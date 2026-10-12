@@ -1607,7 +1607,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Пересечения на границе end=start не считаются конфликтом; реальные пересечения видны.
   - **КОММИТ СЕЙЧАС:** `feat(planning): compute availability and interval conflicts`
 
-- [ ] **C069. Идеальный день и неделя**
+- [x] **C069. Идеальный день и неделя**
   - **Сделать:** Создать шаблоны временных окон и запланированных действий, preview/apply и уникальные ключи.
   - **Проверить:** Повтор применения не создаёт вторую неделю задач; занятые интервалы предупреждаются.
   - **КОММИТ СЕЙЧАС:** `feat(planning): apply routine templates with preview and dedupe`

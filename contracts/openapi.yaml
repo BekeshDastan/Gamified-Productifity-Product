@@ -6,6 +6,230 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/templates/routines/{id}/apply:
+    post:
+      operationId: applyRoutineTemplate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RoutinePreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineApply"
+  /api/v1/templates/routines/{id}/preview:
+    post:
+      operationId: previewRoutineTemplate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RoutinePreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - start_date
+              properties:
+                start_date:
+                  type: string
+  /api/v1/templates/routines/{id}:
+    patch:
+      operationId: editRoutineTemplate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Routine"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineInput"
+  /api/v1/templates/routines:
+    get:
+      operationId: listRoutineTemplates
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Routine"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createRoutineTemplate
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Routine"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineInput"
   /api/v1/plans/day/{date}/blocks:
     post:
       operationId: createPlanBlock
@@ -4091,6 +4315,176 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    RoutineApply:
+      type: object
+      additionalProperties: false
+      required:
+        - start_date
+        - preview_hash
+        - accept_conflicts
+        - reason
+      properties:
+        start_date:
+          type: string
+        preview_hash:
+          type: string
+        accept_conflicts:
+          type: boolean
+        reason:
+          type: string
+    RoutinePreview:
+      type: object
+      additionalProperties: false
+      required:
+        - template
+        - start_date
+        - days
+        - hash
+      properties:
+        template:
+          $ref: "#/components/schemas/Routine"
+        start_date:
+          type: string
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutinePreviewDay"
+        hash:
+          type: string
+    RoutinePreviewDay:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - timezone
+        - items
+        - plan_version
+        - already_applied
+        - past
+        - confirmed
+        - input
+        - actions
+        - availability
+      properties:
+        date:
+          type: string
+        timezone:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanItem"
+        plan_version:
+          type: integer
+        already_applied:
+          type: boolean
+        past:
+          type: boolean
+        confirmed:
+          type: boolean
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineAction"
+        availability:
+          $ref: "#/components/schemas/PlanAvailability"
+    Routine:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - period
+        - days
+        - id
+        - version
+      properties:
+        title:
+          type: string
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineDay"
+        id:
+          type: string
+        version:
+          type: integer
+    RoutineInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - period
+        - days
+      properties:
+        title:
+          type: string
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineDay"
+    RoutineDay:
+      type: object
+      additionalProperties: false
+      required:
+        - day
+        - available_minutes
+        - windows
+        - rest
+        - actions
+      properties:
+        day:
+          type: integer
+        available_minutes:
+          type: integer
+        windows:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanWindow"
+        rest:
+          type: boolean
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineAction"
+    RoutineAction:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - title
+        - minutes
+        - priority
+        - start
+        - end
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        minutes:
+          type: integer
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+        start:
+          type: string
+        end:
+          type: string
     PlanAvailability:
       type: object
       additionalProperties: false

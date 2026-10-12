@@ -361,6 +361,22 @@ type RecurrenceSeriesHistory struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type RoutineApplication struct {
+	OwnerID         pgtype.UUID        `json:"owner_id"`
+	TemplateID      string             `json:"template_id"`
+	LocalDate       pgtype.Date        `json:"local_date"`
+	PlanID          pgtype.UUID        `json:"plan_id"`
+	TemplateVersion int64              `json:"template_version"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
+type RoutineTemplate struct {
+	OwnerID pgtype.UUID `json:"owner_id"`
+	ID      string      `json:"id"`
+	Payload []byte      `json:"payload"`
+	Version int64       `json:"version"`
+}
+
 type Tag struct {
 	ID        pgtype.UUID        `json:"id"`
 	OwnerID   pgtype.UUID        `json:"owner_id"`

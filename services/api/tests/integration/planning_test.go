@@ -22,6 +22,53 @@ func readPlan(t *testing.T, r authResponse) planning.Plan {
 	}
 	return out.Data
 }
+func readRoutinePreview(t *testing.T, r authResponse) planning.RoutinePreview {
+	t.Helper()
+	var out struct {
+		Data planning.RoutinePreview `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &out) != nil || out.Data.Hash == "" {
+		t.Fatalf("preview %d %s", r.status, r.body)
+	}
+	return out.Data
+}
+func TestPlanningRoutinePreviewDedupeAndConflicts(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "routine-plan@example.test")
+	series := calendar.SeriesInput{Event: calendar.Input{Title: "Повторяемая встреча", Start: "2026-10-12T09:30:00Z", End: "2026-10-12T10:30:00Z", Timezone: "UTC"}, Kind: "event", Rule: calendar.Rule{Frequency: "daily", Interval: 1, Count: 2, Weekdays: []int{}}}
+	readSeries(t, f.privateRequest(t, client, "POST", "/calendar/series", "", series))
+	path := "/templates/routines/ideal-week"
+	preview := readRoutinePreview(t, f.privateRequest(t, client, "POST", path+"/preview", "", map[string]string{"start_date": "2026-10-12"}))
+	if len(preview.Days) != 7 || len(preview.Days[0].Availability.Conflicts) != 1 {
+		t.Fatal("projected series missing", preview.Days)
+	}
+	var n int
+	if e := f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM quests)+(SELECT count(*) FROM calendar_events)+(SELECT count(*) FROM day_plans)`).Scan(&n); e != nil || n != 0 {
+		t.Fatal("preview wrote data", n, e)
+	}
+	apply := planning.RoutineRequest{StartDate: preview.StartDate, PreviewHash: preview.Hash, Reason: "Выбираю неделю"}
+	if r := f.privateRequest(t, client, "POST", path+"/apply", "", apply); r.status != 422 {
+		t.Fatal("hidden conflicts", r.status)
+	}
+	apply.AcceptConflicts = true
+	preview = readRoutinePreview(t, f.privateRequest(t, client, "POST", path+"/apply", "", apply, "routine-apply-once-key"))
+	if !preview.Days[0].AlreadyApplied || !preview.Days[6].Input.Rest {
+		t.Fatal("not applied")
+	}
+	if e := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM quests`).Scan(&n); e != nil || n != 6 {
+		t.Fatal("week tasks", n, e)
+	}
+	apply.PreviewHash = preview.Hash
+	readRoutinePreview(t, f.privateRequest(t, client, "POST", path+"/apply", "", apply))
+	if e := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM quests`).Scan(&n); e != nil || n != 6 {
+		t.Fatal("duplicate week", n, e)
+	}
+	stale := readRoutinePreview(t, f.privateRequest(t, client, "POST", "/templates/routines/study-day/preview", "", map[string]string{"start_date": "2026-10-20"}))
+	readEvent(t, f.privateRequest(t, client, "POST", "/calendar/events", "", calendar.Input{Title: "Новая встреча", Start: "2026-10-20T09:00:00Z", End: "2026-10-20T10:00:00Z", Timezone: "UTC"}))
+	if r := f.privateRequest(t, client, "POST", "/templates/routines/study-day/apply", "", planning.RoutineRequest{StartDate: stale.StartDate, PreviewHash: stale.Hash, Reason: "Устаревший план", AcceptConflicts: true}); r.status != 409 {
+		t.Fatal("stale preview applied", r.status)
+	}
+}
 
 func TestPlanningAvailabilityUsesRealCalendar(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
