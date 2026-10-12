@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="560" viewBox="0 0 560 560" fill="none">
+  <defs>
+    <linearGradient id="mountain" x1="280" y1="80" x2="280" y2="490" gradientUnits="userSpaceOnUse"><stop stop-color="#A88BFA" stop-opacity=".24"/><stop offset="1" stop-color="#A88BFA" stop-opacity=".015"/></linearGradient>
+    <linearGradient id="trail" x1="145" y1="435" x2="345" y2="120" gradientUnits="userSpaceOnUse"><stop stop-color="#8470CE" stop-opacity=".25"/><stop offset=".5" stop-color="#A68AF5"/><stop offset="1" stop-color="#CBB6FF"/></linearGradient>
+  </defs>
+  <g stroke="#9A87CB" stroke-opacity=".16"><circle cx="280" cy="280" r="220"/><circle cx="280" cy="280" r="166"/><circle cx="280" cy="280" r="110"/><path d="M20 280h520M280 20v520" stroke-dasharray="3 9"/></g>
+  <path d="M42 461L164 260L230 329L336 105L519 461Z" fill="url(#mountain)" stroke="#A48BDC" stroke-opacity=".4"/>
+  <path d="M164 260L203 339L230 329M336 105L308 214L336 198L367 223L354 143" stroke="#B59DF1" stroke-opacity=".6"/>
+  <path d="M111 454C105 406 206 435 213 379C223 307 298 373 307 299C314 248 397 274 370 218C352 181 335 177 336 117" stroke="url(#trail)" stroke-width="5" stroke-linecap="round"/>
+  <g fill="#19192C" stroke="#B59DF1" stroke-width="3"><circle cx="143" cy="427" r="9"/><circle cx="262" cy="340" r="9"/><circle cx="361" cy="258" r="9"/></g>
+  <circle cx="336" cy="106" r="22" fill="#AA8AF4" fill-opacity=".14"/><circle cx="336" cy="106" r="8" fill="#C6B1FB"/>
+  <g stroke="#BBA7EF" stroke-opacity=".6" stroke-linecap="round"><path d="M116 181v10M111 186h10M436 162v8M432 166h8M423 372v8M419 376h8"/></g>
+  <g fill="#B6A1ED" fill-opacity=".6"><circle cx="199" cy="122" r="2"/><circle cx="471" cy="306" r="2"/><circle cx="92" cy="337" r="2"/></g>
+  <path d="M80 489h400" stroke="#A48BDC" stroke-opacity=".25"/>
+</svg>

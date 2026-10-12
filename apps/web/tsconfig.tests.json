@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "incremental": false, "plugins": [] },
+  "include": [
+    "next-env.d.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "playwright.config.ts",
+    "vitest.config.mts"
+  ],
+  "exclude": ["node_modules"]
+}

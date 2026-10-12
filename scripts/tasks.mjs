@@ -125,12 +125,16 @@ const commands = {
     await commands.lint();
     await commands.test();
     await commands["test-integration"]();
+    await npm("run", "build:web");
+    await commands["test-e2e"]();
+  },
+  "test-e2e": async () => {
+    await npm("run", "test:e2e", "--workspace", "@ascend/web");
   },
 };
 for (const [name, milestone] of Object.entries({
   seed: "C167",
   "seed-demo": "C194",
-  "test-e2e": "C024",
   backup: "C197",
   "restore-verify": "C197",
 })) {
