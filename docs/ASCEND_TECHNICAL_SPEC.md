@@ -1220,7 +1220,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** После перезапуска данные сохраняются; production не использует dev-пароль.
   - **КОММИТ СЕЙЧАС:** `chore(dev): add Docker Compose database environment`
 
-- [ ] **C006. Конфигурация зависимостей**
+- [x] **C006. Конфигурация зависимостей**
   - **Сделать:** Добавить .env.example, docs/dependencies.md и проверку обязательных настроек; отделить dev/test/prod.
   - **Проверить:** Без обязательной переменной процесс завершается с понятной ошибкой без вывода секретов.
   - **КОММИТ СЕЙЧАС:** `chore(config): define environment and dependency policy`

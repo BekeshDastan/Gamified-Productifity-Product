@@ -10,13 +10,19 @@ import (
 	"time"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
 )
 
 func main() {
+	cfg, err := config.Load(os.LookupEnv)
+	if err != nil {
+		slog.Error("invalid configuration", "error", err)
+		os.Exit(1)
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 	server := &http.Server{
-		Addr:              "127.0.0.1:8080",
+		Addr:              cfg.Address,
 		Handler:           platform.NewRouter(),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
