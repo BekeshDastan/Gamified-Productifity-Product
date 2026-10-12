@@ -1274,7 +1274,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Убитый worker отдаёт просроченную lease; повтор события не создаёт два результата тестового обработчика.
   - **КОММИТ СЕЙЧАС:** `feat(worker): add durable jobs and transactional outbox`
 
-- [ ] **C015. Порты файлов и почты**
+- [x] **C015. Порты файлов и почты**
   - **Сделать:** Ввести BlobStore/Mailer, dev-директорию вне web-root, локальный почтовый приёмник и quarantine-интерфейс.
   - **Проверить:** Письмо видно только в dev-приёмнике; неизвестный storage key не читается через публичный URL.
   - **КОММИТ СЕЙЧАС:** `feat(platform): add private blob and mail adapters`

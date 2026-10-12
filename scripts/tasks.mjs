@@ -42,7 +42,7 @@ function requireLocalEnv() {
 async function dev() {
   requireLocalEnv();
   if (env.APP_ENV !== "development") throw new Error("dev requires APP_ENV=development");
-  await run("docker", ["compose", "up", "-d", "--wait", "db"]);
+  await run("docker", ["compose", "up", "-d", "--wait", "db", "mailpit"]);
   await buildGo();
   const children = [];
   let stopping = false;

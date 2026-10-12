@@ -67,3 +67,9 @@
   lease передана новому worker, старый токен отвергнут, эффект записан один раз.
   Ошибки хранят безопасный код; unknown handler не маскируется успехом.
   C013a: дополнительно проверен составной недопустимый HTTP-метод.
+
+- C015: BlobStore/Mailer ports, приватный os.Root store, лимиты/checksum,
+  карантин с отказом при недоступном scanner. SMTP требует TLS в production;
+  dev plaintext только loopback. Тестовое письмо получено локальным Mailpit 1.31.5.
+  Public URL для blobs отсутствует; path traversal, header injection и plaintext
+  production отвергнуты тестами.
