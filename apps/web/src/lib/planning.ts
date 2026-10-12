@@ -83,6 +83,14 @@ export async function getPlan(date: string, signal?: AbortSignal) {
   });
   return dayPlan.parse(r.data?.data);
 }
+export async function getPlanWeek(from: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/plans/week", {
+    params: { query: { from } },
+    signal,
+  });
+  return z.array(dayPlan).parse(r.data?.data);
+}
 function params(plan: DayPlan, key: string) {
   return {
     path: { date: plan.date },

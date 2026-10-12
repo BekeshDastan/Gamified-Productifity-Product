@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/plans/week": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPlanWeek"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/templates/routines/{id}/apply": {
         parameters: {
             query?: never;
@@ -2540,6 +2556,37 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getPlanWeek: {
+        parameters: {
+            query: {
+                from: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DayPlan"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     applyRoutineTemplate: {
         parameters: {
             query?: never;

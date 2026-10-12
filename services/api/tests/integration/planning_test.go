@@ -70,6 +70,28 @@ func TestPlanningRoutinePreviewDedupeAndConflicts(t *testing.T) {
 	}
 }
 
+func TestPlanningWeekShowsDraftsAndRestWithoutInventedPlans(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "week-plan@example.test")
+	path := "/plans/day/2026-10-12"
+	p := readPlan(t, f.privateRequest(t, client, "PUT", path, `"0"`, planning.Input{Rest: true}))
+	readPlan(t, f.privateRequest(t, client, "POST", path+"/confirm", planVersion(p), struct{}{}))
+	r := f.privateRequest(t, client, "GET", "/plans/week?from=2026-10-12", "", nil)
+	var out struct {
+		Data []planning.Plan `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &out) != nil || len(out.Data) != 7 {
+		t.Fatal("week", r.status, string(r.body))
+	}
+	if !out.Data[0].Rest || out.Data[0].Progress.Score != nil || out.Data[1].ID != "" || out.Data[1].ConfirmedAt != nil {
+		t.Fatal("invented commitment")
+	}
+	var n int
+	if e := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM day_plans`).Scan(&n); e != nil || n != 1 {
+		t.Fatal("week mutated plans", n, e)
+	}
+}
+
 func TestPlanningAvailabilityUsesRealCalendar(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, _ := f.signedIn(t, "capacity-plan@example.test")
