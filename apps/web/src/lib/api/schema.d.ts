@@ -1371,6 +1371,33 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        PlanAvailability: {
+            work_minutes: number;
+            busy_minutes: number;
+            free_minutes: number;
+            scheduled_minutes: number;
+            remaining_capacity: number;
+            planned_minutes: number;
+            remaining_minutes: number;
+            deficit_minutes: number;
+            free_slots: components["schemas"]["PlanInterval"][];
+            conflicts: components["schemas"]["PlanConflict"][];
+            more_conflicts: boolean;
+            unfit_ids: string[];
+            unknown_ids: string[];
+            blocks: components["schemas"]["CalendarEventDTO"][];
+            materializing: boolean;
+        };
+        PlanConflict: {
+            first: string;
+            second: string;
+            start: string;
+            end: string;
+        };
+        PlanInterval: {
+            start: string;
+            end: string;
+        };
         PlanBlock: {
             quest_id: string;
             quest_version: number;
@@ -1420,6 +1447,7 @@ export interface components {
             items: components["schemas"]["PlanItem"][];
             changes: components["schemas"]["PlanChange"][];
             progress: components["schemas"]["PlanProgress"];
+            availability: components["schemas"]["PlanAvailability"] | null;
         };
         PlanSnapshot: {
             input: components["schemas"]["PlanInput"];

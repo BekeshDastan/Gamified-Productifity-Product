@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"testing"
 	"time"
@@ -20,6 +21,26 @@ func readPlan(t *testing.T, r authResponse) planning.Plan {
 		t.Fatalf("plan %d %s", r.status, r.body)
 	}
 	return out.Data
+}
+
+func TestPlanningAvailabilityUsesRealCalendar(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "capacity-plan@example.test")
+	qIn := questInput("Нужны два часа")
+	qIn.EstimatedMinutes = 120
+	q := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", qIn))
+	in := planInput()
+	in.QuestIDs = []string{q.ID}
+	path := "/plans/day/2026-10-12"
+	readPlan(t, f.privateRequest(t, client, "PUT", path, `"0"`, in))
+	for _, v := range []struct{ start, end string }{{"09:00", "10:00"}, {"09:30", "10:30"}, {"10:30", "11:00"}} {
+		readEvent(t, f.privateRequest(t, client, "POST", "/calendar/events", "", calendar.Input{Title: "Занято", Start: "2026-10-12T" + v.start + ":00Z", End: "2026-10-12T" + v.end + ":00Z", Timezone: "UTC"}))
+	}
+	p := readPlan(t, f.privateRequest(t, client, "GET", path, "", nil))
+	a := p.Availability
+	if a == nil || a.BusyMinutes != 120 || a.FreeMinutes != 60 || a.DeficitMinutes != 60 || len(a.Conflicts) != 1 || len(a.UnfitIDs) != 1 {
+		t.Fatal("calendar not reflected", a)
+	}
 }
 
 func TestPlanningPrioritiesMultipleBlocksAndDeadline(t *testing.T) {

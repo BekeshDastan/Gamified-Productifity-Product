@@ -32,6 +32,25 @@ export const planProgress = z.object({
   completed_weight: z.number().int(),
   score: z.number().int().nullable(),
 });
+export const planAvailability = z.object({
+  work_minutes: z.number(),
+  busy_minutes: z.number(),
+  free_minutes: z.number(),
+  scheduled_minutes: z.number(),
+  remaining_capacity: z.number(),
+  planned_minutes: z.number(),
+  remaining_minutes: z.number(),
+  deficit_minutes: z.number(),
+  free_slots: z.array(z.object({ start: z.string(), end: z.string() })),
+  conflicts: z.array(
+    z.object({ first: z.string(), second: z.string(), start: z.string(), end: z.string() }),
+  ),
+  more_conflicts: z.boolean(),
+  unfit_ids: z.array(z.string()),
+  unknown_ids: z.array(z.string()),
+  blocks: z.array(calendarEvent),
+  materializing: z.boolean(),
+});
 export const dayPlan = planInput.extend({
   id: z.string(),
   date: z.string(),
@@ -52,6 +71,7 @@ export const dayPlan = planInput.extend({
     }),
   ),
   progress: planProgress,
+  availability: planAvailability.nullable(),
 });
 export type DayPlan = z.infer<typeof dayPlan>;
 export type PlanInput = z.infer<typeof planInput>;

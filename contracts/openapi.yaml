@@ -4091,6 +4091,94 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    PlanAvailability:
+      type: object
+      additionalProperties: false
+      required:
+        - work_minutes
+        - busy_minutes
+        - free_minutes
+        - scheduled_minutes
+        - remaining_capacity
+        - planned_minutes
+        - remaining_minutes
+        - deficit_minutes
+        - free_slots
+        - conflicts
+        - more_conflicts
+        - unfit_ids
+        - unknown_ids
+        - blocks
+        - materializing
+      properties:
+        work_minutes:
+          type: integer
+        busy_minutes:
+          type: integer
+        free_minutes:
+          type: integer
+        scheduled_minutes:
+          type: integer
+        remaining_capacity:
+          type: integer
+        planned_minutes:
+          type: integer
+        remaining_minutes:
+          type: integer
+        deficit_minutes:
+          type: integer
+        free_slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanInterval"
+        conflicts:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanConflict"
+        more_conflicts:
+          type: boolean
+        unfit_ids:
+          type: array
+          items:
+            type: string
+        unknown_ids:
+          type: array
+          items:
+            type: string
+        blocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+        materializing:
+          type: boolean
+    PlanConflict:
+      type: object
+      additionalProperties: false
+      required:
+        - first
+        - second
+        - start
+        - end
+      properties:
+        first:
+          type: string
+        second:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+    PlanInterval:
+      type: object
+      additionalProperties: false
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+        end:
+          type: string
     PlanBlock:
       type: object
       additionalProperties: false
@@ -4198,6 +4286,7 @@ components:
         - items
         - changes
         - progress
+        - availability
       properties:
         available_minutes:
           type: integer
@@ -4244,6 +4333,10 @@ components:
             $ref: "#/components/schemas/PlanChange"
         progress:
           $ref: "#/components/schemas/PlanProgress"
+        availability:
+          anyOf:
+            - $ref: "#/components/schemas/PlanAvailability"
+            - type: "null"
     PlanSnapshot:
       type: object
       additionalProperties: false

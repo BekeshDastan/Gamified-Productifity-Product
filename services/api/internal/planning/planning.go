@@ -46,15 +46,16 @@ type Snapshot struct {
 }
 type Plan struct {
 	Input
-	ID          string     `json:"id"`
-	Date        string     `json:"date"`
-	Timezone    string     `json:"timezone"`
-	Version     int64      `json:"version"`
-	ConfirmedAt *time.Time `json:"confirmed_at"`
-	Snapshot    *Snapshot  `json:"snapshot"`
-	Items       []Item     `json:"items"`
-	Changes     []Change   `json:"changes"`
-	Progress    Progress   `json:"progress"`
+	ID           string        `json:"id"`
+	Date         string        `json:"date"`
+	Timezone     string        `json:"timezone"`
+	Version      int64         `json:"version"`
+	ConfirmedAt  *time.Time    `json:"confirmed_at"`
+	Snapshot     *Snapshot     `json:"snapshot"`
+	Items        []Item        `json:"items"`
+	Changes      []Change      `json:"changes"`
+	Progress     Progress      `json:"progress"`
+	Availability *Availability `json:"availability"`
 }
 type Service struct {
 	pool     *pgxpool.Pool
@@ -205,6 +206,9 @@ func (s *Service) save(ctx context.Context, tx pgx.Tx, id, date string, in Input
 	if old.Version != version {
 		return old, problem(409, "VERSION_CONFLICT", "План изменился. Загрузите свежую версию")
 	}
+	if _, e := windowsFor(date, old.Timezone, in.Windows); e != nil {
+		return old, e
+	}
 	if old.ConfirmedAt != nil && (len(amendment) == 0 || !amendment[0]) {
 		return old, problem(409, "PLAN_CONFIRMED", "Подтверждённый план меняется дополнением с причиной")
 	}
@@ -296,7 +300,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 			}
 			var p Plan
 			if e == nil {
-				e = storage.WithinTx(r.Context(), s.pool, func(tx pgx.Tx) error { var err error; p, err = s.get(r.Context(), tx, id, date); return err })
+				e = storage.WithinTx(r.Context(), s.pool, func(tx pgx.Tx) error { var err error; p, err = s.view(r.Context(), tx, id, date); return err })
 			}
 			s.reply(w, r, p, e)
 		})
