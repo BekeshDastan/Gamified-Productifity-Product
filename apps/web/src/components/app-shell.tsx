@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
-import { ThemeSelect } from "./theme-select";
+import { AccountThemeSelect, PersonalizationEffects } from "./personalization";
 import { useAuth } from "@/lib/auth/provider";
 import { AccountQueryProvider } from "@/lib/api/query-provider";
 
@@ -45,6 +45,12 @@ const planned = [
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/settings/privacy", label: "Приватность", icon: LockKeyhole },
+  { href: "/app/settings/security", label: "Безопасность", icon: LockKeyhole },
+  { href: "/app/onboarding", label: "Первые шаги", icon: Compass },
+  { href: "/app/settings/areas", label: "Направления и теги", icon: Sprout },
+  { href: "/app/settings/schedule", label: "Расписание", icon: CalendarDays },
+  { href: "/app/settings/profile", label: "Профиль", icon: UserRound },
   { href: "/app", label: "Сегодня", icon: House },
   { href: "/app/guide", label: "О приложении", icon: Compass },
   { href: "/app/settings/appearance", label: "Оформление", icon: Settings },
@@ -84,6 +90,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
   return (
     <AccountQueryProvider accountId={auth.session?.account.id ?? null}>
+      <PersonalizationEffects />
       <div className="app-shell">
         <a href="#main-content" className="skip-link">
           К содержимому
@@ -136,7 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </span>
               <span>{available.find((item) => item.href === pathname)?.label ?? "ASCEND"}</span>
             </div>
-            <ThemeSelect />
+            <AccountThemeSelect />
             <span className="account-state">
               <LockKeyhole size={14} aria-hidden="true" />
               {auth.session

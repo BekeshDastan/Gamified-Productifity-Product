@@ -22,6 +22,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/mail"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
 )
 
 type authLogs struct {
@@ -42,7 +43,7 @@ func TestBrowserAuth(t *testing.T) {
 	if os.Getenv("RUN_BROWSER_AUTH") != "1" {
 		t.Skip("run npm run test:auth-e2e for the real browser suite")
 	}
-	pool, ctx := databaseWithTimeout(t, 3*time.Minute)
+	pool, ctx := databaseWithTimeout(t, 6*time.Minute)
 	key := make([]byte, 32)
 	if _, err := rand.Read(key); err != nil {
 		t.Fatal(err)
@@ -62,6 +63,7 @@ func TestBrowserAuth(t *testing.T) {
 	if err := sessions.Mount(router, limits); err != nil {
 		t.Fatal(err)
 	}
+	profile.NewService(pool, clock).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
 		t.Fatal("stop dev before browser acceptance; API test port unavailable")

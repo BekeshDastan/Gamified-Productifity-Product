@@ -6,6 +6,370 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/me/password:
+    patch:
+      operationId: changePassword
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/me/onboarding:
+    get:
+      operationId: getOnboarding
+      responses:
+        "200":
+          $ref: "#/components/responses/Onboarding"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: saveOnboarding
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Onboarding"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/me/onboarding/complete:
+    post:
+      operationId: completeOnboarding
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        $ref: "#/components/requestBodies/Empty"
+      responses:
+        "200":
+          $ref: "#/components/responses/Onboarding"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/areas:
+    get:
+      operationId: listareas
+      responses:
+        "200":
+          $ref: "#/components/responses/Labels"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createareas
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Label"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/areas/{id}:
+    patch:
+      operationId: updateareas
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Label"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: archiveareas
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/Empty"
+      responses:
+        "200":
+          $ref: "#/components/responses/Label"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/tags:
+    get:
+      operationId: listtags
+      responses:
+        "200":
+          $ref: "#/components/responses/Labels"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createtags
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Label"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/tags/{id}:
+    patch:
+      operationId: updatetags
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LabelInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Label"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: archivetags
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/Empty"
+      responses:
+        "200":
+          $ref: "#/components/responses/Label"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/catalog/areas:
+    get:
+      operationId: areaCatalog
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LabelInput"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/me/settings:
+    get:
+      operationId: getSettings
+      responses:
+        "200":
+          $ref: "#/components/responses/Settings"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: updateSettings
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Preferences"
+      responses:
+        "200":
+          $ref: "#/components/responses/Settings"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/me:
+    get:
+      operationId: getProfile
+      responses:
+        "200":
+          $ref: "#/components/responses/Profile"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: updateProfile
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Profile"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/auth/forgot-password:
     post:
       operationId: forgotPassword
@@ -299,6 +663,74 @@ components:
             type: object
             additionalProperties: false
   responses:
+    Onboarding:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/Onboarding"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    Label:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/Label"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    Labels:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Label"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    Settings:
+      description: Настройки владельца с версией
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data, meta]
+            properties:
+              data:
+                $ref: "#/components/schemas/Settings"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    Profile:
+      description: Личный профиль владельца с версией
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data, meta]
+            properties:
+              data:
+                $ref: "#/components/schemas/Profile"
+              meta:
+                $ref: "#/components/schemas/Meta"
     OK:
       description: Операция выполнена
       content:
@@ -385,6 +817,302 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ChangePasswordInput:
+      type: object
+      additionalProperties: false
+      required:
+        - current_password
+        - password
+      properties:
+        current_password:
+          type: string
+          format: password
+          writeOnly: true
+          minLength: 1
+          maxLength: 512
+        password:
+          $ref: "#/components/schemas/RegisterInput/properties/password"
+    Starters:
+      type: object
+      additionalProperties: false
+      required:
+        - goal
+        - task
+        - habit
+      properties:
+        goal:
+          type: string
+          maxLength: 200
+        task:
+          type: string
+          maxLength: 200
+        habit:
+          type: string
+          maxLength: 200
+    OnboardingInput:
+      type: object
+      required:
+        - step
+        - starters
+      properties:
+        step:
+          type: integer
+          minimum: 0
+          maximum: 6
+        starters:
+          $ref: "#/components/schemas/Starters"
+    Onboarding:
+      allOf:
+        - $ref: "#/components/schemas/OnboardingInput"
+        - type: object
+          required:
+            - completed_at
+            - version
+            - created_at
+            - updated_at
+          properties:
+            completed_at:
+              type:
+                - string
+                - "null"
+              format: date-time
+            version:
+              type: integer
+              minimum: 1
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+    LabelInput:
+      type: object
+      required:
+        - name
+        - color
+        - icon
+        - archived
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        color:
+          type: string
+          pattern: ^#[0-9a-f]{6}$
+        icon:
+          type: string
+          enum:
+            - book
+            - briefcase
+            - code
+            - languages
+            - activity
+            - rocket
+            - heart
+            - sprout
+            - tag
+        archived:
+          type: boolean
+    Label:
+      allOf:
+        - $ref: "#/components/schemas/LabelInput"
+        - type: object
+          required:
+            - id
+            - version
+            - created_at
+            - updated_at
+          properties:
+            id:
+              type: string
+              format: uuid
+            version:
+              type: integer
+              minimum: 1
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+    Preferences:
+      type: object
+      required:
+        - personalization
+        - privacy
+        - timezone
+        - language
+        - week_start
+        - time_format
+        - work_intervals
+        - rest_days
+      properties:
+        privacy:
+          type: object
+          additionalProperties: false
+          required:
+            - profile_visibility
+            - share_activity
+            - share_achievements
+            - discoverable
+          properties:
+            profile_visibility:
+              type: string
+              enum:
+                - private
+                - friends
+            share_activity:
+              type: boolean
+              default: false
+            share_achievements:
+              type: boolean
+              default: false
+            discoverable:
+              type: boolean
+              default: false
+        timezone:
+          type: string
+          maxLength: 100
+          description: IANA timezone; начальная UTC, браузерная зона предлагается пользователю.
+        language:
+          type: string
+          enum:
+            - ru
+            - en
+        week_start:
+          type: integer
+          enum:
+            - 1
+            - 7
+        time_format:
+          type: string
+          enum:
+            - 24h
+            - 12h
+        work_intervals:
+          type: array
+          maxItems: 28
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - day
+              - start
+              - end
+            properties:
+              day:
+                type: integer
+                minimum: 1
+                maximum: 7
+              start:
+                type: string
+                pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
+              end:
+                type: string
+                pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
+        rest_days:
+          type: array
+          maxItems: 7
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+        personalization:
+          type: object
+          additionalProperties: false
+          required:
+            - theme
+            - motion
+            - sound
+            - game_mode
+            - widget_order
+          properties:
+            theme:
+              type: string
+              enum:
+                - system
+                - light
+                - dark
+            motion:
+              type: string
+              enum:
+                - system
+                - reduce
+            sound:
+              type: boolean
+              default: false
+            game_mode:
+              type: string
+              enum:
+                - calm
+                - standard
+            widget_order:
+              type: array
+              minItems: 5
+              maxItems: 5
+              uniqueItems: true
+              items:
+                type: string
+                enum:
+                  - today
+                  - calendar
+                  - habits
+                  - focus
+                  - progress
+    Settings:
+      allOf:
+        - $ref: "#/components/schemas/Preferences"
+        - type: object
+          required: [version, created_at, updated_at]
+          properties:
+            version:
+              type: integer
+              minimum: 1
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+    ProfileInput:
+      type: object
+      additionalProperties: false
+      required: [name, nickname, avatar]
+      properties:
+        name:
+          type: string
+          maxLength: 80
+        nickname:
+          type: string
+          pattern: "^([a-z0-9_]{3,24})?$"
+        avatar:
+          type: string
+          enum: [mountain, compass, sprout, sun, moon, star]
+    Profile:
+      type: object
+      additionalProperties: false
+      required: [name, nickname, avatar, owner_id, version, created_at, updated_at]
+      properties:
+        name:
+          $ref: "#/components/schemas/ProfileInput/properties/name"
+        nickname:
+          $ref: "#/components/schemas/ProfileInput/properties/nickname"
+        avatar:
+          $ref: "#/components/schemas/ProfileInput/properties/avatar"
+        owner_id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     ForgotInput:
       type: object
       additionalProperties: false

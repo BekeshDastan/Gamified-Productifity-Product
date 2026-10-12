@@ -4,6 +4,7 @@ import { z } from "zod";
 import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { ApiError, createApiClient } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/provider";
+import { useSettings, formatMoment } from "@/lib/settings";
 import { authClient, authParams, authError, loadSession, withAuthLock } from "@/lib/auth/session";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -20,6 +21,7 @@ const sessionsSchema = z.array(
 type SessionInfo = z.infer<typeof sessionsSchema>[number];
 export function AccountPanel() {
   const auth = useAuth();
+  const preferences = useSettings();
   const [busy, setBusy] = useState(false);
   const locked = useRef(false);
   const [message, setMessage] = useState("");
@@ -132,7 +134,10 @@ export function AccountPanel() {
                 <div>
                   <strong>{item.current ? "Это устройство" : "Другое устройство"}</strong>
                   <p className="ui-hint">
-                    Вход: {new Date(item.created_at).toLocaleString("ru-RU")}
+                    Вход:{" "}
+                    {preferences.data
+                      ? formatMoment(item.created_at, preferences.data)
+                      : "Загружаем дату…"}
                     {item.remember_me ? " · Запомнено на 30 дней" : " · До закрытия браузера"}
                   </p>
                 </div>

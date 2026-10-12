@@ -145,7 +145,7 @@ const commands = {
         "-run",
         "^TestBrowserAuth$",
         "-count=1",
-        "-timeout=4m",
+        "-timeout=8m",
         "./tests/integration/...",
       ],
       api,

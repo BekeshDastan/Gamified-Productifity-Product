@@ -256,6 +256,7 @@ func (s *Sessions) Mount(router chi.Router, limits Limits) error {
 		return errors.New("invalid auth limits")
 	}
 	s.limits = limits
+	s.mountPasswordChange(router)
 	router.Route("/api/v1/auth", func(r chi.Router) {
 		r.Use(s.browserMutation)
 		r.Get("/csrf", s.csrf)
