@@ -1470,7 +1470,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** HTML под видом картинки отвергается; чужой файл и path traversal недоступны.
   - **КОММИТ СЕЙЧАС:** `feat(attachments): attach validated private files to quests`
 
-- [ ] **C047. Шаблоны и пакетные действия**
+- [x] **C047. Шаблоны и пакетные действия**
   - **Сделать:** Добавить task templates, preview создания, атомарные batch до 50 объектов, архив и восстановление.
   - **Проверить:** Повтор применения шаблона с тем же ключом не создаёт дубли; batch с чужим ID отклоняется целиком.
   - **КОММИТ СЕЙЧАС:** `feat(quests): add templates bulk actions and archive recovery`

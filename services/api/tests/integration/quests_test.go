@@ -225,3 +225,71 @@ func TestQuestHierarchyAndDependencies(t *testing.T) {
 	b = readQuest(t, f.privateRequest(t, client, "PUT", "/quests/"+b.ID+"/dependencies", version(b), quests.DependenciesInput{IDs: []string{}, Reason: "Снята зависимость"}))
 	readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+b.ID+"/start", version(b), quests.Transition{}))
 }
+func TestQuestTemplatesBatchPreviewAndArchive(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "tools@example.test")
+	other, _ := f.signedIn(t, "tools-other@example.test")
+	q := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput("Повторимый шаг")))
+	r := f.privateRequest(t, client, "POST", "/templates/quests", "", quests.TemplateSource{Name: "Чтение", QuestID: q.ID})
+	var templ struct {
+		Data quests.Template `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &templ) != nil {
+		t.Fatal("template create", r.status)
+	}
+	var count int
+	if err := f.pool.QueryRow(f.ctx, `SELECT count(*) FROM quests`).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	before := count
+	if r := f.privateRequest(t, client, "POST", "/templates/quests/"+templ.Data.ID+"/preview", "", quests.TemplateDates{}); r.status != 200 {
+		t.Fatal("template preview")
+	}
+	if err := f.pool.QueryRow(f.ctx, `SELECT count(*) FROM quests`).Scan(&count); err != nil || count != before {
+		t.Fatal("preview created quest")
+	}
+	if r := f.privateRequest(t, other, "POST", "/templates/quests/"+templ.Data.ID+"/apply", `"1"`, quests.TemplateDates{}); r.status != 404 {
+		t.Fatal("foreign template")
+	}
+	key := "apply-template-once-key"
+	first := readQuest(t, f.privateRequest(t, client, "POST", "/templates/quests/"+templ.Data.ID+"/apply", `"1"`, quests.TemplateDates{}, key))
+	again := readQuest(t, f.privateRequest(t, client, "POST", "/templates/quests/"+templ.Data.ID+"/apply", `"1"`, quests.TemplateDates{}, key))
+	if first.ID != again.ID || first.ActualMinutes != 0 || first.ParentID != nil || first.Status != "backlog" {
+		t.Fatal("template duplicated or stale fields")
+	}
+	foreign := readQuest(t, f.privateRequest(t, other, "POST", "/quests", "", questInput("Чужая")))
+	batch := quests.Batch{Action: "archive", Items: []quests.BatchItem{{ID: q.ID, Version: q.Version}, {ID: foreign.ID, Version: foreign.Version}}}
+	if r := f.privateRequest(t, client, "POST", "/quests/batch", "", batch); r.status != 404 {
+		t.Fatal("foreign batch accepted")
+	}
+	q = readQuest(t, f.privateRequest(t, client, "GET", "/quests/"+q.ID, "", nil))
+	if q.ArchivedAt != nil || q.Version != 1 {
+		t.Fatal("partial batch")
+	}
+	batch.Items = []quests.BatchItem{{ID: q.ID, Version: q.Version}, {ID: first.ID, Version: first.Version}}
+	if r := f.privateRequest(t, client, "POST", "/quests/batch/preview", "", batch); r.status != 200 {
+		t.Fatal("batch preview", r.status, string(r.body))
+	}
+	q = readQuest(t, f.privateRequest(t, client, "GET", "/quests/"+q.ID, "", nil))
+	if q.ArchivedAt != nil || q.Version != 1 {
+		t.Fatal("preview committed")
+	}
+	if r := f.privateRequest(t, client, "POST", "/quests/batch", "", batch, "batch-archive-once-key"); r.status != 200 {
+		t.Fatal("batch apply", r.status, string(r.body))
+	}
+	if r := f.privateRequest(t, client, "POST", "/quests/batch", "", batch, "batch-archive-once-key"); r.status != 200 {
+		t.Fatal("batch replay")
+	}
+	q = readQuest(t, f.privateRequest(t, client, "GET", "/quests/"+q.ID, "", nil))
+	if q.ArchivedAt == nil || q.Status != "todo" {
+		t.Fatal("archive destroyed status")
+	}
+	q = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/restore", version(q), struct{}{}))
+	if q.ArchivedAt != nil || q.Status != "todo" {
+		t.Fatal("restore lost outcome")
+	}
+	batch.Items = make([]quests.BatchItem, 51)
+	if r := f.privateRequest(t, client, "POST", "/quests/batch", "", batch); r.status != 422 {
+		t.Fatal("batch bound ignored")
+	}
+}

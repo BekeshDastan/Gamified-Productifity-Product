@@ -26,6 +26,7 @@ import { QuestFiltersPanel } from "./quest-filters";
 import { QuestActions, QuestHistory } from "./quest-actions";
 import { QuestStructure, QuestPicker } from "./quest-structure";
 import { QuestFiles } from "./quest-files";
+import { QuestTemplates, QuestArchive, QuestBatchPanel } from "./quest-tools";
 
 export function Quests({ id }: { id?: string }) {
   const auth = useAuth();
@@ -145,6 +146,20 @@ export function Quests({ id }: { id?: string }) {
             }}
           />
           <QuestHistory quest={current} />
+          <QuestArchive
+            quest={current}
+            onChanged={() => {
+              setRevision((v) => v + 1);
+              void query.refetch();
+            }}
+          />
+          <QuestTemplates
+            quest={current}
+            onCreated={(q) => {
+              setCreated(q);
+              void query.refetch();
+            }}
+          />
           <QuestFiles
             quest={current}
             onChanged={() => {
@@ -169,6 +184,12 @@ export function Quests({ id }: { id?: string }) {
       )}
       {collection && (
         <>
+          <QuestTemplates
+            onCreated={(q) => {
+              setCreated(q);
+              void query.refetch();
+            }}
+          />
           <QuestFiltersPanel
             labels={labels.data}
             onApply={(f) => {
@@ -176,6 +197,7 @@ export function Quests({ id }: { id?: string }) {
               setPage(1);
             }}
           />
+          <QuestBatchPanel items={collection.items} onChanged={() => void query.refetch()} />
           <div className="button-row">
             <Button
               variant={board ? "secondary" : "primary"}

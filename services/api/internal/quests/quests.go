@@ -404,6 +404,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		s.mountLifecycle(r)
 		s.mountStructure(r)
 		s.mountAttachments(r)
+		s.mountTools(r)
 		r.Get("/api/v1/quests", func(w http.ResponseWriter, r *http.Request) { q, e := s.List(r); s.reply(w, r, q, e) })
 		r.Post("/api/v1/quests", func(w http.ResponseWriter, r *http.Request) {
 			decode(w, r, func(in Input) (any, error) { return s.Create(r, in) }, s)
