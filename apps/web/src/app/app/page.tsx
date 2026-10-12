@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { ArrowUpRight, LockKeyhole, Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

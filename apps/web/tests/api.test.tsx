@@ -12,16 +12,14 @@ describe("central API boundary", () => {
     "throws on HTTP %s and retains safe diagnostics",
     async (status) => {
       const client = createApiClient({
-        fetch: vi
-          .fn()
-          .mockResolvedValue(
-            new Response(
-              JSON.stringify({
-                error: { code: "VERSION_CONFLICT", request_id: "req-12", current_version: 3 },
-              }),
-              { status, headers: { "Retry-After": "15" } },
-            ),
+        fetch: vi.fn().mockResolvedValue(
+          new Response(
+            JSON.stringify({
+              error: { code: "VERSION_CONFLICT", request_id: "req-12", current_version: 3 },
+            }),
+            { status, headers: { "Retry-After": "15" } },
           ),
+        ),
       });
       await expect(client.GET("/health/ready")).rejects.toMatchObject({
         status,
@@ -40,16 +38,14 @@ describe("central API boundary", () => {
     expect(error.message).not.toContain("private");
   });
   it("sends same-origin credentials and request ID, without following redirects", async () => {
-    const fetcher = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            data: { status: "ok" },
-            meta: { request_id: "r1", server_time: "2026-10-12T00:00:00Z" },
-          }),
-        ),
-      );
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: { status: "ok" },
+          meta: { request_id: "r1", server_time: "2026-10-12T00:00:00Z" },
+        }),
+      ),
+    );
     const result = await createApiClient({ fetch: fetcher }).GET("/health/live");
     expect(result.data?.data.status).toBe("ok");
     const request: Request = fetcher.mock.calls[0]![0];

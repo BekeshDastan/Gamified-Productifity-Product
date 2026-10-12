@@ -713,3 +713,15 @@
     gap: 20px;
   }
 }
+
+.ui-form-fields {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.ui-form-fields .ui-button[type="submit"] {
+  width: 100%;
+}

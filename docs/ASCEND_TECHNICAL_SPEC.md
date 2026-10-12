@@ -1313,7 +1313,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Ошибка сервера не маскируется успехом; пользовательские кэши разделены.
   - **КОММИТ СЕЙЧАС:** `feat(web): add typed API client and query cache`
 
-- [ ] **C021. Единые формы**
+- [x] **C021. Единые формы**
   - **Сделать:** Настроить Zod/React Hook Form, подсветку ошибок, disabled при сохранении и защиту незавершённого ввода.
   - **Проверить:** Двойной submit не создаёт второй запрос; серверная ошибка видна у нужного поля.
   - **КОММИТ СЕЙЧАС:** `feat(forms): add validated form and unsaved change handling`

@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
