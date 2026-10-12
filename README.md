@@ -41,7 +41,7 @@ toolchain (используется 1.26.9) и запущенный Docker Deskt
 ```powershell
 npm ci
 Copy-Item .env.example .env
-node -e "const fs=require('node:fs');const crypto=require('node:crypto');const p='.env';let s=fs.readFileSync(p,'utf8');if(/^AUTH_SIGNING_KEY=$/m.test(s)){s=s.replace(/^AUTH_SIGNING_KEY=$/m,'AUTH_SIGNING_KEY='+crypto.randomBytes(32).toString('base64'));fs.writeFileSync(p,s);}"
+node -e "const fs=require('node:fs');const crypto=require('node:crypto');const p='.env';let s=fs.readFileSync(p,'utf8');if(/^AUTH_SIGNING_KEY=\r?$/m.test(s)){s=s.replace(/^AUTH_SIGNING_KEY=\r?$/m,'AUTH_SIGNING_KEY='+crypto.randomBytes(32).toString('base64'));fs.writeFileSync(p,s);}"
 npm run dev
 ```
 
@@ -60,12 +60,13 @@ Ctrl+C останавливает процессы приложения; баз�
 | `npm run dev`              | `make dev`              | Локальное окружение                             |
 | `npm run lint`             | `make lint`             | Политика файлов, формат, ESLint, TypeScript, Go |
 | `npm test`                 | `make test`             | Tooling, component и Go unit tests              |
-| `npm run check-changed`    | `make check-changed`    | Lint + unit/component + PostgreSQL integration  |
+| `npm run check-changed`    | `make check-changed`    | Lint + unit + PostgreSQL + build + UI/auth E2E  |
 | `npm run build`            | `make build`            | Production web и два Go-бинарника               |
 | `npm run migrate`          | `make migrate`          | Forward-миграции goose к явному DATABASE_URL    |
 | `npm run seed`             | `make seed`             | Пока явный отказ; каталог ещё не создан         |
 | `npm run test:integration` | `make test-integration` | Реальные PostgreSQL и локальная почта           |
 | `npm run test:e2e`         | `make test-e2e`         | Playwright Chromium: темы, меню, a11y, ошибки   |
+| `npm run test:auth-e2e`    | —                       | Реальные Go API, PostgreSQL, SMTP и Chromium    |
 
 Windows не требует установки make: команды npm используют тот же обработчик.
 Неподключённые наборы завершаются с ошибкой и пояснением; фиктивных зелёных тестов
@@ -82,7 +83,7 @@ production web на 127.0.0.1:3100 и останавливает его посл
 
 ## Текущая готовность
 
-Выполнены C001–C031: серверная платформа, лендинг, светлая/тёмная/системная
+Выполнены C001–C032: серверная платформа, лендинг, светлая/тёмная/системная
 темы, адаптивная оболочка, доступные компоненты и авторизация.
 `/app` пока показывает статус подготовки, без вымышленных личных метрик.
 Работают вход, регистрация, email verification, восстановление пароля и управление

@@ -63,7 +63,7 @@ CI создаёт отдельные контейнеры PostgreSQL/Mailpit и 
 
 ## Ограничения текущего этапа
 
-Доменные миграции, backup/restore и production deployment ещё не подключены.
+Backup/restore и production deployment ещё не подключены.
 Готовность каждого пункта отмечается в ТЗ и журнале разработки.
 
 ## Авторизация и письма
@@ -81,6 +81,9 @@ Production SMTP требует STARTTLS и проверку сертификат
 Пороги AUTH_LOGIN_FAILURES=5 (15 минут account+IP), AUTH_IP_FAILURES=50,
 AUTH_REGISTRATIONS=10 (15 минут IP), AUTH_USER_REQUESTS=120 (минута user),
 AUTH_MAIL_REQUESTS=3 (час), AUTH_TOKEN_ATTEMPTS=30 (час IP) настраиваются в окружении.
+Почтовый лимит 3/час применяется к аккаунту/адресу; общий IP-порог выше
+и задаётся AUTH_IP_FAILURES (по умолчанию 50/час), чтобы один адрес не исчерпывал
+почтовую квоту других пользователей общего соединения.
 Forwarded headers не принимаются: без отдельной настройки доверенного proxy
 IP-лимит видит соединение proxy. Production-развёртывание ещё не принято.
 

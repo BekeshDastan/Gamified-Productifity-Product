@@ -127,6 +127,7 @@ const commands = {
     await commands["test-integration"]();
     await npm("run", "build:web");
     await commands["test-e2e"]();
+    await commands["test-auth-e2e"]();
   },
   "test-e2e": async () => {
     await npm("run", "test:e2e", "--workspace", "@ascend/web");

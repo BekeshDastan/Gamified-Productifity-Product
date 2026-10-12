@@ -598,6 +598,7 @@ export interface operations {
             401: components["responses"]["Error"];
             403: components["responses"]["Error"];
             409: components["responses"]["Error"];
+            429: components["responses"]["Error"];
         };
     };
     logout: {

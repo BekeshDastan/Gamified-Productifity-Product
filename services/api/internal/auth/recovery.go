@@ -159,7 +159,7 @@ func (s *Sessions) mountRecovery(r chi.Router) {
 			s.writeError(w, r, invalid)
 			return
 		}
-		if !s.checkLimit(w, r, []bucket{{scope: "forgot-ip:" + remoteIP(r), limit: s.limits.MailRequests, window: time.Hour}, {scope: "forgot-email:" + email, limit: s.limits.MailRequests, window: time.Hour}}) {
+		if !s.checkLimit(w, r, []bucket{{scope: "forgot-ip:" + remoteIP(r), limit: s.limits.IPFailures, window: time.Hour}, {scope: "forgot-email:" + email, limit: s.limits.MailRequests, window: time.Hour}}) {
 			return
 		}
 		if err := s.ForgotPassword(r.Context(), input); err != nil {

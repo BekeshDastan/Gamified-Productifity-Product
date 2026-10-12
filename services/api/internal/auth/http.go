@@ -165,8 +165,14 @@ func (s *Sessions) RequireSession(next http.Handler) http.Handler {
 				return
 			}
 		}
-		next.ServeHTTP(w, r.WithContext(platform.WithIdentity(r.Context(), identity)))
+		if s.userAllowance(w, r, identity) {
+			next.ServeHTTP(w, r.WithContext(platform.WithIdentity(r.Context(), identity)))
+		}
 	})
+}
+
+func (s *Sessions) userAllowance(w http.ResponseWriter, r *http.Request, identity platform.Identity) bool {
+	return s.checkLimit(w, r, []bucket{{scope: "user-api:" + identity.UserID, limit: s.limits.UserRequests, window: time.Minute}})
 }
 
 // Protect is the boundary for private browser routes in subsequent modules.
@@ -299,14 +305,6 @@ func (s *Sessions) Mount(router chi.Router, limits Limits) error {
 		})
 		r.Group(func(r chi.Router) {
 			r.Use(s.RequireSession)
-			r.Use(func(next http.Handler) http.Handler {
-				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					identity, _ := platform.CurrentIdentity(r.Context())
-					if s.checkLimit(w, r, []bucket{{scope: "user-api:" + identity.UserID, limit: limits.UserRequests, window: time.Minute}}) {
-						next.ServeHTTP(w, r)
-					}
-				})
-			})
 			r.Get("/session", func(w http.ResponseWriter, r *http.Request) {
 				identity, _ := platform.CurrentIdentity(r.Context())
 				var result Credentials

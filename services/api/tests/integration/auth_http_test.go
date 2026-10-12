@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
 	"sync"
 	"testing"
 	"time"
@@ -193,5 +194,76 @@ func TestHTTPLoginLimitIsAtomicAndRestoresAfterWindow(t *testing.T) {
 	var count int
 	if err := f.pool.QueryRow(f.ctx, `SELECT count(*) FROM auth_rate_limits WHERE attempts=0`).Scan(&count); err != nil || count != 2 {
 		t.Fatal("successful login counted as failed attempt", err)
+	}
+}
+
+func TestUserRequestQuotaRestoresAndDoesNotBlockLogout(t *testing.T) {
+	limits := auth.DefaultLimits()
+	limits.UserRequests = 2
+	f := newAuthFixture(t, limits)
+	client := authClient(t)
+	account, err := f.service.Register(f.ctx, auth.RegisterInput{Email: "quota@example.test", Password: "correct password phrase"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	csrf := f.csrf(t, client)
+	if got := f.request(t, client, "POST", "/login", csrf, auth.LoginInput{Email: account.Email, Password: "correct password phrase"}); got.status != 200 {
+		t.Fatal(got.status)
+	}
+	csrf = f.csrf(t, client)
+	for i := 0; i < 2; i++ {
+		if got := f.request(t, client, "GET", "/session", "", nil); got.status != 200 {
+			t.Fatal("quota decremented twice", got.status)
+		}
+	}
+	if got := f.request(t, client, "POST", "/refresh", csrf, struct{}{}); got.status != 429 {
+		t.Fatal("refresh bypassed quota", got.status)
+	}
+	if got := f.request(t, client, "GET", "/sessions", "", nil); got.status != 429 || got.header.Get("Retry-After") == "" {
+		t.Fatal("missing user quota", got.status)
+	}
+	f.clock.Advance(time.Minute)
+	if got := f.request(t, client, "GET", "/session", "", nil); got.status != 200 {
+		t.Fatal("quota window did not restore", got.status)
+	}
+	if got := f.request(t, client, "GET", "/session", "", nil); got.status != 200 {
+		t.Fatal(got.status)
+	}
+	if got := f.request(t, client, "POST", "/logout", csrf, struct{}{}); got.status != 200 {
+		t.Fatal("quota must not trap user in an account", got.status)
+	}
+}
+
+func TestCSRFIsBoundToAccessSessionEvenForSameAccount(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	account, err := f.service.Register(f.ctx, auth.RegisterInput{Email: "csrf-binding@example.test", Password: "correct password phrase"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := f.sessions.Login(f.ctx, auth.LoginInput{Email: account.Email, Password: "correct password phrase"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := f.sessions.Login(f.ctx, auth.LoginInput{Email: account.Email, Password: "correct password phrase"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := authClient(t)
+	recorder := httptest.NewRecorder()
+	f.sessions.WriteCookies(recorder, second)
+	address, _ := url.Parse(f.server.URL)
+	client.Jar.SetCookies(address, recorder.Result().Cookies())
+	csrf := f.csrf(t, client)
+	request := httptest.NewRequest("POST", "http://localhost:3000/private-test", bytes.NewBufferString(`{}`))
+	request.Header.Set("Origin", "http://localhost:3000")
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-CSRF-Token", csrf)
+	request.AddCookie(&http.Cookie{Name: "ascend_access", Value: first.Access})
+	request.AddCookie(&http.Cookie{Name: "ascend_refresh", Value: second.Refresh})
+	called := false
+	recorder = httptest.NewRecorder()
+	f.sessions.Protect(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { called = true })).ServeHTTP(recorder, request)
+	if recorder.Code != 403 || called {
+		t.Fatal("CSRF from another sid authorized mutation", recorder.Code)
 	}
 }

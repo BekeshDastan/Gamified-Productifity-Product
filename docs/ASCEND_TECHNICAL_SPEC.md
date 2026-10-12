@@ -1377,7 +1377,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Полный сценарий проходит без ручной подстановки cookie; внешний redirect запрещён.
   - **КОММИТ СЕЙЧАС:** `feat(auth-ui): implement login registration and recovery flows`
 
-- [ ] **C032. Приёмка авторизации**
+- [x] **C032. Приёмка авторизации**
   - **Сделать:** Добавить E2E и конкурентные тесты, проверить logout во второй вкладке и потерянный refresh-ответ.
   - **Проверить:** Все критичные сценарии F01 проходят; нет токенов в web storage или логах.
   - **КОММИТ СЕЙЧАС:** `test(auth): cover token rotation isolation and recovery end to end`

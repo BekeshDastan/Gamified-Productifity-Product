@@ -89,6 +89,9 @@ func TestRecoveryNeutralResponseEncryptedQueueAndSessionInvalidation(t *testing.
 	if got := f.request(t, client, "POST", "/forgot-password", f.csrf(t, client), auth.ForgotInput{Email: account.Email}); got.status != 200 {
 		t.Fatal(got.status)
 	}
+	if got := f.request(t, client, "POST", "/forgot-password", f.csrf(t, client), auth.ForgotInput{Email: account.Email}); got.status != 200 {
+		t.Fatal("unrelated email consumed account allowance", got.status)
+	}
 	if got := f.request(t, client, "POST", "/forgot-password", f.csrf(t, client), auth.ForgotInput{Email: account.Email}); got.status != 429 {
 		t.Fatal("reset request unlimited", got.status)
 	}

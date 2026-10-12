@@ -220,7 +220,7 @@ func (s *Sessions) mountResend(r chi.Router) {
 			return
 		}
 		identity, _ := platform.CurrentIdentity(r.Context())
-		if !s.checkLimit(w, r, []bucket{{scope: "resend-user:" + identity.UserID, limit: s.limits.MailRequests, window: time.Hour}, {scope: "resend-ip:" + remoteIP(r), limit: s.limits.MailRequests, window: time.Hour}}) {
+		if !s.checkLimit(w, r, []bucket{{scope: "resend-ip:" + remoteIP(r), limit: s.limits.IPFailures, window: time.Hour}, {scope: "resend-user:" + identity.UserID, limit: s.limits.MailRequests, window: time.Hour}}) {
 			return
 		}
 		if err := s.ResendVerification(r.Context(), identity); err != nil {

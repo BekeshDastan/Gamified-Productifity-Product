@@ -1,6 +1,6 @@
 # Проверки текущей реализации
 
-Реализованы C001–C024. Остальные пункты ТЗ ещё не считаются готовыми.
+Реализованы C001–C032. Остальные пункты ТЗ ещё не считаются готовыми.
 
 ## Локальные наборы
 
@@ -20,6 +20,8 @@
   persistence, API retry, 404/auth availability и reduced motion. UI fixtures
   не считаются проверкой реального API; Go integration проверяет БД отдельно.
 - `check-changed` также собирает web и запускает E2E. Установить Chromium заранее.
+- `npm run test:auth-e2e`: 4 production Chromium-сценария с реальными Go API,
+  PostgreSQL, worker и SMTP/Mailpit. Включён в `check-changed` и CI.
 
 ## Что уже проверено вручную
 
@@ -31,7 +33,7 @@ API/worker/web. Остановка приложения сохраняет volum
 
 ## Что ещё впереди
 
-Полная F01-auth, профиль, доменные пользовательские E2E, нагрузки,
+Профиль, смена пароля с проверкой текущего (C037), доменные пользовательские E2E, нагрузки,
 restore rehearsal и live smoke внешних провайдеров ещё не реализованы.
 Эти проверки нельзя заменить текущими тестами инфраструктуры. Release-теги
 v0.1/v1.0 пока не создаются.
@@ -70,7 +72,8 @@ SHA-256 в token table, отсутствие raw token в jobs/outbox, срок 
 C030: реальная PostgreSQL/worker проверяют нейтральный HTTP ответ known/unknown,
 AES-GCM payload, только одно письмо известному адресу, reset 30 минут / один раз,
 раздельные назначения token, смену пароля и отзыв двух устройств. Ошибка audit
-откатывает password/token/session изменения. Forgot лимитируется 3/час email и IP.
+откатывает password/token/session изменения. Forgot лимитируется 3/час email;
+общий IP-порог 50/час, чтобы не блокировать пользователей общего соединения.
 
 C031: production Chromium проходит весь цикл через Next proxy, реальный Go API,
 PostgreSQL, worker и SMTP/Mailpit, без mock auth и ручной подстановки cookie.
@@ -78,3 +81,11 @@ PostgreSQL, worker и SMTP/Mailpit, без mock auth и ручной подст�
 redirect, HttpOnly/SameSite/remember-me и отсутствия token storage. Общий suite:
 30 web unit + 13 UI E2E; отдельный запуск npm run test:auth-e2e. API logs проверены
 на реальные пароли/cookie/token; слово password в имени безопасного route не секрет.
+
+C032: 4 real-auth E2E (полный email/reset цикл; две вкладки с одним refresh и logout;
+потерянный реальный ответ с повторным входом; 360 px и обе темы / WCAG). Unit-tests
+проверяют pre-auth expiry/Origin/JSON/CSRF и игнорирование proxy headers. User quota
+проверена на чтении и refresh с восстановлением окна; logout не блокируется квотой.
+Конкурентность family reuse/one-time tokens и изоляция аккаунтов проверены в PostgreSQL.
+Все браузерные и Go-проверки включены в check-changed / CI; старый UI suite использует
+явные guest fixtures, настоящий auth suite не подменяет API и доставку SMTP.

@@ -213,3 +213,22 @@
   старый пароль отклонён → новый пароль работает. Внешний redirect запрещён;
   30 web unit и существующие 13 UI E2E проходят. Набор запускается явно через
   npm run test:auth-e2e, использует отдельную случайную схему ascend_test.
+
+- C032: браузерная приёмка дополнена двумя вкладками с одним refresh, немедленным
+  logout через BroadcastChannel и потерянным реальным refresh-ответом без Set-Cookie.
+  Повторный вход восстанавливает доступ; credentials не появляются в console/storage.
+  Проверены формы 360 px в обеих темах, WCAG и скриншоты; мобильные экраны осмотрены.
+  Добавлены unit-проверки Origin/Content-Type/pre-auth cookie/30-минутного срока,
+  безопасной конфигурации и недоверенных Forwarded headers. Общий Protect теперь
+  применяет user quota и к будущим private routes, refresh учитывает тот же лимит;
+  обычный logout остаётся доступен при исчерпании квоты. Восстановление квоты проверено.
+  Четыре настоящих browser auth сценария включены в check-changed и integration CI.
+  Смена пароля с текущим паролем остаётся запланированным C037; этап 04 принимает
+  регистрацию, вход, email, reset и отзыв сессий, а не весь будущий раздел settings.
+
+Итог локальной приёмки этапа 04: check-changed прошёл (format/ESLint/TypeScript,
+Go vet/Staticcheck, tooling + 30 web unit + Go unit, PostgreSQL integration,
+production build, 13 UI E2E и 4 настоящих auth E2E). После итогового review
+уточнена общая IP-квота писем: 3/час на аккаунт, 50/час на соединение, чтобы
+не блокировать общий кампус малым лимитом. Повторные PostgreSQL/Staticcheck/typecheck
+прошли; проверен отказ CSRF другой sid даже у того же пользователя. CI после push.

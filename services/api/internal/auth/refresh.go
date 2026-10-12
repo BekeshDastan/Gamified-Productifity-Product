@@ -184,8 +184,11 @@ func (s *Sessions) mountRefresh(r chi.Router) {
 			s.writeError(w, r, problem)
 			return
 		}
-		_, raw, ok := s.refreshIdentity(w, r)
+		identity, raw, ok := s.refreshIdentity(w, r)
 		if !ok {
+			return
+		}
+		if !s.userAllowance(w, r, identity) {
 			return
 		}
 		credentials, err := s.Refresh(r.Context(), raw)
