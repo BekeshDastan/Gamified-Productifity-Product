@@ -451,6 +451,16 @@ export interface components {
             updated_at: string;
         };
         Preferences: {
+            privacy: {
+                /** @enum {string} */
+                profile_visibility: "private" | "friends";
+                /** @default false */
+                share_activity: boolean;
+                /** @default false */
+                share_achievements: boolean;
+                /** @default false */
+                discoverable: boolean;
+            };
             /** @description IANA timezone; начальная UTC, браузерная зона предлагается пользователю. */
             timezone: string;
             /** @enum {string} */

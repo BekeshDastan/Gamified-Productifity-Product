@@ -6,7 +6,7 @@ import (
 )
 
 func TestPreferencesValidationAndTimezoneDates(t *testing.T) {
-	base := Preferences{Timezone: "UTC", Language: "ru", WeekStart: 1, TimeFormat: "24h", WorkIntervals: []WorkInterval{}, RestDays: []int{6, 7}}
+	base := Preferences{Privacy: DefaultPrivacy(), Timezone: "UTC", Language: "ru", WeekStart: 1, TimeFormat: "24h", WorkIntervals: []WorkInterval{}, RestDays: []int{6, 7}}
 	for zone, date := range map[string]string{"UTC": "2026-10-12", "Asia/Almaty": "2026-10-13", "America/New_York": "2026-10-12"} {
 		p := base
 		p.Timezone = zone

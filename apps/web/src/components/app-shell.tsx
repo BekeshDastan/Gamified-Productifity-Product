@@ -45,6 +45,7 @@ const planned = [
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/settings/privacy", label: "Приватность", icon: LockKeyhole },
   { href: "/app/settings/security", label: "Безопасность", icon: LockKeyhole },
   { href: "/app/onboarding", label: "Первые шаги", icon: Compass },
   { href: "/app/settings/areas", label: "Направления и теги", icon: Sprout },

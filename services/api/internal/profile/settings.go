@@ -22,6 +22,7 @@ type WorkInterval struct {
 	End   string `json:"end"`
 }
 type Preferences struct {
+	Privacy       Privacy        `json:"privacy"`
 	Timezone      string         `json:"timezone"`
 	Language      string         `json:"language"`
 	WeekStart     int            `json:"week_start"`
@@ -29,6 +30,15 @@ type Preferences struct {
 	WorkIntervals []WorkInterval `json:"work_intervals"`
 	RestDays      []int          `json:"rest_days"`
 }
+type Privacy struct {
+	ProfileVisibility string `json:"profile_visibility"`
+	ShareActivity     bool   `json:"share_activity"`
+	ShareAchievements bool   `json:"share_achievements"`
+	Discoverable      bool   `json:"discoverable"`
+}
+
+func DefaultPrivacy() Privacy { return Privacy{ProfileVisibility: "private"} }
+
 type Settings struct {
 	Preferences
 	Version   int64     `json:"version"`
@@ -39,6 +49,9 @@ type Settings struct {
 var timePattern = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
 
 func ValidatePreferences(p Preferences) error {
+	if p.Privacy.ProfileVisibility != "private" && p.Privacy.ProfileVisibility != "friends" {
+		return invalid("privacy.profile_visibility", "Выберите закрытый профиль или будущий доступ друзьям")
+	}
 	if len(p.Timezone) > 100 || p.Timezone == "Local" || strings.Contains(p.Timezone, "..") || (p.Timezone != "UTC" && !strings.Contains(p.Timezone, "/")) {
 		return invalid("timezone", "Выберите IANA-часовой пояс")
 	}

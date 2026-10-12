@@ -938,8 +938,25 @@ components:
               format: date-time
     Preferences:
       type: object
-      required: [timezone, language, week_start, time_format, work_intervals, rest_days]
+      required: [privacy, timezone, language, week_start, time_format, work_intervals, rest_days]
       properties:
+        privacy:
+          type: object
+          additionalProperties: false
+          required: [profile_visibility, share_activity, share_achievements, discoverable]
+          properties:
+            profile_visibility:
+              type: string
+              enum: [private, friends]
+            share_activity:
+              type: boolean
+              default: false
+            share_achievements:
+              type: boolean
+              default: false
+            discoverable:
+              type: boolean
+              default: false
         timezone:
           type: string
           maxLength: 100

@@ -18,6 +18,12 @@ describe("account date preferences", () => {
   });
   it("rejects invalid timezone and keeps date preferences explicit", () => {
     const base = {
+      privacy: {
+        profile_visibility: "private",
+        share_activity: false,
+        share_achievements: false,
+        discoverable: false,
+      },
       timezone: "UTC",
       language: "ru",
       week_start: 1,

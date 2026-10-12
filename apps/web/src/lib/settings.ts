@@ -8,6 +8,12 @@ import { authClient, authParams, withAuthLock } from "@/lib/auth/session";
 
 const time = z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/);
 export const preferencesSchema = z.object({
+  privacy: z.object({
+    profile_visibility: z.enum(["private", "friends"]),
+    share_activity: z.boolean(),
+    share_achievements: z.boolean(),
+    discoverable: z.boolean(),
+  }),
   timezone: z
     .string()
     .max(100)
