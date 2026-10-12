@@ -1690,6 +1690,7 @@ export interface components {
             has_more: boolean;
             stats: components["schemas"]["HabitStats"];
             pauses: components["schemas"]["HabitPause"][];
+            as_of: string;
         };
         HabitScheduleVersion: {
             version: number;

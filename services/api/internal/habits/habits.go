@@ -39,10 +39,11 @@ type ScheduleVersion struct {
 	Reason        string   `json:"reason"`
 }
 type Habit struct {
-	Pauses  []Pause  `json:"pauses"`
-	Stats   Stats    `json:"stats"`
-	Periods []Period `json:"periods"`
-	HasMore bool     `json:"has_more"`
+	AsOf    time.Time `json:"as_of"`
+	Pauses  []Pause   `json:"pauses"`
+	Stats   Stats     `json:"stats"`
+	Periods []Period  `json:"periods"`
+	HasMore bool      `json:"has_more"`
 	Input
 	ID         string            `json:"id"`
 	Version    int64             `json:"version"`
@@ -172,7 +173,7 @@ func (s *Service) area(ctx context.Context, tx pgx.Tx, id string, key *string) e
 	return nil
 }
 func (s *Service) get(ctx context.Context, tx pgx.Tx, id, key string) (Habit, error) {
-	h := Habit{Schedules: []ScheduleVersion{}, Periods: []Period{}}
+	h := Habit{AsOf: s.clock.Now().UTC(), Schedules: []ScheduleVersion{}, Periods: []Period{}}
 	if !uuid(key) {
 		return h, problem(404, "NOT_FOUND", "Привычка не найдена")
 	}

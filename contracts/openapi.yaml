@@ -5119,6 +5119,7 @@ components:
         - has_more
         - stats
         - pauses
+        - as_of
       properties:
         title:
           type: string
@@ -5170,6 +5171,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/HabitPause"
+        as_of:
+          type: string
     HabitScheduleVersion:
       type: object
       additionalProperties: false

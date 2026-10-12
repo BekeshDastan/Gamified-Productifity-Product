@@ -1661,7 +1661,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Вчерашний провал нельзя превратить в запланированный отдых задним числом.
   - **КОММИТ СЕЙЧАС:** `feat(habits): schedule pauses without rewriting past performance`
 
-- [ ] **C078. Экран привычек**
+- [x] **C078. Экран привычек**
   - **Сделать:** Подключить формы, текущие нормы, heatmap отметок, серию и быстрые действия на Dashboard.
   - **Проверить:** Частичная норма видна как частичная; отметка сохраняется и обновляет карточку.
   - **КОММИТ СЕЙЧАС:** `feat(habits-ui): add habit cards calendar and period progress`
