@@ -8,7 +8,9 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
+	"strings"
 	"testing"
+	"time"
 )
 
 func calendarInput(title string) calendar.Input {
@@ -35,6 +37,33 @@ func readEvent(t *testing.T, r authResponse) calendar.Event {
 	return v.Data
 }
 func eventVersion(v calendar.Event) string { return fmt.Sprintf(`"%d"`, v.Version) }
+func TestCalendarOriginalPlanAndDeadlineStaySeparate(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "calendar-outcomes@example.test")
+	in := questInput("Результат с дедлайном")
+	planned := "2026-10-10"
+	in.PlannedDate = &planned
+	deadline := time.Date(2026, 10, 11, 12, 0, 0, 0, time.UTC)
+	in.Deadline = &deadline
+	q := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", in))
+	q = readQuest(t, f.privateRequest(t, client, "PATCH", "/calendar/quests/"+q.ID, version(q), map[string]any{"planned_date": "2026-10-12", "reason": "Не успел в исходный день"}))
+	q = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]any{}))
+	page := readCalendar(t, f.privateRequest(t, client, "GET", "/calendar?from=2026-10-10&to=2026-10-13", "", nil))
+	history, limit, actual := false, false, false
+	for _, v := range page.Items {
+		switch v.Source {
+		case "history":
+			history = v.Start == planned && v.Status == "postponed" && v.Reason == "Не успел в исходный день"
+		case "deadline":
+			limit = v.Start == deadline.Format(time.RFC3339) && strings.Contains(v.Reason, "позже дедлайна")
+		case "quest":
+			actual = v.Start == "2026-10-12" && v.Status == "completed"
+		}
+	}
+	if !history || !limit || !actual {
+		t.Fatalf("misleading outcome: history=%v deadline=%v actual=%v", history, limit, actual)
+	}
+}
 func readSeries(t *testing.T, r authResponse) calendar.Series {
 	t.Helper()
 	var v struct {

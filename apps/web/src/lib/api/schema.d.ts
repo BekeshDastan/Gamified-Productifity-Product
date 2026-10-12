@@ -1343,6 +1343,7 @@ export interface components {
             series_id: string | null;
             occurrence_key: string | null;
             series_version: number;
+            reason: string;
         };
         GoalTransition: {
             reason: string;

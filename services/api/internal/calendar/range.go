@@ -64,7 +64,6 @@ func (s *Service) List(r *http.Request) (Page, error) {
 		if e != nil {
 			return e
 		}
-		defer rows.Close()
 		for rows.Next() {
 			v := Event{Input: Input{AllDay: true, Timezone: out.Timezone}, Source: "quest"}
 			var key string
@@ -78,10 +77,18 @@ func (s *Service) List(r *http.Request) (Page, error) {
 			v.End = d.AddDate(0, 0, 1).Format("2006-01-02")
 			out.Items = append(out.Items, v)
 		}
+		e = rows.Err()
+		rows.Close()
+		if e != nil {
+			return e
+		}
+		if e = s.addOutcomes(r.Context(), tx, id, from, to, start, end, &out); e != nil {
+			return e
+		}
 		if len(out.Items) > 2000 {
 			return problem(422, "RANGE_LIMIT", "Слишком много событий. Сузьте диапазон")
 		}
-		return rows.Err()
+		return nil
 	})
 	return out, e
 }

@@ -22,6 +22,7 @@ export const calendarEvent = calendarInput.extend({
   series_id: z.uuid().nullable(),
   occurrence_key: z.string().nullable(),
   series_version: z.number().int(),
+  reason: z.string(),
 });
 export type CalendarInput = z.infer<typeof calendarInput>;
 export type CalendarEvent = z.infer<typeof calendarEvent>;

@@ -94,7 +94,7 @@ export default function CalendarWorkspace() {
   const items = (data.data?.items ?? []).filter(
     (e) =>
       (!area || e.area_id === area) &&
-      (!status || e.status === status) &&
+      (!status || (e.cancelled ? "cancelled" : e.status) === status) &&
       (!source || e.source === source),
   );
   function changed() {
@@ -166,14 +166,21 @@ export default function CalendarWorkspace() {
           <p>
             {selected.start} — {selected.end}
           </p>
-          <p>{statuses[selected.status as keyof typeof statuses] ?? "Запланировано"}</p>
-          <ExistingEventForm
-            key={selected.id + ":" + selected.version}
-            zone={zone}
-            areas={labels.data.areas}
-            current={selected}
-            onSaved={changed}
-          />
+          <p>
+            {selected.cancelled
+              ? "Отменено"
+              : (statuses[selected.status as keyof typeof statuses] ?? "Запланировано")}
+          </p>
+          {selected.reason && <p>{selected.reason}</p>}
+          {!["deadline", "history"].includes(selected.source) && (
+            <ExistingEventForm
+              key={selected.id + ":" + selected.version}
+              zone={zone}
+              areas={labels.data.areas}
+              current={selected}
+              onSaved={changed}
+            />
+          )}
           {selected.quest_id && (
             <SafeLink className="text-link" href={"/app/quests/" + selected.quest_id}>
               Открыть задачу
@@ -213,6 +220,7 @@ export default function CalendarWorkspace() {
         <Select label="Статус календаря" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">Все статусы</option>
           <option value="planned">Запланировано</option>
+          <option value="cancelled">Отменено</option>
           {Object.entries(statuses).map(([k, v]) => (
             <option key={k} value={k}>
               {v}
@@ -228,11 +236,13 @@ export default function CalendarWorkspace() {
           <option value="quest">Планы задач</option>
           <option value="block">Блоки задач</option>
           <option value="event">События</option>
+          <option value="deadline">Дедлайны</option>
+          <option value="history">Прежние планы</option>
         </Select>
       </div>
       <p className="ui-hint">
-        ✓ Выполнено · ↷ Перенесено · − Пропущено · × Не получилось. Дедлайн задачи задаётся отдельно
-        от времени работы.
+        ✓ Выполнено · ↷ Перенесено · − Пропущено · × Не получилось · ⊘ Отменено. «Срок» — дедлайн,
+        «Прежний план» — дата до переноса; эти отметки доступны только для просмотра.
       </p>
       {(data.isFetching || data.data?.materializing) && <p role="status">Обновляем события…</p>}
       {data.isError && (
@@ -261,7 +271,12 @@ export default function CalendarWorkspace() {
           eventResize={(info) => void moved(info)}
           eventAllow={(_, event) => {
             const e = event?.extendedProps.record as CalendarEvent | undefined;
-            return !!e && !e.cancelled && !["completed", "failed", "skipped"].includes(e.status);
+            return (
+              !!e &&
+              !["deadline", "history"].includes(e.source) &&
+              !e.cancelled &&
+              !["completed", "failed", "skipped"].includes(e.status)
+            );
           }}
           datesSet={(info) =>
             setRange((old) => {
@@ -272,14 +287,19 @@ export default function CalendarWorkspace() {
           events={items.map((e) => ({
             id: e.id,
             title:
-              ({ completed: "✓ ", postponed: "↷ ", skipped: "− ", failed: "× " }[e.status] ?? "") +
-              e.title,
+              (e.cancelled
+                ? "⊘ "
+                : ({ completed: "✓ ", postponed: "↷ ", skipped: "− ", failed: "× " }[e.status] ??
+                  "")) + e.title,
             start: e.start,
             end: e.end,
             allDay: e.all_day,
             extendedProps: { record: e },
-            durationEditable: e.source !== "quest",
-            startEditable: !e.cancelled && !["completed", "failed", "skipped"].includes(e.status),
+            durationEditable: !["quest", "deadline", "history"].includes(e.source),
+            startEditable:
+              !["deadline", "history"].includes(e.source) &&
+              !e.cancelled &&
+              !["completed", "failed", "skipped"].includes(e.status),
             classNames: ["calendar-status-" + e.status],
             borderColor: labels.data?.areas.find((a) => a.id === e.area_id)?.color,
           }))}

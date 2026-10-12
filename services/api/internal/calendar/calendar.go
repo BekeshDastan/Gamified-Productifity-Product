@@ -49,6 +49,7 @@ type Event struct {
 	SeriesID      *string `json:"series_id"`
 	OccurrenceKey *string `json:"occurrence_key"`
 	SeriesVersion int64   `json:"series_version"`
+	Reason        string  `json:"reason"`
 }
 type Page struct {
 	Items         []Event `json:"items"`

@@ -3916,6 +3916,7 @@ components:
         - series_id
         - occurrence_key
         - series_version
+        - reason
       properties:
         title:
           type: string
@@ -3963,6 +3964,8 @@ components:
             - type: "null"
         series_version:
           type: integer
+        reason:
+          type: string
     GoalTransition:
       type: object
       additionalProperties: false
