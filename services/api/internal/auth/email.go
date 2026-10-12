@@ -151,7 +151,11 @@ func (s *Sessions) RequireVerified(next http.Handler) http.Handler {
 }
 
 func (s *Sessions) MailHandlers(mailer mail.Mailer) map[string]jobs.Handler {
-	return map[string]jobs.Handler{"auth.mail.verify_email": s.mailHandler(mailer, verifyEmail, "Подтвердите почту ASCEND", "verify-email")}
+	return map[string]jobs.Handler{
+		"auth.mail.verify_email":   s.mailHandler(mailer, verifyEmail, "Подтвердите почту ASCEND", "verify-email"),
+		"auth.mail.reset_password": s.mailHandler(mailer, resetPassword, "Новый пароль ASCEND", "reset-password"),
+		"auth.reset_request":       s.handleResetRequest,
+	}
 }
 
 func (s *Sessions) mailHandler(mailer mail.Mailer, kind, subject, page string) jobs.Handler {
@@ -191,7 +195,7 @@ func (s *Sessions) mailHandler(mailer mail.Mailer, kind, subject, page string) j
 
 func (s *Sessions) mountVerification(r chi.Router) {
 	r.Post("/verify-email", func(w http.ResponseWriter, r *http.Request) {
-		if !s.checkLimit(w, r, []bucket{{scope: "verify-ip:" + remoteIP(r), limit: 30, window: time.Hour}}) {
+		if !s.checkLimit(w, r, []bucket{{scope: "verify-ip:" + remoteIP(r), limit: s.limits.TokenAttempts, window: time.Hour}}) {
 			return
 		}
 		input, problem := platform.DecodeJSON[TokenInput](r)
@@ -216,7 +220,7 @@ func (s *Sessions) mountResend(r chi.Router) {
 			return
 		}
 		identity, _ := platform.CurrentIdentity(r.Context())
-		if !s.checkLimit(w, r, []bucket{{scope: "resend-user:" + identity.UserID, limit: 3, window: time.Hour}, {scope: "resend-ip:" + remoteIP(r), limit: 3, window: time.Hour}}) {
+		if !s.checkLimit(w, r, []bucket{{scope: "resend-user:" + identity.UserID, limit: s.limits.MailRequests, window: time.Hour}, {scope: "resend-ip:" + remoteIP(r), limit: s.limits.MailRequests, window: time.Hour}}) {
 			return
 		}
 		if err := s.ResendVerification(r.Context(), identity); err != nil {

@@ -28,7 +28,14 @@ func deliverAuthMail(t *testing.T, f authFixture, mailer *testkit.FakeMailer) {
 	for {
 		job, err := store.Claim(f.ctx)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return
+			count, dispatchErr := store.Dispatch(f.ctx, 100)
+			if dispatchErr != nil {
+				t.Fatal(dispatchErr)
+			}
+			if count == 0 {
+				return
+			}
+			continue
 		}
 		if err != nil {
 			t.Fatal(err)

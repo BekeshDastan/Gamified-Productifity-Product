@@ -1367,7 +1367,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Использованный или истёкший токен не подтверждает повторно; resend ограничен.
   - **КОММИТ СЕЙЧАС:** `feat(auth): verify email with expiring one-time tokens`
 
-- [ ] **C030. Восстановление пароля**
+- [x] **C030. Восстановление пароля**
   - **Сделать:** Реализовать forgot/reset, нейтральные ответы, хеши reset-токенов и отзыв прошлых сессий.
   - **Проверить:** Ссылка работает один раз; неизвестный email не раскрывается; старый пароль перестаёт работать.
   - **КОММИТ СЕЙЧАС:** `feat(auth): add secure password reset and session invalidation`

@@ -19,10 +19,10 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type Limits struct{ LoginFailures, IPFailures, Registrations, UserRequests int }
+type Limits struct{ LoginFailures, IPFailures, Registrations, UserRequests, MailRequests, TokenAttempts int }
 
 func DefaultLimits() Limits {
-	return Limits{LoginFailures: 5, IPFailures: 50, Registrations: 10, UserRequests: 120}
+	return Limits{LoginFailures: 5, IPFailures: 50, Registrations: 10, UserRequests: 120, MailRequests: 3, TokenAttempts: 30}
 }
 
 func (s *Sessions) mac(label, value string) string {
@@ -246,14 +246,16 @@ func (s *Sessions) checkLimit(w http.ResponseWriter, r *http.Request, buckets []
 }
 
 func (s *Sessions) Mount(router chi.Router, limits Limits) error {
-	if limits.LoginFailures < 1 || limits.IPFailures < limits.LoginFailures || limits.Registrations < 1 || limits.UserRequests < 1 {
+	if limits.LoginFailures < 1 || limits.IPFailures < limits.LoginFailures || limits.Registrations < 1 || limits.UserRequests < 1 || limits.MailRequests < 1 || limits.TokenAttempts < 1 {
 		return errors.New("invalid auth limits")
 	}
+	s.limits = limits
 	router.Route("/api/v1/auth", func(r chi.Router) {
 		r.Use(s.browserMutation)
 		r.Get("/csrf", s.csrf)
 		s.mountRefresh(r)
 		s.mountVerification(r)
+		s.mountRecovery(r)
 		r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
 			if !s.checkLimit(w, r, []bucket{{scope: "register-ip:" + remoteIP(r), limit: limits.Registrations, window: 15 * time.Minute}}) {
 				return
@@ -347,6 +349,7 @@ func LoadLimits(lookup func(string) (string, bool)) (Limits, error) {
 	}{
 		{"AUTH_LOGIN_FAILURES", &limits.LoginFailures}, {"AUTH_IP_FAILURES", &limits.IPFailures},
 		{"AUTH_REGISTRATIONS", &limits.Registrations}, {"AUTH_USER_REQUESTS", &limits.UserRequests},
+		{"AUTH_MAIL_REQUESTS", &limits.MailRequests}, {"AUTH_TOKEN_ATTEMPTS", &limits.TokenAttempts},
 	} {
 		if value, ok := lookup(item.name); ok {
 			number, err := strconv.Atoi(value)

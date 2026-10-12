@@ -32,6 +32,7 @@ type Sessions struct {
 	service   *Service
 	config    SessionConfig
 	dummyHash string
+	limits    Limits
 }
 
 type LoginInput struct {
@@ -77,7 +78,7 @@ func NewSessions(ctx context.Context, service *Service, config SessionConfig) (*
 	if err != nil {
 		return nil, err
 	}
-	return &Sessions{service: service, config: config, dummyHash: dummy}, nil
+	return &Sessions{service: service, config: config, dummyHash: dummy, limits: DefaultLimits()}, nil
 }
 
 func randomOpaque() string {

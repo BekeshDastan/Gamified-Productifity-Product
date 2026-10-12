@@ -66,3 +66,8 @@ SHA-256 в token table, отсутствие raw token в jobs/outbox, срок 
 конкурентное подтверждение и invalidate при resend. Проверены 3/час и rollback
 регистрации при отказе очереди. RequireVerified блокирует действие до подтверждения.
 Фактическая SMTP-доставка проверяется отдельным существующим Mailpit-набором.
+
+C030: реальная PostgreSQL/worker проверяют нейтральный HTTP ответ known/unknown,
+AES-GCM payload, только одно письмо известному адресу, reset 30 минут / один раз,
+раздельные назначения token, смену пароля и отзыв двух устройств. Ошибка audit
+откатывает password/token/session изменения. Forgot лимитируется 3/час email и IP.
