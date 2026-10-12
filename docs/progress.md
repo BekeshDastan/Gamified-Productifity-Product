@@ -38,3 +38,10 @@
   Общий dev-запуск проверен HTTP 200; Ctrl+C закрыл порты приложений.
   Production standalone отвечает HTTP 200, CSS также 200. Неподключённый E2E
   явно завершился с ошибкой. next-env.d.ts генерируется и не отслеживается.
+
+Этап 01: удалённый CI web/go success, run 38206646556. Проверенный код в main.
+
+## Этап 02
+
+- C009: JSON logging с редактированием секретов, безопасные correlation IDs,
+  подменяемый Clock и graceful shutdown с ожиданием запросов. Go tests/vet/staticcheck зелёные.

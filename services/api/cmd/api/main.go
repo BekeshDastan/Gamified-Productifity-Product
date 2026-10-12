@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
@@ -19,24 +20,23 @@ func main() {
 		slog.Error("invalid configuration", "error", err)
 		os.Exit(1)
 	}
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	logger := platform.NewLogger(os.Stdout, cfg.LogLevel)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           platform.NewRouter(),
+		Handler:           platform.NewRouter(logger, platform.RealClock{}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	go func() {
-		<-ctx.Done()
-		shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if err := server.Shutdown(shutdown); err != nil {
-			slog.Error("shutdown failed", "error", err)
-		}
-	}()
-	slog.Info("api starting", "address", server.Addr)
-	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		slog.Error("api stopped", "error", err)
+	listener, err := net.Listen("tcp", cfg.Address)
+	if err != nil {
+		logger.Error("api listener unavailable")
 		os.Exit(1)
 	}
+	logger.Info("api starting", "address", server.Addr, "environment", cfg.Environment)
+	if err := platform.Serve(ctx, server, listener); err != nil {
+		logger.Error("api stopped unexpectedly")
+		os.Exit(1)
+	}
+	logger.Info("api stopped")
 }
