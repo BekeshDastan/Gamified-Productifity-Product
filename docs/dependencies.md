@@ -103,3 +103,15 @@ proxy 12.10.2026 и закреплён в go.mod/sum. Argon2id 64 MiB / t=3 / p=
 JWT: github.com/golang-jwt/jwt/v5 v5.3.1, версия закреплена. HS256 — единственный
 разрешённый алгоритм; проверяются issuer/audience/iat/exp, затем sid и роль в БД.
 [Документация JWT v5.3.1](https://pkg.go.dev/github.com/golang-jwt/jwt/v5@v5.3.1).
+
+## Этап 08: календарь
+
+FullCalendar Standard core/react/daygrid/timegrid/list/multimonth/interaction/luxon3
+6.1.21, Luxon 3.7.2 и типы Luxon 3.7.6 закреплены в lockfile. MIT; Premium-пакеты
+и schedulerLicenseKey отсутствуют. Peer dependencies адаптера допускают React 19.
+Выбрана совместимая ветка v6; документация v7 не используется для её API.
+Годовой multiMonthYear входит в Standard и адаптируется к ширине.
+
+[React v6](https://legacy.fullcalendar.io/v6/react),
+[multiMonth v6](https://legacy.fullcalendar.io/v6/multimonth-grid),
+[Luxon](https://github.com/moment/luxon).

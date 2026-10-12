@@ -48,7 +48,10 @@ for (const width of [360, 768, 1280, 1440]) {
           "/app/quests",
         );
       else await expect(page.getByRole("link", { name: "Задачи", exact: true })).toHaveCount(0);
-      await expect(page.getByRole("link", { name: "Календарь", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Календарь", exact: true })).toHaveAttribute(
+        "href",
+        "/app/calendar",
+      );
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBe(true);

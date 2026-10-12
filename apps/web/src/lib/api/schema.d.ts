@@ -4,6 +4,102 @@
  */
 
 export interface paths {
+    "/api/v1/calendar/series/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCalendarSeries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["changeCalendarSeries"];
+        trace?: never;
+    };
+    "/api/v1/calendar/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createCalendarSeries"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/calendar/events/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["editCalendarEvent"];
+        trace?: never;
+    };
+    "/api/v1/calendar/quests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["scheduleCalendarQuest"];
+        trace?: never;
+    };
+    "/api/v1/calendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["calendarRange"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/calendar/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createCalendarEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/goals/{id}/pause": {
         parameters: {
             query?: never;
@@ -1195,6 +1291,60 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        RecurrenceRule: {
+            /** @enum {string} */
+            frequency: "daily" | "weekly" | "monthly";
+            interval: number;
+            weekdays: number[];
+            until: string | null;
+            count: number;
+        };
+        SeriesInput: {
+            event: components["schemas"]["CalendarInput"];
+            rule: components["schemas"]["RecurrenceRule"];
+            /** @enum {string} */
+            kind: "event" | "task";
+        };
+        CalendarSeriesDTO: {
+            event: components["schemas"]["CalendarInput"];
+            rule: components["schemas"]["RecurrenceRule"];
+            /** @enum {string} */
+            kind: "event" | "task";
+            /** Format: uuid */
+            id: string;
+            version: number;
+            ends_before: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        CalendarInput: {
+            title: string;
+            area_id: string | null;
+            quest_id: string | null;
+            all_day: boolean;
+            start: string;
+            end: string;
+            timezone: string;
+        };
+        CalendarEventDTO: {
+            title: string;
+            area_id: string | null;
+            quest_id: string | null;
+            all_day: boolean;
+            start: string;
+            end: string;
+            timezone: string;
+            id: string;
+            version: number;
+            quest_version: number;
+            source: string;
+            status: string;
+            cancelled: boolean;
+            series_id: string | null;
+            occurrence_key: string | null;
+            series_version: number;
+            reason: string;
+        };
         GoalTransition: {
             reason: string;
             criteria_confirmed: boolean;
@@ -1683,6 +1833,46 @@ export interface components {
     };
     responses: {
         /** @description Личные данные владельца */
+        CalendarSeries: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["CalendarSeriesDTO"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        CalendarEvent: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["CalendarEventDTO"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        CalendarPage: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: {
+                        items: components["schemas"]["CalendarEventDTO"][];
+                        timezone: string;
+                        materializing: boolean;
+                    };
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
         GoalHistory: {
             headers: {
                 [name: string]: unknown;
@@ -2048,6 +2238,201 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getCalendarSeries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["CalendarSeries"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    changeCalendarSeries: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    action: "split" | "end";
+                    occurrence_key: string;
+                    replacement: components["schemas"]["SeriesInput"] | null;
+                    until: string | null;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["CalendarSeries"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    createCalendarSeries: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeriesInput"];
+            };
+        };
+        responses: {
+            200: components["responses"]["CalendarSeries"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    editCalendarEvent: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    title: string;
+                    area_id: string | null;
+                    quest_id: string | null;
+                    all_day: boolean;
+                    start: string;
+                    end: string;
+                    timezone: string;
+                    reason: string;
+                    quest_version: number;
+                    cancelled: boolean;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["CalendarEvent"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    scheduleCalendarQuest: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: date */
+                    planned_date: string;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Quest"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    calendarRange: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["CalendarPage"];
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    createCalendarEvent: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarInput"];
+            };
+        };
+        responses: {
+            200: components["responses"]["CalendarEvent"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     pauseGoal: {
         parameters: {
             query?: never;

@@ -66,6 +66,34 @@ type AuthSession struct {
 	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
 }
 
+type CalendarEvent struct {
+	ID            pgtype.UUID        `json:"id"`
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	QuestID       pgtype.UUID        `json:"quest_id"`
+	Payload       []byte             `json:"payload"`
+	AllDay        bool               `json:"all_day"`
+	StartDate     pgtype.Date        `json:"start_date"`
+	EndDate       pgtype.Date        `json:"end_date"`
+	StartsAt      pgtype.Timestamptz `json:"starts_at"`
+	EndsAt        pgtype.Timestamptz `json:"ends_at"`
+	Version       int64              `json:"version"`
+	Cancelled     bool               `json:"cancelled"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	SeriesID      pgtype.UUID        `json:"series_id"`
+	OccurrenceKey pgtype.Date        `json:"occurrence_key"`
+}
+
+type CalendarEventHistory struct {
+	ID          int64              `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	EventID     pgtype.UUID        `json:"event_id"`
+	BeforeState []byte             `json:"before_state"`
+	AfterState  []byte             `json:"after_state"`
+	Reason      string             `json:"reason"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Goal struct {
 	ID         pgtype.UUID        `json:"id"`
 	OwnerID    pgtype.UUID        `json:"owner_id"`
@@ -274,6 +302,32 @@ type QuestView struct {
 	Filters   []byte             `json:"filters"`
 	Version   int64              `json:"version"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type RecurrenceExclusion struct {
+	OwnerID       pgtype.UUID `json:"owner_id"`
+	SeriesID      pgtype.UUID `json:"series_id"`
+	OccurrenceKey pgtype.Date `json:"occurrence_key"`
+	Reason        string      `json:"reason"`
+}
+
+type RecurrenceSeries struct {
+	ID         pgtype.UUID        `json:"id"`
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	Payload    []byte             `json:"payload"`
+	EndsBefore pgtype.Date        `json:"ends_before"`
+	Version    int64              `json:"version"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
+type RecurrenceSeriesHistory struct {
+	ID          int64              `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	SeriesID    pgtype.UUID        `json:"series_id"`
+	BeforeState []byte             `json:"before_state"`
+	AfterState  []byte             `json:"after_state"`
+	Reason      string             `json:"reason"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type Tag struct {

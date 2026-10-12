@@ -6,6 +6,311 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/calendar/series/{id}:
+    patch:
+      operationId: changeCalendarSeries
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - action
+                - occurrence_key
+                - replacement
+                - until
+                - reason
+              properties:
+                action:
+                  type: string
+                  enum:
+                    - split
+                    - end
+                occurrence_key:
+                  type: string
+                replacement:
+                  anyOf:
+                    - $ref: "#/components/schemas/SeriesInput"
+                    - type: "null"
+                until:
+                  anyOf:
+                    - type: string
+                      format: date
+                    - type: "null"
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+      responses:
+        "200":
+          $ref: "#/components/responses/CalendarSeries"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    get:
+      operationId: getCalendarSeries
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/CalendarSeries"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/calendar/series:
+    post:
+      operationId: createCalendarSeries
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeriesInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/CalendarSeries"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/calendar/events/{id}:
+    patch:
+      operationId: editCalendarEvent
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - title
+                - area_id
+                - quest_id
+                - all_day
+                - start
+                - end
+                - timezone
+                - reason
+                - quest_version
+                - cancelled
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                area_id:
+                  anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                quest_id:
+                  anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                all_day:
+                  type: boolean
+                start:
+                  type: string
+                end:
+                  type: string
+                timezone:
+                  type: string
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+                quest_version:
+                  type: integer
+                cancelled:
+                  type: boolean
+      responses:
+        "200":
+          $ref: "#/components/responses/CalendarEvent"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/calendar/quests/{id}:
+    patch:
+      operationId: scheduleCalendarQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - planned_date
+                - reason
+              properties:
+                planned_date:
+                  type: string
+                  format: date
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/calendar:
+    get:
+      operationId: calendarRange
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          $ref: "#/components/responses/CalendarPage"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/calendar/events:
+    post:
+      operationId: createCalendarEvent
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/CalendarEvent"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/goals/{id}/pause:
     post:
       operationId: pauseGoal
@@ -2962,6 +3267,61 @@ components:
             type: object
             additionalProperties: false
   responses:
+    CalendarSeries:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/CalendarSeriesDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    CalendarEvent:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/CalendarEventDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    CalendarPage:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: object
+                required:
+                  - items
+                  - timezone
+                  - materializing
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CalendarEventDTO"
+                  timezone:
+                    type: string
+                  materializing:
+                    type: boolean
+              meta:
+                $ref: "#/components/schemas/Meta"
     GoalHistory:
       description: Личные данные владельца
       content:
@@ -3421,6 +3781,191 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    RecurrenceRule:
+      type: object
+      additionalProperties: false
+      required:
+        - frequency
+        - interval
+        - weekdays
+        - until
+        - count
+      properties:
+        frequency:
+          type: string
+          enum:
+            - daily
+            - weekly
+            - monthly
+        interval:
+          type: integer
+          minimum: 1
+          maximum: 52
+        weekdays:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+        until:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        count:
+          type: integer
+          minimum: 0
+          maximum: 10000
+    SeriesInput:
+      type: object
+      additionalProperties: false
+      required:
+        - event
+        - rule
+        - kind
+      properties:
+        event:
+          $ref: "#/components/schemas/CalendarInput"
+        rule:
+          $ref: "#/components/schemas/RecurrenceRule"
+        kind:
+          type: string
+          enum:
+            - event
+            - task
+    CalendarSeriesDTO:
+      type: object
+      additionalProperties: true
+      required:
+        - event
+        - rule
+        - kind
+        - id
+        - version
+        - ends_before
+      properties:
+        event:
+          $ref: "#/components/schemas/CalendarInput"
+        rule:
+          $ref: "#/components/schemas/RecurrenceRule"
+        kind:
+          type: string
+          enum:
+            - event
+            - task
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+        ends_before:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+    CalendarInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - area_id
+        - quest_id
+        - all_day
+        - start
+        - end
+        - timezone
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        area_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        quest_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        all_day:
+          type: boolean
+        start:
+          type: string
+        end:
+          type: string
+        timezone:
+          type: string
+    CalendarEventDTO:
+      type: object
+      required:
+        - title
+        - area_id
+        - quest_id
+        - all_day
+        - start
+        - end
+        - timezone
+        - id
+        - version
+        - quest_version
+        - source
+        - status
+        - cancelled
+        - series_id
+        - occurrence_key
+        - series_version
+        - reason
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        area_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        quest_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        all_day:
+          type: boolean
+        start:
+          type: string
+        end:
+          type: string
+        timezone:
+          type: string
+        id:
+          type: string
+        version:
+          type: integer
+        quest_version:
+          type: integer
+        source:
+          type: string
+        status:
+          type: string
+        cancelled:
+          type: boolean
+        series_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        occurrence_key:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        series_version:
+          type: integer
+        reason:
+          type: string
     GoalTransition:
       type: object
       additionalProperties: false

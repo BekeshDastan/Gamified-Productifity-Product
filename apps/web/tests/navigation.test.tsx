@@ -8,9 +8,8 @@ describe("application navigation", () => {
   it("does not link unfinished modules to fake screens", () => {
     render(<AppShell>Содержание</AppShell>);
     expect(screen.getByRole("link", { name: "Задачи" })).toHaveAttribute("href", "/app/quests");
-    expect(screen.queryByRole("link", { name: "Календарь" })).not.toBeInTheDocument();
-    for (const label of screen.getAllByText("Календарь"))
-      expect(label.closest("[aria-disabled]")).toHaveAttribute("aria-disabled", "true");
+    for (const link of screen.getAllByRole("link", { name: "Календарь" }))
+      expect(link).toHaveAttribute("href", "/app/calendar");
     expect(screen.getByRole("link", { name: "Оформление" })).toHaveAttribute(
       "href",
       "/app/settings/appearance",

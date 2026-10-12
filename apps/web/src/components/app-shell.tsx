@@ -30,7 +30,6 @@ import { useAuth } from "@/lib/auth/provider";
 import { AccountQueryProvider } from "@/lib/api/query-provider";
 
 const planned = [
-  { label: "Календарь", icon: CalendarDays },
   { label: "Привычки", icon: Repeat2 },
   { label: "Фокус", icon: Timer },
   { label: "Испытания", icon: Trophy },
@@ -43,6 +42,7 @@ const planned = [
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/calendar", label: "Календарь", icon: CalendarDays },
   { href: "/app/goals", label: "Цели", icon: Flag },
   { href: "/app/quests", label: "Задачи", icon: ListTodo },
   { href: "/app/settings/privacy", label: "Приватность", icon: LockKeyhole },
@@ -161,10 +161,13 @@ export function AppShell({ children }: { children: ReactNode }) {
               <House size={21} aria-hidden="true" />
               Сегодня
             </Link>
-            <span aria-disabled="true">
+            <Link
+              href="/app/calendar"
+              aria-current={pathname === "/app/calendar" ? "page" : undefined}
+            >
               <CalendarDays size={21} aria-hidden="true" />
-              Календарь<span className="sr-only"> — скоро</span>
-            </span>
+              Календарь
+            </Link>
             <span aria-disabled="true">
               <Plus size={23} aria-hidden="true" />
               Добавить<span className="sr-only"> — скоро</span>

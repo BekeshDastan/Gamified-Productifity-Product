@@ -9,10 +9,13 @@ import (
 	"syscall"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/mail"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 )
 
@@ -47,6 +50,8 @@ func main() {
 		os.Exit(1)
 	}
 	logger.Info("worker starting")
+	clock := platform.RealClock{}
+	go calendar.NewService(pool, clock, quests.NewService(pool, clock).WithObserver(goals.NewService(pool, clock).QuestChanged)).Run(ctx, logger)
 	jobs.Run(ctx, jobs.Store{Pool: pool, Clock: platform.RealClock{}}, sessions.MailHandlers(mailer), logger)
 	logger.Info("worker stopped")
 }

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -60,7 +61,9 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	if len(scanners) > 0 {
 		scanner = scanners[0]
 	}
-	quests.NewService(pool, clock).WithObserver(goalService.QuestChanged).WithFiles(files, scanner).Mount(router, sessions.Protect)
+	questService := quests.NewService(pool, clock).WithObserver(goalService.QuestChanged).WithFiles(files, scanner)
+	questService.Mount(router, sessions.Protect)
+	calendar.NewService(pool, clock, questService).Mount(router, sessions.Protect)
 	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)
 	return authFixture{pool: pool, ctx: ctx, clock: clock, sessions: sessions, service: service, server: server}
