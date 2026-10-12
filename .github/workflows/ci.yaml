@@ -24,6 +24,8 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
+      - run: npm run generate:api
+      - run: git diff --exit-code -- apps/web/src/lib/api/schema.d.ts
       - run: npm run check:repo
       - run: npm run format:check
       - run: npm run lint:web

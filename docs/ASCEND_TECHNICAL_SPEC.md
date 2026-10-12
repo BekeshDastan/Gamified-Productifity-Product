@@ -1259,7 +1259,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Поднятие чистой БД проходит; rollback транзакции не оставляет частичных строк.
   - **КОММИТ СЕЙЧАС:** `feat(storage): add PostgreSQL migrations and transaction support`
 
-- [ ] **C012. Контракт ошибок и валидации**
+- [x] **C012. Контракт ошибок и валидации**
   - **Сделать:** Создать OpenAPI, DTO, единый формат ошибок, ограничения полей, пагинацию и генерацию типов.
   - **Проверить:** Некорректный JSON и недопустимые поля дают разные документированные ответы.
   - **КОММИТ СЕЙЧАС:** `feat(api): define OpenAPI contracts and error responses`

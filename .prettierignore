@@ -8,3 +8,4 @@ package-lock.json
 docs/ASCEND_TECHNICAL_SPEC.md
 apps/web/next-env.d.ts
 services/api/internal/storage/sqlgen
+apps/web/src/lib/api/schema.d.ts

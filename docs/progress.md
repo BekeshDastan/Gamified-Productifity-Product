@@ -52,3 +52,7 @@
 - C011: pgx pool, goose forward CLI, служебная миграция audit_events, sqlc 1.31.1.
   Реальная БД: миграции повторяемы, rollback оставляет 0 строк, commit — 1.
   Тестовая схема удалена автоматически; production/основная БД не очищается.
+
+- C012: OpenAPI 3.1, генерация TS types, единые data/meta и error envelope.
+  JSON 400 отделён от DTO 422; неизвестные role/owner_id отклоняются, Unicode
+  считается символами; пагинация ограничена. Contract/unit tests и typecheck зелёные.

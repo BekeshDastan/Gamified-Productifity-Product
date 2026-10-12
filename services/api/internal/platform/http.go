@@ -2,7 +2,6 @@ package platform
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"time"
@@ -20,20 +19,30 @@ func NewRouter(logger *slog.Logger, c Clock, readiness ...func(context.Context) 
 			w.Header().Set("X-Content-Type-Options", "nosniff")
 			w.Header().Set("Cache-Control", "no-store")
 			if req.ContentLength > 1<<20 {
-				http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+				WriteError(w, req, problem(413, "BODY_TOO_LARGE", "Запрос слишком большой"))
 				return
 			}
 			req.Body = http.MaxBytesReader(w, req.Body, 1<<20)
 			defer func() {
 				if recover() != nil {
 					logger.Error("http_panic", "request_id", RequestMeta(req.Context()).RequestID)
-					http.Error(w, "internal error", 500)
+					WriteError(w, req, problem(500, "INTERNAL_ERROR", "Не удалось выполнить запрос"))
 				}
 			}()
 			next.ServeHTTP(w, req)
 		})
 	})
-	r.Use(middleware.Timeout(20 * time.Second))
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			ctx, cancel := context.WithTimeout(req.Context(), 20*time.Second)
+			defer cancel()
+			recorder := middleware.NewWrapResponseWriter(w, req.ProtoMajor)
+			next.ServeHTTP(recorder, req.WithContext(ctx))
+			if ctx.Err() == context.DeadlineExceeded && recorder.Status() == 0 {
+				WriteError(w, req, problem(504, "DEADLINE_EXCEEDED", "Время ожидания истекло"))
+			}
+		})
+	})
 	health := func(ready bool) http.HandlerFunc {
 		return func(w http.ResponseWriter, req *http.Request) {
 			status, state := http.StatusOK, "ok"
@@ -44,12 +53,18 @@ func NewRouter(logger *slog.Logger, c Clock, readiness ...func(context.Context) 
 					status, state = http.StatusServiceUnavailable, "unavailable"
 				}
 			}
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
-			w.WriteHeader(status)
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]string{"status": state}, "meta": map[string]string{"request_id": RequestMeta(req.Context()).RequestID, "server_time": c.Now().UTC().Format(time.RFC3339)}})
+			WriteData(w, req, c, status, struct {
+				Status string `json:"status"`
+			}{state})
 		}
 	}
 	r.Get("/health/live", health(false))
 	r.Get("/health/ready", health(true))
+	r.NotFound(func(w http.ResponseWriter, req *http.Request) {
+		WriteError(w, req, problem(404, "NOT_FOUND", "Не найдено"))
+	})
+	r.MethodNotAllowed(func(w http.ResponseWriter, req *http.Request) {
+		WriteError(w, req, problem(405, "METHOD_NOT_ALLOWED", "Метод недоступен"))
+	})
 	return r
 }
