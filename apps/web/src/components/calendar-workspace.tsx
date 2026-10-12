@@ -19,6 +19,9 @@ import {
   createEvent,
   editCalendar,
   createSeries,
+  getSeries,
+  changeSeries,
+  type CalendarSeries,
   type CalendarInput,
   type CalendarEvent,
 } from "@/lib/calendar";
@@ -164,7 +167,7 @@ export default function CalendarWorkspace() {
             {selected.start} — {selected.end}
           </p>
           <p>{statuses[selected.status as keyof typeof statuses] ?? "Запланировано"}</p>
-          <EventForm
+          <ExistingEventForm
             key={selected.id + ":" + selected.version}
             zone={zone}
             areas={labels.data.areas}
@@ -316,11 +319,13 @@ function EventForm({
   areas,
   onSaved,
   current,
+  series,
 }: {
   zone: string;
   areas: { id: string; name: string }[];
   onSaved: () => void;
   current?: CalendarEvent;
+  series?: CalendarSeries;
 }) {
   const key = useRef(crypto.randomUUID());
   const schema = calendarInput.extend({
@@ -333,6 +338,7 @@ function EventForm({
     count: z.number().int().min(1).max(10000),
     until: z.string(),
     kind: z.enum(["event", "task"]),
+    scope: z.enum(["this", "future", "end"]),
   });
   const editor = useValidatedForm<z.infer<typeof schema>>({
     schema,
@@ -348,18 +354,42 @@ function EventForm({
       }),
       reason: "",
       cancelled: current?.cancelled ?? false,
-      frequency: "none",
-      interval: 1,
-      weekdays: [1, 3, 5],
-      ending: "count",
-      count: 10,
-      until: "",
-      kind: "event",
+      frequency: series?.rule.frequency ?? "none",
+      interval: series?.rule.interval ?? 1,
+      weekdays: series?.rule.weekdays ?? [1, 3, 5],
+      ending: series?.rule.until ? "until" : "count",
+      count: series?.rule.count || 10,
+      until: series?.rule.until ?? "",
+      kind: series?.kind ?? "event",
+      scope: "this",
     },
     fields: ["title", "area_id", "quest_id", "all_day", "start", "end", "timezone", "reason"],
     save: async (values) => {
       const input = calendarInput.parse(values);
-      if (current) await editCalendar(current, input, values.reason, key.current, values.cancelled);
+      const rule = {
+        frequency: values.frequency === "none" ? ("daily" as const) : values.frequency,
+        interval: values.interval,
+        weekdays: values.frequency === "weekly" ? values.weekdays : [],
+        count: values.ending === "count" ? values.count : 0,
+        until: values.ending === "until" ? values.until : null,
+      };
+      if (current && series && values.scope !== "this")
+        await changeSeries(
+          series,
+          {
+            action: values.scope === "end" ? "end" : "split",
+            occurrence_key: current.occurrence_key!,
+            replacement:
+              values.scope === "future"
+                ? { event: { ...input, quest_id: null }, kind: values.kind, rule }
+                : null,
+            until: values.scope === "end" ? values.until : null,
+            reason: values.reason,
+          },
+          key.current,
+        );
+      else if (current)
+        await editCalendar(current, input, values.reason, key.current, values.cancelled);
       else if (values.frequency !== "none")
         await createSeries(
           {
@@ -384,6 +414,16 @@ function EventForm({
   const errors = form.formState.errors;
   return (
     <Form saving={editor.saving} error={editor.error} onSubmit={editor.onSubmit}>
+      {series && (
+        <Select label="Изменить повторения" {...form.register("scope")}>
+          <option value="this">Только это повторение</option>
+          <option value="future">Это и будущие</option>
+          <option value="end">Последний день серии</option>
+        </Select>
+      )}
+      {series && form.watch("scope") === "end" && (
+        <Input label="Новый последний день серии" type="date" {...form.register("until")} />
+      )}
       <Input label="Название события" {...form.register("title")} error={errors.title?.message} />
       <Select
         label="Направление события"
@@ -444,7 +484,7 @@ function EventForm({
           Отменить событие
         </label>
       )}
-      {!current && (
+      {(!current || (series && form.watch("scope") === "future")) && (
         <>
           <Select label="Повторение" {...form.register("frequency")}>
             <option value="none">Не повторять</option>
@@ -511,4 +551,33 @@ function EventForm({
       <Button type="submit">Сохранить событие</Button>
     </Form>
   );
+}
+function ExistingEventForm(props: {
+  zone: string;
+  areas: { id: string; name: string }[];
+  current: CalendarEvent;
+  onSaved: () => void;
+}) {
+  const account = useAuth().session?.account.id;
+  const series = useQuery({
+    queryKey: [
+      "account",
+      account,
+      "calendar-series",
+      props.current.series_id,
+      props.current.series_version,
+    ],
+    enabled: !!props.current.series_id,
+    queryFn: ({ signal }) => getSeries(props.current.series_id!, signal),
+  });
+  if (props.current.series_id && series.isPending)
+    return <p role="status">Загружаем правило серии…</p>;
+  if (props.current.series_id && !series.data)
+    return (
+      <p role="alert">
+        Не удалось загрузить правило.{" "}
+        <Button onClick={() => void series.refetch()}>Повторить</Button>
+      </p>
+    );
+  return <EventForm {...props} series={series.data} />;
 }

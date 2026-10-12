@@ -46,3 +46,31 @@ func (s *Service) ScheduleInTx(ctx context.Context, tx pgx.Tx, id, key string, v
 	}
 	return q, e
 }
+func (s *Service) CancelOccurrenceInTx(ctx context.Context, tx pgx.Tx, id, key string, version int64, reason string) (Quest, error) {
+	q, e := get(ctx, tx, id, key, true)
+	if e != nil {
+		return q, e
+	}
+	if q.Version != version {
+		p := problem(409, "VERSION_CONFLICT", "Задача уже изменена")
+		p.CurrentVersion = &q.Version
+		return q, p
+	}
+	if q.ArchivedAt != nil || q.Status == "completed" || q.Status == "failed" || q.Status == "skipped" {
+		return q, problem(409, "HISTORY_LOCKED", "Завершённая история не переписывается")
+	}
+	before := q
+	q.Status = "skipped"
+	data, e := json.Marshal(q.Input)
+	if e != nil {
+		return q, e
+	}
+	q, e = scan(tx.QueryRow(ctx, `UPDATE quests SET payload=$3,status='skipped',version=version+1,updated_at=$4 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, s.clock.Now().UTC()))
+	if e == nil {
+		e = s.event(ctx, tx, id, "skipped", reason, &before, q)
+	}
+	if e == nil && q.ParentID != nil {
+		e = s.rollup(ctx, tx, id, *q.ParentID)
+	}
+	return q, e
+}

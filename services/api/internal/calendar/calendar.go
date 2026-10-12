@@ -270,6 +270,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		r.Use(protect)
 		s.mountEdits(r)
 		s.mountSeries(r)
+		s.mountExceptions(r)
 		r.Get("/api/v1/calendar", func(w http.ResponseWriter, r *http.Request) { v, e := s.List(r); s.reply(w, r, v, e) })
 		r.Post("/api/v1/calendar/events", func(w http.ResponseWriter, r *http.Request) {
 			decode(s, w, r, func(in Input) (any, error) {

@@ -46,7 +46,11 @@ func (s *Service) insertSeries(ctx context.Context, tx pgx.Tx, id string, in Ser
 	if e != nil {
 		return Series{}, e
 	}
-	return scanSeries(tx.QueryRow(ctx, `INSERT INTO recurrence_series(owner_id,payload,created_at) VALUES($1,$2,$3) RETURNING id::text,payload,version,ends_before::text`, id, data, s.clock.Now().UTC()))
+	v, e := scanSeries(tx.QueryRow(ctx, `INSERT INTO recurrence_series(owner_id,payload,created_at) VALUES($1,$2,$3) RETURNING id::text,payload,version,ends_before::text`, id, data, s.clock.Now().UTC()))
+	if e == nil {
+		e = s.seriesHistory(ctx, tx, id, nil, v, "Создание серии")
+	}
+	return v, e
 }
 func (s *Service) materialize(ctx context.Context, tx pgx.Tx, id string, from, to time.Time) (bool, error) {
 	rows, e := tx.Query(ctx, `SELECT id::text,payload,version,ends_before::text FROM recurrence_series WHERE owner_id=$1 ORDER BY created_at,id`, id)

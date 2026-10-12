@@ -41,11 +41,15 @@ func (s *Service) edit(r *http.Request, tx pgx.Tx, id, key string, in Edit) (Eve
 			d, _ := time.Parse(time.RFC3339, in.Start)
 			planned = d.In(zone).Format("2006-01-02")
 		}
-		q, e := s.quests.ScheduleInTx(r.Context(), tx, id, *in.QuestID, in.QuestVersion, planned, in.Reason)
+		var e error
+		if in.Cancelled && !current.Cancelled {
+			_, e = s.quests.CancelOccurrenceInTx(r.Context(), tx, id, *in.QuestID, in.QuestVersion, in.Reason)
+		} else {
+			_, e = s.quests.ScheduleInTx(r.Context(), tx, id, *in.QuestID, in.QuestVersion, planned, in.Reason)
+		}
 		if e != nil {
 			return current, e
 		}
-		current.QuestVersion = q.Version
 	}
 	data, e := json.Marshal(in.Input)
 	if e != nil {

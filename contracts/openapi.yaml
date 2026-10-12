@@ -6,6 +6,91 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/calendar/series/{id}:
+    patch:
+      operationId: changeCalendarSeries
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - action
+                - occurrence_key
+                - replacement
+                - until
+                - reason
+              properties:
+                action:
+                  type: string
+                  enum:
+                    - split
+                    - end
+                occurrence_key:
+                  type: string
+                replacement:
+                  anyOf:
+                    - $ref: "#/components/schemas/SeriesInput"
+                    - type: "null"
+                until:
+                  anyOf:
+                    - type: string
+                      format: date
+                    - type: "null"
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+      responses:
+        "200":
+          $ref: "#/components/responses/CalendarSeries"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    get:
+      operationId: getCalendarSeries
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/CalendarSeries"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/calendar/series:
     post:
       operationId: createCalendarSeries
@@ -33,25 +118,6 @@ paths:
         "409":
           $ref: "#/components/responses/Error"
         "422":
-          $ref: "#/components/responses/Error"
-        "429":
-          $ref: "#/components/responses/Error"
-  /api/v1/calendar/series/{id}:
-    get:
-      operationId: getCalendarSeries
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          $ref: "#/components/responses/CalendarSeries"
-        "401":
-          $ref: "#/components/responses/Error"
-        "404":
           $ref: "#/components/responses/Error"
         "429":
           $ref: "#/components/responses/Error"

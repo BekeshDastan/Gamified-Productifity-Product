@@ -64,6 +64,43 @@ export const calendarSeries = seriesInput.extend({
   ends_before: z.string().nullable(),
 });
 export type SeriesInput = z.infer<typeof seriesInput>;
+export type CalendarSeries = z.infer<typeof calendarSeries>;
+export async function getSeries(id: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/calendar/series/{id}", {
+    params: { path: { id } },
+    signal,
+  });
+  return calendarSeries.parse(r.data?.data);
+}
+export async function changeSeries(
+  current: CalendarSeries,
+  body: {
+    action: "split" | "end";
+    occurrence_key: string;
+    replacement: SeriesInput | null;
+    until: string | null;
+    reason: string;
+  },
+  key: string,
+) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    const r = await api.PATCH("/api/v1/calendar/series/{id}", {
+      params: {
+        path: { id: current.id },
+        header: {
+          ...authParams().header,
+          "If-Match": '"' + current.version + '"',
+          "Idempotency-Key": key,
+        },
+      },
+      body,
+    });
+    return calendarSeries.parse(r.data?.data);
+  });
+}
 export async function createSeries(input: SeriesInput, key: string) {
   await requireAccount();
   return withAuthLock(async () => {

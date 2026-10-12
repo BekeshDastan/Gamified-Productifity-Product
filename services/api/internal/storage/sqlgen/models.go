@@ -320,6 +320,16 @@ type RecurrenceSeries struct {
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 
+type RecurrenceSeriesHistory struct {
+	ID          int64              `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	SeriesID    pgtype.UUID        `json:"series_id"`
+	BeforeState []byte             `json:"before_state"`
+	AfterState  []byte             `json:"after_state"`
+	Reason      string             `json:"reason"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Tag struct {
 	ID        pgtype.UUID        `json:"id"`
 	OwnerID   pgtype.UUID        `json:"owner_id"`

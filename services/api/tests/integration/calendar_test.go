@@ -35,6 +35,95 @@ func readEvent(t *testing.T, r authResponse) calendar.Event {
 	return v.Data
 }
 func eventVersion(v calendar.Event) string { return fmt.Sprintf(`"%d"`, v.Version) }
+func readSeries(t *testing.T, r authResponse) calendar.Series {
+	t.Helper()
+	var v struct {
+		Data calendar.Series `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &v) != nil || v.Data.ID == "" {
+		t.Fatalf("series %d %s", r.status, r.body)
+	}
+	return v.Data
+}
+func TestCalendarExceptionsSplitEndAndCompletedHistory(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "calendar-exceptions@example.test")
+	other, _ := f.signedIn(t, "foreign-series@example.test")
+	in := calendar.SeriesInput{Event: calendarInput("Серия задач"), Kind: "task", Rule: calendar.Rule{Frequency: "daily", Interval: 1, Count: 5, Weekdays: []int{}}}
+	series := readSeries(t, f.privateRequest(t, client, "POST", "/calendar/series", "", in))
+	path := "/calendar?from=2026-10-12&to=2026-10-18"
+	page := readCalendar(t, f.privateRequest(t, client, "GET", path, "", nil))
+	byDate := map[string]calendar.Event{}
+	for _, v := range page.Items {
+		if v.SeriesID != nil {
+			byDate[*v.OccurrenceKey] = v
+		}
+	}
+	done := byDate["2026-10-14"]
+	q := readQuest(t, f.privateRequest(t, client, "GET", "/quests/"+*done.QuestID, "", nil))
+	q = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]any{}))
+	completedVersion := q.Version
+	cancel := byDate["2026-10-15"]
+	cancel = readEvent(t, f.privateRequest(t, client, "PATCH", "/calendar/events/"+cancel.ID, eventVersion(cancel), calendar.Edit{Input: cancel.Input, Reason: "Отдых", QuestVersion: cancel.QuestVersion, Cancelled: true}))
+	if !cancel.Cancelled || cancel.Status != "skipped" {
+		t.Fatal("cancel not reflected in task")
+	}
+	replacement := in
+	replacement.Event.Start = "2026-10-13"
+	replacement.Event.End = "2026-10-14"
+	replacement.Event.Title = "Продолжение"
+	replacement.Rule.Count = 4
+	edit := calendar.SeriesEdit{Action: "split", OccurrenceKey: "2026-10-13", Replacement: &replacement, Reason: "Меняю будущий план"}
+	key := "calendar-split-replay-key"
+	next := readSeries(t, f.privateRequest(t, client, "PATCH", "/calendar/series/"+series.ID, fmt.Sprintf(`"%d"`, series.Version), edit, key))
+	replay := readSeries(t, f.privateRequest(t, client, "PATCH", "/calendar/series/"+series.ID, fmt.Sprintf(`"%d"`, series.Version), edit, key))
+	if next.ID == series.ID || next.ID != replay.ID {
+		t.Fatal("split replay")
+	}
+	for i := 0; i < 2; i++ {
+		page = readCalendar(t, f.privateRequest(t, client, "GET", path, "", nil))
+	}
+	active := 0
+	for _, v := range page.Items {
+		if v.SeriesID != nil && *v.SeriesID == next.ID && !v.Cancelled {
+			active++
+			if *v.OccurrenceKey == "2026-10-14" || *v.OccurrenceKey == "2026-10-15" {
+				t.Fatal("history resurrected")
+			}
+		}
+	}
+	if active != 2 {
+		t.Fatal("future instances", active)
+	}
+	q = readQuest(t, f.privateRequest(t, client, "GET", "/quests/"+q.ID, "", nil))
+	if q.Version != completedVersion || q.Status != "completed" || *q.PlannedDate != "2026-10-14" {
+		t.Fatal("completion rewritten")
+	}
+	until := "2026-10-13"
+	next = readSeries(t, f.privateRequest(t, client, "PATCH", "/calendar/series/"+next.ID, fmt.Sprintf(`"%d"`, next.Version), calendar.SeriesEdit{Action: "end", Until: &until, Reason: "Сокращаю серию"}))
+	page = readCalendar(t, f.privateRequest(t, client, "GET", path, "", nil))
+	for _, v := range page.Items {
+		if v.SeriesID != nil && *v.SeriesID == next.ID && *v.OccurrenceKey > until && !v.Cancelled {
+			t.Fatal("end did not cancel future")
+		}
+	}
+	if r := f.privateRequest(t, other, "GET", "/calendar/series/"+next.ID, "", nil); r.status != 404 {
+		t.Fatal("series ownership")
+	}
+	if r := f.privateRequest(t, client, "PATCH", "/calendar/series/"+next.ID, `"1"`, calendar.SeriesEdit{Action: "end", Until: &until, Reason: "Старая версия"}); r.status != 409 {
+		t.Fatal("stale series")
+	}
+	svc := calendar.NewService(f.pool, f.clock, quests.NewService(f.pool, f.clock))
+	if e := svc.FillHorizon(t.Context()); e != nil {
+		t.Fatal(e)
+	}
+	page = readCalendar(t, f.privateRequest(t, client, "GET", path, "", nil))
+	for _, v := range page.Items {
+		if v.ID == cancel.ID && !v.Cancelled {
+			t.Fatal("cancel lost after worker restart")
+		}
+	}
+}
 func TestCalendarRecurrenceWindowLimitAndWorkerReplay(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, _ := f.signedIn(t, "calendar-series@example.test")
