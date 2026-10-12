@@ -1303,7 +1303,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Диалог удерживает и возвращает фокус; формы имеют labels и тексты ошибок.
   - **КОММИТ СЕЙЧАС:** `feat(ui): add accessible shared interface components`
 
-- [ ] **C019. Навигационная оболочка**
+- [x] **C019. Навигационная оболочка**
   - **Сделать:** Создать sidebar, header, мобильное меню, нижнюю панель и route boundaries для будущих модулей.
   - **Проверить:** На 360 px нет недоступных пунктов; скрытая функция не ведёт на фиктивный рабочий экран.
   - **КОММИТ СЕЙЧАС:** `feat(web): add responsive application navigation`
