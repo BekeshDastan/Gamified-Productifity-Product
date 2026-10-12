@@ -1,4 +1,4 @@
-import { AuthPending } from "@/components/auth-pending";
+import { LoginForm } from "@/components/auth-forms";
 export default function LoginPage() {
-  return <AuthPending kind="login" />;
+  return <LoginForm />;
 }

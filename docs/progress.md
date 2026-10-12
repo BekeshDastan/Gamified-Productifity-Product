@@ -198,3 +198,18 @@
   Проверены одинаковые ответы/queue path, отсутствие plaintext email в запросе
   очереди, неизвестный адрес без письма, истечение, повтор, запрет смешения verify/reset,
   старый/новый пароль, access+refresh двух устройств и rollback при ошибке audit.
+
+- C031: формы login/register/verify/forgot/reset подключены к Go API; подтверждение
+  одноразовых ссылок только по кнопке, fragment сразу очищается из адреса.
+  Password managers/Unicode/пробелы поддержаны; валидация, busy lock, safe errors,
+  remember-me 30 дней и ограниченный внутренний redirect. Токены только HttpOnly,
+  CSRF/состояние аккаунта в памяти. BroadcastChannel передаёт лишь changed/signed-out,
+  Web Locks сериализует cookie mutations; потеря refresh не маскируется успешным входом.
+  Панель показывает актуальную почту, resend, устройства и отзыв/выход.
+  Кэш аккаунта изолирован в AppShell и очищается при смене; auth forms находятся
+  вне этой границы, поэтому не теряют fragment при начальной проверке сессии.
+  Проверено в Chromium production: регистрация → реальный worker/SMTP/Mailpit →
+  verify → два независимых устройства → forgot/reset → старые входы отозваны →
+  старый пароль отклонён → новый пароль работает. Внешний redirect запрещён;
+  30 web unit и существующие 13 UI E2E проходят. Набор запускается явно через
+  npm run test:auth-e2e, использует отдельную случайную схему ascend_test.

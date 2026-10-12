@@ -3,12 +3,10 @@ import { describe, expect, it } from "vitest";
 import Home from "../src/app/page";
 
 describe("product landing", () => {
-  it("explains the current availability instead of offering an unfinished account", () => {
+  it("explains the current availability and account entry points", () => {
     render(<Home />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Большие перемены");
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Аккаунты и персональные функции пока в разработке",
-    );
+    expect(screen.getByRole("status")).toHaveTextContent("Доступны аккаунт, обзор и оформление");
     expect(screen.getByRole("link", { name: "Войти" })).toHaveAttribute("href", "/auth/login");
     expect(screen.getByRole("link", { name: "Регистрация" })).toHaveAttribute(
       "href",

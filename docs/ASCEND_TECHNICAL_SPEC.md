@@ -1372,7 +1372,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Ссылка работает один раз; неизвестный email не раскрывается; старый пароль перестаёт работать.
   - **КОММИТ СЕЙЧАС:** `feat(auth): add secure password reset and session invalidation`
 
-- [ ] **C031. Экраны аутентификации**
+- [x] **C031. Экраны аутентификации**
   - **Сделать:** Подключить формы входа/регистрации/verify/reset, «Запомнить меня» и безопасный внутренний redirect.
   - **Проверить:** Полный сценарий проходит без ручной подстановки cookie; внешний redirect запрещён.
   - **КОММИТ СЕЙЧАС:** `feat(auth-ui): implement login registration and recovery flows`

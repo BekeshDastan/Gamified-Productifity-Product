@@ -8,6 +8,14 @@ const ready = {
 // UI response fixtures only. Real PostgreSQL/API behavior has a separate integration suite.
 test.beforeEach(async ({ page }) => {
   await page.route("**/health/ready", (route) => route.fulfill({ json: ready }));
+  await page.route("**/api/v1/auth/**", (route) =>
+    route.request().url().endsWith("/csrf")
+      ? route.fulfill({ json: { ...ready, data: { token: "a".repeat(43) } } })
+      : route.fulfill({
+          status: 401,
+          json: { error: { code: "UNAUTHORIZED", message: "Войдите", request_id: "ui-fixture" } },
+        }),
+  );
 });
 
 for (const width of [360, 768, 1280, 1440]) {
@@ -169,7 +177,7 @@ test("unknown routes return 404; auth routes disclose current availability", asy
   await page.getByRole("link", { name: "На главную" }).click();
   await expect(page).toHaveURL("/");
   await page.getByRole("link", { name: "Войти" }).click();
-  await expect(page.getByRole("heading", { name: "Вход пока недоступен" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "С возвращением" })).toBeVisible();
   expect(
     (
       await new AxeBuilder({ page })

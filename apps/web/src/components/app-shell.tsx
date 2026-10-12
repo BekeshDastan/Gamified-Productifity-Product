@@ -26,6 +26,8 @@ import {
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { ThemeSelect } from "./theme-select";
+import { useAuth } from "@/lib/auth/provider";
+import { AccountQueryProvider } from "@/lib/api/query-provider";
 
 const planned = [
   { label: "Календарь", icon: CalendarDays },
@@ -49,6 +51,7 @@ const available = [
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const auth = useAuth();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuTrigger = useRef<HTMLButtonElement | null>(null);
@@ -80,97 +83,103 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
   return (
-    <div className="app-shell">
-      <a href="#main-content" className="skip-link">
-        К содержимому
-      </a>
-      <aside className="app-sidebar">
-        <Link className="wordmark" href="/" aria-label="ASCEND, главная">
-          <ArrowUpRight aria-hidden="true" />
-          ASCEND
-        </Link>
-        {navigation()}
-        <div className="sidebar-note">
-          <LockKeyhole size={17} aria-hidden="true" />
-          <span>
-            Приватно по умолчанию.
-            <br />В вашем ритме.
-          </span>
-        </div>
-      </aside>
-      <div className="app-workspace">
-        <header className="app-header">
-          <div className="header-title">
-            <span className="mobile-only">
-              <Dialog
-                title="Разделы"
-                description="Личный кабинет находится в разработке."
-                open={menuOpen}
-                onOpenChange={setMenuOpen}
-                onCloseAutoFocus={(event) => {
-                  if (menuTrigger.current) {
-                    event.preventDefault();
-                    menuTrigger.current.focus();
-                  }
-                }}
-                trigger={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Открыть меню"
-                    onClick={(event) => {
-                      menuTrigger.current = event.currentTarget;
-                    }}
-                  >
-                    <Menu size={21} aria-hidden="true" />
-                  </Button>
-                }
-                className="mobile-drawer"
-              >
-                {navigation()}
-              </Dialog>
-            </span>
-            <span>{available.find((item) => item.href === pathname)?.label ?? "ASCEND"}</span>
-          </div>
-          <ThemeSelect />
-          <span className="account-state">
-            <LockKeyhole size={14} aria-hidden="true" />
-            Гостевой режим
-          </span>
-        </header>
-        <main id="main-content" tabIndex={-1} className="app-main">
-          {children}
-        </main>
-        <nav className="bottom-nav" aria-label="Быстрая навигация">
-          <Link href="/app" aria-current={pathname === "/app" ? "page" : undefined}>
-            <House size={21} aria-hidden="true" />
-            Сегодня
+    <AccountQueryProvider accountId={auth.session?.account.id ?? null}>
+      <div className="app-shell">
+        <a href="#main-content" className="skip-link">
+          К содержимому
+        </a>
+        <aside className="app-sidebar">
+          <Link className="wordmark" href="/" aria-label="ASCEND, главная">
+            <ArrowUpRight aria-hidden="true" />
+            ASCEND
           </Link>
-          <span aria-disabled="true">
-            <CalendarDays size={21} aria-hidden="true" />
-            Календарь<span className="sr-only"> — скоро</span>
-          </span>
-          <span aria-disabled="true">
-            <Plus size={23} aria-hidden="true" />
-            Добавить<span className="sr-only"> — скоро</span>
-          </span>
-          <span aria-disabled="true">
-            <ChartNoAxesCombined size={21} aria-hidden="true" />
-            Прогресс<span className="sr-only"> — скоро</span>
-          </span>
-          <Button
-            variant="ghost"
-            aria-label="Ещё — открыть меню"
-            onClick={(event) => {
-              menuTrigger.current = event.currentTarget;
-              setMenuOpen(true);
-            }}
-          >
-            <Menu size={21} aria-hidden="true" />
-            Ещё
-          </Button>
-        </nav>
+          {navigation()}
+          <div className="sidebar-note">
+            <LockKeyhole size={17} aria-hidden="true" />
+            <span>
+              Приватно по умолчанию.
+              <br />В вашем ритме.
+            </span>
+          </div>
+        </aside>
+        <div className="app-workspace">
+          <header className="app-header">
+            <div className="header-title">
+              <span className="mobile-only">
+                <Dialog
+                  title="Разделы"
+                  description="Личный кабинет находится в разработке."
+                  open={menuOpen}
+                  onOpenChange={setMenuOpen}
+                  onCloseAutoFocus={(event) => {
+                    if (menuTrigger.current) {
+                      event.preventDefault();
+                      menuTrigger.current.focus();
+                    }
+                  }}
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Открыть меню"
+                      onClick={(event) => {
+                        menuTrigger.current = event.currentTarget;
+                      }}
+                    >
+                      <Menu size={21} aria-hidden="true" />
+                    </Button>
+                  }
+                  className="mobile-drawer"
+                >
+                  {navigation()}
+                </Dialog>
+              </span>
+              <span>{available.find((item) => item.href === pathname)?.label ?? "ASCEND"}</span>
+            </div>
+            <ThemeSelect />
+            <span className="account-state">
+              <LockKeyhole size={14} aria-hidden="true" />
+              {auth.session
+                ? "Личный аккаунт"
+                : auth.session === undefined
+                  ? "Проверяем вход…"
+                  : "Гостевой режим"}
+            </span>
+          </header>
+          <main id="main-content" tabIndex={-1} className="app-main">
+            {children}
+          </main>
+          <nav className="bottom-nav" aria-label="Быстрая навигация">
+            <Link href="/app" aria-current={pathname === "/app" ? "page" : undefined}>
+              <House size={21} aria-hidden="true" />
+              Сегодня
+            </Link>
+            <span aria-disabled="true">
+              <CalendarDays size={21} aria-hidden="true" />
+              Календарь<span className="sr-only"> — скоро</span>
+            </span>
+            <span aria-disabled="true">
+              <Plus size={23} aria-hidden="true" />
+              Добавить<span className="sr-only"> — скоро</span>
+            </span>
+            <span aria-disabled="true">
+              <ChartNoAxesCombined size={21} aria-hidden="true" />
+              Прогресс<span className="sr-only"> — скоро</span>
+            </span>
+            <Button
+              variant="ghost"
+              aria-label="Ещё — открыть меню"
+              onClick={(event) => {
+                menuTrigger.current = event.currentTarget;
+                setMenuOpen(true);
+              }}
+            >
+              <Menu size={21} aria-hidden="true" />
+              Ещё
+            </Button>
+          </nav>
+        </div>
       </div>
-    </div>
+    </AccountQueryProvider>
   );
 }

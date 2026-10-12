@@ -1,4 +1,4 @@
-import { AuthPending } from "@/components/auth-pending";
+import { RegisterForm } from "@/components/auth-forms";
 export default function RegisterPage() {
-  return <AuthPending kind="register" />;
+  return <RegisterForm />;
 }

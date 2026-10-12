@@ -71,3 +71,10 @@ C030: реальная PostgreSQL/worker проверяют нейтральны
 AES-GCM payload, только одно письмо известному адресу, reset 30 минут / один раз,
 раздельные назначения token, смену пароля и отзыв двух устройств. Ошибка audit
 откатывает password/token/session изменения. Forgot лимитируется 3/час email и IP.
+
+C031: production Chromium проходит весь цикл через Next proxy, реальный Go API,
+PostgreSQL, worker и SMTP/Mailpit, без mock auth и ручной подстановки cookie.
+Два независимых cookie jars, проверка reset-отзыва второго устройства, внешнего
+redirect, HttpOnly/SameSite/remember-me и отсутствия token storage. Общий suite:
+30 web unit + 13 UI E2E; отдельный запуск npm run test:auth-e2e. API logs проверены
+на реальные пароли/cookie/token; слово password в имени безопасного route не секрет.

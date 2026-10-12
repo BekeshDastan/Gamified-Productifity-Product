@@ -30,7 +30,8 @@
     "migrate": "node scripts/tasks.mjs migrate",
     "seed": "node scripts/tasks.mjs seed",
     "test:integration": "node scripts/tasks.mjs test-integration",
-    "test:e2e": "node scripts/tasks.mjs test-e2e"
+    "test:e2e": "node scripts/tasks.mjs test-e2e",
+    "test:auth-e2e": "node scripts/tasks.mjs test-auth-e2e"
   },
   "devDependencies": {
     "openapi-typescript": "7.13.0",

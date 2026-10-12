@@ -99,3 +99,7 @@ proxy 12.10.2026 и закреплён в go.mod/sum. Argon2id 64 MiB / t=3 / p=
 
 [OWASP Password Storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html),
 [официальный Argon2](https://pkg.go.dev/golang.org/x/crypto/argon2).
+
+JWT: github.com/golang-jwt/jwt/v5 v5.3.1, версия закреплена. HS256 — единственный
+разрешённый алгоритм; проверяются issuer/audience/iat/exp, затем sid и роль в БД.
+[Документация JWT v5.3.1](https://pkg.go.dev/github.com/golang-jwt/jwt/v5@v5.3.1).

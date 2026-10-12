@@ -55,8 +55,8 @@ export default function Home() {
               </Link>
             </div>
             <p className="availability" role="status">
-              <span aria-hidden="true">◷</span> Доступны обзор и оформление. Аккаунты и персональные
-              функции пока в разработке.
+              <span aria-hidden="true">◷</span> Доступны аккаунт, обзор и оформление. Задачи и
+              персональные сводки появятся на следующих этапах.
             </p>
           </div>
           <div className="hero-art">

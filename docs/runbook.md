@@ -65,3 +65,26 @@ CI создаёт отдельные контейнеры PostgreSQL/Mailpit и 
 
 Доменные миграции, backup/restore и production deployment ещё не подключены.
 Готовность каждого пункта отмечается в ТЗ и журнале разработки.
+
+## Авторизация и письма
+
+AUTH_SIGNING_KEY — base64 32 случайных байт, общий стабильный ключ API и worker;
+генерация без вывода в README. Значения не коммитить. В production обязательны
+HTTPS и AUTH_INSECURE_LOCAL_COOKIES=false: cookie __Host-/Secure/HttpOnly/Lax.
+Локальный HTTP допускается только явно и на loopback. Смена ключа инвалидирует
+access/pre-auth и email/reset links; активные refresh sessions отзываются отдельно.
+SMTP_HOST/PORT/MAIL_FROM нужны worker, SMTP_USERNAME/PASSWORD при аутентификации.
+Production SMTP требует STARTTLS и проверку сертификата; локальная почта остаётся
+в Mailpit, наружу не пересылается. Очередь допускает повторную доставку после
+неопределённого SMTP результата, ссылки всегда одноразовые.
+
+Пороги AUTH_LOGIN_FAILURES=5 (15 минут account+IP), AUTH_IP_FAILURES=50,
+AUTH_REGISTRATIONS=10 (15 минут IP), AUTH_USER_REQUESTS=120 (минута user),
+AUTH_MAIL_REQUESTS=3 (час), AUTH_TOKEN_ATTEMPTS=30 (час IP) настраиваются в окружении.
+Forwarded headers не принимаются: без отдельной настройки доверенного proxy
+IP-лимит видит соединение proxy. Production-развёртывание ещё не принято.
+
+Реальная браузерная приёмка: остановите dev, выполните npm run build:web,
+затем npm run test:auth-e2e. Нужны ascend_test, TEST_DATABASE_URL,
+TEST_SMTP_ADDR, TEST_MAIL_HTTP и Chromium. Порты 8080/3100 должны быть свободны.
+Тест создаёт и очищает только случайную схему; рабочие аккаунты не создаются.
