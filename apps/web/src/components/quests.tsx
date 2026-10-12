@@ -27,6 +27,7 @@ import { QuestActions, QuestHistory } from "./quest-actions";
 import { QuestStructure, QuestPicker } from "./quest-structure";
 import { QuestFiles } from "./quest-files";
 import { QuestTemplates, QuestArchive, QuestBatchPanel } from "./quest-tools";
+import { QuestGoalLink } from "./goal-plan";
 
 export function Quests({ id }: { id?: string }) {
   const auth = useAuth();
@@ -145,6 +146,7 @@ export function Quests({ id }: { id?: string }) {
             }}
           />
           <QuestHistory quest={current} />
+          <QuestGoalLink id={current.id} />
           <QuestArchive
             quest={current}
             onChanged={() => {

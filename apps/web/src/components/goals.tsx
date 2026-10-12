@@ -23,11 +23,14 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input, Select, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
+import { GoalPlanPanel } from "./goal-plan";
 
 export function Goals({ id }: { id?: string }) {
   const auth = useAuth();
   const account = auth.session?.account.id;
   const discard = useConfirmDiscard();
+  const cache = useQueryClient();
+  const [editingDetails, setEditingDetails] = useState(false);
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState(emptyGoalFilters);
   const [editing, setEditing] = useState(false);
@@ -73,6 +76,7 @@ export function Goals({ id }: { id?: string }) {
   const collection = "items" in query.data ? query.data : undefined;
   const changed = () => {
     void query.refetch().then(() => setRevision((v) => v + 1));
+    void cache.invalidateQueries({ queryKey: ["account"] });
   };
   return (
     <div className="quest-workspace">
@@ -108,7 +112,7 @@ export function Goals({ id }: { id?: string }) {
           }}
         />
       )}
-      {current && (
+      {current && !editing && (
         <>
           <SafeLink className="text-link" href="/app/goals">
             Все цели
@@ -136,12 +140,26 @@ export function Goals({ id }: { id?: string }) {
               <p className="ui-hint">Срок прошёл. Цель остаётся открытой до вашего решения.</p>
             )}
           </Card>
-          <GoalForm
-            key={current.id + revision}
-            current={current}
-            labels={labels.data}
-            onSaved={changed}
-          />
+          {!current.archived_at && ["draft", "active", "paused"].includes(current.state) && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (discard()) setEditingDetails(!editingDetails);
+              }}
+            >
+              {editingDetails ? "Закрыть редактор цели" : "Изменить цель"}
+            </Button>
+          )}
+          {editingDetails ? (
+            <GoalForm
+              key={current.id + revision}
+              current={current}
+              labels={labels.data}
+              onSaved={changed}
+            />
+          ) : (
+            <GoalPlanPanel goal={current} onChanged={changed} />
+          )}
         </>
       )}
       {collection && (

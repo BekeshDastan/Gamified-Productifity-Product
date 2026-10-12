@@ -81,6 +81,15 @@ type Goal struct {
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
+type GoalQuest struct {
+	OwnerID     pgtype.UUID    `json:"owner_id"`
+	GoalID      pgtype.UUID    `json:"goal_id"`
+	QuestID     pgtype.UUID    `json:"quest_id"`
+	MilestoneID pgtype.UUID    `json:"milestone_id"`
+	Required    bool           `json:"required"`
+	Weight      pgtype.Numeric `json:"weight"`
+}
+
 type GoalVersion struct {
 	ID          int64              `json:"id"`
 	OwnerID     pgtype.UUID        `json:"owner_id"`
@@ -131,6 +140,18 @@ type LifeArea struct {
 	Version   int64              `json:"version"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Milestone struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	GoalID    pgtype.UUID        `json:"goal_id"`
+	Title     string             `json:"title"`
+	Required  bool               `json:"required"`
+	Weight    pgtype.Numeric     `json:"weight"`
+	Completed bool               `json:"completed"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type Onboarding struct {

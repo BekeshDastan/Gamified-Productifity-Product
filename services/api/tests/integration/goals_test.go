@@ -14,6 +14,54 @@ import (
 func goalInput(title string) goals.Input {
 	return goals.Input{Title: title, Criteria: "Обязательные результаты", ProgressType: "quests", Target: 1}
 }
+
+func TestGoalPlanWeightsTransferAndOwnership(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "goal-plan@example.test")
+	other, _ := f.signedIn(t, "foreign-plan@example.test")
+	create := func(title string) goals.Goal {
+		return readGoal(t, f.privateRequest(t, client, "POST", "/goals", "", goals.Create{Input: goalInput(title), State: "active"}))
+	}
+	a, b := create("Первая"), create("Вторая")
+	q := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput("Результат")))
+	q = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]any{}))
+	link := goals.LinkInput{Required: true, Weight: 3}
+	a = readGoal(t, f.privateRequest(t, client, "PUT", "/goals/"+a.ID+"/links/"+q.ID, goalVersion(a), link))
+	if a.Progress != 100 {
+		t.Fatal("linked completion not counted")
+	}
+	if r := f.privateRequest(t, client, "PUT", "/goals/"+b.ID+"/links/"+q.ID, goalVersion(b), link); r.status != 409 {
+		t.Fatal("silent transfer")
+	}
+	link.PreviousGoalID = &a.ID
+	link.PreviousGoalVersion = a.Version
+	link.Reason = "Перенёс в другой план"
+	b = readGoal(t, f.privateRequest(t, client, "PUT", "/goals/"+b.ID+"/links/"+q.ID, goalVersion(b), link))
+	a = readGoal(t, f.privateRequest(t, client, "GET", "/goals/"+a.ID, "", nil))
+	if a.Progress != 0 || b.Progress != 100 {
+		t.Fatal("transfer summaries differ")
+	}
+	foreign := readQuest(t, f.privateRequest(t, other, "POST", "/quests", "", questInput("Чужая")))
+	if r := f.privateRequest(t, client, "PUT", "/goals/"+b.ID+"/links/"+foreign.ID, goalVersion(b), link); r.status != 404 {
+		t.Fatal("foreign link")
+	}
+	q2 := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput("Ещё результат")))
+	link.PreviousGoalID = nil
+	link.PreviousGoalVersion = 0
+	link.Weight = 1
+	b = readGoal(t, f.privateRequest(t, client, "PUT", "/goals/"+b.ID+"/links/"+q2.ID, goalVersion(b), link))
+	if b.Progress != 75 {
+		t.Fatal("weighted leaves", b.Progress)
+	}
+	in := goalInput("Этапы")
+	in.ProgressType = "milestones"
+	m := readGoal(t, f.privateRequest(t, client, "POST", "/goals", "", goals.Create{Input: in, State: "active"}))
+	m = readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+m.ID+"/milestones", goalVersion(m), goals.MilestoneInput{Title: "Готово", Required: true, Weight: 3, Completed: true}))
+	m = readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+m.ID+"/milestones", goalVersion(m), goals.MilestoneInput{Title: "Дальше", Required: true, Weight: 1}))
+	if m.Progress != 75 {
+		t.Fatal("milestone weights", m.Progress)
+	}
+}
 func readGoal(t *testing.T, r authResponse) goals.Goal {
 	t.Helper()
 	var v struct {

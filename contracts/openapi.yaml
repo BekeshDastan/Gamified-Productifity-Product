@@ -6,6 +6,364 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/goals/{id}/plan:
+    get:
+      operationId: goalPlan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/GoalPlan"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/goal:
+    get:
+      operationId: questGoal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/GoalAssignment"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/goals/{id}/milestones:
+    post:
+      operationId: postMilestone
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - title
+                - required
+                - weight
+                - completed
+                - reason
+              properties:
+                title:
+                  type: string
+                  maxLength: 200
+                required:
+                  type: boolean
+                weight:
+                  type: number
+                  exclusiveMinimum: 0
+                  maximum: 1000
+                completed:
+                  type: boolean
+                reason:
+                  type: string
+                  maxLength: 1000
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/goals/{id}/milestones/{mid}:
+    patch:
+      operationId: patchMilestone
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: mid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - title
+                - required
+                - weight
+                - completed
+                - reason
+              properties:
+                title:
+                  type: string
+                  maxLength: 200
+                required:
+                  type: boolean
+                weight:
+                  type: number
+                  exclusiveMinimum: 0
+                  maximum: 1000
+                completed:
+                  type: boolean
+                reason:
+                  type: string
+                  maxLength: 1000
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: deleteMilestone
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: mid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - title
+                - required
+                - weight
+                - completed
+                - reason
+              properties:
+                title:
+                  type: string
+                  maxLength: 200
+                required:
+                  type: boolean
+                weight:
+                  type: number
+                  exclusiveMinimum: 0
+                  maximum: 1000
+                completed:
+                  type: boolean
+                reason:
+                  type: string
+                  maxLength: 1000
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/goals/{id}/links/{qid}:
+    put:
+      operationId: putGoalLink
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: qid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - milestone_id
+                - required
+                - weight
+                - previous_goal_id
+                - previous_goal_version
+                - reason
+              properties:
+                milestone_id:
+                  anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                required:
+                  type: boolean
+                weight:
+                  type: number
+                  exclusiveMinimum: 0
+                  maximum: 1000
+                previous_goal_id:
+                  anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                previous_goal_version:
+                  type: integer
+                  minimum: 0
+                reason:
+                  type: string
+                  maxLength: 1000
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: deleteGoalLink
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: qid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - milestone_id
+                - required
+                - weight
+                - previous_goal_id
+                - previous_goal_version
+                - reason
+              properties:
+                milestone_id:
+                  anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                required:
+                  type: boolean
+                weight:
+                  type: number
+                  exclusiveMinimum: 0
+                  maximum: 1000
+                previous_goal_id:
+                  anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                previous_goal_version:
+                  type: integer
+                  minimum: 0
+                reason:
+                  type: string
+                  maxLength: 1000
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/goals:
     get:
       operationId: listGoals
@@ -1976,6 +2334,34 @@ components:
             type: object
             additionalProperties: false
   responses:
+    GoalPlan:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/GoalPlanDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    GoalAssignment:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/GoalAssignmentDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
     Goal:
       description: Личные данные владельца
       content:
@@ -2345,6 +2731,149 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    GoalMilestoneInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - required
+        - weight
+        - completed
+        - reason
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        required:
+          type: boolean
+        weight:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1000
+        completed:
+          type: boolean
+        reason:
+          type: string
+          maxLength: 1000
+    GoalLinkInput:
+      type: object
+      additionalProperties: false
+      required:
+        - milestone_id
+        - required
+        - weight
+        - previous_goal_id
+        - previous_goal_version
+        - reason
+      properties:
+        milestone_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        required:
+          type: boolean
+        weight:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1000
+        previous_goal_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        previous_goal_version:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          maxLength: 1000
+    GoalMilestone:
+      type: object
+      required:
+        - title
+        - required
+        - weight
+        - completed
+        - reason
+        - id
+        - version
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        required:
+          type: boolean
+        weight:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1000
+        completed:
+          type: boolean
+        reason:
+          type: string
+          maxLength: 1000
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+    GoalLink:
+      type: object
+      required:
+        - quest_id
+        - title
+        - status
+        - milestone_id
+        - required
+        - weight
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+        milestone_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        required:
+          type: boolean
+        weight:
+          type: number
+    GoalPlanDTO:
+      type: object
+      required:
+        - milestones
+        - links
+      properties:
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoalMilestone"
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoalLink"
+    GoalAssignmentDTO:
+      type: object
+      required:
+        - goal_id
+        - goal_title
+        - goal_version
+      properties:
+        goal_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        goal_title:
+          type: string
+        goal_version:
+          type: integer
     GoalInput:
       type: object
       additionalProperties: false

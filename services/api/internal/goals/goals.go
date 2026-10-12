@@ -173,7 +173,7 @@ func (s *Service) labels(ctx context.Context, tx pgx.Tx, id string, in Input) er
 	return e
 }
 func (s *Service) event(ctx context.Context, tx pgx.Tx, id, kind, reason string, g Goal) error {
-	data, e := json.Marshal(g)
+	data, e := s.snapshot(ctx, tx, id, g)
 	if e != nil {
 		return e
 	}
@@ -297,6 +297,7 @@ func decode[T any](s *Service, w http.ResponseWriter, r *http.Request, fn func(T
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountPlan(r)
 		r.Get("/api/v1/goals", func(w http.ResponseWriter, r *http.Request) { v, e := s.list(r); s.reply(w, r, v, e) })
 		r.Get("/api/v1/goals/{id}", func(w http.ResponseWriter, r *http.Request) {
 			id, e := owner(r.Context())
