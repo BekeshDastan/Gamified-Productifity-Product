@@ -45,3 +45,6 @@
 
 - C009: JSON logging с редактированием секретов, безопасные correlation IDs,
   подменяемый Clock и graceful shutdown с ожиданием запросов. Go tests/vet/staticcheck зелёные.
+
+- C010: health/live и health/ready, pgx pool.Ping, таймауты и лимит тела.
+  Тесты подтверждают 503 readiness при отказе БД, живой liveness, 413 и безопасный 500.

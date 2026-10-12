@@ -1249,7 +1249,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Некорректный config не запускает сервер; лог не выводит секреты; shutdown завершает запросы корректно.
   - **КОММИТ СЕЙЧАС:** `feat(platform): add validated config and structured logging`
 
-- [ ] **C010. HTTP и проверки готовности**
+- [x] **C010. HTTP и проверки готовности**
   - **Сделать:** Настроить chi, middleware восстановления panic, лимит тела, таймауты и health/live versus health/ready.
   - **Проверить:** При недоступной БД readiness возвращает отказ, liveness остаётся корректным.
   - **КОММИТ СЕЙЧАС:** `feat(api): add routing health and readiness endpoints`

@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
 )
@@ -23,10 +25,19 @@ func main() {
 	logger := platform.NewLogger(os.Stdout, cfg.LogLevel)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	if err != nil {
+		logger.Error("invalid database configuration")
+		os.Exit(1)
+	}
+	defer pool.Close()
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           platform.NewRouter(logger, platform.RealClock{}),
+		Handler:           platform.NewRouter(logger, platform.RealClock{}, pool.Ping),
 		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 	listener, err := net.Listen("tcp", cfg.Address)
 	if err != nil {
