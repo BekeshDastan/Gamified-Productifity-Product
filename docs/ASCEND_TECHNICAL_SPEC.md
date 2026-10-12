@@ -1225,7 +1225,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Без обязательной переменной процесс завершается с понятной ошибкой без вывода секретов.
   - **КОММИТ СЕЙЧАС:** `chore(config): define environment and dependency policy`
 
-- [ ] **C007. Непрерывная интеграция**
+- [x] **C007. Непрерывная интеграция**
   - **Сделать:** Создать workflow проверок frontend/backend, lockfiles и запрещённых секретов; не добавлять фиктивные успешные test scripts.
   - **Проверить:** Ошибка теста блокирует merge; чистый проект получает зелёный CI.
   - **КОММИТ СЕЙЧАС:** `chore(ci): run builds lint and unit tests`

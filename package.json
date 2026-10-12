@@ -17,7 +17,10 @@
     "lint:web": "npm run lint --workspace @ascend/web",
     "lint:go": "node scripts/go-check.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:repo": "node scripts/check-repository.mjs",
+    "test:tooling": "node --test scripts/*.test.mjs",
+    "test:web": "npm run test --workspace @ascend/web"
   },
   "devDependencies": {
     "prettier": "3.9.10"
