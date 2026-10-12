@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/v1/goals/{id}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["goalMetricEntries"];
+        put?: never;
+        post: operations["postGoalMetric"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/entries/{entry}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["patchGoalMetric"];
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/entries/{entry}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["goalMetricHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/goals/{id}/plan": {
         parameters: {
             query?: never;
@@ -955,6 +1003,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        GoalMetricInput: {
+            value: number;
+            unit: string;
+            /** Format: date */
+            occurred_on: string;
+            note: string;
+            reason: string;
+            entry_version: number;
+        };
+        GoalEntry: {
+            id: number;
+            value: number;
+            unit: string;
+            /** Format: date */
+            occurred_on: string;
+            note: string;
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            reason: string;
+        };
         GoalMilestoneInput: {
             title: string;
             required: boolean;
@@ -1368,6 +1437,18 @@ export interface components {
     };
     responses: {
         /** @description Личные данные владельца */
+        GoalEntries: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalEntry"][];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
         GoalPlan: {
             headers: {
                 [name: string]: unknown;
@@ -1685,6 +1766,122 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    goalMetricEntries: {
+        parameters: {
+            query?: {
+                before?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoalEntries"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    postGoalMetric: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    value: number;
+                    unit: string;
+                    /** Format: date */
+                    occurred_on: string;
+                    note: string;
+                    reason: string;
+                    entry_version: number;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    patchGoalMetric: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+                entry: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    value: number;
+                    unit: string;
+                    /** Format: date */
+                    occurred_on: string;
+                    note: string;
+                    reason: string;
+                    entry_version: number;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    goalMetricHistory: {
+        parameters: {
+            query?: {
+                before?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+                entry: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoalEntries"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     goalPlan: {
         parameters: {
             query?: never;

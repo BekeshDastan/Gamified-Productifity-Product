@@ -134,17 +134,16 @@ func Validate(in Input) (Input, error) {
 	return in, nil
 }
 
-const columns = `g.id::text,g.payload,g.state,g.progress::float8,g.version,g.archived_at,g.created_at,g.updated_at,
+const columns = `g.id::text,g.payload,g.state,g.progress::float8,g.version,g.archived_at,g.created_at,g.updated_at,g.current::float8,
  COALESCE(g.target_date < ($3::timestamptz AT TIME ZONE COALESCE((SELECT preferences->>'timezone' FROM user_settings WHERE owner_id=g.owner_id),'UTC'))::date AND g.state IN('draft','active','paused'),false)`
 
 func scan(row pgx.Row) (Goal, error) {
 	var g Goal
 	var data []byte
-	e := row.Scan(&g.ID, &data, &g.State, &g.Progress, &g.Version, &g.ArchivedAt, &g.CreatedAt, &g.UpdatedAt, &g.Overdue)
+	e := row.Scan(&g.ID, &data, &g.State, &g.Progress, &g.Version, &g.ArchivedAt, &g.CreatedAt, &g.UpdatedAt, &g.Current, &g.Overdue)
 	if e == nil {
 		e = json.Unmarshal(data, &g.Input)
 	}
-	g.Current = g.Start
 	return g, e
 }
 func (s *Service) lock(ctx context.Context, tx pgx.Tx, id string) error {
@@ -191,6 +190,12 @@ func (s *Service) insert(ctx context.Context, tx pgx.Tx, id string, in Create) (
 	var key string
 	e = tx.QueryRow(ctx, `INSERT INTO goals(owner_id,area_id,payload,state,start_date,target_date,created_at,updated_at) VALUES($1,$2,$3,$4,$5::text::date,$6::text::date,$7,$7) RETURNING id::text`, id, in.AreaID, data, in.State, in.StartDate, in.TargetDate, s.clock.Now().UTC()).Scan(&key)
 	if e != nil {
+		return Goal{}, e
+	}
+	if e = s.setupMetric(ctx, tx, id, key, in.Input); e != nil {
+		return Goal{}, e
+	}
+	if _, e = tx.Exec(ctx, `UPDATE goals SET current=$3 WHERE owner_id=$1 AND id=$2`, id, key, in.Start); e != nil {
 		return Goal{}, e
 	}
 	g, e := s.get(ctx, tx, id, key)
@@ -298,6 +303,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountPlan(r)
+		s.mountMetrics(r)
 		r.Get("/api/v1/goals", func(w http.ResponseWriter, r *http.Request) { v, e := s.list(r); s.reply(w, r, v, e) })
 		r.Get("/api/v1/goals/{id}", func(w http.ResponseWriter, r *http.Request) {
 			id, e := owner(r.Context())
@@ -366,17 +372,20 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 					if e := s.labels(r.Context(), tx, id, in.Input); e != nil {
 						return e
 					}
+					if e := s.setupMetric(r.Context(), tx, id, g.ID, in.Input); e != nil {
+						return e
+					}
 					data, e := json.Marshal(in.Input)
 					if e != nil {
 						return e
 					}
-					_, e = tx.Exec(r.Context(), `UPDATE goals SET payload=$3,area_id=$4,start_date=$5::text::date,target_date=$6::text::date,version=version+1,updated_at=$7 WHERE owner_id=$1 AND id=$2`, id, g.ID, data, in.AreaID, in.StartDate, in.TargetDate, s.clock.Now().UTC())
+					_, e = tx.Exec(r.Context(), `UPDATE goals SET payload=$3,area_id=$4,start_date=$5::text::date,target_date=$6::text::date,updated_at=$7 WHERE owner_id=$1 AND id=$2`, id, g.ID, data, in.AreaID, in.StartDate, in.TargetDate, s.clock.Now().UTC())
 					if e != nil {
 						return e
 					}
 					g, e = s.get(r.Context(), tx, id, g.ID)
 					if e == nil {
-						e = s.event(r.Context(), tx, id, "edited", in.Reason, g)
+						g, e = s.touch(r.Context(), tx, id, g, "edited", in.Reason)
 					}
 					return e
 				})

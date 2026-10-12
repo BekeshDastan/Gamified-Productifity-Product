@@ -6,6 +6,209 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/goals/{id}/entries:
+    post:
+      operationId: postGoalMetric
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - value
+                - unit
+                - occurred_on
+                - note
+                - reason
+                - entry_version
+              properties:
+                value:
+                  type: number
+                  minimum: 0
+                  maximum: 1000000000
+                unit:
+                  type: string
+                  minLength: 1
+                  maxLength: 40
+                occurred_on:
+                  type: string
+                  format: date
+                note:
+                  type: string
+                  maxLength: 1000
+                reason:
+                  type: string
+                  maxLength: 1000
+                entry_version:
+                  type: integer
+                  minimum: 0
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    get:
+      operationId: goalMetricEntries
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: before
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          $ref: "#/components/responses/GoalEntries"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/goals/{id}/entries/{entry}:
+    patch:
+      operationId: patchGoalMetric
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entry
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - value
+                - unit
+                - occurred_on
+                - note
+                - reason
+                - entry_version
+              properties:
+                value:
+                  type: number
+                  minimum: 0
+                  maximum: 1000000000
+                unit:
+                  type: string
+                  minLength: 1
+                  maxLength: 40
+                occurred_on:
+                  type: string
+                  format: date
+                note:
+                  type: string
+                  maxLength: 1000
+                reason:
+                  type: string
+                  maxLength: 1000
+                entry_version:
+                  type: integer
+                  minimum: 0
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/goals/{id}/entries/{entry}/history:
+    get:
+      operationId: goalMetricHistory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: entry
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - name: before
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          $ref: "#/components/responses/GoalEntries"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/goals/{id}/plan:
     get:
       operationId: goalPlan
@@ -2334,6 +2537,22 @@ components:
             type: object
             additionalProperties: false
   responses:
+    GoalEntries:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GoalEntry"
+              meta:
+                $ref: "#/components/schemas/Meta"
     GoalPlan:
       description: Личные данные владельца
       content:
@@ -2731,6 +2950,67 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    GoalMetricInput:
+      type: object
+      additionalProperties: false
+      required:
+        - value
+        - unit
+        - occurred_on
+        - note
+        - reason
+        - entry_version
+      properties:
+        value:
+          type: number
+          minimum: 0
+          maximum: 1000000000
+        unit:
+          type: string
+          minLength: 1
+          maxLength: 40
+        occurred_on:
+          type: string
+          format: date
+        note:
+          type: string
+          maxLength: 1000
+        reason:
+          type: string
+          maxLength: 1000
+        entry_version:
+          type: integer
+          minimum: 0
+    GoalEntry:
+      type: object
+      required:
+        - id
+        - value
+        - unit
+        - occurred_on
+        - note
+        - version
+        - created_at
+        - reason
+      properties:
+        id:
+          type: integer
+        value:
+          type: number
+        unit:
+          type: string
+        occurred_on:
+          type: string
+          format: date
+        note:
+          type: string
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        reason:
+          type: string
     GoalMilestoneInput:
       type: object
       additionalProperties: false

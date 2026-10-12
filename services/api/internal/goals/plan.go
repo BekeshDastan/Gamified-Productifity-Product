@@ -114,7 +114,8 @@ const leavesSQL = `WITH RECURSIVE tree AS (
 
 func (s *Service) calculate(ctx context.Context, tx pgx.Tx, id string, g Goal) (float64, error) {
 	if g.ProgressType == "metric" {
-		return g.Progress, nil
+		progress, _, e := s.metricProgress(ctx, tx, id, g)
+		return progress, e
 	}
 	var progress float64
 	sql := leavesSQL + `SELECT COALESCE(100*sum(l.weight*COALESCE(m.weight,1)) FILTER(WHERE l.status='completed')/NULLIF(sum(l.weight*COALESCE(m.weight,1)),0),0)::float8 FROM leaves l LEFT JOIN milestones m ON m.owner_id=$1 AND m.goal_id=$2 AND m.id=l.milestone_id WHERE l.mandatory AND COALESCE(m.required,true)`
@@ -140,7 +141,14 @@ func (s *Service) touch(ctx context.Context, tx pgx.Tx, id string, g Goal, kind,
 		kind = "achievement_reverted"
 		reason = "Исправление источников снизило подтверждённый результат. " + reason
 	}
-	_, e = tx.Exec(ctx, `UPDATE goals SET progress=$3,state=$4,version=version+1,updated_at=$5 WHERE owner_id=$1 AND id=$2`, id, g.ID, progress, state, s.clock.Now().UTC())
+	current := float64(0)
+	if g.ProgressType == "metric" {
+		_, current, e = s.metricProgress(ctx, tx, id, g)
+		if e != nil {
+			return g, e
+		}
+	}
+	_, e = tx.Exec(ctx, `UPDATE goals SET progress=$3,state=$4,version=version+1,updated_at=$5,current=$6 WHERE owner_id=$1 AND id=$2`, id, g.ID, progress, state, s.clock.Now().UTC(), current)
 	if e != nil {
 		return g, e
 	}

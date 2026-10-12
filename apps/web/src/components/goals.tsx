@@ -24,6 +24,7 @@ import { Card } from "./ui/card";
 import { Input, Select, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
 import { GoalPlanPanel } from "./goal-plan";
+import { GoalMetrics } from "./goal-metrics";
 
 export function Goals({ id }: { id?: string }) {
   const auth = useAuth();
@@ -158,7 +159,12 @@ export function Goals({ id }: { id?: string }) {
               onSaved={changed}
             />
           ) : (
-            <GoalPlanPanel goal={current} onChanged={changed} />
+            <>
+              {current.progress_type === "metric" && (
+                <GoalMetrics goal={current} onChanged={changed} />
+              )}
+              <GoalPlanPanel goal={current} onChanged={changed} />
+            </>
           )}
         </>
       )}

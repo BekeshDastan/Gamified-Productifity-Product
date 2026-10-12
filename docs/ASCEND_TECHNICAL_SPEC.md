@@ -1504,7 +1504,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Перенос задачи между целями обновляет обе сводки; чужая связь запрещена.
   - **КОММИТ СЕЙЧАС:** `feat(goals): add milestones and linked quest hierarchy`
 
-- [ ] **C052. Числовые результаты**
+- [x] **C052. Числовые результаты**
   - **Сделать:** Реализовать возрастающие числовые цели, единицы, журнал добавлений и исправлений.
   - **Проверить:** Нельзя суммировать книги и минуты; current/target дают ожидаемый процент.
   - **КОММИТ СЕЙЧАС:** `feat(goals): add typed metric entries and progress calculation`

@@ -79,6 +79,42 @@ type Goal struct {
 	ArchivedAt pgtype.Timestamptz `json:"archived_at"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	Current    pgtype.Numeric     `json:"current"`
+}
+
+type GoalMetric struct {
+	ID         pgtype.UUID    `json:"id"`
+	OwnerID    pgtype.UUID    `json:"owner_id"`
+	GoalID     pgtype.UUID    `json:"goal_id"`
+	StartValue pgtype.Numeric `json:"start_value"`
+	Target     pgtype.Numeric `json:"target"`
+	Unit       string         `json:"unit"`
+}
+
+type GoalMetricEntry struct {
+	ID         int64              `json:"id"`
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	GoalID     pgtype.UUID        `json:"goal_id"`
+	MetricID   pgtype.UUID        `json:"metric_id"`
+	Value      pgtype.Numeric     `json:"value"`
+	Unit       string             `json:"unit"`
+	OccurredOn pgtype.Date        `json:"occurred_on"`
+	Note       string             `json:"note"`
+	Version    int64              `json:"version"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
+type GoalMetricRevision struct {
+	ID         int64              `json:"id"`
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	EntryID    int64              `json:"entry_id"`
+	Version    int64              `json:"version"`
+	Value      pgtype.Numeric     `json:"value"`
+	Unit       string             `json:"unit"`
+	OccurredOn pgtype.Date        `json:"occurred_on"`
+	Note       string             `json:"note"`
+	Reason     string             `json:"reason"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 
 type GoalQuest struct {

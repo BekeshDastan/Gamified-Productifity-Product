@@ -73,6 +73,57 @@ func readGoal(t *testing.T, r authResponse) goals.Goal {
 	return v.Data
 }
 func goalVersion(g goals.Goal) string { return fmt.Sprintf(`"%d"`, g.Version) }
+func TestGoalMetricUnitJournalCorrectionAndReplay(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "goal-metric@example.test")
+	in := goalInput("Прочитать книги")
+	in.ProgressType = "metric"
+	in.Start = 2
+	in.Target = 12
+	in.Unit = "книги"
+	g := readGoal(t, f.privateRequest(t, client, "POST", "/goals", "", goals.Create{Input: in, State: "active"}))
+	if g.Current != 2 || g.Progress != 0 {
+		t.Fatal("numeric start")
+	}
+	entry := goals.MetricInput{Value: 3, Unit: "минуты", OccurredOn: "2026-10-12", Note: "Три книги"}
+	if r := f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/entries", goalVersion(g), entry); r.status != 422 {
+		t.Fatal("mixed units")
+	}
+	entry.Unit = "книги"
+	oldVersion := goalVersion(g)
+	g = readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/entries", oldVersion, entry, "goal-metric-replay-key"))
+	if g.Current != 5 || g.Progress != 30 {
+		t.Fatal("metric percentage", g.Current, g.Progress)
+	}
+	repeat := readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/entries", oldVersion, entry, "goal-metric-replay-key"))
+	if repeat.Version != g.Version {
+		t.Fatal("metric repeated")
+	}
+	entries := f.privateRequest(t, client, "GET", "/goals/"+g.ID+"/entries", "", nil)
+	var result struct {
+		Data []goals.Revision `json:"data"`
+	}
+	if entries.status != 200 || json.Unmarshal(entries.body, &result) != nil || len(result.Data) != 1 {
+		t.Fatal("entry journal", string(entries.body))
+	}
+	v := result.Data[0]
+	entry.Value = 1
+	entry.EntryVersion = v.Version
+	entry.Reason = "Исправил неверное количество"
+	g = readGoal(t, f.privateRequest(t, client, "PATCH", fmt.Sprintf("/goals/%s/entries/%d", g.ID, v.ID), goalVersion(g), entry))
+	if g.Current != 3 || g.Progress != 10 {
+		t.Fatal("correction calculation")
+	}
+	history := f.privateRequest(t, client, "GET", fmt.Sprintf("/goals/%s/entries/%d/history", g.ID, v.ID), "", nil)
+	if history.status != 200 || json.Unmarshal(history.body, &result) != nil || len(result.Data) != 2 || result.Data[1].Value != 3 || result.Data[0].Value != 1 {
+		t.Fatal("correction history")
+	}
+	in.Unit = "минуты"
+	if r := f.privateRequest(t, client, "PATCH", "/goals/"+g.ID, goalVersion(g), goals.Edit{Input: in, Reason: "Сменить единицу"}); r.status != 422 {
+		t.Fatal("existing entries retyped")
+	}
+}
+
 func TestGoalCRUDOverdueOwnerAndPromotion(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, account := f.signedIn(t, "goal-owner@example.test")
