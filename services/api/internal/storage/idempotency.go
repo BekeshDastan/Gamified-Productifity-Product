@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -37,7 +36,7 @@ type IdempotencyStore struct {
 func (s IdempotencyStore) Execute(ctx context.Context, scope Scope, body []byte, fn func(pgx.Tx) (Result, error)) (Result, error) {
 	var userID pgtype.UUID
 	if userID.Scan(scope.UserID) != nil || !validKey.MatchString(scope.Key) || len(scope.RouteKey) > 512 || !validRoute.MatchString(scope.RouteKey) ||
-		!strings.Contains("|POST|PUT|PATCH|DELETE|", "|"+scope.Method+"|") {
+		(scope.Method != "POST" && scope.Method != "PUT" && scope.Method != "PATCH" && scope.Method != "DELETE") {
 		return Result{}, ErrInvalidScope
 	}
 	if s.Now == nil || fn == nil {
