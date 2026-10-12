@@ -20,7 +20,16 @@
     "format:check": "prettier --check .",
     "check:repo": "node scripts/check-repository.mjs",
     "test:tooling": "node --test scripts/*.test.mjs",
-    "test:web": "npm run test --workspace @ascend/web"
+    "test:web": "npm run test --workspace @ascend/web",
+    "dev": "node scripts/tasks.mjs dev",
+    "lint": "node scripts/tasks.mjs lint",
+    "test": "node scripts/tasks.mjs test",
+    "check-changed": "node scripts/tasks.mjs check-changed",
+    "build": "node scripts/tasks.mjs build",
+    "migrate": "node scripts/tasks.mjs migrate",
+    "seed": "node scripts/tasks.mjs seed",
+    "test:integration": "node scripts/tasks.mjs test-integration",
+    "test:e2e": "node scripts/tasks.mjs test-e2e"
   },
   "devDependencies": {
     "prettier": "3.9.10"

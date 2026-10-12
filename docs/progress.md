@@ -32,3 +32,9 @@
   Production audit: 0 advisories. У dev-линтера есть advisory, описан в dependencies.
   Результат удалённого CI проверяется после первого push. Защита main на стороне
   GitHub должна требовать успешные Checks; сама конфигурация workflow её не включает.
+
+- C008: единые команды make/npm, check-changed запускает полный существующий
+  набор. Lint, typecheck, unit/component/tooling tests и build прошли.
+  Общий dev-запуск проверен HTTP 200; Ctrl+C закрыл порты приложений.
+  Production standalone отвечает HTTP 200, CSS также 200. Неподключённый E2E
+  явно завершился с ошибкой. next-env.d.ts генерируется и не отслеживается.

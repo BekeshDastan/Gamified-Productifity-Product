@@ -1230,7 +1230,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Ошибка теста блокирует merge; чистый проект получает зелёный CI.
   - **КОММИТ СЕЙЧАС:** `chore(ci): run builds lint and unit tests`
 
-- [ ] **C008. Команды разработки**
+- [x] **C008. Команды разработки**
   - **Сделать:** Добавить make dev, lint, test, check-changed, build, migrate, seed, test-e2e с реальными командами или явным сообщением о ещё не подключённом наборе.
   - **Проверить:** README воспроизводится с нуля; check-changed не пропускает существующие тесты.
   - **КОММИТ СЕЙЧАС:** `chore(dev): add documented development commands`

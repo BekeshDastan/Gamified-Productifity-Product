@@ -31,6 +31,45 @@
 должен работать без подключения внешних провайдеров. Инструкции запуска
 добавляются вместе с соответствующими работающими компонентами.
 
+## Быстрый запуск
+
+Нужны Node.js 22.22.0, npm 10.9.4, Go с поддержкой автоматической загрузки
+toolchain (используется 1.26.9) и запущенный Docker Desktop / Docker Engine.
+
+В PowerShell из корня проекта:
+
+```powershell
+npm ci
+Copy-Item .env.example .env
+npm run dev
+```
+
+При существующем `.env` не перезаписывайте его. Команда запускает базу, API,
+worker и web. Сайт: <http://localhost:3000>. API: <http://127.0.0.1:8080>.
+Доступных доменных API пока нет; неизвестные пути возвращают 404.
+Ctrl+C останавливает процессы приложения; база остаётся в Docker с сохранёнными
+данными. Остановить базу: `docker compose stop`.
+
+| Команда npm                | Эквивалент make         | Действие                                        |
+| -------------------------- | ----------------------- | ----------------------------------------------- |
+| `npm run dev`              | `make dev`              | Локальное окружение                             |
+| `npm run lint`             | `make lint`             | Политика файлов, формат, ESLint, TypeScript, Go |
+| `npm test`                 | `make test`             | Tooling, component и Go unit tests              |
+| `npm run check-changed`    | `make check-changed`    | Полный существующий набор lint + test           |
+| `npm run build`            | `make build`            | Production web и два Go-бинарника               |
+| `npm run migrate`          | `make migrate`          | Пока явный отказ; подключается в C011           |
+| `npm run seed`             | `make seed`             | Пока явный отказ; каталог ещё не создан         |
+| `npm run test:integration` | `make test-integration` | Подключается в C016                             |
+| `npm run test:e2e`         | `make test-e2e`         | Подключается в C024                             |
+
+Windows не требует установки make: команды npm используют тот же обработчик.
+Неподключённые наборы завершаются с ошибкой и пояснением; фиктивных зелёных тестов
+нет. `make backup`, `make restore-verify`, `make seed-demo` также пока отказывают
+в выполнении. Production web после build: `npm run start --workspace @ascend/web`.
+
+Настройки и версии: [dependencies](docs/dependencies.md).
+Локальная БД и сохранность данных: [runbook](docs/runbook.md).
+
 ## Лицензия
 
 [MIT](LICENSE). Сторонние ресурсы и их лицензии учитываются отдельно.
