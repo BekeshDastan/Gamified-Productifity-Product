@@ -1455,7 +1455,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Один набор фильтров даёт одинаковые задачи в обоих представлениях.
   - **КОММИТ СЕЙЧАС:** `feat(quests): add filtering sorting and Kanban views`
 
-- [ ] **C044. Статусы и журнал**
+- [x] **C044. Статусы и журнал**
   - **Сделать:** Подключить start/complete/reopen/postpone/skip/fail с version, причинами и task_events.
   - **Проверить:** Недопустимый переход даёт 409; перенос не изменяет дедлайн молча; история сохраняется.
   - **КОММИТ СЕЙЧАС:** `feat(quests): implement lifecycle transitions and change history`

@@ -199,6 +199,9 @@ func (s *Service) insert(ctx context.Context, tx pgx.Tx, id string, in Input) (Q
 	if err == nil {
 		err = syncTags(ctx, tx, id, q.ID, in.Tags)
 	}
+	if err == nil {
+		err = s.event(ctx, tx, id, "created", "", nil, q)
+	}
 	return q, err
 }
 func (s *Service) Create(r *http.Request, in Input) (Quest, error) {
@@ -261,6 +264,9 @@ func (s *Service) Update(r *http.Request, key string, in Input) (Quest, error) {
 		q, err = scan(tx.QueryRow(r.Context(), `UPDATE quests SET payload=$3,area_id=$4,version=version+1,updated_at=$5 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, in.AreaID, s.clock.Now().UTC()))
 		if err == nil {
 			err = syncTags(r.Context(), tx, id, key, in.Tags)
+		}
+		if err == nil {
+			err = s.event(r.Context(), tx, id, "edited", "", &current, q)
 		}
 		return err
 	})
@@ -366,6 +372,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountViews(r)
+		s.mountLifecycle(r)
 		r.Get("/api/v1/quests", func(w http.ResponseWriter, r *http.Request) { q, e := s.List(r); s.reply(w, r, q, e) })
 		r.Post("/api/v1/quests", func(w http.ResponseWriter, r *http.Request) {
 			decode(w, r, func(in Input) (any, error) { return s.Create(r, in) }, s)

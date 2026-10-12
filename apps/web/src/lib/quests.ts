@@ -157,3 +157,70 @@ export async function questLabels(signal?: AbortSignal) {
   const schema = z.array(z.object({ id: z.uuid(), name: z.string(), archived: z.boolean() }));
   return { areas: schema.parse(areas.data?.data), tags: schema.parse(tags.data?.data) };
 }
+export const transitionSchema = z.object({
+  reason: z.string().max(1000),
+  planned_date: z.string(),
+  return_to_backlog: z.boolean(),
+  shift_deadline: z.boolean(),
+  deadline: z.string(),
+});
+export type TransitionFields = z.infer<typeof transitionSchema>;
+export const actionPaths = {
+  start: "/api/v1/quests/{id}/start",
+  ready: "/api/v1/quests/{id}/ready",
+  complete: "/api/v1/quests/{id}/complete",
+  reopen: "/api/v1/quests/{id}/reopen",
+  postpone: "/api/v1/quests/{id}/postpone",
+  skip: "/api/v1/quests/{id}/skip",
+  fail: "/api/v1/quests/{id}/fail",
+} as const;
+export type QuestAction = keyof typeof actionPaths;
+export async function actOnQuest(
+  q: Quest,
+  action: QuestAction,
+  inFields: TransitionFields,
+  key: string,
+) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    const r = await api.POST(actionPaths[action], {
+      params: {
+        path: { id: q.id },
+        header: {
+          ...authParams().header,
+          "If-Match": '"' + q.version + '"',
+          "Idempotency-Key": key,
+        },
+      },
+      body: {
+        reason: inFields.reason,
+        ...(action === "postpone"
+          ? {
+              planned_date: inFields.planned_date || null,
+              return_to_backlog: inFields.return_to_backlog,
+              shift_deadline: inFields.shift_deadline,
+              deadline: inFields.deadline || null,
+            }
+          : {}),
+      },
+    });
+    return questSchema.parse(r.data?.data);
+  });
+}
+export const questEventSchema = z.object({
+  id: z.number().int(),
+  kind: z.string(),
+  reason: z.string(),
+  before: questSchema.nullable(),
+  after: questSchema,
+  created_at: z.iso.datetime({ offset: true }),
+});
+export async function questHistory(id: string, before?: number, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/quests/{id}/history", {
+    params: { path: { id }, query: { before } },
+    signal,
+  });
+  return z.array(questEventSchema).parse(r.data?.data);
+}

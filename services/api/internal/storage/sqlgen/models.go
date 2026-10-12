@@ -171,6 +171,18 @@ type Tag struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type TaskEvent struct {
+	ID           int64              `json:"id"`
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	QuestID      pgtype.UUID        `json:"quest_id"`
+	Kind         string             `json:"kind"`
+	Reason       string             `json:"reason"`
+	BeforeState  []byte             `json:"before_state"`
+	AfterState   []byte             `json:"after_state"`
+	QuestVersion int64              `json:"quest_version"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
 type User struct {
 	ID              pgtype.UUID        `json:"id"`
 	Email           string             `json:"email"`

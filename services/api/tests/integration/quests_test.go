@@ -9,6 +9,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"testing"
+	"time"
 )
 
 func questInput(title string) quests.Input {
@@ -106,5 +107,58 @@ func TestQuestFiltersAndViews(t *testing.T) {
 	}
 	if r = f.privateRequest(t, client, "GET", "/quests?sort=arbitrary", "", nil); r.status != 422 {
 		t.Fatal("invalid order")
+	}
+}
+func TestQuestLifecycleHistoryAndIdempotency(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "lifecycle@example.test")
+	in := questInput("Статусы")
+	deadline := f.clock.Now().Add(time.Hour)
+	in.Deadline = &deadline
+	q := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", in))
+	action := func(name string, body quests.Transition) {
+		t.Helper()
+		q = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/"+name, version(q), body))
+	}
+	action("start", quests.Transition{})
+	date := "2026-10-15"
+	action("postpone", quests.Transition{Reason: "Смена плана", PlannedDate: &date})
+	if q.Deadline == nil || !q.Deadline.Equal(deadline) || q.PlannedDate == nil || *q.PlannedDate != date {
+		t.Fatal("postpone moved deadline")
+	}
+	action("ready", quests.Transition{})
+	action("skip", quests.Transition{Reason: "Больше не нужно"})
+	action("reopen", quests.Transition{})
+	action("fail", quests.Transition{Reason: "Не успел"})
+	action("reopen", quests.Transition{})
+	key := "complete-once-test-key"
+	oldVersion := version(q)
+	first := readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/complete", oldVersion, quests.Transition{}, key))
+	again := readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/complete", oldVersion, quests.Transition{}, key))
+	if first.Version != again.Version || first.CompletedAt == nil || first.Status != "completed" {
+		t.Fatal("duplicate completion")
+	}
+	if r := f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/complete", oldVersion, quests.Transition{Reason: "changed"}, key); r.status != 409 {
+		t.Fatal("key body mismatch")
+	}
+	q = first
+	if r := f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/start", version(q), quests.Transition{}); r.status != 409 {
+		t.Fatal("terminal transition")
+	}
+	action("reopen", quests.Transition{})
+	action("postpone", quests.Transition{Reason: "Вернуть в идеи", ReturnToBacklog: true})
+	if q.Status != "backlog" || q.PlannedDate != nil {
+		t.Fatal("backlog return")
+	}
+	if r := f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/postpone", version(q), quests.Transition{Reason: "x", PlannedDate: &date}); r.status != 409 {
+		t.Fatal("backlog postponed")
+	}
+	r := f.privateRequest(t, client, "GET", "/quests/"+q.ID+"/history", "", nil)
+	if r.status != 200 || !bytes.Contains(r.body, []byte("Смена плана")) || !bytes.Contains(r.body, []byte("Больше не нужно")) {
+		t.Fatal("missing history")
+	}
+	var count int
+	if err := f.pool.QueryRow(f.ctx, `SELECT count(*) FROM task_events WHERE quest_id=$1 AND kind='complete'`, q.ID).Scan(&count); err != nil || count != 1 {
+		t.Fatal("completion event duplicated", count, err)
 	}
 }

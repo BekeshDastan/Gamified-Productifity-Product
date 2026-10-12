@@ -23,6 +23,7 @@ import { Card } from "./ui/card";
 import { Input, Select, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
 import { QuestFiltersPanel } from "./quest-filters";
+import { QuestActions, QuestHistory } from "./quest-actions";
 
 export function Quests({ id }: { id?: string }) {
   const auth = useAuth();
@@ -30,6 +31,7 @@ export function Quests({ id }: { id?: string }) {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState(emptyFilters);
   const [board, setBoard] = useState(false);
+  const [revision, setRevision] = useState(0);
   const [editing, setEditing] = useState(false);
   const [created, setCreated] = useState<Quest>();
   const confirmDiscard = useConfirmDiscard();
@@ -125,11 +127,19 @@ export function Quests({ id }: { id?: string }) {
             </p>
           </Card>
           <QuestForm
-            key={current.id}
+            key={current.id + revision}
             current={current}
             labels={labels.data}
             onSaved={() => void query.refetch()}
           />
+          <QuestActions
+            quest={current}
+            onChanged={() => {
+              setRevision((v) => v + 1);
+              void query.refetch();
+            }}
+          />
+          <QuestHistory quest={current} />
         </>
       )}
       {collection && (
