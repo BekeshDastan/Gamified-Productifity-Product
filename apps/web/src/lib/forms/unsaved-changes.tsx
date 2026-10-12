@@ -63,6 +63,10 @@ export function useUnsavedChanges(dirty: boolean) {
     return () => guard.setDirty(id, false);
   }, [guard, id, dirty]);
 }
+export function useConfirmDiscard() {
+  const guard = useContext(Context);
+  return () => !guard?.isBlocked() || window.confirm(message);
+}
 export function SafeLink({ onNavigate, ...props }: ComponentProps<typeof Link>) {
   const guard = useContext(Context);
   return (
