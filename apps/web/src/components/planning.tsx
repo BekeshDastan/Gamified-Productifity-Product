@@ -349,7 +349,7 @@ export function PlanCapacity({ plan }: { plan: DayPlan }) {
         <ul>
           {a.unfit_ids.map((id) => (
             <li key={id}>
-              <SafeLink href={`/app/quests?id=${id}`}>{task(id)}</SafeLink>
+              <SafeLink href={`/app/quests/${id}`}>{task(id)}</SafeLink>
             </li>
           ))}
         </ul>

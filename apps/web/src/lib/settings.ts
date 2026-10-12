@@ -9,6 +9,10 @@ import { authClient, authParams, withAuthLock } from "@/lib/auth/session";
 const time = z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/);
 export const preferencesSchema = z.object({
   personalization: z.object({
+    hidden_widgets: z
+      .array(z.enum(["today", "calendar", "habits", "focus", "progress"]))
+      .max(5)
+      .optional(),
     theme: z.enum(["system", "light", "dark"]),
     motion: z.enum(["system", "reduce"]),
     sound: z.boolean(),

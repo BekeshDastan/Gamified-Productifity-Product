@@ -136,7 +136,7 @@ export function PlanEditor({ plan, onChanged }: { plan: DayPlan; onChanged: () =
           <ul className="plan-items">
             {ids.map((id) => (
               <li key={id}>
-                <SafeLink href={`/app/quests?id=${id}`}>
+                <SafeLink href={`/app/quests/${id}`}>
                   {plan.items.find((q) => q.id === id)?.title ?? titles[id] ?? "Выбранная задача"}
                 </SafeLink>
                 <label className="check-row">

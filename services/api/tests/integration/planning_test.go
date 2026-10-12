@@ -22,6 +22,48 @@ func readPlan(t *testing.T, r authResponse) planning.Plan {
 	}
 	return out.Data
 }
+func TestPlanningDashboardCrossViewAndEmptyAccount(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "dashboard-plan@example.test")
+	b, _ := f.signedIn(t, "empty-dashboard@example.test")
+	read := func(r authResponse) planning.Dashboard {
+		var out struct {
+			Data planning.Dashboard `json:"data"`
+		}
+		if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+			t.Fatalf("dashboard %d %s", r.status, r.body)
+		}
+		return out.Data
+	}
+	empty := read(f.privateRequest(t, b, "GET", "/dashboard", "", nil))
+	if empty.Plan.ID != "" || len(empty.Tasks) != 0 || len(empty.Deadlines) != 0 || len(empty.Events) != 0 {
+		t.Fatal("invented data")
+	}
+	date := "2026-10-12"
+	input := questInput("Живая задача")
+	input.PlannedDate = &date
+	deadline := time.Date(2026, 10, 12, 15, 0, 0, 0, time.UTC)
+	input.Deadline = &deadline
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", input))
+	path := "/plans/day/" + date
+	p := readPlan(t, f.privateRequest(t, a, "PUT", path, `"0"`, planning.Input{AvailableMinutes: 60, QuestIDs: []string{q.ID}, TopIDs: []string{q.ID}}))
+	readPlan(t, f.privateRequest(t, a, "POST", path+"/confirm", planVersion(p), struct{}{}))
+	before := read(f.privateRequest(t, a, "GET", "/dashboard?date="+date, "", nil))
+	if len(before.Tasks) != 1 || len(before.Deadlines) != 1 || before.Plan.Progress.Committed != 1 {
+		t.Fatal("missing current data", before)
+	}
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", fmt.Sprintf(`"%d"`, q.Version), map[string]string{"reason": "Готово"}))
+	after := read(f.privateRequest(t, a, "GET", "/dashboard?date="+date, "", nil))
+	if after.Tasks[0].Status != "completed" || len(after.Deadlines) != 0 || after.Plan.Progress.Completed != 1 {
+		t.Fatal("stale cross-view result", after)
+	}
+	if len(read(f.privateRequest(t, b, "GET", "/dashboard", "", nil)).Tasks) != 0 {
+		t.Fatal("foreign owner leak")
+	}
+	if r := f.privateRequest(t, a, "GET", "/dashboard?date=invalid", "", nil); r.status != 422 {
+		t.Fatal("invalid date", r.status)
+	}
+}
 func readRoutinePreview(t *testing.T, r authResponse) planning.RoutinePreview {
 	t.Helper()
 	var out struct {

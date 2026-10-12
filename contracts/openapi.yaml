@@ -6,6 +6,43 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/dashboard:
+    get:
+      operationId: getDashboard
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Dashboard"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/plans/week:
     get:
       operationId: getPlanWeek
@@ -4355,6 +4392,47 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    Dashboard:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - timezone
+        - plan
+        - tasks
+        - deadlines
+        - events
+        - more_tasks
+        - more_deadlines
+        - more_events
+        - updated_at
+      properties:
+        date:
+          type: string
+        timezone:
+          type: string
+        plan:
+          $ref: "#/components/schemas/DayPlan"
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestDTO"
+        deadlines:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestDTO"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+        more_tasks:
+          type: boolean
+        more_deadlines:
+          type: boolean
+        more_events:
+          type: boolean
+        updated_at:
+          type: string
     RoutineApply:
       type: object
       additionalProperties: false
@@ -6314,6 +6392,18 @@ components:
             widget_order:
               type: array
               minItems: 5
+              maxItems: 5
+              uniqueItems: true
+              items:
+                type: string
+                enum:
+                  - today
+                  - calendar
+                  - habits
+                  - focus
+                  - progress
+            hidden_widgets:
+              type: array
               maxItems: 5
               uniqueItems: true
               items:

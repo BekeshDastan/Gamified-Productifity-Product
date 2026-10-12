@@ -186,12 +186,29 @@ function AppearanceForm({ initial, ownerId }: { initial: Settings; ownerId: stri
           Звуки и игровые эффекты появятся вместе с соответствующими разделами. Сейчас сохраняется
           ваш выбор; системное уменьшение движения соблюдается всегда.
         </p>
-        <h3>Порядок будущих виджетов</h3>
-        <p className="ui-hint">Порядок будет применён после подключения персональной сводки.</p>
+        <h3>Виджеты главной страницы</h3>
+        <p className="ui-hint">Выберите состав и порядок вашей сводки.</p>
         <ol className="widget-order">
           {order.map((item, i) => (
             <li key={item}>
-              <span>{widgetNames[item]}</span>
+              <label className="auth-checkbox">
+                <input
+                  type="checkbox"
+                  aria-label={`Показывать ${widgetNames[item]}`}
+                  checked={
+                    !(flow.form.watch("personalization.hidden_widgets") ?? []).includes(item)
+                  }
+                  onChange={(e) => {
+                    const hidden = flow.form.getValues("personalization.hidden_widgets") ?? [];
+                    flow.form.setValue(
+                      "personalization.hidden_widgets",
+                      e.target.checked ? hidden.filter((x) => x !== item) : [...hidden, item],
+                      { shouldDirty: true },
+                    );
+                  }}
+                />
+                {widgetNames[item]}
+              </label>
               <Button
                 variant="ghost"
                 aria-label={`Поднять ${widgetNames[item]}`}

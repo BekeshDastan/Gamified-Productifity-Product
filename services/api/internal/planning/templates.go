@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
@@ -246,7 +247,10 @@ func (s *Service) previewRoutine(ctx context.Context, tx pgx.Tx, id, key, start 
 		}
 		if !v.AlreadyApplied && !v.Past {
 			for _, a := range rd.Actions {
-				synthetic := "routine-" + a.Key
+				h := sha256.Sum256([]byte(id + "/" + key + "/" + p.Date + "/" + a.Key))
+				h[6] = (h[6] & 15) | 80
+				h[8] = (h[8] & 63) | 128
+				synthetic := fmt.Sprintf("%x-%x-%x-%x-%x", h[:4], h[4:6], h[6:8], h[8:10], h[10:16])
 				v.Input.QuestIDs = append(append([]string{}, v.Input.QuestIDs...), synthetic)
 				p.Items = append(p.Items, Item{ID: synthetic, Title: a.Title, EstimatedMinutes: a.Minutes})
 				if a.Start != "" {

@@ -1529,3 +1529,17 @@ html[data-motion="reduce"] *::after {
   cursor: pointer;
   padding: 0.75rem 0;
 }
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.dashboard-widget {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dashboard-widget li {
+  margin-block: 0.7rem;
+}

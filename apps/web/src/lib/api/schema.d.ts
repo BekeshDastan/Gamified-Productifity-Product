@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plans/week": {
         parameters: {
             query?: never;
@@ -1451,6 +1467,18 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Dashboard: {
+            date: string;
+            timezone: string;
+            plan: components["schemas"]["DayPlan"];
+            tasks: components["schemas"]["QuestDTO"][];
+            deadlines: components["schemas"]["QuestDTO"][];
+            events: components["schemas"]["CalendarEventDTO"][];
+            more_tasks: boolean;
+            more_deadlines: boolean;
+            more_events: boolean;
+            updated_at: string;
+        };
         RoutineApply: {
             start_date: string;
             preview_hash: string;
@@ -2039,6 +2067,7 @@ export interface components {
                 /** @enum {string} */
                 game_mode: "calm" | "standard";
                 widget_order: ("today" | "calendar" | "habits" | "focus" | "progress")[];
+                hidden_widgets?: ("today" | "calendar" | "habits" | "focus" | "progress")[];
             };
         };
         Settings: components["schemas"]["Preferences"] & {
@@ -2556,6 +2585,37 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getDashboard: {
+        parameters: {
+            query?: {
+                date?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Dashboard"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     getPlanWeek: {
         parameters: {
             query: {

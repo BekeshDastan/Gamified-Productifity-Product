@@ -1617,7 +1617,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Можно пройти утренний сценарий без редактирования БД; отдых не помечен успехом.
   - **КОММИТ СЕЙЧАС:** `feat(planning-ui): add daily and weekly planning workflow`
 
-- [ ] **C071. Живой Dashboard**
+- [x] **C071. Живой Dashboard**
   - **Сделать:** Создать единый endpoint и виджеты текущих задач/привычек по мере доступности, без фейковых XP до этапа 11.
   - **Проверить:** Завершение задачи обновляет Dashboard и календарь; пустой аккаунт не имеет демонстрационных цифр.
   - **КОММИТ СЕЙЧАС:** `feat(dashboard): aggregate current tasks plans and deadlines`
@@ -2729,3 +2729,4 @@ feat(quests): implement lifecycle transitions and change history
 ---
 
 **Конец ТЗ. Редакция 1.0.** 28 функциональных модулей · 25 этапов · 200 плановых коммитов · без ИИ.
+

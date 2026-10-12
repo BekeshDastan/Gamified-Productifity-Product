@@ -293,6 +293,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		s.mountBlocks(r)
 		s.mountRoutines(r)
 		s.mountWeek(r)
+		s.mountDashboard(r)
 		r.Get("/api/v1/plans/day/{date}", func(w http.ResponseWriter, r *http.Request) {
 			date := chi.URLParam(r, "date")
 			_, e := day(date)
