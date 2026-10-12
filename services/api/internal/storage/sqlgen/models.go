@@ -8,6 +8,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Attachment struct {
+	ID         pgtype.UUID        `json:"id"`
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	QuestID    pgtype.UUID        `json:"quest_id"`
+	StorageKey string             `json:"storage_key"`
+	Name       string             `json:"name"`
+	Mime       string             `json:"mime"`
+	Size       int64              `json:"size"`
+	Checksum   string             `json:"checksum"`
+	Verdict    string             `json:"verdict"`
+	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
+	Version    int64              `json:"version"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type AuditEvent struct {
 	ID         pgtype.UUID        `json:"id"`
 	ActorID    pgtype.UUID        `json:"actor_id"`

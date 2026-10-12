@@ -12,6 +12,7 @@ import (
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
@@ -54,7 +55,22 @@ func main() {
 		os.Exit(1)
 	}
 	profile.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
-	quests.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
+	directory := os.Getenv("BLOB_PRIVATE_DIR")
+	if directory == "" {
+		directory = ".data/blobs"
+	}
+	files, err := blob.NewLocal(directory)
+	if err != nil {
+		logger.Error("private blob directory unavailable")
+		os.Exit(1)
+	}
+	defer files.Close()
+	scanner, err := blob.ConfigureScanner(files, os.Getenv("UPLOAD_SCAN_MODE"), os.Getenv("CLAMAV_ADDRESS"))
+	if err != nil {
+		logger.Error("invalid scanner configuration")
+		os.Exit(1)
+	}
+	quests.NewService(pool, platform.RealClock{}).WithFiles(files, scanner).Mount(router, sessions.Protect)
 	server := &http.Server{
 		Addr:              cfg.Address,
 		Handler:           router,

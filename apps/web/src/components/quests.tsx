@@ -25,6 +25,7 @@ import { Form } from "./ui/form";
 import { QuestFiltersPanel } from "./quest-filters";
 import { QuestActions, QuestHistory } from "./quest-actions";
 import { QuestStructure, QuestPicker } from "./quest-structure";
+import { QuestFiles } from "./quest-files";
 
 export function Quests({ id }: { id?: string }) {
   const auth = useAuth();
@@ -144,6 +145,13 @@ export function Quests({ id }: { id?: string }) {
             }}
           />
           <QuestHistory quest={current} />
+          <QuestFiles
+            quest={current}
+            onChanged={() => {
+              setRevision((v) => v + 1);
+              void query.refetch();
+            }}
+          />
           <QuestStructure
             quest={current}
             onChanged={() => {

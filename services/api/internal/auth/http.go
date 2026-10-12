@@ -101,7 +101,8 @@ func (s *Sessions) browserMutation(next http.Handler) http.Handler {
 			return
 		}
 		media, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
-		if err != nil || media != "application/json" {
+		upload := r.Method == http.MethodPost && r.URL.Path == "/api/v1/attachments" && media == "multipart/form-data"
+		if err != nil || (media != "application/json" && !upload) {
 			s.writeError(w, r, &platform.APIError{Status: 415, Code: "UNSUPPORTED_MEDIA_TYPE", Message: "Используйте JSON"})
 			return
 		}

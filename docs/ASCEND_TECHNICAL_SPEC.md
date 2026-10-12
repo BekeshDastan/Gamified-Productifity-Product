@@ -1465,7 +1465,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Цикл и чужая зависимость отвергаются; родитель не закрывает детей автоматически.
   - **КОММИТ СЕЙЧАС:** `feat(quests): add bounded subtasks and dependency validation`
 
-- [ ] **C046. Безопасные вложения**
+- [x] **C046. Безопасные вложения**
   - **Сделать:** Реализовать загрузку, quarantine, MIME/размер/квоты, привязку владельца и безопасное скачивание.
   - **Проверить:** HTML под видом картинки отвергается; чужой файл и path traversal недоступны.
   - **КОММИТ СЕЙЧАС:** `feat(attachments): attach validated private files to quests`

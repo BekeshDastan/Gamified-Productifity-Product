@@ -6,6 +6,169 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/attachments:
+    post:
+      operationId: uploadQuestFile
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - quest_id
+                - version
+                - file
+              properties:
+                quest_id:
+                  type: string
+                  format: uuid
+                version:
+                  type: string
+                  description: Quoted quest version, same semantics as If-Match
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          $ref: "#/components/responses/Attachment"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "413":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/attachments:
+    get:
+      operationId: questAttachments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Attachments"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/attachments/{id}:
+    delete:
+      operationId: deleteAttachment
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/attachments/{id}/scan:
+    post:
+      operationId: rescanAttachment
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          $ref: "#/components/responses/Attachment"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/attachments/{id}/download:
+    get:
+      operationId: downloadAttachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Private download; attachment disposition, nosniff, sandbox
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
   /api/v1/quests/{id}/structure:
     get:
       operationId: questStructure
@@ -1238,6 +1401,36 @@ components:
             type: object
             additionalProperties: false
   responses:
+    Attachment:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/AttachmentDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    Attachments:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttachmentDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
     QuestStructure:
       description: Личные данные владельца
       content:
@@ -1489,6 +1682,42 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    AttachmentDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - quest_id
+        - name
+        - mime
+        - size
+        - verdict
+        - version
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        mime:
+          type: string
+        size:
+          type: integer
+        verdict:
+          type: string
+          enum:
+            - pending
+            - clean
+            - rejected
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
     QuestDependencies:
       type: object
       additionalProperties: false

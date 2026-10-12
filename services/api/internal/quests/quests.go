@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -20,8 +21,16 @@ import (
 )
 
 type Service struct {
-	pool  *pgxpool.Pool
-	clock platform.Clock
+	pool    *pgxpool.Pool
+	clock   platform.Clock
+	files   blob.BlobStore
+	scanner blob.Scanner
+}
+
+func (s *Service) WithFiles(files blob.BlobStore, scanner blob.Scanner) *Service {
+	s.files = files
+	s.scanner = scanner
+	return s
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
@@ -394,6 +403,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		s.mountViews(r)
 		s.mountLifecycle(r)
 		s.mountStructure(r)
+		s.mountAttachments(r)
 		r.Get("/api/v1/quests", func(w http.ResponseWriter, r *http.Request) { q, e := s.List(r); s.reply(w, r, q, e) })
 		r.Post("/api/v1/quests", func(w http.ResponseWriter, r *http.Request) {
 			decode(w, r, func(in Input) (any, error) { return s.Create(r, in) }, s)
