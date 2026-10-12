@@ -33,6 +33,18 @@ func TestPreferencesValidationAndTimezoneDates(t *testing.T) {
 		}
 	}
 	p := base
+	p.Personalization.HiddenWidgets = []string{"today", "today"}
+	if ValidatePreferences(p) == nil {
+		t.Fatal("duplicate hidden widgets accepted")
+	}
+	p.Personalization.HiddenWidgets = []string{"unknown"}
+	if ValidatePreferences(p) == nil {
+		t.Fatal("unknown hidden widget accepted")
+	}
+	p.Personalization.HiddenWidgets = []string{"focus"}
+	if e := ValidatePreferences(p); e != nil {
+		t.Fatal(e)
+	}
 	p.WorkIntervals = []WorkInterval{{Day: 1, Start: "09:00", End: "12:00"}, {Day: 1, Start: "12:00", End: "13:00"}}
 	if err := ValidatePreferences(p); err != nil {
 		t.Fatal(err)

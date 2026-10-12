@@ -219,9 +219,7 @@
   font-weight: 650;
   text-decoration: none;
   line-height: 1.35;
-  transition:
-    background 140ms,
-    transform 140ms;
+  transition: transform 140ms;
 }
 .ui-button:hover:not(:disabled) {
   filter: brightness(1.08);

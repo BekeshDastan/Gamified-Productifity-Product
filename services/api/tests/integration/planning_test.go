@@ -74,6 +74,62 @@ func readRoutinePreview(t *testing.T, r authResponse) planning.RoutinePreview {
 	}
 	return out.Data
 }
+func TestPlanningCustomRoutinesAndAtomicFailures(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "custom-routines@example.test")
+	b, _ := f.signedIn(t, "foreign-routines@example.test")
+	read := func(r authResponse) planning.Routine {
+		var out struct {
+			Data planning.Routine `json:"data"`
+		}
+		if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+			t.Fatalf("routine %d %s", r.status, r.body)
+		}
+		return out.Data
+	}
+	in := planning.RoutineInput{Title: "Личный вечер", Period: "day", Days: []planning.RoutineDay{{Day: 1, AvailableMinutes: 60, Actions: []planning.RoutineAction{{Key: "read", Title: "Читать", Priority: "normal", Minutes: 30}}}}}
+	custom := read(f.privateRequest(t, a, "POST", "/templates/routines", "", in))
+	in.Title = "Новый вечер"
+	custom = read(f.privateRequest(t, a, "PATCH", "/templates/routines/"+custom.ID, `"1"`, in))
+	if r := f.privateRequest(t, a, "PATCH", "/templates/routines/"+custom.ID, `"1"`, in); r.status != 409 {
+		t.Fatal("stale routine", r.status)
+	}
+	if r := f.privateRequest(t, b, "POST", "/templates/routines/"+custom.ID+"/preview", "", map[string]string{"start_date": "2026-10-13"}); r.status != 404 {
+		t.Fatal("foreign routine", r.status)
+	}
+	read(f.privateRequest(t, a, "PATCH", "/templates/routines/study-day", `"1"`, in))
+	if r := f.privateRequest(t, a, "GET", "/templates/routines", "", nil); r.status != 200 {
+		t.Fatal("catalog", r.status)
+	}
+	preview := readRoutinePreview(t, f.privateRequest(t, a, "POST", "/templates/routines/"+custom.ID+"/preview", "", map[string]string{"start_date": "2026-10-13"}))
+	readRoutinePreview(t, f.privateRequest(t, a, "POST", "/templates/routines/"+custom.ID+"/apply", "", planning.RoutineRequest{StartDate: preview.StartDate, PreviewHash: preview.Hash, Reason: "Мой вечер"}))
+	var key string
+	if e := f.pool.QueryRow(t.Context(), `SELECT id::text FROM quests WHERE payload->>'title'='Читать'`).Scan(&key); e != nil {
+		t.Fatal(e)
+	}
+	p := readPlan(t, f.privateRequest(t, a, "GET", "/plans/day/2026-10-13", "", nil))
+	q := readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+key, "", nil))
+	readPlan(t, f.privateRequest(t, a, "POST", "/plans/day/2026-10-13/move", planVersion(p), planning.Move{QuestID: key, QuestVersion: q.Version, Reason: "Планирую вечер"}))
+	p = readPlan(t, f.privateRequest(t, a, "GET", "/plans/day/2026-10-13", "", nil))
+	q = readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+key, "", nil))
+	if _, e := f.pool.Exec(t.Context(), `CREATE FUNCTION reject_planning_block() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected rollback'; END $$; CREATE TRIGGER reject_planning_block BEFORE INSERT ON calendar_events FOR EACH ROW EXECUTE FUNCTION reject_planning_block()`); e != nil {
+		t.Fatal(e)
+	}
+	r := f.privateRequest(t, a, "POST", "/plans/day/2026-10-13/blocks", planVersion(p), planning.Block{Move: planning.Move{QuestID: key, QuestVersion: q.Version, Reason: "Проверка атомарности"}, Start: "19:00", End: "20:00"})
+	if r.status != 500 {
+		t.Fatal("expected rollback", r.status)
+	}
+	fresh := readPlan(t, f.privateRequest(t, a, "GET", "/plans/day/2026-10-13", "", nil))
+	if fresh.Version != p.Version {
+		t.Fatal("plan committed after block failure")
+	}
+	if r = f.privateRequest(t, a, "POST", "/plans/day/2026-10-13/addendum", planVersion(p), planning.Amendment{Input: p.Input, Reason: "Ещё не подтверждён"}); r.status != 409 {
+		t.Fatal("draft amendment", r.status)
+	}
+	if r = f.privateRequest(t, a, "POST", "/templates/routines/ideal-week/preview", "", map[string]string{"start_date": "2026-10-13"}); r.status != 422 {
+		t.Fatal("week starts Tuesday", r.status)
+	}
+}
 func TestPlanningRoutinePreviewDedupeAndConflicts(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, _ := f.signedIn(t, "routine-plan@example.test")

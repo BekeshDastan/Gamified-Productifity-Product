@@ -215,8 +215,12 @@ function Workspace({ account, preferences }: { account: string; preferences: Pre
           ) : (
             <>
               <PlanCapacity plan={p} />
-              <ConfirmPanel key={p.date + ":" + p.version} plan={p} onChanged={changed} />
-              <PlanBlocks key={p.date + ":" + p.version} plan={p} onChanged={changed} />
+              <ConfirmPanel
+                key={"confirm:" + p.date + ":" + p.version}
+                plan={p}
+                onChanged={changed}
+              />
+              <PlanBlocks key={"blocks:" + p.date + ":" + p.version} plan={p} onChanged={changed} />
               <PlanRoutines date={date} onChanged={changed} />
             </>
           )}

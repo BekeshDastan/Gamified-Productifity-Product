@@ -1622,7 +1622,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Завершение задачи обновляет Dashboard и календарь; пустой аккаунт не имеет демонстрационных цифр.
   - **КОММИТ СЕЙЧАС:** `feat(dashboard): aggregate current tasks plans and deadlines`
 
-- [ ] **C072. Приёмка планирования**
+- [x] **C072. Приёмка планирования**
   - **Сделать:** Добавить тесты замороженного плана, нескольких time blocks и независимости дедлайна.
   - **Проверить:** Изменение в одном экране согласованно видно в остальных; прошлый план остаётся проверяемым.
   - **КОММИТ СЕЙЧАС:** `test(planning): cover snapshots capacity and cross-view updates`
