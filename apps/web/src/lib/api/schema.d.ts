@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/goals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listGoals"];
+        put?: never;
+        post: operations["createGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getGoal"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["editGoal"];
+        trace?: never;
+    };
     "/api/v1/quests/{id}/archive": {
         parameters: {
             query?: never;
@@ -843,6 +875,51 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        GoalInput: {
+            title: string;
+            motive: string;
+            criteria: string;
+            area_id: string | null;
+            start_date: string | null;
+            target_date: string | null;
+            /** @enum {string} */
+            progress_type: "milestones" | "quests" | "metric";
+            start: number;
+            target: number;
+            unit: string;
+        };
+        GoalDTO: {
+            title: string;
+            motive: string;
+            criteria: string;
+            area_id: string | null;
+            start_date: string | null;
+            target_date: string | null;
+            /** @enum {string} */
+            progress_type: "milestones" | "quests" | "metric";
+            start: number;
+            target: number;
+            unit: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            state: "draft" | "active" | "paused" | "achieved" | "not_achieved" | "cancelled";
+            progress: number;
+            current: number;
+            version: number;
+            overdue: boolean;
+            archived_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        GoalPage: {
+            items: components["schemas"]["GoalDTO"][];
+            total: number;
+            page: number;
+            page_size: number;
+        };
         QuestBatch: {
             items: {
                 /** Format: uuid */
@@ -1168,6 +1245,30 @@ export interface components {
     };
     responses: {
         /** @description Личные данные владельца */
+        Goal: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalDTO"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        Goals: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalPage"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
         Quests: {
             headers: {
                 [name: string]: unknown;
@@ -1437,6 +1538,123 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listGoals: {
+        parameters: {
+            query?: {
+                state?: string;
+                search?: string;
+                area_id?: string;
+                archived?: string;
+                page?: string;
+                page_size?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Goals"];
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    createGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    title: string;
+                    motive: string;
+                    criteria: string;
+                    area_id: string | null;
+                    start_date: string | null;
+                    target_date: string | null;
+                    /** @enum {string} */
+                    progress_type: "milestones" | "quests" | "metric";
+                    start: number;
+                    target: number;
+                    unit: string;
+                    /** @enum {string} */
+                    state: "draft" | "active";
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getGoal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    editGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    title: string;
+                    motive: string;
+                    criteria: string;
+                    area_id: string | null;
+                    start_date: string | null;
+                    target_date: string | null;
+                    /** @enum {string} */
+                    progress_type: "milestones" | "quests" | "metric";
+                    start: number;
+                    target: number;
+                    unit: string;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     archiveQuest: {
         parameters: {
             query?: never;

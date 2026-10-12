@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
@@ -55,6 +56,7 @@ func main() {
 		os.Exit(1)
 	}
 	profile.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
+	goals.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
 	directory := os.Getenv("BLOB_PRIVATE_DIR")
 	if directory == "" {
 		directory = ".data/blobs"

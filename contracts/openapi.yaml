@@ -6,6 +6,239 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/goals:
+    get:
+      operationId: listGoals
+      parameters:
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: area_id
+          in: query
+          schema:
+            type: string
+        - name: archived
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/Goals"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createGoal
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - title
+                - motive
+                - criteria
+                - area_id
+                - start_date
+                - target_date
+                - progress_type
+                - start
+                - target
+                - unit
+                - state
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                motive:
+                  type: string
+                  maxLength: 10000
+                criteria:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                area_id:
+                  anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                start_date:
+                  anyOf:
+                    - type: string
+                      format: date
+                    - type: "null"
+                target_date:
+                  anyOf:
+                    - type: string
+                      format: date
+                    - type: "null"
+                progress_type:
+                  type: string
+                  enum:
+                    - milestones
+                    - quests
+                    - metric
+                start:
+                  type: number
+                  minimum: 0
+                  maximum: 1000000000
+                target:
+                  type: number
+                  exclusiveMinimum: 0
+                  maximum: 1000000000
+                unit:
+                  type: string
+                  maxLength: 40
+                state:
+                  type: string
+                  enum:
+                    - draft
+                    - active
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/goals/{id}:
+    get:
+      operationId: getGoal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: editGoal
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - title
+                - motive
+                - criteria
+                - area_id
+                - start_date
+                - target_date
+                - progress_type
+                - start
+                - target
+                - unit
+                - reason
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                motive:
+                  type: string
+                  maxLength: 10000
+                criteria:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                area_id:
+                  anyOf:
+                    - type: string
+                      format: uuid
+                    - type: "null"
+                start_date:
+                  anyOf:
+                    - type: string
+                      format: date
+                    - type: "null"
+                target_date:
+                  anyOf:
+                    - type: string
+                      format: date
+                    - type: "null"
+                progress_type:
+                  type: string
+                  enum:
+                    - milestones
+                    - quests
+                    - metric
+                start:
+                  type: number
+                  minimum: 0
+                  maximum: 1000000000
+                target:
+                  type: number
+                  exclusiveMinimum: 0
+                  maximum: 1000000000
+                unit:
+                  type: string
+                  maxLength: 40
+                reason:
+                  type: string
+                  maxLength: 1000
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/quests/{id}/archive:
     post:
       operationId: archiveQuest
@@ -1743,6 +1976,34 @@ components:
             type: object
             additionalProperties: false
   responses:
+    Goal:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/GoalDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    Goals:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/GoalPage"
+              meta:
+                $ref: "#/components/schemas/Meta"
     Quests:
       description: Личные данные владельца
       content:
@@ -2084,6 +2345,182 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    GoalInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - motive
+        - criteria
+        - area_id
+        - start_date
+        - target_date
+        - progress_type
+        - start
+        - target
+        - unit
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        motive:
+          type: string
+          maxLength: 10000
+        criteria:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        area_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        start_date:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        target_date:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        progress_type:
+          type: string
+          enum:
+            - milestones
+            - quests
+            - metric
+        start:
+          type: number
+          minimum: 0
+          maximum: 1000000000
+        target:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1000000000
+        unit:
+          type: string
+          maxLength: 40
+    GoalDTO:
+      type: object
+      required:
+        - title
+        - motive
+        - criteria
+        - area_id
+        - start_date
+        - target_date
+        - progress_type
+        - start
+        - target
+        - unit
+        - id
+        - state
+        - progress
+        - current
+        - version
+        - overdue
+        - archived_at
+        - created_at
+        - updated_at
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        motive:
+          type: string
+          maxLength: 10000
+        criteria:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        area_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        start_date:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        target_date:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        progress_type:
+          type: string
+          enum:
+            - milestones
+            - quests
+            - metric
+        start:
+          type: number
+          minimum: 0
+          maximum: 1000000000
+        target:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1000000000
+        unit:
+          type: string
+          maxLength: 40
+        id:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum:
+            - draft
+            - active
+            - paused
+            - achieved
+            - not_achieved
+            - cancelled
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        current:
+          type: number
+        version:
+          type: integer
+          minimum: 1
+        overdue:
+          type: boolean
+        archived_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    GoalPage:
+      type: object
+      required:
+        - items
+        - total
+        - page
+        - page_size
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoalDTO"
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
     QuestBatch:
       type: object
       additionalProperties: false

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
@@ -48,6 +49,7 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 		t.Fatal(err)
 	}
 	profile.NewService(pool, clock).Mount(router, sessions.Protect)
+	goals.NewService(pool, clock).Mount(router, sessions.Protect)
 	files, err := blob.NewLocal(t.TempDir())
 	if err != nil {
 		t.Fatal(err)

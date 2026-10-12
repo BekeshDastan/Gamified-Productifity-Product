@@ -66,6 +66,32 @@ type AuthSession struct {
 	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
 }
 
+type Goal struct {
+	ID         pgtype.UUID        `json:"id"`
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	AreaID     pgtype.UUID        `json:"area_id"`
+	Payload    []byte             `json:"payload"`
+	State      string             `json:"state"`
+	StartDate  pgtype.Date        `json:"start_date"`
+	TargetDate pgtype.Date        `json:"target_date"`
+	Progress   pgtype.Numeric     `json:"progress"`
+	Version    int64              `json:"version"`
+	ArchivedAt pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type GoalVersion struct {
+	ID          int64              `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	GoalID      pgtype.UUID        `json:"goal_id"`
+	GoalVersion int64              `json:"goal_version"`
+	Kind        string             `json:"kind"`
+	Reason      string             `json:"reason"`
+	Snapshot    []byte             `json:"snapshot"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type IdempotencyRecord struct {
 	UserID         pgtype.UUID        `json:"user_id"`
 	Method         string             `json:"method"`
