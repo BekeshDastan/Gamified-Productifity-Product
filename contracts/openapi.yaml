@@ -6,6 +6,170 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/habits/{id}/emergency:
+    post:
+      operationId: excuseHabitPeriod
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitEmergencyInput"
+  /api/v1/habits/{id}/pauses/{pause}/resume:
+    post:
+      operationId: resumeHabit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: pause
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitResumeInput"
+  /api/v1/habits/{id}/pauses:
+    post:
+      operationId: pauseHabit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitPauseInput"
   /api/v1/habits/{id}/logs/{log}/correct:
     post:
       operationId: correctHabitLog
@@ -4709,6 +4873,69 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    HabitEmergencyInput:
+      type: object
+      additionalProperties: false
+      required:
+        - period_id
+        - reason
+      properties:
+        period_id:
+          type: string
+        reason:
+          type: string
+    HabitResumeInput:
+      type: object
+      additionalProperties: false
+      required:
+        - resumes_on
+        - reason
+      properties:
+        resumes_on:
+          type: string
+        reason:
+          type: string
+    HabitPause:
+      type: object
+      additionalProperties: false
+      required:
+        - starts_on
+        - ends_on
+        - reason
+        - id
+        - version
+        - created_at
+      properties:
+        starts_on:
+          type: string
+        ends_on:
+          anyOf:
+            - type: string
+            - type: "null"
+        reason:
+          type: string
+        id:
+          type: string
+        version:
+          type: integer
+        created_at:
+          type: string
+    HabitPauseInput:
+      type: object
+      additionalProperties: false
+      required:
+        - starts_on
+        - ends_on
+        - reason
+      properties:
+        starts_on:
+          type: string
+        ends_on:
+          anyOf:
+            - type: string
+            - type: "null"
+        reason:
+          type: string
     HabitStats:
       type: object
       additionalProperties: false
@@ -4824,6 +5051,7 @@ components:
         - state
         - excluded
         - emergency_reason
+        - rest_reason
       properties:
         id:
           type: string
@@ -4853,6 +5081,8 @@ components:
         excluded:
           type: boolean
         emergency_reason:
+          type: string
+        rest_reason:
           type: string
     HabitScheduleChange:
       type: object
@@ -4888,6 +5118,7 @@ components:
         - periods
         - has_more
         - stats
+        - pauses
       properties:
         title:
           type: string
@@ -4935,6 +5166,10 @@ components:
           type: boolean
         stats:
           $ref: "#/components/schemas/HabitStats"
+        pauses:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitPause"
     HabitScheduleVersion:
       type: object
       additionalProperties: false

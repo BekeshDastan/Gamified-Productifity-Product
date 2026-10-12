@@ -207,3 +207,36 @@ func TestHabitStreakWeekendAndBestCorrection(t *testing.T) {
 		t.Fatal("best retained false run", h.Stats)
 	}
 }
+func TestHabitFuturePausesAndEmergencyCannotHidePast(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "habit-pause@example.test")
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", habitInput()))
+	path := "/habits/" + h.ID
+	end := "2026-10-14"
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/pauses", habitVersion(h), habits.PauseInput{StartsOn: "2026-10-13", EndsOn: &end, Reason: "Плановый отдых"}))
+	if len(h.Pauses) != 1 {
+		t.Fatal(h)
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/pauses/"+h.Pauses[0].ID+"/resume", habitVersion(h), habits.ResumeInput{ResumesOn: "2026-10-14", Reason: "Возвращаюсь раньше"}))
+	if *h.Pauses[0].EndsOn != "2026-10-13" {
+		t.Fatal(h.Pauses)
+	}
+	f.clock.Advance(48 * time.Hour)
+	if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+		t.Fatal(r.status)
+	}
+	h = readHabit(t, f.privateRequest(t, a, "GET", path, "", nil))
+	if len(h.Periods) != 3 || h.Periods[0].State != "missed" || h.Periods[1].State != "rest" || h.Periods[1].RestReason == "" || h.Periods[2].State != "open" {
+		t.Fatal(h.Periods)
+	}
+	if r := f.privateRequest(t, a, "POST", path+"/emergency", habitVersion(h), habits.EmergencyInput{PeriodID: h.Periods[0].ID, Reason: "Попытка скрыть прошлое"}); r.status != 422 {
+		t.Fatal("retro emergency", r.status)
+	}
+	if r := f.privateRequest(t, a, "POST", path+"/pauses", habitVersion(h), habits.PauseInput{StartsOn: "2026-10-12", Reason: "Поздняя пауза"}); r.status != 422 {
+		t.Fatal("retro pause", r.status)
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/emergency", habitVersion(h), habits.EmergencyInput{PeriodID: h.Periods[2].ID, Reason: "Непредвиденное обстоятельство"}))
+	if h.Periods[2].State != "rest" || h.Periods[2].EmergencyReason == "" || h.Stats.Successful != 0 || h.Stats.Missed != 1 {
+		t.Fatal("emergency counted as success or hid past", h)
+	}
+}

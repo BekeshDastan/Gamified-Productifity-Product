@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/v1/habits/{id}/emergency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["excuseHabitPeriod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/habits/{id}/pauses/{pause}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resumeHabit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/habits/{id}/pauses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["pauseHabit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/habits/{id}/logs/{log}/correct": {
         parameters: {
             query?: never;
@@ -1547,6 +1595,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        HabitEmergencyInput: {
+            period_id: string;
+            reason: string;
+        };
+        HabitResumeInput: {
+            resumes_on: string;
+            reason: string;
+        };
+        HabitPause: {
+            starts_on: string;
+            ends_on: string | null;
+            reason: string;
+            id: string;
+            version: number;
+            created_at: string;
+        };
+        HabitPauseInput: {
+            starts_on: string;
+            ends_on: string | null;
+            reason: string;
+        };
         HabitStats: {
             current: number;
             best: number;
@@ -1595,6 +1664,7 @@ export interface components {
             state: "open" | "success" | "missed" | "rest";
             excluded: boolean;
             emergency_reason: string;
+            rest_reason: string;
         };
         HabitScheduleChange: {
             effective_from: string;
@@ -1619,6 +1689,7 @@ export interface components {
             periods: components["schemas"]["HabitPeriod"][];
             has_more: boolean;
             stats: components["schemas"]["HabitStats"];
+            pauses: components["schemas"]["HabitPause"][];
         };
         HabitScheduleVersion: {
             version: number;
@@ -2761,6 +2832,130 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    excuseHabitPeriod: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Версия 0 для создания, текущая положительная версия для изменения */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HabitEmergencyInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["HabitDTO"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    resumeHabit: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Версия 0 для создания, текущая положительная версия для изменения */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+                pause: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HabitResumeInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["HabitDTO"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    pauseHabit: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Версия 0 для создания, текущая положительная версия для изменения */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HabitPauseInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["HabitDTO"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     correctHabitLog: {
         parameters: {
             query?: never;

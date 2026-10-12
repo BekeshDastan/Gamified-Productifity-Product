@@ -7,6 +7,7 @@ import (
 )
 
 type Period struct {
+	RestReason      string    `json:"rest_reason"`
 	ID              string    `json:"id"`
 	Key             string    `json:"key"`
 	Start           time.Time `json:"start"`
@@ -68,7 +69,8 @@ func (s *Service) materialize(ctx context.Context, tx pgx.Tx, id string, h Habit
 			break
 		}
 		if scheduled(d, v.Schedule) {
-			tag, e := tx.Exec(ctx, `INSERT INTO habit_periods(owner_id,habit_id,period_key,starts_at,ends_at,timezone,schedule_version,target) VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(owner_id,habit_id,period_key) DO NOTHING`, id, h.ID, key, a.UTC(), b.UTC(), h.Timezone, v.Version, v.Schedule.Target)
+			rest := pauseReason(h, a, b)
+			tag, e := tx.Exec(ctx, `INSERT INTO habit_periods(owner_id,habit_id,period_key,starts_at,ends_at,timezone,schedule_version,target,excluded,rest_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT(owner_id,habit_id,period_key) DO NOTHING`, id, h.ID, key, a.UTC(), b.UTC(), h.Timezone, v.Version, v.Schedule.Target, rest != "", rest)
 			if e != nil {
 				return false, e
 			}
@@ -90,7 +92,7 @@ func (s *Service) materialize(ctx context.Context, tx pgx.Tx, id string, h Habit
 	return more, e
 }
 func (s *Service) periods(ctx context.Context, tx pgx.Tx, id string, h Habit) ([]Period, error) {
-	rows, e := tx.Query(ctx, `SELECT p.id::text,p.period_key,p.starts_at,p.ends_at,p.timezone,p.schedule_version,p.target,p.excluded,p.emergency_reason,COALESCE((SELECT sum(l.amount) FROM habit_logs l WHERE l.owner_id=p.owner_id AND l.period_id=p.id),0)::double precision FROM habit_periods p WHERE p.owner_id=$1 AND p.habit_id=$2 ORDER BY p.starts_at,p.id`, id, h.ID)
+	rows, e := tx.Query(ctx, `SELECT p.id::text,p.period_key,p.starts_at,p.ends_at,p.timezone,p.schedule_version,p.target,p.excluded,p.emergency_reason,p.rest_reason,COALESCE((SELECT sum(l.amount) FROM habit_logs l WHERE l.owner_id=p.owner_id AND l.period_id=p.id),0)::double precision FROM habit_periods p WHERE p.owner_id=$1 AND p.habit_id=$2 ORDER BY p.starts_at,p.id`, id, h.ID)
 	if e != nil {
 		return nil, e
 	}
@@ -98,7 +100,7 @@ func (s *Service) periods(ctx context.Context, tx pgx.Tx, id string, h Habit) ([
 	out := []Period{}
 	for rows.Next() {
 		var p Period
-		if e = rows.Scan(&p.ID, &p.Key, &p.Start, &p.End, &p.Timezone, &p.ScheduleVersion, &p.Target, &p.Excluded, &p.EmergencyReason, &p.Amount); e != nil {
+		if e = rows.Scan(&p.ID, &p.Key, &p.Start, &p.End, &p.Timezone, &p.ScheduleVersion, &p.Target, &p.Excluded, &p.EmergencyReason, &p.RestReason, &p.Amount); e != nil {
 			return nil, e
 		}
 		p.Progress = int(min(100, p.Amount/p.Target*100))
