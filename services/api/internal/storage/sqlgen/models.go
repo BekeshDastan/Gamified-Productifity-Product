@@ -17,3 +17,15 @@ type AuditEvent struct {
 	Metadata   []byte             `json:"metadata"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
+
+type IdempotencyRecord struct {
+	UserID         pgtype.UUID        `json:"user_id"`
+	Method         string             `json:"method"`
+	RouteKey       string             `json:"route_key"`
+	IdempotencyKey string             `json:"idempotency_key"`
+	BodyHash       []byte             `json:"body_hash"`
+	StatusCode     pgtype.Int4        `json:"status_code"`
+	ResponseBody   []byte             `json:"response_body"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt      pgtype.Timestamptz `json:"expires_at"`
+}

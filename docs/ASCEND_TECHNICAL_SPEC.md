@@ -1264,7 +1264,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Некорректный JSON и недопустимые поля дают разные документированные ответы.
   - **КОММИТ СЕЙЧАС:** `feat(api): define OpenAPI contracts and error responses`
 
-- [ ] **C013. Защита изменений от конфликтов**
+- [x] **C013. Защита изменений от конфликтов**
   - **Сделать:** Реализовать helpers владельца, If-Match и хранилище idempotency с hash тела и route scope.
   - **Проверить:** Два тела с одним ключом дают 409; результаты разных пользователей не смешиваются.
   - **КОММИТ СЕЙЧАС:** `feat(platform): add ownership versioning and idempotency primitives`

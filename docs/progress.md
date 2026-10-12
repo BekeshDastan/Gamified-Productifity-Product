@@ -56,3 +56,8 @@
 - C012: OpenAPI 3.1, генерация TS types, единые data/meta и error envelope.
   JSON 400 отделён от DTO 422; неизвестные role/owner_id отклоняются, Unicode
   считается символами; пагинация ограничена. Contract/unit tests и typecheck зелёные.
+
+- C013: owner/session context, строгий If-Match, PostgreSQL idempotency scope
+  user+method+concrete route+key и SHA-256 тела. 12 параллельных запросов дают
+  одно выполнение; чужой пользователь/ресурс не получает чужой ответ; другое тело
+  возвращает IDEMPOTENCY_MISMATCH. Unit/integration/vet/staticcheck проходят.
