@@ -292,15 +292,20 @@ func (s *Service) List(r *http.Request) (Page, error) {
 	if size > 100 {
 		return Page{}, invalid("page_size", "Не более 100 записей")
 	}
+	filters, err := queryFilters(r.URL.Query())
+	if err != nil {
+		return Page{}, err
+	}
+	args := filters.args(id, s.clock.Now().UTC())
 	result := Page{Items: []Quest{}, Page: page, PageSize: size}
 	err = storage.WithinTx(r.Context(), s.pool, func(tx pgx.Tx) error {
 		if e := s.promoteStarter(r.Context(), tx, id); e != nil {
 			return e
 		}
-		if e := tx.QueryRow(r.Context(), `SELECT count(*) FROM quests WHERE owner_id=$1 AND archived_at IS NULL`, id).Scan(&result.Total); e != nil {
+		if e := tx.QueryRow(r.Context(), `SELECT count(*) FROM quests WHERE `+filteredWhere, args...).Scan(&result.Total); e != nil {
 			return e
 		}
-		rows, e := tx.Query(r.Context(), `SELECT `+columns+` FROM quests WHERE owner_id=$1 AND archived_at IS NULL ORDER BY created_at DESC,id LIMIT $2 OFFSET $3`, id, size, (page-1)*size)
+		rows, e := tx.Query(r.Context(), `SELECT `+columns+` FROM quests WHERE `+filteredWhere+` ORDER BY `+sorts[filters.Sort]+` LIMIT $11 OFFSET $12`, append(args, size, (page-1)*size)...)
 		if e != nil {
 			return e
 		}
@@ -360,6 +365,7 @@ func decode[T any](w http.ResponseWriter, r *http.Request, fn func(T) (any, erro
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountViews(r)
 		r.Get("/api/v1/quests", func(w http.ResponseWriter, r *http.Request) { q, e := s.List(r); s.reply(w, r, q, e) })
 		r.Post("/api/v1/quests", func(w http.ResponseWriter, r *http.Request) {
 			decode(w, r, func(in Input) (any, error) { return s.Create(r, in) }, s)

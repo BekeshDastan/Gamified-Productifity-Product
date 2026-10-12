@@ -150,6 +150,15 @@ type QuestTag struct {
 	TagID   pgtype.UUID `json:"tag_id"`
 }
 
+type QuestView struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Name      string             `json:"name"`
+	Filters   []byte             `json:"filters"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Tag struct {
 	ID        pgtype.UUID        `json:"id"`
 	OwnerID   pgtype.UUID        `json:"owner_id"`

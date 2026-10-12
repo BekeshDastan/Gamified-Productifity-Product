@@ -1450,7 +1450,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** После reload поля сохранены; серверная валидация отображается в форме.
   - **КОММИТ СЕЙЧАС:** `feat(quests-ui): add quest creation editing and detail views`
 
-- [ ] **C043. Фильтры и Kanban**
+- [x] **C043. Фильтры и Kanban**
   - **Сделать:** Реализовать поиск, фильтры, стабильную сортировку, сохранённые представления и Kanban.
   - **Проверить:** Один набор фильтров даёт одинаковые задачи в обоих представлениях.
   - **КОММИТ СЕЙЧАС:** `feat(quests): add filtering sorting and Kanban views`

@@ -6,6 +6,66 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/quests/views:
+    get:
+      operationId: getQuestViews
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestViews"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: saveQuestView
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestViewInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestView"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/views/{id}:
+    delete:
+      operationId: deleteQuestView
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/quests:
     get:
       operationId: listQuests
@@ -22,6 +82,49 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: area_id
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: string
+        - name: planned_from
+          in: query
+          schema:
+            type: string
+        - name: planned_to
+          in: query
+          schema:
+            type: string
+        - name: overdue
+          in: query
+          schema:
+            type: boolean
+        - name: archived
+          in: query
+          schema:
+            type: boolean
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - newest
+              - oldest
+              - title
+              - planned
+              - priority
       responses:
         "200":
           $ref: "#/components/responses/QuestPage"
@@ -560,11 +663,14 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [data, meta]
+                required:
+                  - data
+                  - meta
                 properties:
                   data:
                     type: object
-                    required: [token]
+                    required:
+                      - token
                     properties:
                       token:
                         type: string
@@ -591,7 +697,9 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [data, meta]
+                required:
+                  - data
+                  - meta
                 properties:
                   data:
                     $ref: "#/components/schemas/Account"
@@ -699,7 +807,9 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [data, meta]
+                required:
+                  - data
+                  - meta
                 properties:
                   data:
                     type: array
@@ -762,6 +872,36 @@ components:
             type: object
             additionalProperties: false
   responses:
+    QuestView:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/QuestViewDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    QuestViews:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestViewDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
     Quest:
       description: Личные данные владельца
       content:
@@ -840,7 +980,9 @@ components:
         application/json:
           schema:
             type: object
-            required: [data, meta]
+            required:
+              - data
+              - meta
             properties:
               data:
                 $ref: "#/components/schemas/Settings"
@@ -852,7 +994,9 @@ components:
         application/json:
           schema:
             type: object
-            required: [data, meta]
+            required:
+              - data
+              - meta
             properties:
               data:
                 $ref: "#/components/schemas/Profile"
@@ -864,11 +1008,14 @@ components:
         application/json:
           schema:
             type: object
-            required: [data, meta]
+            required:
+              - data
+              - meta
             properties:
               data:
                 type: object
-                required: [ok]
+                required:
+                  - ok
                 properties:
                   ok:
                     type: boolean
@@ -881,7 +1028,9 @@ components:
         application/json:
           schema:
             type: object
-            required: [data, meta]
+            required:
+              - data
+              - meta
             properties:
               data:
                 $ref: "#/components/schemas/Session"
@@ -934,7 +1083,7 @@ components:
       required: true
       schema:
         type: string
-        pattern: '^"[1-9][0-9]*"$'
+        pattern: ^"[1-9][0-9]*"$
     IdempotencyKey:
       in: header
       name: Idempotency-Key
@@ -944,6 +1093,70 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    QuestFilters:
+      type: object
+      additionalProperties: false
+      required:
+        - search
+        - status
+        - area_id
+        - priority
+        - planned_from
+        - planned_to
+        - overdue
+        - archived
+        - sort
+      properties:
+        search:
+          type: string
+          maxLength: 200
+        status:
+          type: string
+        area_id:
+          type: string
+        priority:
+          type: string
+        planned_from:
+          type: string
+        planned_to:
+          type: string
+        overdue:
+          type: boolean
+        archived:
+          type: boolean
+        sort:
+          type: string
+          enum:
+            - newest
+            - oldest
+            - title
+            - planned
+            - priority
+    QuestViewInput:
+      type: object
+      required:
+        - name
+        - filters
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        filters:
+          $ref: "#/components/schemas/QuestFilters"
+    QuestViewDTO:
+      allOf:
+        - $ref: "#/components/schemas/QuestViewInput"
+        - type: object
+          required:
+            - id
+            - version
+          properties:
+            id:
+              type: string
+              format: uuid
+            version:
+              type: integer
     QuestInput:
       type: object
       additionalProperties: false
@@ -1384,7 +1597,10 @@ components:
       allOf:
         - $ref: "#/components/schemas/Preferences"
         - type: object
-          required: [version, created_at, updated_at]
+          required:
+            - version
+            - created_at
+            - updated_at
           properties:
             version:
               type: integer
@@ -1398,21 +1614,37 @@ components:
     ProfileInput:
       type: object
       additionalProperties: false
-      required: [name, nickname, avatar]
+      required:
+        - name
+        - nickname
+        - avatar
       properties:
         name:
           type: string
           maxLength: 80
         nickname:
           type: string
-          pattern: "^([a-z0-9_]{3,24})?$"
+          pattern: ^([a-z0-9_]{3,24})?$
         avatar:
           type: string
-          enum: [mountain, compass, sprout, sun, moon, star]
+          enum:
+            - mountain
+            - compass
+            - sprout
+            - sun
+            - moon
+            - star
     Profile:
       type: object
       additionalProperties: false
-      required: [name, nickname, avatar, owner_id, version, created_at, updated_at]
+      required:
+        - name
+        - nickname
+        - avatar
+        - owner_id
+        - version
+        - created_at
+        - updated_at
       properties:
         name:
           $ref: "#/components/schemas/ProfileInput/properties/name"
@@ -1435,7 +1667,8 @@ components:
     ForgotInput:
       type: object
       additionalProperties: false
-      required: [email]
+      required:
+        - email
       properties:
         email:
           type: string
@@ -1444,7 +1677,9 @@ components:
     ResetInput:
       type: object
       additionalProperties: false
-      required: [token, password]
+      required:
+        - token
+        - password
       properties:
         token:
           type: string
@@ -1460,7 +1695,8 @@ components:
     TokenInput:
       type: object
       additionalProperties: false
-      required: [token]
+      required:
+        - token
       properties:
         token:
           type: string
@@ -1470,7 +1706,12 @@ components:
     SessionInfo:
       type: object
       additionalProperties: false
-      required: [id, created_at, expires_at, remember_me, current]
+      required:
+        - id
+        - created_at
+        - expires_at
+        - remember_me
+        - current
       properties:
         id:
           type: string
@@ -1488,7 +1729,9 @@ components:
     Meta:
       type: object
       additionalProperties: false
-      required: [request_id, server_time]
+      required:
+        - request_id
+        - server_time
       properties:
         request_id:
           type: string
@@ -1499,22 +1742,30 @@ components:
     HealthEnvelope:
       type: object
       additionalProperties: false
-      required: [data, meta]
+      required:
+        - data
+        - meta
       properties:
         data:
           type: object
           additionalProperties: false
-          required: [status]
+          required:
+            - status
           properties:
             status:
               type: string
-              enum: [ok, unavailable]
+              enum:
+                - ok
+                - unavailable
         meta:
           $ref: "#/components/schemas/Meta"
     LoginInput:
       type: object
       additionalProperties: false
-      required: [email, password, remember_me]
+      required:
+        - email
+        - password
+        - remember_me
       description: Вход требует pre-auth CSRF и Origin. Токены выдаются только в HttpOnly cookies.
       properties:
         email:
@@ -1531,7 +1782,9 @@ components:
     RegisterInput:
       type: object
       additionalProperties: false
-      required: [email, password]
+      required:
+        - email
+        - password
       description: Регистрация требует pre-auth CSRF и Origin; роль задаётся сервером.
       properties:
         email:
@@ -1548,7 +1801,10 @@ components:
     Session:
       type: object
       additionalProperties: false
-      required: [account, session_id, expires_at]
+      required:
+        - account
+        - session_id
+        - expires_at
       properties:
         account:
           $ref: "#/components/schemas/Account"
@@ -1561,7 +1817,12 @@ components:
     Account:
       type: object
       additionalProperties: false
-      required: [id, email, role, email_verified, created_at]
+      required:
+        - id
+        - email
+        - role
+        - email_verified
+        - created_at
       properties:
         id:
           type: string
@@ -1571,7 +1832,9 @@ components:
           format: email
         role:
           type: string
-          enum: [user, admin]
+          enum:
+            - user
+            - admin
           readOnly: true
         email_verified:
           type: boolean
@@ -1583,38 +1846,40 @@ components:
     ErrorEnvelope:
       type: object
       additionalProperties: false
-      required: [error]
+      required:
+        - error
       properties:
         error:
           type: object
           additionalProperties: false
-          required: [code, message, request_id]
+          required:
+            - code
+            - message
+            - request_id
           properties:
             code:
               type: string
               enum:
-                [
-                  INVALID_JSON,
-                  VALIDATION_ERROR,
-                  EMAIL_TAKEN,
-                  UNAUTHORIZED,
-                  ORIGIN_REJECTED,
-                  CSRF_REJECTED,
-                  REFRESH_IN_PROGRESS,
-                  TOKEN_INVALID,
-                  EMAIL_UNVERIFIED,
-                  FORBIDDEN,
-                  NOT_FOUND,
-                  METHOD_NOT_ALLOWED,
-                  VERSION_CONFLICT,
-                  IDEMPOTENCY_MISMATCH,
-                  OPERATION_IN_PROGRESS,
-                  RATE_LIMITED,
-                  INTERNAL_ERROR,
-                  BODY_TOO_LARGE,
-                  UNSUPPORTED_MEDIA_TYPE,
-                  DEADLINE_EXCEEDED,
-                ]
+                - INVALID_JSON
+                - VALIDATION_ERROR
+                - EMAIL_TAKEN
+                - UNAUTHORIZED
+                - ORIGIN_REJECTED
+                - CSRF_REJECTED
+                - REFRESH_IN_PROGRESS
+                - TOKEN_INVALID
+                - EMAIL_UNVERIFIED
+                - FORBIDDEN
+                - NOT_FOUND
+                - METHOD_NOT_ALLOWED
+                - VERSION_CONFLICT
+                - IDEMPOTENCY_MISMATCH
+                - OPERATION_IN_PROGRESS
+                - RATE_LIMITED
+                - INTERNAL_ERROR
+                - BODY_TOO_LARGE
+                - UNSUPPORTED_MEDIA_TYPE
+                - DEADLINE_EXCEEDED
             message:
               type: string
             request_id:

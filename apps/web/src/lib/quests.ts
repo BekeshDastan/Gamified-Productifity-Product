@@ -54,13 +54,74 @@ export const emptyQuest: QuestInput = {
   tags: [],
   status: "todo",
 };
-export async function listQuests(page = 1, signal?: AbortSignal) {
+export const filterSchema = z.object({
+  search: z.string().max(200),
+  status: z.string(),
+  area_id: z.string(),
+  priority: z.string(),
+  planned_from: z.string(),
+  planned_to: z.string(),
+  overdue: z.boolean(),
+  archived: z.boolean(),
+  sort: z.enum(["newest", "oldest", "title", "planned", "priority"]),
+});
+export type QuestFilters = z.infer<typeof filterSchema>;
+export const emptyFilters: QuestFilters = {
+  search: "",
+  status: "",
+  area_id: "",
+  priority: "",
+  planned_from: "",
+  planned_to: "",
+  overdue: false,
+  archived: false,
+  sort: "newest",
+};
+export const viewSchema = z.object({
+  id: z.uuid(),
+  version: z.number().int(),
+  name: z.string(),
+  filters: filterSchema,
+});
+export async function listQuests(
+  page = 1,
+  signal?: AbortSignal,
+  filters: QuestFilters = emptyFilters,
+) {
   await requireAccount();
   const r = await createApiClient().GET("/api/v1/quests", {
-    params: { query: { page, page_size: 25 } },
+    params: { query: { page, page_size: 25, ...filters } },
     signal,
   });
   return questPage.parse(r.data?.data);
+}
+export async function getQuestViews(signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/quests/views", { signal });
+  return z.array(viewSchema).parse(r.data?.data);
+}
+export async function saveQuestView(name: string, filters: QuestFilters) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    const r = await api.POST("/api/v1/quests/views", {
+      params: authParams(),
+      body: { name, filters },
+    });
+    return viewSchema.parse(r.data?.data);
+  });
+}
+export async function deleteQuestView(view: z.infer<typeof viewSchema>) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    await api.DELETE("/api/v1/quests/views/{id}", {
+      params: {
+        path: { id: view.id },
+        header: { ...authParams().header, "If-Match": '"' + view.version + '"' },
+      },
+    });
+  });
 }
 export async function getQuest(id: string, signal?: AbortSignal) {
   await requireAccount();

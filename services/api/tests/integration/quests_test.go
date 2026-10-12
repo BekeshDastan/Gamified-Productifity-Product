@@ -3,6 +3,7 @@
 package integration
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
@@ -72,5 +73,38 @@ func TestQuestCRUDOwnerPaginationAndStarter(t *testing.T) {
 			t.Fatal("draft duplicated")
 		}
 		source = promoted
+	}
+}
+func TestQuestFiltersAndViews(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "filters@example.test")
+	other, _ := f.signedIn(t, "filters-other@example.test")
+	for _, title := range []string{"Alpha", "Beta", "Alphabet"} {
+		in := questInput(title)
+		in.Priority = "high"
+		readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", in))
+	}
+	r := f.privateRequest(t, client, "GET", "/quests?search=Alp&priority=high&sort=title", "", nil)
+	var body struct {
+		Data quests.Page `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &body) != nil || body.Data.Total != 2 || body.Data.Items[0].Title != "Alpha" {
+		t.Fatal("filtered order", r.status, string(r.body))
+	}
+	r = f.privateRequest(t, client, "POST", "/quests/views", "", quests.ViewInput{Name: "Важное", Filters: quests.Filters{Search: "Alp", Priority: "high", Sort: "title"}})
+	var view struct {
+		Data quests.View `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &view) != nil {
+		t.Fatal("view create")
+	}
+	if r = f.privateRequest(t, other, "DELETE", "/quests/views/"+view.Data.ID, `"1"`, nil); r.status != 404 {
+		t.Fatal("foreign view removed")
+	}
+	if r = f.privateRequest(t, client, "GET", "/quests/views", "", nil); r.status != 200 || !bytes.Contains(r.body, []byte("Важное")) {
+		t.Fatal("view lost")
+	}
+	if r = f.privateRequest(t, client, "GET", "/quests?sort=arbitrary", "", nil); r.status != 422 {
+		t.Fatal("invalid order")
 	}
 }

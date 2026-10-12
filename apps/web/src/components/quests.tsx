@@ -7,6 +7,7 @@ import { SafeLink, useConfirmDiscard } from "@/lib/forms/unsaved-changes";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import {
   emptyQuest,
+  emptyFilters,
   getQuest,
   listQuests,
   questInput,
@@ -21,18 +22,21 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input, Select, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
+import { QuestFiltersPanel } from "./quest-filters";
 
 export function Quests({ id }: { id?: string }) {
   const auth = useAuth();
   const account = auth.session?.account.id;
   const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState(emptyFilters);
+  const [board, setBoard] = useState(false);
   const [editing, setEditing] = useState(false);
   const [created, setCreated] = useState<Quest>();
   const confirmDiscard = useConfirmDiscard();
   const query = useQuery<Quest | Awaited<ReturnType<typeof listQuests>>>({
-    queryKey: ["account", account, "quests", id ?? "", page],
+    queryKey: ["account", account, "quests", id ?? "", page, filters],
     enabled: !!account,
-    queryFn: ({ signal }) => (id ? getQuest(id, signal) : listQuests(page, signal)),
+    queryFn: ({ signal }) => (id ? getQuest(id, signal) : listQuests(page, signal, filters)),
   });
   const labels = useQuery({
     queryKey: ["account", account, "quest-labels"],
@@ -130,29 +134,83 @@ export function Quests({ id }: { id?: string }) {
       )}
       {collection && (
         <>
+          <QuestFiltersPanel
+            labels={labels.data}
+            onApply={(f) => {
+              setFilters(f);
+              setPage(1);
+            }}
+          />
+          <div className="button-row">
+            <Button
+              variant={board ? "secondary" : "primary"}
+              aria-pressed={!board}
+              onClick={() => setBoard(false)}
+            >
+              Список
+            </Button>
+            <Button
+              variant={board ? "primary" : "secondary"}
+              aria-pressed={board}
+              onClick={() => setBoard(true)}
+            >
+              Доска
+            </Button>
+          </div>
           <p className="ui-hint">
             Найдено: {collection.total}. Награды подключатся на этапе системы прогресса.
           </p>
-          <div className="quest-list">
-            {collection.items.map((q) => (
-              <Card key={q.id}>
-                <h2>
-                  <SafeLink className="text-link" href={"/app/quests/" + q.id}>
-                    {q.title}
-                  </SafeLink>
-                </h2>
-                <p>
-                  {statuses[q.status]} · Сложность {q.difficulty}/5
-                </p>
-                <p>
-                  План: {q.planned_date ?? "не задан"} · Оценка: {q.estimated_minutes} мин.
-                </p>
-                {q.deadline && settings.data && (
-                  <p>Дедлайн: {formatMoment(q.deadline, settings.data)}</p>
-                )}
-              </Card>
-            ))}
-          </div>
+          {!board && (
+            <div className="quest-list">
+              {collection.items.map((q) => (
+                <Card key={q.id}>
+                  <h2>
+                    <SafeLink className="text-link" href={"/app/quests/" + q.id}>
+                      {q.title}
+                    </SafeLink>
+                  </h2>
+                  <p>
+                    {statuses[q.status]} · Сложность {q.difficulty}/5
+                  </p>
+                  <p>
+                    План: {q.planned_date ?? "не задан"} · Оценка: {q.estimated_minutes} мин.
+                  </p>
+                  {q.deadline && settings.data && (
+                    <p>Дедлайн: {formatMoment(q.deadline, settings.data)}</p>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+          {board && (
+            <>
+              <p className="ui-hint">
+                Доска показывает те же задачи текущей страницы. Откройте карточку для изменения
+                статуса.
+              </p>
+              <div className="quest-kanban" aria-label="Доска задач" tabIndex={0}>
+                {Object.entries(statuses).map(([status, label]) => (
+                  <section className="quest-column" key={status}>
+                    <h2>
+                      {label} · {collection.items.filter((q) => q.status === status).length}
+                    </h2>
+                    {collection.items
+                      .filter((q) => q.status === status)
+                      .map((q) => (
+                        <Card key={q.id}>
+                          <h3>
+                            <SafeLink className="text-link" href={"/app/quests/" + q.id}>
+                              {q.title}
+                            </SafeLink>
+                          </h3>
+                          <p>План: {q.planned_date ?? "не задан"}</p>
+                        </Card>
+                      ))}
+                  </section>
+                ))}
+              </div>
+            </>
+          )}
           {collection.total === 0 && (
             <Card>
               <h2>Начните с одного шага</h2>
