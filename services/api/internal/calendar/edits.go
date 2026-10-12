@@ -84,28 +84,34 @@ func (s *Service) mountEdits(r chi.Router) {
 		decode(s, w, r, func(in struct {
 			PlannedDate string `json:"planned_date"`
 			Reason      string `json:"reason"`
-		}) (any, error) { if _, e := day(in.PlannedDate); e != nil {
-			return nil, e
-		}; if e := validReason(in.Reason); e != nil {
-			return nil, e
-		}; id, e := owner(r.Context()); if e != nil {
-			return nil, e
-		}; return s.idempotent(r, in, func(tx pgx.Tx) (any, error) {
-			var version int64
-			if !uuid(chi.URLParam(r, "id")) {
-				return nil, problem(404, "NOT_FOUND", "Задача не найдена")
+		}) (any, error) {
+			if _, e := day(in.PlannedDate); e != nil {
+				return nil, e
 			}
-			e := tx.QueryRow(r.Context(), `SELECT version FROM quests WHERE owner_id=$1 AND id=$2`, id, chi.URLParam(r, "id")).Scan(&version)
-			if e == pgx.ErrNoRows {
-				return nil, problem(404, "NOT_FOUND", "Задача не найдена")
+			if e := validReason(in.Reason); e != nil {
+				return nil, e
 			}
+			id, e := owner(r.Context())
 			if e != nil {
 				return nil, e
 			}
-			if p := platform.MatchVersion(r, version); p != nil {
-				return nil, p
-			}
-			return s.quests.ScheduleInTx(r.Context(), tx, id, chi.URLParam(r, "id"), version, in.PlannedDate, in.Reason)
-		}) })
+			return s.idempotent(r, in, func(tx pgx.Tx) (any, error) {
+				var version int64
+				if !uuid(chi.URLParam(r, "id")) {
+					return nil, problem(404, "NOT_FOUND", "Задача не найдена")
+				}
+				e := tx.QueryRow(r.Context(), `SELECT version FROM quests WHERE owner_id=$1 AND id=$2`, id, chi.URLParam(r, "id")).Scan(&version)
+				if e == pgx.ErrNoRows {
+					return nil, problem(404, "NOT_FOUND", "Задача не найдена")
+				}
+				if e != nil {
+					return nil, e
+				}
+				if p := platform.MatchVersion(r, version); p != nil {
+					return nil, p
+				}
+				return s.quests.ScheduleInTx(r.Context(), tx, id, chi.URLParam(r, "id"), version, in.PlannedDate, in.Reason)
+			})
+		})
 	})
 }

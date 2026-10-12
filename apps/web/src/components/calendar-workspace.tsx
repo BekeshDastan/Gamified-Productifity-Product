@@ -18,6 +18,7 @@ import {
   calendarInput,
   createEvent,
   editCalendar,
+  createSeries,
   type CalendarInput,
   type CalendarEvent,
 } from "@/lib/calendar";
@@ -62,6 +63,7 @@ export default function CalendarWorkspace() {
     queryKey: ["account", account, "calendar", range, settings.data?.timezone],
     enabled: !!account && !!range.from,
     queryFn: ({ signal }) => calendarRange(range.from, range.to, signal),
+    refetchInterval: (q) => (q.state.data?.materializing ? 500 : false),
   });
   if (auth.session === undefined) return <p role="status">Проверяем вход…</p>;
   if (!account)
@@ -229,7 +231,7 @@ export default function CalendarWorkspace() {
         ✓ Выполнено · ↷ Перенесено · − Пропущено · × Не получилось. Дедлайн задачи задаётся отдельно
         от времени работы.
       </p>
-      {data.isFetching && <p role="status">Обновляем события…</p>}
+      {(data.isFetching || data.data?.materializing) && <p role="status">Обновляем события…</p>}
       {data.isError && (
         <p role="alert">
           Не удалось загрузить диапазон.{" "}
@@ -321,8 +323,18 @@ function EventForm({
   current?: CalendarEvent;
 }) {
   const key = useRef(crypto.randomUUID());
-  const schema = calendarInput.extend({ reason: z.string().max(1000), cancelled: z.boolean() });
-  const editor = useValidatedForm<CalendarInput & { reason: string; cancelled: boolean }>({
+  const schema = calendarInput.extend({
+    reason: z.string().max(1000),
+    cancelled: z.boolean(),
+    frequency: z.enum(["none", "daily", "weekly", "monthly"]),
+    interval: z.number().int().min(1).max(52),
+    weekdays: z.array(z.number()),
+    ending: z.enum(["count", "until"]),
+    count: z.number().int().min(1).max(10000),
+    until: z.string(),
+    kind: z.enum(["event", "task"]),
+  });
+  const editor = useValidatedForm<z.infer<typeof schema>>({
     schema,
     defaultValues: {
       ...(current ?? {
@@ -336,11 +348,33 @@ function EventForm({
       }),
       reason: "",
       cancelled: current?.cancelled ?? false,
+      frequency: "none",
+      interval: 1,
+      weekdays: [1, 3, 5],
+      ending: "count",
+      count: 10,
+      until: "",
+      kind: "event",
     },
     fields: ["title", "area_id", "quest_id", "all_day", "start", "end", "timezone", "reason"],
     save: async (values) => {
       const input = calendarInput.parse(values);
       if (current) await editCalendar(current, input, values.reason, key.current, values.cancelled);
+      else if (values.frequency !== "none")
+        await createSeries(
+          {
+            event: { ...input, quest_id: null },
+            kind: values.kind,
+            rule: {
+              frequency: values.frequency,
+              interval: values.interval,
+              weekdays: values.frequency === "weekly" ? values.weekdays : [],
+              count: values.ending === "count" ? values.count : 0,
+              until: values.ending === "until" ? values.until : null,
+            },
+          },
+          key.current,
+        );
       else await createEvent(input, key.current);
       key.current = crypto.randomUUID();
       onSaved();
@@ -409,6 +443,70 @@ function EventForm({
           <input type="checkbox" {...form.register("cancelled")} />
           Отменить событие
         </label>
+      )}
+      {!current && (
+        <>
+          <Select label="Повторение" {...form.register("frequency")}>
+            <option value="none">Не повторять</option>
+            <option value="daily">Ежедневно</option>
+            <option value="weekly">По дням недели</option>
+            <option value="monthly">Ежемесячно по числу</option>
+          </Select>
+          {form.watch("frequency") !== "none" && (
+            <>
+              <Select label="Что повторять" {...form.register("kind")}>
+                <option value="event">Событие</option>
+                <option value="task">Отдельную задачу каждый раз</option>
+              </Select>
+              <Input
+                label="Интервал повторения"
+                type="number"
+                {...form.register("interval", { valueAsNumber: true })}
+              />
+              {form.watch("frequency") === "weekly" && (
+                <fieldset>
+                  <legend>Дни недели</legend>
+                  {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((d, i) => (
+                    <label key={d} className="check-row">
+                      <input
+                        type="checkbox"
+                        checked={form.watch("weekdays").includes(i + 1)}
+                        onChange={(e) =>
+                          form.setValue(
+                            "weekdays",
+                            e.target.checked
+                              ? [...form.getValues("weekdays"), i + 1]
+                              : form.getValues("weekdays").filter((v) => v !== i + 1),
+                            { shouldDirty: true },
+                          )
+                        }
+                      />
+                      {d}
+                    </label>
+                  ))}
+                </fieldset>
+              )}
+              <Select label="Конец повторения" {...form.register("ending")}>
+                <option value="count">По числу повторений</option>
+                <option value="until">По дате включительно</option>
+              </Select>
+              {form.watch("ending") === "count" ? (
+                <Input
+                  label="Число повторений"
+                  type="number"
+                  {...form.register("count", { valueAsNumber: true })}
+                />
+              ) : (
+                <Input label="Последний день серии" type="date" {...form.register("until")} />
+              )}
+              <p className="ui-hint">
+                На 31-е число короткий месяц пропускается. Время в пропущенном часе при переводе
+                часов пропускается; двойное время означает более ранний момент. Серия ограничена 10
+                годами. Часовой пояс серии: {zone}.
+              </p>
+            </>
+          )}
+        </>
       )}
       <Button type="submit">Сохранить событие</Button>
     </Form>

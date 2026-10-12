@@ -19,6 +19,9 @@ export const calendarEvent = calendarInput.extend({
   source: z.string(),
   status: z.string(),
   cancelled: z.boolean(),
+  series_id: z.uuid().nullable(),
+  occurrence_key: z.string().nullable(),
+  series_version: z.number().int(),
 });
 export type CalendarInput = z.infer<typeof calendarInput>;
 export type CalendarEvent = z.infer<typeof calendarEvent>;
@@ -28,7 +31,9 @@ export async function calendarRange(from: string, to: string, signal?: AbortSign
     params: { query: { from, to } },
     signal,
   });
-  return z.object({ items: z.array(calendarEvent), timezone: z.string() }).parse(r.data?.data);
+  return z
+    .object({ items: z.array(calendarEvent), timezone: z.string(), materializing: z.boolean() })
+    .parse(r.data?.data);
 }
 export async function createEvent(input: CalendarInput, key: string) {
   await requireAccount();
@@ -39,6 +44,35 @@ export async function createEvent(input: CalendarInput, key: string) {
       body: input,
     });
     return calendarEvent.parse(r.data?.data);
+  });
+}
+export const recurrenceRule = z.object({
+  frequency: z.enum(["daily", "weekly", "monthly"]),
+  interval: z.number().int().min(1).max(52),
+  weekdays: z.array(z.number().int().min(1).max(7)),
+  until: z.string().nullable(),
+  count: z.number().int().min(0).max(10000),
+});
+export const seriesInput = z.object({
+  event: calendarInput,
+  rule: recurrenceRule,
+  kind: z.enum(["event", "task"]),
+});
+export const calendarSeries = seriesInput.extend({
+  id: z.uuid(),
+  version: z.number().int(),
+  ends_before: z.string().nullable(),
+});
+export type SeriesInput = z.infer<typeof seriesInput>;
+export async function createSeries(input: SeriesInput, key: string) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    const r = await api.POST("/api/v1/calendar/series", {
+      params: { header: { ...authParams().header, "Idempotency-Key": key } },
+      body: input,
+    });
+    return calendarSeries.parse(r.data?.data);
   });
 }
 export async function editCalendar(

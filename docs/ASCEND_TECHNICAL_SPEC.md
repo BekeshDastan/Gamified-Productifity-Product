@@ -1553,7 +1553,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Ошибка сохранения откатывает визуальное перемещение; task list отражает новую дату.
   - **КОММИТ СЕЙЧАС:** `feat(calendar): persist drag drop resize and form edits`
 
-- [ ] **C060. Правила повторения**
+- [x] **C060. Правила повторения**
   - **Сделать:** Реализовать поддерживаемые частоты, оконный генератор и уникальные occurrence keys.
   - **Проверить:** Повтор запроса диапазона не создаёт новые копии; ограничение 400 экземпляров соблюдается.
   - **КОММИТ СЕЙЧАС:** `feat(calendar): add deterministic recurrence generation`

@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/calendar/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createCalendarSeries"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/calendar/series/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCalendarSeries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/calendar/events/{id}": {
         parameters: {
             query?: never;
@@ -1259,6 +1291,32 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        RecurrenceRule: {
+            /** @enum {string} */
+            frequency: "daily" | "weekly" | "monthly";
+            interval: number;
+            weekdays: number[];
+            until: string | null;
+            count: number;
+        };
+        SeriesInput: {
+            event: components["schemas"]["CalendarInput"];
+            rule: components["schemas"]["RecurrenceRule"];
+            /** @enum {string} */
+            kind: "event" | "task";
+        };
+        CalendarSeriesDTO: {
+            event: components["schemas"]["CalendarInput"];
+            rule: components["schemas"]["RecurrenceRule"];
+            /** @enum {string} */
+            kind: "event" | "task";
+            /** Format: uuid */
+            id: string;
+            version: number;
+            ends_before: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         CalendarInput: {
             title: string;
             area_id: string | null;
@@ -1282,6 +1340,9 @@ export interface components {
             source: string;
             status: string;
             cancelled: boolean;
+            series_id: string | null;
+            occurrence_key: string | null;
+            series_version: number;
         };
         GoalTransition: {
             reason: string;
@@ -1771,6 +1832,18 @@ export interface components {
     };
     responses: {
         /** @description Личные данные владельца */
+        CalendarSeries: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["CalendarSeriesDTO"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
         CalendarEvent: {
             headers: {
                 [name: string]: unknown;
@@ -1792,6 +1865,7 @@ export interface components {
                     data: {
                         items: components["schemas"]["CalendarEventDTO"][];
                         timezone: string;
+                        materializing: boolean;
                     };
                     meta: components["schemas"]["Meta"];
                 };
@@ -2163,6 +2237,48 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    createCalendarSeries: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeriesInput"];
+            };
+        };
+        responses: {
+            200: components["responses"]["CalendarSeries"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getCalendarSeries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["CalendarSeries"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     editCalendarEvent: {
         parameters: {
             query?: never;
@@ -2179,7 +2295,14 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CalendarInput"] & {
+                "application/json": {
+                    title: string;
+                    area_id: string | null;
+                    quest_id: string | null;
+                    all_day: boolean;
+                    start: string;
+                    end: string;
+                    timezone: string;
                     reason: string;
                     quest_version: number;
                     cancelled: boolean;

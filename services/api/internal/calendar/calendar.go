@@ -40,16 +40,20 @@ type Input struct {
 }
 type Event struct {
 	Input
-	ID           string `json:"id"`
-	Version      int64  `json:"version"`
-	QuestVersion int64  `json:"quest_version"`
-	Source       string `json:"source"`
-	Status       string `json:"status"`
-	Cancelled    bool   `json:"cancelled"`
+	ID            string  `json:"id"`
+	Version       int64   `json:"version"`
+	QuestVersion  int64   `json:"quest_version"`
+	Source        string  `json:"source"`
+	Status        string  `json:"status"`
+	Cancelled     bool    `json:"cancelled"`
+	SeriesID      *string `json:"series_id"`
+	OccurrenceKey *string `json:"occurrence_key"`
+	SeriesVersion int64   `json:"series_version"`
 }
 type Page struct {
-	Items    []Event `json:"items"`
-	Timezone string  `json:"timezone"`
+	Items         []Event `json:"items"`
+	Timezone      string  `json:"timezone"`
+	Materializing bool    `json:"materializing"`
 }
 type Edit struct {
 	Input
@@ -122,12 +126,12 @@ func (s *Service) lock(ctx context.Context, tx pgx.Tx, id string) error {
 	return tx.QueryRow(ctx, `SELECT owner_id::text FROM profiles WHERE owner_id=$1 FOR UPDATE`, id).Scan(&v)
 }
 
-const columns = `e.payload,e.id::text,e.version,e.cancelled,COALESCE(q.version,0),COALESCE(q.status,'planned')`
+const columns = `e.payload,e.id::text,e.version,e.cancelled,COALESCE(q.version,0),COALESCE(q.status,'planned'),e.series_id::text,e.occurrence_key::text,COALESCE((SELECT version FROM recurrence_series WHERE owner_id=e.owner_id AND id=e.series_id),0)`
 
 func scan(row pgx.Row) (Event, error) {
 	var v Event
 	var data []byte
-	e := row.Scan(&data, &v.ID, &v.Version, &v.Cancelled, &v.QuestVersion, &v.Status)
+	e := row.Scan(&data, &v.ID, &v.Version, &v.Cancelled, &v.QuestVersion, &v.Status, &v.SeriesID, &v.OccurrenceKey, &v.SeriesVersion)
 	if e == nil {
 		e = json.Unmarshal(data, &v.Input)
 	}
@@ -265,6 +269,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountEdits(r)
+		s.mountSeries(r)
 		r.Get("/api/v1/calendar", func(w http.ResponseWriter, r *http.Request) { v, e := s.List(r); s.reply(w, r, v, e) })
 		r.Post("/api/v1/calendar/events", func(w http.ResponseWriter, r *http.Request) {
 			decode(s, w, r, func(in Input) (any, error) {

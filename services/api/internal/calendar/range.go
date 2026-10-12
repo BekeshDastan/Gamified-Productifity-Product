@@ -39,6 +39,10 @@ func (s *Service) List(r *http.Request) (Page, error) {
 		}
 		start := time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, zone)
 		end := time.Date(to.Year(), to.Month(), to.Day(), 0, 0, 0, 0, zone)
+		out.Materializing, e = s.materialize(r.Context(), tx, id, from, to)
+		if e != nil {
+			return e
+		}
 		rows, e := tx.Query(r.Context(), `SELECT `+columns+` FROM calendar_events e LEFT JOIN quests q ON q.owner_id=e.owner_id AND q.id=e.quest_id WHERE e.owner_id=$1 AND (q.id IS NULL OR q.archived_at IS NULL) AND ((e.all_day AND e.start_date<$3::text::date AND e.end_date>$2::text::date) OR (NOT e.all_day AND e.starts_at<$5 AND e.ends_at>$4)) ORDER BY e.created_at,e.id LIMIT 2001`, id, from.Format("2006-01-02"), to.Format("2006-01-02"), start, end)
 		if e != nil {
 			return e

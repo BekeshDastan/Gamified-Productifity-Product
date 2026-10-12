@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"testing"
 )
 
@@ -34,6 +35,55 @@ func readEvent(t *testing.T, r authResponse) calendar.Event {
 	return v.Data
 }
 func eventVersion(v calendar.Event) string { return fmt.Sprintf(`"%d"`, v.Version) }
+func TestCalendarRecurrenceWindowLimitAndWorkerReplay(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "calendar-series@example.test")
+	in := calendar.SeriesInput{Event: calendarInput("Ежедневно"), Kind: "event", Rule: calendar.Rule{Frequency: "daily", Interval: 1, Count: 365, Weekdays: []int{}}}
+	in.Event.Start = "2026-01-01"
+	in.Event.End = "2026-01-02"
+	for i := 0; i < 2; i++ {
+		r := f.privateRequest(t, client, "POST", "/calendar/series", "", in)
+		if r.status != 200 {
+			t.Fatalf("series %d %s", r.status, r.body)
+		}
+	}
+	path := "/calendar?from=2026-01-01&to=2027-01-01"
+	first := readCalendar(t, f.privateRequest(t, client, "GET", path, "", nil))
+	if !first.Materializing || len(first.Items) != 400 {
+		t.Fatal("400 budget", len(first.Items), first.Materializing)
+	}
+	second := readCalendar(t, f.privateRequest(t, client, "GET", path, "", nil))
+	if second.Materializing || len(second.Items) != 730 {
+		t.Fatal("continuation", len(second.Items))
+	}
+	third := readCalendar(t, f.privateRequest(t, client, "GET", path, "", nil))
+	if len(third.Items) != 730 {
+		t.Fatal("duplicates")
+	}
+	in.Kind = "task"
+	in.Event = calendarInput("Отдельная задача")
+	in.Rule.Count = 3
+	r := f.privateRequest(t, client, "POST", "/calendar/series", "", in)
+	if r.status != 200 {
+		t.Fatal("task series", r.status)
+	}
+	for i := 0; i < 2; i++ {
+		svc := calendar.NewService(f.pool, f.clock, quests.NewService(f.pool, f.clock))
+		if e := svc.FillHorizon(t.Context()); e != nil {
+			t.Fatal(e)
+		}
+	}
+	var tasks, occurrences int
+	if e := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM quests WHERE payload->>'title'='Отдельная задача'`).Scan(&tasks); e != nil {
+		t.Fatal(e)
+	}
+	if e := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM calendar_events WHERE quest_id IS NOT NULL`).Scan(&occurrences); e != nil {
+		t.Fatal(e)
+	}
+	if tasks != 3 || occurrences != 3 {
+		t.Fatal("worker/task copies", tasks, occurrences)
+	}
+}
 func TestCalendarMoveResizeVersionAndTaskSync(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, _ := f.signedIn(t, "calendar-move@example.test")
