@@ -24,6 +24,7 @@ import { Input, Select, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
 import { QuestFiltersPanel } from "./quest-filters";
 import { QuestActions, QuestHistory } from "./quest-actions";
+import { QuestStructure, QuestPicker } from "./quest-structure";
 
 export function Quests({ id }: { id?: string }) {
   const auth = useAuth();
@@ -32,6 +33,7 @@ export function Quests({ id }: { id?: string }) {
   const [filters, setFilters] = useState(emptyFilters);
   const [board, setBoard] = useState(false);
   const [revision, setRevision] = useState(0);
+  const [newParent, setNewParent] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [created, setCreated] = useState<Quest>();
   const confirmDiscard = useConfirmDiscard();
@@ -101,6 +103,8 @@ export function Quests({ id }: { id?: string }) {
       )}
       {editing && (
         <QuestForm
+          key={newParent ?? "new"}
+          initialParent={newParent}
           labels={labels.data}
           onSaved={(q) => {
             setCreated(q);
@@ -140,6 +144,19 @@ export function Quests({ id }: { id?: string }) {
             }}
           />
           <QuestHistory quest={current} />
+          <QuestStructure
+            quest={current}
+            onChanged={() => {
+              setRevision((v) => v + 1);
+              void query.refetch();
+            }}
+            onAddChild={() => {
+              if (confirmDiscard()) {
+                setNewParent(current.id);
+                setEditing(true);
+              }
+            }}
+          />
         </>
       )}
       {collection && (
@@ -246,6 +263,7 @@ export function Quests({ id }: { id?: string }) {
   );
 }
 const formSchema = questInput.extend({
+  parent_id: z.string(),
   area_id: z.string(),
   deadline: z
     .string()
@@ -263,6 +281,7 @@ function formValues(q: QuestInput): Fields {
   return {
     ...q,
     area_id: q.area_id ?? "",
+    parent_id: q.parent_id ?? "",
     deadline: q.deadline ?? "",
     planned_date: q.planned_date ?? "",
   };
@@ -271,10 +290,12 @@ function QuestForm({
   current,
   labels,
   onSaved,
+  initialParent,
 }: {
   current?: Quest;
   labels: Labels;
   onSaved: (q: Quest) => void;
+  initialParent?: string | null;
 }) {
   const cache = useQueryClient();
   const confirmDiscard = useConfirmDiscard();
@@ -282,7 +303,7 @@ function QuestForm({
   const [record, setRecord] = useState(current);
   const flow = useValidatedForm<Fields>({
     schema: formSchema,
-    defaultValues: formValues(current ?? emptyQuest),
+    defaultValues: formValues(current ?? { ...emptyQuest, parent_id: initialParent ?? null }),
     fields: [
       "title",
       "description",
@@ -295,6 +316,8 @@ function QuestForm({
       "actual_minutes",
       "tags",
       "status",
+      "parent_id",
+      "required",
     ],
     save: async (values) => {
       setSaved(false);
@@ -302,6 +325,7 @@ function QuestForm({
         {
           ...values,
           area_id: values.area_id || null,
+          parent_id: values.parent_id || null,
           deadline: values.deadline || null,
           planned_date: values.planned_date || null,
         },
@@ -346,6 +370,21 @@ function QuestForm({
               </option>
             ))}
         </Select>
+        <QuestPicker
+          label="Родительская задача"
+          value={f.watch("parent_id")}
+          onChange={(id) => f.setValue("parent_id", id, { shouldDirty: true })}
+          exclude={current?.id}
+        />
+        {errors.parent_id && (
+          <p role="alert" className="ui-error">
+            {errors.parent_id.message}
+          </p>
+        )}
+        <label className="check-row">
+          <input type="checkbox" {...f.register("required")} />
+          Обязательная подзадача
+        </label>
         <div className="quest-grid">
           <Select label="Приоритет" {...f.register("priority")}>
             <option value="low">Низкий</option>

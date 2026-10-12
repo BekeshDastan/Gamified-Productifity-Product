@@ -95,6 +95,20 @@ func (s *Service) transitionTx(r *http.Request, tx pgx.Tx, id, key, action strin
 		return q, invalid("reason", "Укажите причину")
 	}
 	before := q
+	if action == "start" || action == "complete" {
+		if err := s.checkBlocked(ctx, tx, id, key); err != nil {
+			return q, err
+		}
+	}
+	if action == "complete" {
+		sum, e := summary(ctx, tx, id, key)
+		if e != nil {
+			return q, e
+		}
+		if sum.Container && sum.RequiredLeaves > sum.CompletedLeaves {
+			return q, problem(409, "CHILDREN_INCOMPLETE", "Сначала завершите обязательные подзадачи")
+		}
+	}
 	if action == "postpone" {
 		if in.ReturnToBacklog {
 			if in.PlannedDate != nil {
@@ -133,6 +147,12 @@ func (s *Service) transitionTx(r *http.Request, tx pgx.Tx, id, key, action strin
 	q, err = scan(tx.QueryRow(ctx, `UPDATE quests SET payload=$3,status=$4,completed_at=$5,version=version+1,updated_at=$6 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, next, q.CompletedAt, s.clock.Now().UTC()))
 	if err == nil {
 		err = s.event(ctx, tx, id, action, in.Reason, &before, q)
+	}
+	if err == nil && q.ParentID != nil {
+		err = s.rollup(ctx, tx, id, *q.ParentID)
+	}
+	if err == nil {
+		err = s.rollupDependents(ctx, tx, id, q.ID)
 	}
 	return q, err
 }

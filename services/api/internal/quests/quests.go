@@ -40,6 +40,8 @@ type Input struct {
 	ActualMinutes    int        `json:"actual_minutes"`
 	Tags             []string   `json:"tags"`
 	Status           string     `json:"status"`
+	ParentID         *string    `json:"parent_id"`
+	Required         bool       `json:"required"`
 }
 type Quest struct {
 	Input
@@ -107,6 +109,9 @@ func Validate(in Input) (Input, error) {
 	}
 	if in.AreaID != nil && !uuid(*in.AreaID) {
 		return in, invalid("area_id", "Выберите направление")
+	}
+	if in.ParentID != nil && !uuid(*in.ParentID) {
+		return in, invalid("parent_id", "Выберите родителя")
 	}
 	if in.Tags == nil {
 		in.Tags = []string{}
@@ -188,6 +193,9 @@ func syncTags(ctx context.Context, tx pgx.Tx, id, key string, tags []string) err
 	return nil
 }
 func (s *Service) insert(ctx context.Context, tx pgx.Tx, id string, in Input) (Quest, error) {
+	if err := s.validateParent(ctx, tx, id, "", in.ParentID); err != nil {
+		return Quest{}, err
+	}
 	if err := s.labels(ctx, tx, id, in); err != nil {
 		return Quest{}, err
 	}
@@ -195,12 +203,15 @@ func (s *Service) insert(ctx context.Context, tx pgx.Tx, id string, in Input) (Q
 	if err != nil {
 		return Quest{}, err
 	}
-	q, err := scan(tx.QueryRow(ctx, `INSERT INTO quests(owner_id,area_id,payload,status,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$5) RETURNING `+columns, id, in.AreaID, data, in.Status, s.clock.Now().UTC()))
+	q, err := scan(tx.QueryRow(ctx, `INSERT INTO quests(owner_id,area_id,parent_id,payload,status,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$6) RETURNING `+columns, id, in.AreaID, in.ParentID, data, in.Status, s.clock.Now().UTC()))
 	if err == nil {
 		err = syncTags(ctx, tx, id, q.ID, in.Tags)
 	}
 	if err == nil {
 		err = s.event(ctx, tx, id, "created", "", nil, q)
+	}
+	if err == nil && q.ParentID != nil {
+		err = s.rollup(ctx, tx, id, *q.ParentID)
 	}
 	return q, err
 }
@@ -254,6 +265,9 @@ func (s *Service) Update(r *http.Request, key string, in Input) (Quest, error) {
 		if current.Status != in.Status {
 			return invalid("status", "Используйте действие изменения статуса")
 		}
+		if err := s.validateParent(r.Context(), tx, id, key, in.ParentID); err != nil {
+			return err
+		}
 		if err := s.labels(r.Context(), tx, id, in); err != nil {
 			return err
 		}
@@ -261,12 +275,18 @@ func (s *Service) Update(r *http.Request, key string, in Input) (Quest, error) {
 		if err != nil {
 			return err
 		}
-		q, err = scan(tx.QueryRow(r.Context(), `UPDATE quests SET payload=$3,area_id=$4,version=version+1,updated_at=$5 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, in.AreaID, s.clock.Now().UTC()))
+		q, err = scan(tx.QueryRow(r.Context(), `UPDATE quests SET payload=$3,area_id=$4,parent_id=$6,version=version+1,updated_at=$5 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, in.AreaID, s.clock.Now().UTC(), in.ParentID))
 		if err == nil {
 			err = syncTags(r.Context(), tx, id, key, in.Tags)
 		}
 		if err == nil {
 			err = s.event(r.Context(), tx, id, "edited", "", &current, q)
+		}
+		if err == nil && current.ParentID != nil {
+			err = s.rollup(r.Context(), tx, id, *current.ParentID)
+		}
+		if err == nil && q.ParentID != nil {
+			err = s.rollup(r.Context(), tx, id, *q.ParentID)
 		}
 		return err
 	})
@@ -341,7 +361,7 @@ func (s *Service) promoteStarter(ctx context.Context, tx pgx.Tx, id string) erro
 	if err != nil {
 		return err
 	}
-	q, err := s.insert(ctx, tx, id, Input{Title: title, Priority: "normal", Difficulty: 1, Tags: []string{}, Status: "backlog"})
+	q, err := s.insert(ctx, tx, id, Input{Title: title, Priority: "normal", Difficulty: 1, Tags: []string{}, Status: "backlog", Required: true})
 	if err != nil {
 		return err
 	}
@@ -373,6 +393,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		r.Use(protect)
 		s.mountViews(r)
 		s.mountLifecycle(r)
+		s.mountStructure(r)
 		r.Get("/api/v1/quests", func(w http.ResponseWriter, r *http.Request) { q, e := s.List(r); s.reply(w, r, q, e) })
 		r.Post("/api/v1/quests", func(w http.ResponseWriter, r *http.Request) {
 			decode(w, r, func(in Input) (any, error) { return s.Create(r, in) }, s)

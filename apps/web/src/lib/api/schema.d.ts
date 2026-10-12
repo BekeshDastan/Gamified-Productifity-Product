@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/quests/{id}/structure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["questStructure"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quests/{id}/dependencies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["questDependencies"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/quests/{id}/start": {
         parameters: {
             query?: never;
@@ -603,6 +635,17 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        QuestDependencies: {
+            ids: string[];
+            reason: string;
+        };
+        QuestStructureDTO: {
+            container: boolean;
+            required_leaves: number;
+            completed_leaves: number;
+            children: components["schemas"]["QuestDTO"][];
+            dependencies: components["schemas"]["QuestDTO"][];
+        };
         QuestTransition: {
             reason?: string;
             planned_date?: string | null;
@@ -654,6 +697,8 @@ export interface components {
             tags: string[];
             /** @enum {string} */
             status: "backlog" | "todo" | "in_progress" | "postponed" | "completed" | "failed" | "skipped";
+            parent_id: string | null;
+            required: boolean;
         };
         QuestDTO: {
             title: string;
@@ -678,6 +723,8 @@ export interface components {
             created_at: string;
             /** Format: date-time */
             updated_at: string;
+            parent_id: string | null;
+            required: boolean;
         };
         QuestPageDTO: {
             items: components["schemas"]["QuestDTO"][];
@@ -871,6 +918,18 @@ export interface components {
     };
     responses: {
         /** @description Личные данные владельца */
+        QuestStructure: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["QuestStructureDTO"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
         QuestEvents: {
             headers: {
                 [name: string]: unknown;
@@ -1056,6 +1115,51 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    questStructure: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["QuestStructure"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    questDependencies: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestDependencies"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Quest"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     startQuest: {
         parameters: {
             query?: never;

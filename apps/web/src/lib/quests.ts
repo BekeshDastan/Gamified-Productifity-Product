@@ -24,6 +24,8 @@ export const questInput = z.object({
   actual_minutes: z.number().int().min(0).max(525600),
   tags: z.array(z.uuid()).max(50),
   status: z.enum(["backlog", "todo", "in_progress", "postponed", "completed", "failed", "skipped"]),
+  parent_id: z.uuid().nullable(),
+  required: z.boolean(),
 });
 export const questSchema = questInput.extend({
   id: z.uuid(),
@@ -53,6 +55,8 @@ export const emptyQuest: QuestInput = {
   actual_minutes: 0,
   tags: [],
   status: "todo",
+  parent_id: null,
+  required: true,
 };
 export const filterSchema = z.object({
   search: z.string().max(200),

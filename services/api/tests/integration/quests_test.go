@@ -13,7 +13,7 @@ import (
 )
 
 func questInput(title string) quests.Input {
-	return quests.Input{Title: title, Priority: "normal", Difficulty: 2, Tags: []string{}, Status: "todo"}
+	return quests.Input{Title: title, Priority: "normal", Difficulty: 2, Tags: []string{}, Status: "todo", Required: true}
 }
 func readQuest(t *testing.T, r authResponse) quests.Quest {
 	t.Helper()
@@ -161,4 +161,67 @@ func TestQuestLifecycleHistoryAndIdempotency(t *testing.T) {
 	if err := f.pool.QueryRow(f.ctx, `SELECT count(*) FROM task_events WHERE quest_id=$1 AND kind='complete'`, q.ID).Scan(&count); err != nil || count != 1 {
 		t.Fatal("completion event duplicated", count, err)
 	}
+}
+func TestQuestHierarchyAndDependencies(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "tree@example.test")
+	other, _ := f.signedIn(t, "tree-other@example.test")
+	root := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput("Проект")))
+	in := questInput("Глава")
+	in.ParentID = &root.ID
+	child := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", in))
+	in = questInput("Страница")
+	in.ParentID = &child.ID
+	leaf := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", in))
+	in = questInput("Глубже")
+	in.ParentID = &leaf.ID
+	if r := f.privateRequest(t, client, "POST", "/quests", "", in); r.status != 422 {
+		t.Fatal("depth accepted")
+	}
+	in = root.Input
+	in.ParentID = &leaf.ID
+	if r := f.privateRequest(t, client, "PATCH", "/quests/"+root.ID, version(root), in); r.status != 422 {
+		t.Fatal("tree cycle")
+	}
+	if r := f.privateRequest(t, client, "POST", "/quests/"+root.ID+"/complete", version(root), quests.Transition{}); r.status != 409 {
+		t.Fatal("parent completed children")
+	}
+	foreign := readQuest(t, f.privateRequest(t, other, "POST", "/quests", "", questInput("Чужая")))
+	in = questInput("Чужой родитель")
+	in.ParentID = &foreign.ID
+	if r := f.privateRequest(t, client, "POST", "/quests", "", in); r.status != 422 {
+		t.Fatal("foreign parent")
+	}
+	leaf = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+leaf.ID+"/complete", version(leaf), quests.Transition{}))
+	root = readQuest(t, f.privateRequest(t, client, "GET", "/quests/"+root.ID, "", nil))
+	child = readQuest(t, f.privateRequest(t, client, "GET", "/quests/"+child.ID, "", nil))
+	if root.Status != "completed" || child.Status != "completed" {
+		t.Fatal("container rollup")
+	}
+	readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+leaf.ID+"/reopen", version(leaf), quests.Transition{}))
+	root = readQuest(t, f.privateRequest(t, client, "GET", "/quests/"+root.ID, "", nil))
+	if root.Status != "todo" {
+		t.Fatal("rollup reopen")
+	}
+	a := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput("A")))
+	b := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput("B")))
+	b = readQuest(t, f.privateRequest(t, client, "PUT", "/quests/"+b.ID+"/dependencies", version(b), quests.DependenciesInput{IDs: []string{a.ID}}))
+	if r := f.privateRequest(t, client, "PUT", "/quests/"+a.ID+"/dependencies", version(a), quests.DependenciesInput{IDs: []string{b.ID}}); r.status != 422 {
+		t.Fatal("dependency cycle")
+	}
+	if r := f.privateRequest(t, client, "PUT", "/quests/"+a.ID+"/dependencies", version(a), quests.DependenciesInput{IDs: []string{foreign.ID}}); r.status != 422 {
+		t.Fatal("foreign dependency")
+	}
+	if r := f.privateRequest(t, client, "POST", "/quests/"+b.ID+"/start", version(b), quests.Transition{}); r.status != 409 {
+		t.Fatal("blocked task started")
+	}
+	a = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+a.ID+"/skip", version(a), quests.Transition{Reason: "Отказ"}))
+	if r := f.privateRequest(t, client, "POST", "/quests/"+b.ID+"/complete", version(b), quests.Transition{}); r.status != 409 {
+		t.Fatal("skipped dependency unblocked")
+	}
+	if r := f.privateRequest(t, client, "PUT", "/quests/"+b.ID+"/dependencies", version(b), quests.DependenciesInput{IDs: []string{}}); r.status != 422 {
+		t.Fatal("silent unblock")
+	}
+	b = readQuest(t, f.privateRequest(t, client, "PUT", "/quests/"+b.ID+"/dependencies", version(b), quests.DependenciesInput{IDs: []string{}, Reason: "Снята зависимость"}))
+	readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+b.ID+"/start", version(b), quests.Transition{}))
 }

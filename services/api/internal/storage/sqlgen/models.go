@@ -142,6 +142,13 @@ type Quest struct {
 	ArchivedAt  pgtype.Timestamptz `json:"archived_at"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ParentID    pgtype.UUID        `json:"parent_id"`
+}
+
+type QuestDependency struct {
+	OwnerID   pgtype.UUID `json:"owner_id"`
+	QuestID   pgtype.UUID `json:"quest_id"`
+	DependsOn pgtype.UUID `json:"depends_on"`
 }
 
 type QuestTag struct {

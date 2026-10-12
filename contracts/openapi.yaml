@@ -6,6 +6,59 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/quests/{id}/structure:
+    get:
+      operationId: questStructure
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestStructure"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/dependencies:
+    put:
+      operationId: questDependencies
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestDependencies"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/quests/{id}/start:
     post:
       operationId: startQuest
@@ -1185,6 +1238,20 @@ components:
             type: object
             additionalProperties: false
   responses:
+    QuestStructure:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/QuestStructureDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
     QuestEvents:
       description: Личные данные владельца
       content:
@@ -1422,6 +1489,46 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    QuestDependencies:
+      type: object
+      additionalProperties: false
+      required:
+        - ids
+        - reason
+      properties:
+        ids:
+          type: array
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        reason:
+          type: string
+          maxLength: 1000
+    QuestStructureDTO:
+      type: object
+      required:
+        - container
+        - required_leaves
+        - completed_leaves
+        - children
+        - dependencies
+      properties:
+        container:
+          type: boolean
+        required_leaves:
+          type: integer
+        completed_leaves:
+          type: integer
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestDTO"
+        dependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestDTO"
     QuestTransition:
       type: object
       additionalProperties: false
@@ -1547,6 +1654,8 @@ components:
         - actual_minutes
         - tags
         - status
+        - parent_id
+        - required
       properties:
         title:
           type: string
@@ -1605,6 +1714,13 @@ components:
             - completed
             - failed
             - skipped
+        parent_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        required:
+          type: boolean
     QuestDTO:
       type: object
       additionalProperties: false
@@ -1626,6 +1742,8 @@ components:
         - archived_at
         - created_at
         - updated_at
+        - parent_id
+        - required
       properties:
         title:
           type: string
@@ -1706,6 +1824,13 @@ components:
         updated_at:
           type: string
           format: date-time
+        parent_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        required:
+          type: boolean
     QuestPageDTO:
       type: object
       required:
