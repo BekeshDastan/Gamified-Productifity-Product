@@ -15,6 +15,7 @@ import {
 import { Input, Select, DatePicker } from "./ui/field";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { listGoals } from "@/lib/goals";
 export function QuestFiltersPanel({
   filters,
   labels,
@@ -76,6 +77,15 @@ export function QuestFiltersPanel({
               </option>
             ))}
           </Select>
+          <Select
+            label="Фильтр по цели"
+            value={draft.goal_id}
+            onChange={(e) => field("goal_id", e.target.value)}
+          >
+            <option value="">Все цели</option>
+            {draft.goal_id && <option value={draft.goal_id}>Выбранная цель</option>}
+          </Select>
+          <GoalChoice onChoose={(id) => field("goal_id", id)} />
           <Select
             label="Фильтр по приоритету"
             value={draft.priority}
@@ -205,5 +215,56 @@ export function QuestFiltersPanel({
         ))}
       </ul>
     </Card>
+  );
+}
+
+function GoalChoice({ onChoose }: { onChoose: (id: string) => void }) {
+  const account = useAuth().session?.account.id;
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const goals = useQuery({
+    queryKey: ["account", account, "quest-goal-choices", search, page],
+    queryFn: ({ signal }) =>
+      listGoals(page, { search, state: "", area_id: "", archived: false }, signal),
+  });
+  return (
+    <div>
+      <Input
+        label="Найти цель для фильтра"
+        value={search}
+        maxLength={200}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPage(1);
+        }}
+      />
+      {goals.data ? (
+        <>
+          <Select label="Выбрать цель" value="" onChange={(e) => onChoose(e.target.value)}>
+            <option value="">Выберите из найденных</option>
+            {goals.data.items.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.title}
+              </option>
+            ))}
+          </Select>
+          <div className="button-row">
+            <Button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+              Цели: назад
+            </Button>
+            <Button
+              disabled={page * goals.data.page_size >= goals.data.total}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Цели: далее
+            </Button>
+          </div>
+        </>
+      ) : (
+        <p role={goals.isPending ? "status" : "alert"}>
+          {goals.isPending ? "Загружаем цели…" : "Цели не загрузились."}
+        </p>
+      )}
+    </div>
   );
 }

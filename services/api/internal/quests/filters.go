@@ -16,6 +16,7 @@ import (
 )
 
 type Filters struct {
+	GoalID      string `json:"goal_id"`
 	Search      string `json:"search"`
 	Status      string `json:"status"`
 	AreaID      string `json:"area_id"`
@@ -28,6 +29,9 @@ type Filters struct {
 }
 
 func validateFilters(f Filters) (Filters, error) {
+	if f.GoalID != "" && !uuid(f.GoalID) {
+		return f, invalid("goal_id", "Выберите цель")
+	}
 	f.Search = strings.TrimSpace(f.Search)
 	if !utf8.ValidString(f.Search) || utf8.RuneCountInString(f.Search) > 200 {
 		return f, invalid("search", "До 200 символов")
@@ -75,7 +79,7 @@ func queryFilters(q url.Values) (Filters, error) {
 			return Filters{}, invalid(name, "Укажите true или false")
 		}
 	}
-	return validateFilters(Filters{Search: q.Get("search"), Status: q.Get("status"), AreaID: q.Get("area_id"), Priority: q.Get("priority"), PlannedFrom: q.Get("planned_from"), PlannedTo: q.Get("planned_to"), Overdue: q.Get("overdue") == "true", Archived: q.Get("archived") == "true", Sort: q.Get("sort")})
+	return validateFilters(Filters{GoalID: q.Get("goal_id"), Search: q.Get("search"), Status: q.Get("status"), AreaID: q.Get("area_id"), Priority: q.Get("priority"), PlannedFrom: q.Get("planned_from"), PlannedTo: q.Get("planned_to"), Overdue: q.Get("overdue") == "true", Archived: q.Get("archived") == "true", Sort: q.Get("sort")})
 }
 
 // Ordering comes only from the allowlist; every client value remains a parameter.
@@ -84,10 +88,14 @@ const filteredWhere = `owner_id=$1 AND (archived_at IS NOT NULL)=$2
  AND ($4='' OR status=$4) AND ($5='' OR area_id::text=$5)
  AND ($6='' OR payload->>'priority'=$6)
  AND ($7='' OR planned_date>=NULLIF($7,'')::date) AND ($8='' OR planned_date<=NULLIF($8,'')::date)
- AND (NOT $9 OR (status NOT IN ('completed','failed','skipped') AND deadline<$10))`
+ AND (NOT $9 OR (status NOT IN ('completed','failed','skipped') AND deadline<$10))
+ AND ($11='' OR quests.id IN(WITH RECURSIVE linked AS (
+ SELECT quest_id id FROM goal_quests WHERE owner_id=$1 AND goal_id::text=$11
+ UNION SELECT q.id FROM quests q JOIN linked l ON q.parent_id=l.id WHERE q.owner_id=$1
+ ) SELECT id FROM linked))`
 
 func (f Filters) args(id string, now time.Time) []any {
-	return []any{id, f.Archived, f.Search, f.Status, f.AreaID, f.Priority, f.PlannedFrom, f.PlannedTo, f.Overdue, now}
+	return []any{id, f.Archived, f.Search, f.Status, f.AreaID, f.Priority, f.PlannedFrom, f.PlannedTo, f.Overdue, now, f.GoalID}
 }
 
 type ViewInput struct {

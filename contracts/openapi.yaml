@@ -1802,6 +1802,10 @@ paths:
     get:
       operationId: listQuests
       parameters:
+        - name: goal_id
+          in: query
+          schema:
+            type: string
         - name: page
           in: query
           schema:
@@ -3761,6 +3765,8 @@ components:
         - archived
         - sort
       properties:
+        goal_id:
+          type: string
         search:
           type: string
           maxLength: 200

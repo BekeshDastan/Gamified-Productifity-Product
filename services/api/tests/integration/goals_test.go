@@ -123,6 +123,65 @@ func TestGoalTemplatePreviewApplyAndReplay(t *testing.T) {
 		t.Fatal("tasks outside plan")
 	}
 }
+func TestGoalQuestEventsTreeAndRollback(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "goal-events@example.test")
+	g := readGoal(t, f.privateRequest(t, client, "POST", "/goals", "", goals.Create{Input: goalInput("Дерево"), State: "active"}))
+	root := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput("Контейнер")))
+	childInput := questInput("Обязательный лист")
+	childInput.ParentID = &root.ID
+	child := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", childInput))
+	optionalInput := childInput
+	optionalInput.Title = "Необязательный"
+	optionalInput.Required = false
+	_ = readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", optionalInput))
+	g = readGoal(t, f.privateRequest(t, client, "PUT", "/goals/"+g.ID+"/links/"+root.ID, goalVersion(g), goals.LinkInput{Required: true, Weight: 1}))
+	child = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+child.ID+"/complete", version(child), map[string]any{}, "goal-leaf-complete-key"))
+	g = readGoal(t, f.privateRequest(t, client, "GET", "/goals/"+g.ID, "", nil))
+	if g.Progress != 100 || g.State != "active" {
+		t.Fatal("leaf or automatic achievement", g)
+	}
+	leafVersion := child.Version
+	_ = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+child.ID+"/complete", fmt.Sprintf(`"%d"`, leafVersion-1), map[string]any{}, "goal-leaf-complete-key"))
+	repeated := readGoal(t, f.privateRequest(t, client, "GET", "/goals/"+g.ID, "", nil))
+	if repeated.Version != g.Version {
+		t.Fatal("replay changed goal")
+	}
+	child = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+child.ID+"/reopen", version(child), map[string]any{}))
+	g = readGoal(t, f.privateRequest(t, client, "GET", "/goals/"+g.ID, "", nil))
+	if g.Progress != 0 {
+		t.Fatal("reopen not reflected")
+	}
+	// Both source event and projection must roll back if goal history cannot persist.
+	_, e := f.pool.Exec(t.Context(), `CREATE FUNCTION reject_goal_history() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test projection failure'; END $$; CREATE TRIGGER reject_goal_history BEFORE INSERT ON goal_versions FOR EACH ROW EXECUTE FUNCTION reject_goal_history()`)
+	if e != nil {
+		t.Fatal(e)
+	}
+	r := f.privateRequest(t, client, "POST", "/quests/"+child.ID+"/complete", version(child), map[string]any{})
+	if r.status != 500 {
+		t.Fatal("failure not propagated", r.status)
+	}
+	fresh := readQuest(t, f.privateRequest(t, client, "GET", "/quests/"+child.ID, "", nil))
+	if fresh.Status != "todo" || fresh.Version != child.Version {
+		t.Fatal("quest committed without projection")
+	}
+	_, e = f.pool.Exec(t.Context(), `DROP TRIGGER reject_goal_history ON goal_versions; DROP FUNCTION reject_goal_history()`)
+	if e != nil {
+		t.Fatal(e)
+	}
+	extra := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput("Другая ветка")))
+	otherGoal := readGoal(t, f.privateRequest(t, client, "POST", "/goals", "", goals.Create{Input: goalInput("Другая"), State: "active"}))
+	otherGoal = readGoal(t, f.privateRequest(t, client, "PUT", "/goals/"+otherGoal.ID+"/links/"+extra.ID, goalVersion(otherGoal), goals.LinkInput{Required: true, Weight: 1}))
+	extra.ParentID = &root.ID
+	if r = f.privateRequest(t, client, "PATCH", "/quests/"+extra.ID, version(extra), extra.Input); r.status != 422 {
+		t.Fatal("overlap via parent move", r.status, string(r.body))
+	}
+	r = f.privateRequest(t, client, "GET", "/quests?goal_id="+g.ID, "", nil)
+	var page struct{ Data struct{ Total int } }
+	if r.status != 200 || json.Unmarshal(r.body, &page) != nil || page.Data.Total != 3 {
+		t.Fatal("goal filter", r.status, string(r.body))
+	}
+}
 func TestGoalMetricUnitJournalCorrectionAndReplay(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, _ := f.signedIn(t, "goal-metric@example.test")

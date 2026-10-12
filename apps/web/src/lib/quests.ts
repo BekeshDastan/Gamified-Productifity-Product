@@ -59,6 +59,7 @@ export const emptyQuest: QuestInput = {
   required: true,
 };
 export const filterSchema = z.object({
+  goal_id: z.string().default(""),
   search: z.string().max(200),
   status: z.string(),
   area_id: z.string(),
@@ -71,6 +72,7 @@ export const filterSchema = z.object({
 });
 export type QuestFilters = z.infer<typeof filterSchema>;
 export const emptyFilters: QuestFilters = {
+  goal_id: "",
   search: "",
   status: "",
   area_id: "",

@@ -1264,6 +1264,7 @@ export interface components {
             };
         };
         QuestFilters: {
+            goal_id?: string;
             search: string;
             status: string;
             area_id: string;
@@ -3110,6 +3111,7 @@ export interface operations {
     listQuests: {
         parameters: {
             query?: {
+                goal_id?: string;
                 page?: number;
                 page_size?: number;
                 search?: string;
