@@ -95,6 +95,102 @@ paths:
           $ref: "#/components/responses/Error"
         "429":
           $ref: "#/components/responses/Error"
+  /api/v1/auth/refresh:
+    post:
+      operationId: refreshSession
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        $ref: "#/components/requestBodies/Empty"
+      responses:
+        "200":
+          $ref: "#/components/responses/Session"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+  /api/v1/auth/logout:
+    post:
+      operationId: logout
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        $ref: "#/components/requestBodies/Empty"
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+  /api/v1/auth/logout-all:
+    post:
+      operationId: logoutAll
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        $ref: "#/components/requestBodies/Empty"
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/auth/sessions:
+    get:
+      operationId: listSessions
+      responses:
+        "200":
+          description: Только активные сессии текущего аккаунта
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SessionInfo"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/auth/sessions/{id}:
+    delete:
+      operationId: revokeSession
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        $ref: "#/components/requestBodies/Empty"
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /health/live:
     get:
       operationId: getLiveness
@@ -112,7 +208,32 @@ paths:
         "503":
           $ref: "#/components/responses/Health"
 components:
+  requestBodies:
+    Empty:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
   responses:
+    OK:
+      description: Операция выполнена
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data, meta]
+            properties:
+              data:
+                type: object
+                required: [ok]
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+              meta:
+                $ref: "#/components/schemas/Meta"
     Session:
       description: Аккаунт и метаданные сессии. Токены только в HttpOnly cookie.
       content:
@@ -182,6 +303,24 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    SessionInfo:
+      type: object
+      additionalProperties: false
+      required: [id, created_at, expires_at, remember_me, current]
+      properties:
+        id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        remember_me:
+          type: boolean
+        current:
+          type: boolean
     Meta:
       type: object
       additionalProperties: false
@@ -297,6 +436,7 @@ components:
                   UNAUTHORIZED,
                   ORIGIN_REJECTED,
                   CSRF_REJECTED,
+                  REFRESH_IN_PROGRESS,
                   FORBIDDEN,
                   NOT_FOUND,
                   METHOD_NOT_ALLOWED,

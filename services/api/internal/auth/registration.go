@@ -52,7 +52,7 @@ func NormalizeEmail(value string) (string, *platform.APIError) {
 	return email, nil
 }
 
-// Register is deliberately not exposed as a public route before C027 adds pre-auth CSRF and limits.
+// Register runs behind the HTTP boundary's pre-auth CSRF and attempt limits.
 func (s *Service) Register(ctx context.Context, input RegisterInput) (Account, error) {
 	email, invalid := NormalizeEmail(input.Email)
 	if invalid != nil {

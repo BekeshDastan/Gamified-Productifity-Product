@@ -92,7 +92,7 @@ func unauthorized() *platform.APIError {
 	return &platform.APIError{Status: 401, Code: "UNAUTHORIZED", Message: "Войдите в аккаунт"}
 }
 
-// Login remains unmounted until pre-auth CSRF and attempt limits are installed.
+// Login runs behind the HTTP boundary's pre-auth CSRF and attempt limits.
 func (s *Sessions) Login(ctx context.Context, input LoginInput) (Credentials, error) {
 	email, invalid := NormalizeEmail(input.Email)
 	if invalid != nil {

@@ -252,6 +252,7 @@ func (s *Sessions) Mount(router chi.Router, limits Limits) error {
 	router.Route("/api/v1/auth", func(r chi.Router) {
 		r.Use(s.browserMutation)
 		r.Get("/csrf", s.csrf)
+		s.mountRefresh(r)
 		r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
 			if !s.checkLimit(w, r, []bucket{{scope: "register-ip:" + remoteIP(r), limit: limits.Registrations, window: 15 * time.Minute}}) {
 				return
@@ -317,6 +318,7 @@ func (s *Sessions) Mount(router chi.Router, limits Limits) error {
 				}
 				platform.WriteData(w, r, s.service.clock, 200, result)
 			})
+			s.mountSessionManagement(r)
 		})
 	})
 	return nil

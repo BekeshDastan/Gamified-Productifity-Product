@@ -1357,7 +1357,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Запрос без CSRF и чужого origin не изменяет данные; превышение порога даёт 429.
   - **КОММИТ СЕЙЧАС:** `feat(auth): enforce session authorization CSRF and login limits`
 
-- [ ] **C028. Обновление и выход**
+- [x] **C028. Обновление и выход**
   - **Сделать:** Реализовать refresh family, конкурентное окно, logout, logout-all и revoke отдельной сессии.
   - **Проверить:** Повтор старого токена по правилам блокируется; после выхода старый access не действует.
   - **КОММИТ СЕЙЧАС:** `feat(auth): rotate refresh tokens and revoke sessions`
