@@ -6,6 +6,95 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/auth/csrf:
+    get:
+      operationId: getCSRF
+      summary: Получить CSRF для текущей сессии или pre-auth cookie
+      responses:
+        "200":
+          description: Токен хранится только в памяти клиента
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: object
+                    required: [token]
+                    properties:
+                      token:
+                        type: string
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "403":
+          $ref: "#/components/responses/Error"
+  /api/v1/auth/register:
+    post:
+      operationId: register
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Аккаунт создан
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Account"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/auth/login:
+    post:
+      operationId: login
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Session"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/auth/session:
+    get:
+      operationId: getSession
+      responses:
+        "200":
+          $ref: "#/components/responses/Session"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /health/live:
     get:
       operationId: getLiveness
@@ -24,6 +113,18 @@ paths:
           $ref: "#/components/responses/Health"
 components:
   responses:
+    Session:
+      description: Аккаунт и метаданные сессии. Токены только в HttpOnly cookie.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data, meta]
+            properties:
+              data:
+                $ref: "#/components/schemas/Session"
+              meta:
+                $ref: "#/components/schemas/Meta"
     Health:
       description: Доступность без внутренних деталей
       content:
@@ -37,6 +138,20 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorEnvelope"
   parameters:
+    CSRF:
+      in: header
+      name: X-CSRF-Token
+      required: true
+      schema:
+        type: string
+        minLength: 43
+        maxLength: 43
+    Origin:
+      in: header
+      name: Origin
+      required: true
+      schema:
+        type: string
     Limit:
       in: query
       name: limit
@@ -97,7 +212,7 @@ components:
       type: object
       additionalProperties: false
       required: [email, password, remember_me]
-      description: Вход подключается с pre-auth CSRF и ограничениями в C027. Токены выдаются только в HttpOnly cookies.
+      description: Вход требует pre-auth CSRF и Origin. Токены выдаются только в HttpOnly cookies.
       properties:
         email:
           type: string
@@ -114,7 +229,7 @@ components:
       type: object
       additionalProperties: false
       required: [email, password]
-      description: DTO регистрации. Публичный endpoint подключается после pre-auth CSRF и rate limits (C027).
+      description: Регистрация требует pre-auth CSRF и Origin; роль задаётся сервером.
       properties:
         email:
           type: string
@@ -127,6 +242,19 @@ components:
           minLength: 12
           maxLength: 128
           description: Unicode-символы, максимум 512 UTF-8 байт; пробелы сохраняются.
+    Session:
+      type: object
+      additionalProperties: false
+      required: [account, session_id, expires_at]
+      properties:
+        account:
+          $ref: "#/components/schemas/Account"
+        session_id:
+          type: string
+          format: uuid
+        expires_at:
+          type: string
+          format: date-time
     Account:
       type: object
       additionalProperties: false
@@ -167,6 +295,8 @@ components:
                   VALIDATION_ERROR,
                   EMAIL_TAKEN,
                   UNAUTHORIZED,
+                  ORIGIN_REJECTED,
+                  CSRF_REJECTED,
                   FORBIDDEN,
                   NOT_FOUND,
                   METHOD_NOT_ALLOWED,

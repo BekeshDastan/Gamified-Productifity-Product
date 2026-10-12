@@ -41,12 +41,15 @@ toolchain (используется 1.26.9) и запущенный Docker Deskt
 ```powershell
 npm ci
 Copy-Item .env.example .env
+node -e "const fs=require('node:fs');const crypto=require('node:crypto');const p='.env';let s=fs.readFileSync(p,'utf8');if(/^AUTH_SIGNING_KEY=$/m.test(s)){s=s.replace(/^AUTH_SIGNING_KEY=$/m,'AUTH_SIGNING_KEY='+crypto.randomBytes(32).toString('base64'));fs.writeFileSync(p,s);}"
 npm run dev
 ```
 
 При существующем `.env` не перезаписывайте его. Команда запускает базу, API,
 worker и web. Сайт: <http://localhost:3000>. API: <http://127.0.0.1:8080>.
-Доступных доменных API пока нет; неизвестные пути возвращают 404.
+API входа/регистрации доступны с Origin и CSRF; формы интерфейса появятся в C031.
+Неизвестные пути возвращают 404. Ключ AUTH_SIGNING_KEY не публикуйте и сохраняйте
+между перезапусками; его смена завершит текущие входы.
 Проверки сервера: `/health/live` и `/health/ready` (503 при недоступной БД).
 Ctrl+C останавливает процессы приложения; база остаётся в Docker с сохранёнными
 данными. Остановить базу: `docker compose stop`.

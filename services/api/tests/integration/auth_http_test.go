@@ -1,0 +1,197 @@
+//go:build integration
+
+package integration
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"io"
+	"log/slog"
+	"net/http"
+	"net/http/cookiejar"
+	"net/http/httptest"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type authFixture struct {
+	pool     *pgxpool.Pool
+	ctx      context.Context
+	clock    *testkit.Clock
+	sessions *auth.Sessions
+	service  *auth.Service
+	server   *httptest.Server
+}
+
+func newAuthFixture(t *testing.T, limits auth.Limits) authFixture {
+	t.Helper()
+	pool, ctx := database(t)
+	clock := testkit.NewClock(time.Date(2026, 10, 12, 12, 0, 0, 0, time.UTC))
+	service := auth.NewService(pool, auth.NewPasswordHasher(), clock)
+	sessions, err := auth.NewSessions(ctx, service, auth.SessionConfig{Origin: "http://localhost:3000", Environment: "test", InsecureLocalCookies: true, SigningKey: bytes.Repeat([]byte{12}, 32)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	router := platform.NewRouter(slog.New(slog.NewTextHandler(io.Discard, nil)), clock, pool.Ping)
+	if err := sessions.Mount(router, limits); err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(router)
+	t.Cleanup(server.Close)
+	return authFixture{pool: pool, ctx: ctx, clock: clock, sessions: sessions, service: service, server: server}
+}
+
+func authClient(t *testing.T) *http.Client {
+	t.Helper()
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return &http.Client{Jar: jar, Timeout: 10 * time.Second}
+}
+
+type authResponse struct {
+	status int
+	header http.Header
+	body   []byte
+}
+
+func (f authFixture) request(t *testing.T, client *http.Client, method, path, csrf string, input any) authResponse {
+	t.Helper()
+	data, err := json.Marshal(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := http.NewRequest(method, f.server.URL+"/api/v1/auth"+path, bytes.NewReader(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Header.Set("Origin", "http://localhost:3000")
+	r.Header.Set("Content-Type", "application/json")
+	if csrf != "" {
+		r.Header.Set("X-CSRF-Token", csrf)
+	}
+	response, err := client.Do(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return authResponse{status: response.StatusCode, header: response.Header, body: body}
+}
+func (f authFixture) csrf(t *testing.T, client *http.Client) string {
+	t.Helper()
+	response := f.request(t, client, "GET", "/csrf", "", nil)
+	var result struct {
+		Data struct {
+			Token string `json:"token"`
+		} `json:"data"`
+	}
+	if response.status != 200 || json.Unmarshal(response.body, &result) != nil || len(result.Data.Token) != 43 {
+		t.Fatal("csrf unavailable", response.status)
+	}
+	return result.Data.Token
+}
+
+func TestHTTPPreauthOriginCSRFAndStrictDTO(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client := authClient(t)
+	input := auth.RegisterInput{Email: "http@example.test", Password: "correct password phrase"}
+	if response := f.request(t, client, "POST", "/register", "", input); response.status != 403 {
+		t.Fatal("missing csrf accepted", response.status)
+	}
+	csrf := f.csrf(t, client)
+	foreign := authClient(t)
+	if response := f.request(t, foreign, "POST", "/register", csrf, input); response.status != 403 {
+		t.Fatal("csrf unbound to cookie", response.status)
+	}
+	r, _ := http.NewRequest("POST", f.server.URL+"/api/v1/auth/register", bytes.NewBufferString(`{"email":"foreign@example.test","password":"correct password phrase"}`))
+	r.Header.Set("Origin", "https://foreign.example")
+	r.Header.Set("Content-Type", "application/json")
+	r.Header.Set("X-CSRF-Token", csrf)
+	response, err := client.Do(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	response.Body.Close()
+	if response.StatusCode != 403 {
+		t.Fatal("foreign origin accepted")
+	}
+	var count int
+	if err := f.pool.QueryRow(f.ctx, `SELECT count(*) FROM users`).Scan(&count); err != nil || count != 0 {
+		t.Fatal("rejected request wrote user", err)
+	}
+	if response := f.request(t, client, "POST", "/register", csrf, map[string]any{"email": input.Email, "password": input.Password, "role": "admin"}); response.status != 422 {
+		t.Fatal("untrusted role accepted", response.status)
+	}
+	if response := f.request(t, client, "POST", "/register", csrf, input); response.status != 201 {
+		t.Fatal("registration failed", response.status)
+	}
+	login := f.request(t, client, "POST", "/login", csrf, auth.LoginInput{Email: input.Email, Password: input.Password})
+	if login.status != 200 || len(login.header.Values("Set-Cookie")) != 2 {
+		t.Fatal("login failed", login.status)
+	}
+	if got := f.request(t, client, "GET", "/session", "", nil); got.status != 200 || !bytes.Contains(got.body, []byte(input.Email)) {
+		t.Fatal("session unavailable", got.status)
+	}
+	if got := f.request(t, foreign, "GET", "/session", "", nil); got.status != 401 {
+		t.Fatal("session leaked to another cookie jar", got.status)
+	}
+}
+
+func TestHTTPLoginLimitIsAtomicAndRestoresAfterWindow(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client := authClient(t)
+	csrf := f.csrf(t, client)
+	account, err := f.service.Register(f.ctx, auth.RegisterInput{Email: "limited@example.test", Password: "correct password phrase"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wait sync.WaitGroup
+	statuses := make(chan int, 10)
+	for i := 0; i < 10; i++ {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			response := f.request(t, client, "POST", "/login", csrf, auth.LoginInput{Email: account.Email, Password: "wrong password phrase"})
+			statuses <- response.status
+		}()
+	}
+	wait.Wait()
+	close(statuses)
+	denied, limited := 0, 0
+	for status := range statuses {
+		switch status {
+		case 401:
+			denied++
+		case 429:
+			limited++
+		default:
+			t.Fatal("unexpected limit result", status)
+		}
+	}
+	if denied != 5 || limited != 5 {
+		t.Fatal("parallel limit bypassed", denied, limited)
+	}
+	if got := f.request(t, client, "POST", "/login", csrf, auth.LoginInput{Email: account.Email, Password: "correct password phrase"}); got.status != 429 || got.header.Get("Retry-After") == "" {
+		t.Fatal("missing retry limit", got.status)
+	}
+	f.clock.Advance(15 * time.Minute)
+	if got := f.request(t, client, "POST", "/login", csrf, auth.LoginInput{Email: account.Email, Password: "correct password phrase"}); got.status != 200 {
+		t.Fatal("window did not restore", got.status)
+	}
+	var count int
+	if err := f.pool.QueryRow(f.ctx, `SELECT count(*) FROM auth_rate_limits WHERE attempts=0`).Scan(&count); err != nil || count != 2 {
+		t.Fatal("successful login counted as failed attempt", err)
+	}
+}

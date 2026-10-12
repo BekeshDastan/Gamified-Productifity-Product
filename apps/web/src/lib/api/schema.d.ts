@@ -4,6 +4,71 @@
  */
 
 export interface paths {
+    "/api/v1/auth/csrf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Получить CSRF для текущей сессии или pre-auth cookie */
+        get: operations["getCSRF"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSession"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -54,7 +119,7 @@ export interface components {
             };
             meta: components["schemas"]["Meta"];
         };
-        /** @description Вход подключается с pre-auth CSRF и ограничениями в C027. Токены выдаются только в HttpOnly cookies. */
+        /** @description Вход требует pre-auth CSRF и Origin. Токены выдаются только в HttpOnly cookies. */
         LoginInput: {
             /** Format: email */
             email: string;
@@ -62,7 +127,7 @@ export interface components {
             password: string;
             remember_me: boolean;
         };
-        /** @description DTO регистрации. Публичный endpoint подключается после pre-auth CSRF и rate limits (C027). */
+        /** @description Регистрация требует pre-auth CSRF и Origin; роль задаётся сервером. */
         RegisterInput: {
             /** Format: email */
             email: string;
@@ -71,6 +136,13 @@ export interface components {
              * @description Unicode-символы, максимум 512 UTF-8 байт; пробелы сохраняются.
              */
             password: string;
+        };
+        Session: {
+            account: components["schemas"]["Account"];
+            /** Format: uuid */
+            session_id: string;
+            /** Format: date-time */
+            expires_at: string;
         };
         Account: {
             /** Format: uuid */
@@ -86,7 +158,7 @@ export interface components {
         ErrorEnvelope: {
             error: {
                 /** @enum {string} */
-                code: "INVALID_JSON" | "VALIDATION_ERROR" | "EMAIL_TAKEN" | "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "VERSION_CONFLICT" | "IDEMPOTENCY_MISMATCH" | "OPERATION_IN_PROGRESS" | "RATE_LIMITED" | "INTERNAL_ERROR" | "BODY_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "DEADLINE_EXCEEDED";
+                code: "INVALID_JSON" | "VALIDATION_ERROR" | "EMAIL_TAKEN" | "UNAUTHORIZED" | "ORIGIN_REJECTED" | "CSRF_REJECTED" | "FORBIDDEN" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "VERSION_CONFLICT" | "IDEMPOTENCY_MISMATCH" | "OPERATION_IN_PROGRESS" | "RATE_LIMITED" | "INTERNAL_ERROR" | "BODY_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "DEADLINE_EXCEEDED";
                 message: string;
                 request_id: string;
                 fields?: {
@@ -97,6 +169,18 @@ export interface components {
         };
     };
     responses: {
+        /** @description Аккаунт и метаданные сессии. Токены только в HttpOnly cookie. */
+        Session: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["Session"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
         /** @description Доступность без внутренних деталей */
         Health: {
             headers: {
@@ -117,6 +201,8 @@ export interface components {
         };
     };
     parameters: {
+        CSRF: string;
+        Origin: string;
         Limit: number;
         Cursor: string;
         IfMatch: string;
@@ -128,6 +214,103 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getCSRF: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Токен хранится только в памяти клиента */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            token: string;
+                        };
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            403: components["responses"]["Error"];
+        };
+    };
+    register: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterInput"];
+            };
+        };
+        responses: {
+            /** @description Аккаунт создан */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Account"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            403: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginInput"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Session"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Session"];
+            401: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     getLiveness: {
         parameters: {
             query?: never;

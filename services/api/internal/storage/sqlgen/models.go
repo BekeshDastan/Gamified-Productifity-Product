@@ -18,6 +18,12 @@ type AuditEvent struct {
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 
+type AuthRateLimit struct {
+	BucketHash []byte             `json:"bucket_hash"`
+	Attempts   int32              `json:"attempts"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+}
+
 type AuthRefreshToken struct {
 	TokenHash []byte             `json:"-"`
 	SessionID pgtype.UUID        `json:"session_id"`

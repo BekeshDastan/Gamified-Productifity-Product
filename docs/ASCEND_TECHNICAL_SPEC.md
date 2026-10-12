@@ -1352,7 +1352,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Успешный вход даёт доступ только своему пользователю; истёкший JWT отвергается.
   - **КОММИТ СЕЙЧАС:** `feat(auth): add login and session creation`
 
-- [ ] **C027. Middleware безопасности**
+- [x] **C027. Middleware безопасности**
   - **Сделать:** Подключить проверку sid, role, Origin/CSRF, pre-auth контекст и ограничения попыток.
   - **Проверить:** Запрос без CSRF и чужого origin не изменяет данные; превышение порога даёт 429.
   - **КОММИТ СЕЙЧАС:** `feat(auth): enforce session authorization CSRF and login limits`

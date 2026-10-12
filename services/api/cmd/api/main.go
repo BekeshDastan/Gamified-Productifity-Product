@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
@@ -30,9 +31,29 @@ func main() {
 		os.Exit(1)
 	}
 	defer pool.Close()
+	authConfig, err := auth.LoadSessionConfig(cfg.Origin, cfg.Environment, os.LookupEnv)
+	if err != nil {
+		logger.Error("invalid auth configuration", "error", err)
+		os.Exit(1)
+	}
+	sessions, err := auth.NewSessions(ctx, auth.NewService(pool, auth.NewPasswordHasher(), platform.RealClock{}), authConfig)
+	if err != nil {
+		logger.Error("invalid session configuration")
+		os.Exit(1)
+	}
+	router := platform.NewRouter(logger, platform.RealClock{}, pool.Ping)
+	limits, err := auth.LoadLimits(os.LookupEnv)
+	if err != nil {
+		logger.Error("invalid auth limits")
+		os.Exit(1)
+	}
+	if err := sessions.Mount(router, limits); err != nil {
+		logger.Error("invalid auth limits")
+		os.Exit(1)
+	}
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           platform.NewRouter(logger, platform.RealClock{}, pool.Ping),
+		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      30 * time.Second,
