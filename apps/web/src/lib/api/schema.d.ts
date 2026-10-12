@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/plans/day/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDayPlan"];
+        put: operations["saveDayPlan"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/calendar/series/{id}": {
         parameters: {
             query?: never;
@@ -1291,6 +1307,45 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        DayPlan: {
+            available_minutes: number;
+            windows: components["schemas"]["PlanWindow"][];
+            quest_ids: string[];
+            top_ids: string[];
+            rest: boolean;
+            id: string;
+            date: string;
+            timezone: string;
+            version: number;
+            confirmed_at: string | null;
+            snapshot: components["schemas"]["PlanSnapshot"] | null;
+            items: components["schemas"]["PlanItem"][];
+        };
+        PlanSnapshot: {
+            input: components["schemas"]["PlanInput"];
+            items: components["schemas"]["PlanItem"][];
+        };
+        PlanItem: {
+            id: string;
+            title: string;
+            version: number;
+            estimated_minutes: number;
+            weight: number;
+            status: string;
+            archived: boolean;
+            completed_at: string | null;
+        };
+        PlanInput: {
+            available_minutes: number;
+            windows: components["schemas"]["PlanWindow"][];
+            quest_ids: string[];
+            top_ids: string[];
+            rest: boolean;
+        };
+        PlanWindow: {
+            start: string;
+            end: string;
+        };
         RecurrenceRule: {
             /** @enum {string} */
             frequency: "daily" | "weekly" | "monthly";
@@ -2238,6 +2293,78 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getDayPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DayPlan"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    saveDayPlan: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Версия 0 для создания, текущая положительная версия для изменения */
+                "If-Match": string;
+            };
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DayPlan"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     getCalendarSeries: {
         parameters: {
             query?: never;

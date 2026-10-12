@@ -6,6 +6,97 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/plans/day/{date}:
+    get:
+      operationId: getDayPlan
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: saveDayPlan
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanInput"
   /api/v1/calendar/series/{id}:
     patch:
       operationId: changeCalendarSeries
@@ -3781,6 +3872,146 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    DayPlan:
+      type: object
+      additionalProperties: false
+      required:
+        - available_minutes
+        - windows
+        - quest_ids
+        - top_ids
+        - rest
+        - id
+        - date
+        - timezone
+        - version
+        - confirmed_at
+        - snapshot
+        - items
+      properties:
+        available_minutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        windows:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanWindow"
+        quest_ids:
+          type: array
+          items:
+            type: string
+        top_ids:
+          type: array
+          maxItems: 3
+          items:
+            type: string
+        rest:
+          type: boolean
+        id:
+          type: string
+        date:
+          type: string
+        timezone:
+          type: string
+        version:
+          type: integer
+        confirmed_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        snapshot:
+          anyOf:
+            - $ref: "#/components/schemas/PlanSnapshot"
+            - type: "null"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanItem"
+    PlanSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - input
+        - items
+      properties:
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanItem"
+    PlanItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - version
+        - estimated_minutes
+        - weight
+        - status
+        - archived
+        - completed_at
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        version:
+          type: integer
+        estimated_minutes:
+          type: integer
+        weight:
+          type: integer
+        status:
+          type: string
+        archived:
+          type: boolean
+        completed_at:
+          anyOf:
+            - type: string
+            - type: "null"
+    PlanInput:
+      type: object
+      additionalProperties: false
+      required:
+        - available_minutes
+        - windows
+        - quest_ids
+        - top_ids
+        - rest
+      properties:
+        available_minutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        windows:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanWindow"
+        quest_ids:
+          type: array
+          items:
+            type: string
+        top_ids:
+          type: array
+          maxItems: 3
+          items:
+            type: string
+        rest:
+          type: boolean
+    PlanWindow:
+      type: object
+      additionalProperties: false
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+        end:
+          type: string
     RecurrenceRule:
       type: object
       additionalProperties: false

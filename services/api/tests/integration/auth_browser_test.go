@@ -21,6 +21,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
@@ -80,7 +81,9 @@ func TestBrowserAuth(t *testing.T) {
 	defer files.Close()
 	questService := quests.NewService(pool, clock).WithObserver(goalService.QuestChanged).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
-	calendar.NewService(pool, clock, questService).Mount(router, sessions.Protect)
+	calendarService := calendar.NewService(pool, clock, questService)
+	calendarService.Mount(router, sessions.Protect)
+	planning.NewService(pool, clock, questService, calendarService).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
 		t.Fatal("stop dev before browser acceptance; API test port unavailable")
