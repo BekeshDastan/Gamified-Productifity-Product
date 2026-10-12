@@ -122,7 +122,23 @@ func (s *Service) confirm(r *http.Request, tx pgx.Tx, id, date string) (Plan, er
 		return p, e
 	}
 	before := p
-	p.Snapshot = &Snapshot{Input: p.Input, Items: items}
+	from, to, e := bounds(p.Date, p.Timezone)
+	if e != nil {
+		return p, e
+	}
+	d, _ := day(p.Date)
+	more, e := s.calendar.MaterializeInTx(r.Context(), tx, id, d, d.AddDate(0, 0, 1))
+	if e != nil {
+		return p, e
+	}
+	if more {
+		return p, problem(409, "MATERIALIZING", "Догрузите календарный день перед подтверждением")
+	}
+	blocks, e := s.calendar.TimedInTx(r.Context(), tx, id, from, to)
+	if e != nil {
+		return p, e
+	}
+	p.Snapshot = &Snapshot{Input: p.Input, Items: items, Blocks: blocks}
 	now := s.clock.Now().UTC()
 	p.ConfirmedAt = &now
 	p.Version++

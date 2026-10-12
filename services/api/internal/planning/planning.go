@@ -40,8 +40,9 @@ type Item struct {
 	CompletedAt      *time.Time `json:"completed_at"`
 }
 type Snapshot struct {
-	Input Input  `json:"input"`
-	Items []Item `json:"items"`
+	Input  Input            `json:"input"`
+	Items  []Item           `json:"items"`
+	Blocks []calendar.Event `json:"blocks"`
 }
 type Plan struct {
 	Input
@@ -285,6 +286,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountCommitments(r)
+		s.mountBlocks(r)
 		r.Get("/api/v1/plans/day/{date}", func(w http.ResponseWriter, r *http.Request) {
 			date := chi.URLParam(r, "date")
 			_, e := day(date)

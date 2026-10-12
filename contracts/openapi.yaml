@@ -6,6 +6,114 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/plans/day/{date}/blocks:
+    post:
+      operationId: createPlanBlock
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CalendarEventDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanBlock"
+  /api/v1/plans/day/{date}/move:
+    post:
+      operationId: movePlannedQuest
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanMove"
   /api/v1/plans/day/{date}/addendum:
     post:
       operationId: amendDayPlan
@@ -3983,6 +4091,40 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    PlanBlock:
+      type: object
+      additionalProperties: false
+      required:
+        - quest_id
+        - quest_version
+        - reason
+        - start
+        - end
+      properties:
+        quest_id:
+          type: string
+        quest_version:
+          type: integer
+        reason:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+    PlanMove:
+      type: object
+      additionalProperties: false
+      required:
+        - quest_id
+        - quest_version
+        - reason
+      properties:
+        quest_id:
+          type: string
+        quest_version:
+          type: integer
+        reason:
+          type: string
     PlanAmendment:
       type: object
       additionalProperties: false
@@ -4108,6 +4250,7 @@ components:
       required:
         - input
         - items
+        - blocks
       properties:
         input:
           $ref: "#/components/schemas/PlanInput"
@@ -4115,6 +4258,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PlanItem"
+        blocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
     PlanItem:
       type: object
       additionalProperties: false

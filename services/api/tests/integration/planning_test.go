@@ -8,6 +8,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"testing"
+	"time"
 )
 
 func readPlan(t *testing.T, r authResponse) planning.Plan {
@@ -19,6 +20,48 @@ func readPlan(t *testing.T, r authResponse) planning.Plan {
 		t.Fatalf("plan %d %s", r.status, r.body)
 	}
 	return out.Data
+}
+
+func TestPlanningPrioritiesMultipleBlocksAndDeadline(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "blocks-plan@example.test")
+	qIn := questInput("Два блока работы")
+	deadline := f.clock.Now().Add(72 * time.Hour)
+	qIn.Deadline = &deadline
+	q := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", qIn))
+	in := planInput()
+	in.QuestIDs = []string{q.ID}
+	in.TopIDs = []string{q.ID}
+	path := "/plans/day/2026-10-13"
+	p := readPlan(t, f.privateRequest(t, client, "PUT", path, `"0"`, in))
+	first := planning.Block{Move: planning.Move{QuestID: q.ID, QuestVersion: q.Version, Reason: "Утренний блок"}, Start: "09:00", End: "10:00"}
+	readEvent(t, f.privateRequest(t, client, "POST", path+"/blocks", planVersion(p), first, "planning-first-block"))
+	readEvent(t, f.privateRequest(t, client, "POST", path+"/blocks", planVersion(p), first, "planning-first-block"))
+	p = readPlan(t, f.privateRequest(t, client, "GET", path, "", nil))
+	q = readQuest(t, f.privateRequest(t, client, "GET", "/quests/"+q.ID, "", nil))
+	if q.PlannedDate == nil || *q.PlannedDate != "2026-10-13" || !q.Deadline.Equal(deadline) {
+		t.Fatal("date or deadline changed", q)
+	}
+	second := first
+	second.QuestVersion = q.Version
+	second.Start = "14:00"
+	second.End = "15:00"
+	readEvent(t, f.privateRequest(t, client, "POST", path+"/blocks", planVersion(p), second))
+	p = readPlan(t, f.privateRequest(t, client, "GET", path, "", nil))
+	p = readPlan(t, f.privateRequest(t, client, "POST", path+"/confirm", planVersion(p), struct{}{}))
+	if len(p.Snapshot.Blocks) != 2 {
+		t.Fatal("blocks lost or duplicated", len(p.Snapshot.Blocks))
+	}
+	var ids []string
+	for i := 0; i < 4; i++ {
+		q := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput(fmt.Sprintf("Приоритет %d", i))))
+		ids = append(ids, q.ID)
+	}
+	in.QuestIDs = ids
+	in.TopIDs = ids
+	if r := f.privateRequest(t, client, "PUT", "/plans/day/2026-10-14", `"0"`, in); r.status != 422 {
+		t.Fatal("four priorities accepted", r.status)
+	}
 }
 func planInput() planning.Input {
 	return planning.Input{AvailableMinutes: 120, Windows: []planning.Window{{Start: "09:00", End: "12:00"}}, QuestIDs: []string{}, TopIDs: []string{}}
