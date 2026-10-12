@@ -118,7 +118,7 @@ func (s *Service) calculate(ctx context.Context, tx pgx.Tx, id string, g Goal) (
 		return progress, e
 	}
 	var progress float64
-	sql := leavesSQL + `SELECT COALESCE(100*sum(l.weight*COALESCE(m.weight,1)) FILTER(WHERE l.status='completed')/NULLIF(sum(l.weight*COALESCE(m.weight,1)),0),0)::float8 FROM leaves l LEFT JOIN milestones m ON m.owner_id=$1 AND m.goal_id=$2 AND m.id=l.milestone_id WHERE l.mandatory AND COALESCE(m.required,true)`
+	sql := leavesSQL + `SELECT COALESCE(100*sum(l.weight) FILTER(WHERE l.status='completed')/NULLIF(sum(l.weight),0),0)::float8 FROM leaves l LEFT JOIN milestones m ON m.owner_id=$1 AND m.goal_id=$2 AND m.id=l.milestone_id WHERE l.mandatory AND COALESCE(m.required,true)`
 	if g.ProgressType == "milestones" {
 		sql = leavesSQL + `, parts AS (
  SELECT m.weight,CASE WHEN EXISTS(SELECT 1 FROM goal_quests q WHERE q.owner_id=$1 AND q.goal_id=$2 AND q.milestone_id=m.id)
@@ -308,6 +308,15 @@ func (s *Service) mountPlan(r chi.Router) {
 						}
 						_, e = tx.Exec(r.Context(), `DELETE FROM goal_quests WHERE owner_id=$1 AND quest_id=$2`, id, qid)
 					} else {
+						if old == nil || *old != g.ID {
+							var count int
+							if e = tx.QueryRow(r.Context(), `SELECT count(*) FROM goal_quests WHERE owner_id=$1 AND goal_id=$2`, id, g.ID).Scan(&count); e != nil {
+								return e
+							}
+							if count >= 500 {
+								return invalid("quest_id", "Не более 500 прямых связей в одной цели")
+							}
+						}
 						if in.MilestoneID != nil {
 							if e = tx.QueryRow(r.Context(), `SELECT EXISTS(SELECT 1 FROM milestones WHERE owner_id=$1 AND goal_id=$2 AND id=$3)`, id, g.ID, *in.MilestoneID).Scan(&exists); e != nil {
 								return e

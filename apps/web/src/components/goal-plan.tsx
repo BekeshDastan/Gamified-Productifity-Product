@@ -36,13 +36,16 @@ export function GoalPlanPanel({ goal, onChanged }: { goal: Goal; onChanged: () =
     );
   const plan = query.data;
   const editable = !goal.archived_at && ["draft", "active", "paused"].includes(goal.state);
-  return (
+  const content = (
     <>
       <Card>
         <h2>Этапы цели</h2>
         <p className="ui-hint">
-          Сводка учитывает обязательные этапы с их весами. Если у этапа есть задачи, прогресс
-          берётся из обязательных листьев.
+          {goal.progress_type === "milestones"
+            ? "Сводка учитывает обязательные этапы с их весами. Если у этапа есть задачи, прогресс берётся из обязательных листьев."
+            : goal.progress_type === "quests"
+              ? "Этапы группируют задачи. Процент считается по весам обязательных листьев; вес этапа дополнительно не умножается."
+              : "Этапы помогают организовать работу. Процент этой цели считается только по числовому журналу."}
         </p>
         {plan.milestones.length === 0 && <p>Этапы пока не добавлены.</p>}
         {plan.milestones.map((m) => (
@@ -53,12 +56,15 @@ export function GoalPlanPanel({ goal, onChanged }: { goal: Goal; onChanged: () =
               {m.completed ? " · Отмечен" : ""}
             </p>
             {editable && (
-              <MilestoneForm
-                key={m.id + ":" + m.version}
-                goal={goal}
-                current={m}
-                onChanged={onChanged}
-              />
+              <details>
+                <summary>Изменить этап</summary>
+                <MilestoneForm
+                  key={m.id + ":" + m.version}
+                  goal={goal}
+                  current={m}
+                  onChanged={onChanged}
+                />
+              </details>
             )}
           </div>
         ))}
@@ -68,7 +74,7 @@ export function GoalPlanPanel({ goal, onChanged }: { goal: Goal; onChanged: () =
         <h2>Задачи цели</h2>
         <p className="ui-hint">
           Контейнер учитывается через обязательные листья. Повторная связь с родителем или потомком
-          запрещена.
+          запрещена. Вес связанного контейнера применяется к каждому его листу.
         </p>
         <ul className="quest-batch">
           {plan.links.map((l) => (
@@ -90,6 +96,14 @@ export function GoalPlanPanel({ goal, onChanged }: { goal: Goal; onChanged: () =
         {editable && <LinkForm goal={goal} milestones={plan.milestones} onChanged={onChanged} />}
       </Card>
     </>
+  );
+  return goal.progress_type === "metric" ? (
+    <details>
+      <summary>Вспомогательные этапы и задачи</summary>
+      {content}
+    </details>
+  ) : (
+    content
   );
 }
 const milestoneFields = z.object({

@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth/provider";
 import { useConfirmDiscard } from "@/lib/forms/unsaved-changes";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { goalInput, goalStates, type Goal } from "@/lib/goals";
+import { statuses } from "@/lib/quests";
 import { goalActions, goalHistory, transitionGoal, type GoalAction } from "@/lib/goal-lifecycle";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -224,7 +225,8 @@ export function GoalHistory({ goal }: { goal: Goal }) {
                   <ul>
                     {v.snapshot.plan.links.map((l) => (
                       <li key={l.quest_id}>
-                        {l.title} · вес {l.weight} · {l.status}
+                        {l.title} · вес {l.weight} ·{" "}
+                        {statuses[l.status as keyof typeof statuses] ?? l.status}
                       </li>
                     ))}
                   </ul>

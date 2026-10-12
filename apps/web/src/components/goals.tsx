@@ -39,6 +39,7 @@ export function Goals({ id }: { id?: string }) {
   const [editing, setEditing] = useState(false);
   const [created, setCreated] = useState<Goal>();
   const [revision, setRevision] = useState(0);
+  const [notice, setNotice] = useState("");
   const query = useQuery<Goal | Awaited<ReturnType<typeof listGoals>>>({
     queryKey: ["account", account, "goals", id ?? "", page, filters],
     enabled: !!account,
@@ -78,11 +79,13 @@ export function Goals({ id }: { id?: string }) {
   const current = "id" in query.data ? query.data : undefined;
   const collection = "items" in query.data ? query.data : undefined;
   const changed = () => {
+    setNotice("Изменения сохранены.");
     void query.refetch().then(() => setRevision((v) => v + 1));
     void cache.invalidateQueries({ queryKey: ["account"] });
   };
   return (
     <div className="quest-workspace">
+      {notice && <p role="status">{notice}</p>}
       <div className="button-row">
         <Button
           onClick={() => {
@@ -319,7 +322,7 @@ const fieldsSchema = goalInput.omit({ area_id: true, start_date: true, target_da
 type Fields = z.infer<typeof fieldsSchema>;
 function values(g: GoalInput, state: "draft" | "active" = "draft"): Fields {
   return {
-    ...goalInput.parse(g),
+    ...g,
     area_id: g.area_id ?? "",
     start_date: g.start_date ?? "",
     target_date: g.target_date ?? "",

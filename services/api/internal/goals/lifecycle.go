@@ -168,7 +168,7 @@ func (s *Service) mountLifecycle(r chi.Router) {
 						} else {
 							return nil, invalid("resolution", "Выберите: продолжить, перестроить план или закрыть")
 						}
-						explanation += "\nРешение пересмотра: " + in.Resolution
+						explanation += "\nРешение пересмотра: " + map[string]string{"continue": "Продолжить с новой датой", "rebuild": "Перестроить будущий план", "close": "Закрыть и убрать в архив"}[in.Resolution]
 					}
 					if in.Completed != "" {
 						explanation += "\nВыполнено: " + in.Completed

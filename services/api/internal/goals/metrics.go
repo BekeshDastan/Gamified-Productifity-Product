@@ -60,12 +60,12 @@ func (s *Service) setupMetric(ctx context.Context, tx pgx.Tx, id, key string, in
 	return e
 }
 func (s *Service) metricProgress(ctx context.Context, tx pgx.Tx, id string, g Goal) (float64, float64, error) {
-	var current float64
-	e := tx.QueryRow(ctx, `SELECT $3::numeric+COALESCE(sum(value),0) FROM goal_metric_entries WHERE owner_id=$1 AND goal_id=$2`, id, g.ID, g.Start).Scan(&current)
+	var current, progress float64
+	e := tx.QueryRow(ctx, `SELECT current::float8,GREATEST(0,LEAST(100,100*(current-$3::numeric)/($4::numeric-$3::numeric)))::float8 FROM
+ (SELECT $3::numeric+COALESCE(sum(value),0) current FROM goal_metric_entries WHERE owner_id=$1 AND goal_id=$2) totals`, id, g.ID, g.Start, g.Target).Scan(&current, &progress)
 	if e != nil {
 		return 0, 0, e
 	}
-	progress := math.Max(0, math.Min(100, (current-g.Start)/(g.Target-g.Start)*100))
 	return progress, current, nil
 }
 func (s *Service) idempotent(r *http.Request, in any, fn func(pgx.Tx) (any, error)) (any, error) {

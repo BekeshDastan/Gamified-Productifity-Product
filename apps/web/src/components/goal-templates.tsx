@@ -115,7 +115,7 @@ function TemplateEditor({
     <div className="goal-plan-part">
       <h3>{template.name}</h3>
       <p>{template.description}</p>
-      <Form saving={flow.saving || applying || done} error={flow.error} onSubmit={flow.onSubmit}>
+      <Form saving={flow.saving || applying} error={flow.error} onSubmit={flow.onSubmit}>
         <Input
           label="Название цели"
           {...register("input.title")}

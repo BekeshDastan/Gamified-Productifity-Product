@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
@@ -276,6 +277,73 @@ func TestGoalDecisionsCorrectionReviewAndArchive(t *testing.T) {
 		t.Fatal("cancel archive")
 	}
 }
+func TestGoalConcurrentEditsAndSourceControl(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "goal-control@example.test")
+	g := readGoal(t, f.privateRequest(t, client, "POST", "/goals", "", goals.Create{Input: goalInput("Контроль"), State: "active"}))
+	statuses := make(chan int, 2)
+	for _, title := range []string{"Первое окно", "Второе окно"} {
+		go func() {
+			input := g.Input
+			input.Title = title
+			statuses <- f.privateRequest(t, client, "PATCH", "/goals/"+g.ID, goalVersion(g), goals.Edit{Input: input, Reason: "Уточнение"}).status
+		}()
+	}
+	a, b := <-statuses, <-statuses
+	if !(a == 200 && b == 409 || a == 409 && b == 200) {
+		t.Fatal("concurrent edit", a, b)
+	}
+	g = readGoal(t, f.privateRequest(t, client, "GET", "/goals/"+g.ID, "", nil))
+	g = readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/milestones", goalVersion(g), goals.MilestoneInput{Title: "Группа", Required: true, Weight: 100}))
+	var plan struct{ Data goals.Plan }
+	planResponse := f.privateRequest(t, client, "GET", "/goals/"+g.ID+"/plan", "", nil)
+	if json.Unmarshal(planResponse.body, &plan) != nil || len(plan.Data.Milestones) != 1 {
+		t.Fatal("plan group")
+	}
+	for i, w := range []float64{3, 1} {
+		q := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput(fmt.Sprintf("Лист %d", i))))
+		link := goals.LinkInput{Required: true, Weight: w}
+		if i == 0 {
+			link.MilestoneID = &plan.Data.Milestones[0].ID
+		}
+		g = readGoal(t, f.privateRequest(t, client, "PUT", "/goals/"+g.ID+"/links/"+q.ID, goalVersion(g), link))
+		if i == 0 {
+			_ = readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]any{}))
+			g = readGoal(t, f.privateRequest(t, client, "GET", "/goals/"+g.ID, "", nil))
+		}
+	}
+	var expected float64
+	if e := f.pool.QueryRow(t.Context(), `SELECT 100*sum(l.weight) FILTER(WHERE q.status='completed')/sum(l.weight) FROM goal_quests l JOIN quests q ON q.owner_id=l.owner_id AND q.id=l.quest_id WHERE l.goal_id=$1 AND l.required`, g.ID).Scan(&expected); e != nil || expected != 75 || g.Progress != expected {
+		t.Fatal("source control", expected, g.Progress, e)
+	}
+	other, _ := f.signedIn(t, "goal-history-owner@example.test")
+	if r := f.privateRequest(t, other, "GET", "/goals/"+g.ID+"/history", "", nil); r.status != 404 {
+		t.Fatal("foreign history")
+	}
+	// Rebuild removes live associations, keeps source quests and immutable past plan.
+	next := g.Input
+	date := "2026-12-01"
+	next.TargetDate = &date
+	g = readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/review", goalVersion(g), goals.Transition{Reason: "Новая стратегия", Resolution: "rebuild", NextInput: &next}))
+	if g.Progress != 0 || g.State != "active" {
+		t.Fatal("rebuild progress")
+	}
+	var count int
+	if e := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM quests`).Scan(&count); e != nil || count != 2 {
+		t.Fatal("rebuild deleted quests", count, e)
+	}
+	var history struct{ Data []goals.Version }
+	r := f.privateRequest(t, client, "GET", "/goals/"+g.ID+"/history", "", nil)
+	if json.Unmarshal(r.body, &history) != nil {
+		t.Fatal("history")
+	}
+	var snapshot struct {
+		Plan goals.Plan `json:"plan"`
+	}
+	if json.Unmarshal(history.Data[1].Snapshot, &snapshot) != nil || len(snapshot.Plan.Links) != 2 {
+		t.Fatal("rebuild erased prior plan")
+	}
+}
 func TestGoalMetricUnitJournalCorrectionAndReplay(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, _ := f.signedIn(t, "goal-metric@example.test")
@@ -374,5 +442,50 @@ func TestGoalCRUDOverdueOwnerAndPromotion(t *testing.T) {
 	var count int
 	if e := f.pool.QueryRow(f.ctx, `SELECT count(*) FROM goals WHERE payload->>'title'='Первая цель'`).Scan(&count); e != nil || count != 1 {
 		t.Fatal("duplicate goal draft")
+	}
+}
+func TestGoalDeadlineUsesOwnerCalendarWithoutClosing(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, account := f.signedIn(t, "goal-timezone@example.test")
+	input := goalInput("Календарный срок")
+	day := "2026-10-12"
+	input.TargetDate = &day
+	g := readGoal(t, f.privateRequest(t, client, "POST", "/goals", "", goals.Create{Input: input, State: "active"}))
+	initialVersion := g.Version
+	for _, tc := range []struct {
+		zone    string
+		overdue bool
+	}{{"UTC", false}, {"Pacific/Kiritimati", true}, {"America/New_York", false}} {
+		if _, e := f.pool.Exec(t.Context(), `UPDATE user_settings SET preferences=jsonb_set(preferences,'{timezone}',to_jsonb($2::text)) WHERE owner_id=$1`, account.ID, tc.zone); e != nil {
+			t.Fatal(e)
+		}
+		g = readGoal(t, f.privateRequest(t, client, "GET", "/goals/"+g.ID, "", nil))
+		if g.Overdue != tc.overdue || g.TargetDate == nil || *g.TargetDate != day || g.State != "active" || g.Version != initialVersion {
+			t.Fatal("deadline", tc.zone, g)
+		}
+	}
+	// Account clock can cross midnight without a write or an automatic failure.
+	f.clock.Advance(24 * time.Hour)
+	refreshed := f.request(t, client, "POST", "/refresh", f.csrf(t, client), struct{}{})
+	if refreshed.status != 200 {
+		t.Fatal("refresh after day", refreshed.status)
+	}
+	g = readGoal(t, f.privateRequest(t, client, "GET", "/goals/"+g.ID, "", nil))
+	if !g.Overdue || g.State != "active" || g.Version != initialVersion {
+		t.Fatal("automatic closing", g)
+	}
+}
+func TestGoalMetricPrecisionAtLargeBaseline(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "goal-precision@example.test")
+	input := goalInput("Точный прирост")
+	input.ProgressType = "metric"
+	input.Unit = "единицы"
+	input.Start = 999999999.99
+	input.Target = 1000000000
+	g := readGoal(t, f.privateRequest(t, client, "POST", "/goals", "", goals.Create{Input: input, State: "active"}))
+	g = readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/entries", goalVersion(g), goals.MetricInput{Value: 0.001, Unit: input.Unit, OccurredOn: "2026-10-12"}))
+	if g.Progress != 10 {
+		t.Fatal("numeric precision", g.Progress)
 	}
 }
