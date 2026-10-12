@@ -725,3 +725,70 @@
 .ui-form-fields .ui-button[type="submit"] {
   width: 100%;
 }
+
+.page-state {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 32px 24px;
+  text-align: center;
+}
+.page-state > svg {
+  margin: 0 auto 16px;
+  color: var(--accent);
+}
+.page-state h2 {
+  font-size: 24px;
+  margin: 0 0 16px;
+}
+.page-state .ui-button {
+  margin-top: 20px;
+}
+.page-state .request-id {
+  margin-top: 12px;
+  font-size: 12px;
+}
+.skeleton-stack {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+.skeleton {
+  display: block;
+  height: 18px;
+  background: var(--muted);
+  border-radius: 6px;
+  animation: breathe 1.8s ease-in-out infinite;
+}
+.skeleton:nth-child(2) {
+  width: 80%;
+}
+.skeleton:nth-child(3) {
+  width: 65%;
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+.conflict-actions {
+  display: grid;
+  gap: 16px;
+}
+.service-ready {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+  color: var(--success);
+  margin: 0;
+}
+.connection-card {
+  margin-top: 24px;
+}
+.connection-card h2 {
+  font-size: 18px;
+}
+.connection-card .page-state {
+  margin: 0;
+  padding: 16px;
+}

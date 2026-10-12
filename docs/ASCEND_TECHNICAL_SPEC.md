@@ -1318,7 +1318,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Двойной submit не создаёт второй запрос; серверная ошибка видна у нужного поля.
   - **КОММИТ СЕЙЧАС:** `feat(forms): add validated form and unsaved change handling`
 
-- [ ] **C022. Состояния страниц**
+- [x] **C022. Состояния страниц**
   - **Сделать:** Создать skeleton, retry, empty-state, not-found и диалог конфликта версии.
   - **Проверить:** Ошибку загрузки можно повторить; нет нулевых «успехов» вместо неизвестных данных.
   - **КОММИТ СЕЙЧАС:** `feat(ui): add loading empty error and conflict states`

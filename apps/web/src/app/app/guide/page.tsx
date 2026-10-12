@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { ServiceStatus } from "@/components/service-status";
 export default function GuidePage() {
   return (
     <>
@@ -42,6 +43,10 @@ export default function GuidePage() {
           </p>
         </Card>
       </div>
+      <Card className="connection-card">
+        <h2>Доступность сервиса</h2>
+        <ServiceStatus />
+      </Card>
     </>
   );
 }
