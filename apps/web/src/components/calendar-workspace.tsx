@@ -2,6 +2,8 @@
 import { useRef, useState } from "react";
 import type { EventApi } from "@fullcalendar/core";
 import { z } from "zod";
+import { fromWall, toWall } from "@/lib/calendar-time";
+import { ApiError } from "@/lib/api/client";
 import FullCalendar from "@fullcalendar/react";
 import dayGrid from "@fullcalendar/daygrid";
 import timeGrid from "@fullcalendar/timegrid";
@@ -374,6 +376,12 @@ function EventForm({
       }),
       reason: "",
       cancelled: current?.cancelled ?? false,
+      ...(current && !current.all_day
+        ? {
+            start: toWall(current.start, current.timezone),
+            end: toWall(current.end, current.timezone),
+          }
+        : {}),
       frequency: series?.rule.frequency ?? "none",
       interval: series?.rule.interval ?? 1,
       weekdays: series?.rule.weekdays ?? [1, 3, 5],
@@ -386,6 +394,20 @@ function EventForm({
     fields: ["title", "area_id", "quest_id", "all_day", "start", "end", "timezone", "reason"],
     save: async (values) => {
       const input = calendarInput.parse(values);
+      if (!input.all_day) {
+        try {
+          input.start = fromWall(input.start, input.timezone);
+          input.end = fromWall(input.end, input.timezone);
+        } catch {
+          throw new ApiError(
+            422,
+            "VALIDATION_ERROR",
+            "Выбранное местное время не существует. Выберите другой час.",
+            undefined,
+            { start: "Проверьте время и переход часов" },
+          );
+        }
+      }
       const rule = {
         frequency: values.frequency === "none" ? ("daily" as const) : values.frequency,
         interval: values.interval,
@@ -468,17 +490,22 @@ function EventForm({
         <input
           type="checkbox"
           disabled={current?.source === "quest"}
-          {...form.register("all_day")}
+          {...form.register("all_day", {
+            onChange: () => {
+              form.setValue("start", "", { shouldDirty: true });
+              form.setValue("end", "", { shouldDirty: true });
+            },
+          })}
         />
         Без времени
       </label>
       <Input
         label="Начало события"
-        type={form.watch("all_day") ? "date" : "text"}
+        type={form.watch("all_day") ? "date" : "datetime-local"}
         hint={
           form.watch("all_day")
             ? "Дата без часового сдвига"
-            : "Дата и время с поясом, например 2026-10-12T09:00:00+05:00"
+            : "Местное время: " + form.getValues("timezone")
         }
         {...form.register("start")}
         error={errors.start?.message}
@@ -486,7 +513,7 @@ function EventForm({
       <Input
         label="Конец события"
         disabled={current?.source === "quest"}
-        type={form.watch("all_day") ? "date" : "text"}
+        type={form.watch("all_day") ? "date" : "datetime-local"}
         hint="Конец не включён: для одного дня выберите следующий день."
         {...form.register("end")}
         error={errors.end?.message}

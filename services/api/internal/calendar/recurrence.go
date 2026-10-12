@@ -33,6 +33,15 @@ func validateSeries(in SeriesInput) (SeriesInput, error) {
 		return in, e
 	}
 	in.Event = v
+	if in.Rule.Weekdays == nil {
+		in.Rule.Weekdays = []int{}
+	}
+	if !v.AllDay {
+		start, _ := time.Parse(time.RFC3339, v.Start)
+		if start.Second() != 0 || start.Nanosecond() != 0 {
+			return in, invalid("start", "Для повторений укажите время с точностью до минуты")
+		}
+	}
 	if in.Event.QuestID != nil {
 		return in, invalid("quest_id", "Для повторения задачи создаётся отдельная задача на каждый экземпляр")
 	}
@@ -69,6 +78,12 @@ func validateSeries(in SeriesInput) (SeriesInput, error) {
 		until, e := day(*in.Rule.Until)
 		if e != nil || until.Before(anchor) || until.After(anchor.AddDate(10, 0, 0)) {
 			return in, invalid("until", "Конец серии: от начала до 10 лет")
+		}
+	}
+	if in.Rule.Count > 0 {
+		all := generateValidated(in, anchor, anchor.AddDate(10, 0, 1), nil)
+		if len(all) < in.Rule.Count {
+			return in, invalid("count", "Выбранное число повторений не помещается в 10 лет; уменьшите число или интервал")
 		}
 	}
 	return in, nil
@@ -109,6 +124,9 @@ func Generate(in SeriesInput, from, to time.Time, endsBefore *string) ([]Occurre
 		return nil, e
 	}
 	in = valid
+	return generateValidated(in, from, to, endsBefore), nil
+}
+func generateValidated(in SeriesInput, from, to time.Time, endsBefore *string) []Occurrence {
 	anchor, h, m := seriesAnchor(in.Event)
 	zone, _ := time.LoadLocation(in.Event.Timezone)
 	var duration time.Duration
@@ -175,12 +193,12 @@ func Generate(in SeriesInput, from, to time.Time, endsBefore *string) ([]Occurre
 		// Include overlap at the start of the requested window, including long blocks.
 		lookback := days
 		if !in.Event.AllDay {
-			lookback = int(duration/(24*time.Hour)) + 2
+			lookback = int(duration/(24*time.Hour)) + 3
 		}
 		overlap := d.AddDate(0, 0, lookback).After(from)
 		if overlap {
 			out = append(out, Occurrence{Key: key, Event: v})
 		}
 	}
-	return out, nil
+	return out
 }

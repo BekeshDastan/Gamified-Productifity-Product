@@ -74,7 +74,11 @@ func (s *Service) materialize(ctx context.Context, tx pgx.Tx, id string, from, t
 	created := 0
 	more := false
 	for _, v := range series {
-		occurrences, e := Generate(v.SeriesInput, from, to, v.EndsBefore)
+		windowEnd := to
+		if !v.Event.AllDay {
+			windowEnd = to.AddDate(0, 0, 2)
+		}
+		occurrences, e := Generate(v.SeriesInput, from, windowEnd, v.EndsBefore)
 		if e != nil {
 			return false, e
 		}

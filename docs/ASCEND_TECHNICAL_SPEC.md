@@ -1568,7 +1568,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Перенос не выглядит как своевременное выполнение на исходную дату.
   - **КОММИТ СЕЙЧАС:** `feat(calendar-ui): show deadlines outcomes and postponed history`
 
-- [ ] **C063. Обработка временных границ**
+- [x] **C063. Обработка временных границ**
   - **Сделать:** Закрепить политику пропущенных/двойных времён и 31-го числа, внедрить Clock fixtures.
   - **Проверить:** Контрольные кейсы UTC, Asia/Almaty и DST-зоны дают ожидаемые даты.
   - **КОММИТ СЕЙЧАС:** `test(calendar): cover leap days timezone changes and DST`

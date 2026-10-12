@@ -37,6 +37,58 @@ func readEvent(t *testing.T, r authResponse) calendar.Event {
 	return v.Data
 }
 func eventVersion(v calendar.Event) string { return fmt.Sprintf(`"%d"`, v.Version) }
+func TestCalendarTimezoneChangeAndClockHorizon(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, account := f.signedIn(t, "calendar-zone@example.test")
+	in := calendar.SeriesInput{Event: calendar.Input{Title: "Серия в своём поясе", Start: "2026-10-12T23:30:00-12:00", End: "2026-10-13T00:30:00-12:00", Timezone: "Etc/GMT+12"}, Kind: "event", Rule: calendar.Rule{Frequency: "daily", Interval: 1, Count: 65, Weekdays: []int{}}}
+	series := readSeries(t, f.privateRequest(t, client, "POST", "/calendar/series", "", in))
+	whole := calendarInput("Без времени")
+	readEvent(t, f.privateRequest(t, client, "POST", "/calendar/events", "", whole))
+	var stable string
+	for _, zone := range []string{"Pacific/Kiritimati", "UTC", "Asia/Almaty", "America/New_York"} {
+		if _, e := f.pool.Exec(t.Context(), `UPDATE user_settings SET preferences=jsonb_set(preferences,'{timezone}',to_jsonb($2::text)) WHERE owner_id=$1`, account.ID, zone); e != nil {
+			t.Fatal(e)
+		}
+		page := readCalendar(t, f.privateRequest(t, client, "GET", "/calendar?from=2026-10-12&to=2026-10-15", "", nil))
+		found := false
+		for _, v := range page.Items {
+			if v.Title == whole.Title && v.Start != whole.Start {
+				t.Fatal("all day shifted")
+			}
+			if v.SeriesID != nil && *v.SeriesID == series.ID && *v.OccurrenceKey == "2026-10-12" {
+				found = true
+				if stable == "" {
+					stable = v.ID
+				}
+				if v.ID != stable || v.Start != "2026-10-13T11:30:00Z" {
+					t.Fatal("zone changed identity or instant", zone, v)
+				}
+			}
+		}
+		if !found {
+			t.Fatal("cross-zone instance omitted", zone)
+		}
+	}
+	svc := calendar.NewService(f.pool, f.clock, quests.NewService(f.pool, f.clock))
+	if e := svc.FillHorizon(t.Context()); e != nil {
+		t.Fatal(e)
+	}
+	var before int
+	if e := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM calendar_events WHERE series_id=$1`, series.ID).Scan(&before); e != nil {
+		t.Fatal(e)
+	}
+	f.clock.Advance(24 * time.Hour)
+	if e := svc.FillHorizon(t.Context()); e != nil {
+		t.Fatal(e)
+	}
+	var after int
+	if e := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM calendar_events WHERE series_id=$1`, series.ID).Scan(&after); e != nil {
+		t.Fatal(e)
+	}
+	if after != before+1 {
+		t.Fatal("clock horizon", before, after)
+	}
+}
 func TestCalendarOriginalPlanAndDeadlineStaySeparate(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, _ := f.signedIn(t, "calendar-outcomes@example.test")
