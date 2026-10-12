@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -73,7 +74,9 @@ func main() {
 		logger.Error("invalid scanner configuration")
 		os.Exit(1)
 	}
-	quests.NewService(pool, platform.RealClock{}).WithObserver(goalService.QuestChanged).WithFiles(files, scanner).Mount(router, sessions.Protect)
+	questService := quests.NewService(pool, platform.RealClock{}).WithObserver(goalService.QuestChanged).WithFiles(files, scanner)
+	questService.Mount(router, sessions.Protect)
+	calendar.NewService(pool, platform.RealClock{}, questService).Mount(router, sessions.Protect)
 	server := &http.Server{
 		Addr:              cfg.Address,
 		Handler:           router,

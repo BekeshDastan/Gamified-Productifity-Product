@@ -66,6 +66,32 @@ type AuthSession struct {
 	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
 }
 
+type CalendarEvent struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	QuestID   pgtype.UUID        `json:"quest_id"`
+	Payload   []byte             `json:"payload"`
+	AllDay    bool               `json:"all_day"`
+	StartDate pgtype.Date        `json:"start_date"`
+	EndDate   pgtype.Date        `json:"end_date"`
+	StartsAt  pgtype.Timestamptz `json:"starts_at"`
+	EndsAt    pgtype.Timestamptz `json:"ends_at"`
+	Version   int64              `json:"version"`
+	Cancelled bool               `json:"cancelled"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type CalendarEventHistory struct {
+	ID          int64              `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	EventID     pgtype.UUID        `json:"event_id"`
+	BeforeState []byte             `json:"before_state"`
+	AfterState  []byte             `json:"after_state"`
+	Reason      string             `json:"reason"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Goal struct {
 	ID         pgtype.UUID        `json:"id"`
 	OwnerID    pgtype.UUID        `json:"owner_id"`
