@@ -55,3 +55,14 @@ type OutboxEvent struct {
 	OccurredAt   pgtype.Timestamptz `json:"occurred_at"`
 	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
 }
+
+type User struct {
+	ID              pgtype.UUID        `json:"id"`
+	Email           string             `json:"email"`
+	PasswordHash    string             `json:"-"`
+	Role            string             `json:"role"`
+	EmailVerifiedAt pgtype.Timestamptz `json:"email_verified_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	DisabledAt      pgtype.Timestamptz `json:"disabled_at"`
+}

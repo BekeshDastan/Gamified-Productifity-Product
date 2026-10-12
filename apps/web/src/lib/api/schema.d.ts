@@ -54,10 +54,31 @@ export interface components {
             };
             meta: components["schemas"]["Meta"];
         };
+        /** @description DTO регистрации. Публичный endpoint подключается после pre-auth CSRF и rate limits (C027). */
+        RegisterInput: {
+            /** Format: email */
+            email: string;
+            /**
+             * Format: password
+             * @description Unicode-символы, максимум 512 UTF-8 байт; пробелы сохраняются.
+             */
+            password: string;
+        };
+        Account: {
+            /** Format: uuid */
+            id: string;
+            /** Format: email */
+            email: string;
+            /** @enum {string} */
+            readonly role: "user" | "admin";
+            readonly email_verified: boolean;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
         ErrorEnvelope: {
             error: {
                 /** @enum {string} */
-                code: "INVALID_JSON" | "VALIDATION_ERROR" | "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "VERSION_CONFLICT" | "IDEMPOTENCY_MISMATCH" | "OPERATION_IN_PROGRESS" | "RATE_LIMITED" | "INTERNAL_ERROR" | "BODY_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "DEADLINE_EXCEEDED";
+                code: "INVALID_JSON" | "VALIDATION_ERROR" | "EMAIL_TAKEN" | "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "VERSION_CONFLICT" | "IDEMPOTENCY_MISMATCH" | "OPERATION_IN_PROGRESS" | "RATE_LIMITED" | "INTERNAL_ERROR" | "BODY_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "DEADLINE_EXCEEDED";
                 message: string;
                 request_id: string;
                 fields?: {
