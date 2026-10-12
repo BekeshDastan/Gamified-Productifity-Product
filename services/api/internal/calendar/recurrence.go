@@ -2,6 +2,7 @@ package calendar
 
 import (
 	"time"
+	_ "time/tzdata"
 )
 
 type Rule struct {
@@ -71,6 +72,9 @@ func validateSeries(in SeriesInput) (SeriesInput, error) {
 		return in, invalid("weekdays", "Дни недели относятся к недельному повторению")
 	}
 	anchor, _, _ := seriesAnchor(in.Event)
+	if anchor.Year() > 9987 {
+		return in, invalid("start", "Начало серии должно оставлять место для горизонта и длительности")
+	}
 	if (in.Rule.Until == nil) == (in.Rule.Count == 0) || in.Rule.Count < 0 || in.Rule.Count > 10000 {
 		return in, invalid("count", "Выберите конец по дате или числу 1–10000")
 	}
@@ -109,14 +113,16 @@ func ResolveWall(d time.Time, hour, minute int, zone *time.Location) (time.Time,
 		offsets[off] = true
 	}
 	var earliest time.Time
+	found := false
 	for off := range offsets {
 		candidate := wall.Add(-time.Duration(off) * time.Second)
 		local := candidate.In(zone)
-		if local.Year() == d.Year() && local.Month() == d.Month() && local.Day() == d.Day() && local.Hour() == hour && local.Minute() == minute && (earliest.IsZero() || candidate.Before(earliest)) {
+		if local.Year() == d.Year() && local.Month() == d.Month() && local.Day() == d.Day() && local.Hour() == hour && local.Minute() == minute && (!found || candidate.Before(earliest)) {
 			earliest = candidate
+			found = true
 		}
 	}
-	return earliest, !earliest.IsZero()
+	return earliest, found
 }
 func Generate(in SeriesInput, from, to time.Time, endsBefore *string) ([]Occurrence, error) {
 	valid, e := validateSeries(in)

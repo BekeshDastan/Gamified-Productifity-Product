@@ -24,7 +24,6 @@ import {
   getSeries,
   changeSeries,
   type CalendarSeries,
-  type CalendarInput,
   type CalendarEvent,
 } from "@/lib/calendar";
 import { questLabels, statuses } from "@/lib/quests";
@@ -99,6 +98,20 @@ export default function CalendarWorkspace() {
       (!status || (e.cancelled ? "cancelled" : e.status) === status) &&
       (!source || e.source === source),
   );
+  const timed = items.filter(
+    (e) =>
+      !e.all_day &&
+      !e.cancelled &&
+      ["event", "block"].includes(e.source) &&
+      !["completed", "failed", "skipped"].includes(e.status),
+  );
+  const conflict = timed.find((a, i) =>
+    timed
+      .slice(i + 1)
+      .some(
+        (b) => Date.parse(a.start) < Date.parse(b.end) && Date.parse(a.end) > Date.parse(b.start),
+      ),
+  );
   function changed() {
     setEditing(false);
     setSelected(undefined);
@@ -121,6 +134,7 @@ export default function CalendarWorkspace() {
           start: info.event.startStr,
           end: info.event.endStr,
           all_day: info.event.allDay,
+          timezone: zone,
         },
         "Перенос или изменение длительности в календаре",
         crypto.randomUUID(),
@@ -151,6 +165,12 @@ export default function CalendarWorkspace() {
         <span>Часовой пояс: {zone}</span>
       </div>
       {notice && <p role="status">{notice}</p>}
+      {conflict && (
+        <p role="status">
+          В диапазоне есть пересекающиеся блоки, в том числе «{conflict.title}». Оба показаны в
+          сетке. Можно перенести один из них или оставить пересечение осознанно.
+        </p>
+      )}
       {mutationError && (
         <p role="alert">
           {mutationError} <Button onClick={() => void data.refetch()}>Обновить диапазон</Button>
@@ -174,6 +194,18 @@ export default function CalendarWorkspace() {
               : (statuses[selected.status as keyof typeof statuses] ?? "Запланировано")}
           </p>
           {selected.reason && <p>{selected.reason}</p>}
+          <Button
+            variant="ghost"
+            onClick={() => {
+              if (discard())
+                void data.refetch().then((result) => {
+                  const fresh = result.data?.items.find((e) => e.id === selected.id);
+                  setSelected(fresh);
+                });
+            }}
+          >
+            Загрузить свежую версию
+          </Button>
           {!["deadline", "history"].includes(selected.source) && (
             <ExistingEventForm
               key={selected.id + ":" + selected.version}
@@ -249,7 +281,7 @@ export default function CalendarWorkspace() {
       {(data.isFetching || data.data?.materializing) && <p role="status">Обновляем события…</p>}
       {data.isError && (
         <p role="alert">
-          Не удалось загрузить диапазон.{" "}
+          {data.error instanceof ApiError ? data.error.message : "Не удалось загрузить диапазон."}{" "}
           <Button onClick={() => void data.refetch()}>Повторить</Button>
         </p>
       )}
@@ -257,12 +289,23 @@ export default function CalendarWorkspace() {
         <FullCalendar
           ref={ref}
           plugins={[dayGrid, timeGrid, list, multiMonth, interaction, luxon]}
-          locale={ru}
+          locale={settings.data.language === "en" ? "en" : ru}
+          eventTimeFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: settings.data.time_format === "12h",
+          }}
+          slotLabelFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: settings.data.time_format === "12h",
+          }}
           timeZone={zone}
           firstDay={settings.data.week_start % 7}
           initialView="dayGridMonth"
           headerToolbar={{ left: "prev,next today", center: "title", right: "" }}
-          buttonText={{ today: "Сегодня" }}
+          buttonIcons={false}
+          buttonText={{ today: "Сегодня", prev: "Назад", next: "Вперёд" }}
           height="auto"
           allDayText="Без времени"
           noEventsText="В этом диапазоне нет событий"
@@ -271,10 +314,11 @@ export default function CalendarWorkspace() {
           editable={true}
           eventDrop={(info) => void moved(info)}
           eventResize={(info) => void moved(info)}
-          eventAllow={(_, event) => {
+          eventAllow={(span, event) => {
             const e = event?.extendedProps.record as CalendarEvent | undefined;
             return (
               !!e &&
+              (e.source !== "quest" || span.allDay) &&
               !["deadline", "history"].includes(e.source) &&
               !e.cancelled &&
               !["completed", "failed", "skipped"].includes(e.status)
@@ -466,58 +510,66 @@ function EventForm({
       {series && form.watch("scope") === "end" && (
         <Input label="Новый последний день серии" type="date" {...form.register("until")} />
       )}
-      <Input label="Название события" {...form.register("title")} error={errors.title?.message} />
-      <Select
-        label="Направление события"
-        value={form.watch("area_id") ?? ""}
-        onChange={(e) => form.setValue("area_id", e.target.value || null, { shouldDirty: true })}
-      >
-        <option value="">Без направления</option>
-        {areas.map((a) => (
-          <option key={a.id} value={a.id}>
-            {a.name}
-          </option>
-        ))}
-      </Select>
-      {!current && (
-        <QuestPicker
-          label="Связанная задача"
-          value={form.watch("quest_id") ?? ""}
-          onChange={(v) => form.setValue("quest_id", v || null, { shouldDirty: true })}
-        />
-      )}
-      <label className="check-row">
-        <input
-          type="checkbox"
+      <fieldset disabled={form.watch("scope") === "end"} className="ui-form-fields">
+        <Input
+          label="Название события"
           disabled={current?.source === "quest"}
-          {...form.register("all_day", {
-            onChange: () => {
-              form.setValue("start", "", { shouldDirty: true });
-              form.setValue("end", "", { shouldDirty: true });
-            },
-          })}
+          {...form.register("title")}
+          error={errors.title?.message}
         />
-        Без времени
-      </label>
-      <Input
-        label="Начало события"
-        type={form.watch("all_day") ? "date" : "datetime-local"}
-        hint={
-          form.watch("all_day")
-            ? "Дата без часового сдвига"
-            : "Местное время: " + form.getValues("timezone")
-        }
-        {...form.register("start")}
-        error={errors.start?.message}
-      />
-      <Input
-        label="Конец события"
-        disabled={current?.source === "quest"}
-        type={form.watch("all_day") ? "date" : "datetime-local"}
-        hint="Конец не включён: для одного дня выберите следующий день."
-        {...form.register("end")}
-        error={errors.end?.message}
-      />
+        <Select
+          label="Направление события"
+          disabled={current?.source === "quest"}
+          value={form.watch("area_id") ?? ""}
+          onChange={(e) => form.setValue("area_id", e.target.value || null, { shouldDirty: true })}
+        >
+          <option value="">Без направления</option>
+          {areas.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name}
+            </option>
+          ))}
+        </Select>
+        {!current && form.watch("frequency") === "none" && (
+          <QuestPicker
+            label="Связанная задача"
+            value={form.watch("quest_id") ?? ""}
+            onChange={(v) => form.setValue("quest_id", v || null, { shouldDirty: true })}
+          />
+        )}
+        <label className="check-row">
+          <input
+            type="checkbox"
+            disabled={current?.source === "quest"}
+            {...form.register("all_day", {
+              onChange: () => {
+                form.setValue("start", "", { shouldDirty: true });
+                form.setValue("end", "", { shouldDirty: true });
+              },
+            })}
+          />
+          Без времени
+        </label>
+        <Input
+          label="Начало события"
+          type={form.watch("all_day") ? "date" : "datetime-local"}
+          hint={
+            form.watch("all_day")
+              ? "Дата без часового сдвига"
+              : "Местное время: " + form.getValues("timezone")
+          }
+          {...form.register("start")}
+          error={errors.start?.message}
+        />
+        <Input
+          label="Конец события"
+          disabled={current?.source === "quest"}
+          type={form.watch("all_day") ? "date" : "datetime-local"}
+          hint="Конец не включён: для одного дня выберите следующий день."
+          {...form.register("end")}
+          error={errors.end?.message}
+        />
+      </fieldset>
       {current && (
         <Input
           label="Причина изменения"
@@ -525,7 +577,7 @@ function EventForm({
           error={errors.reason?.message}
         />
       )}
-      {current && current.source !== "quest" && (
+      {current && current.source !== "quest" && form.watch("scope") === "this" && (
         <label className="check-row">
           <input type="checkbox" {...form.register("cancelled")} />
           Отменить событие
@@ -533,8 +585,13 @@ function EventForm({
       )}
       {(!current || (series && form.watch("scope") === "future")) && (
         <>
-          <Select label="Повторение" {...form.register("frequency")}>
-            <option value="none">Не повторять</option>
+          <Select
+            label="Повторение"
+            {...form.register("frequency", {
+              onChange: () => form.setValue("quest_id", null, { shouldDirty: true }),
+            })}
+          >
+            {!current && <option value="none">Не повторять</option>}
             <option value="daily">Ежедневно</option>
             <option value="weekly">По дням недели</option>
             <option value="monthly">Ежемесячно по числу</option>

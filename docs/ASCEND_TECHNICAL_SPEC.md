@@ -1573,7 +1573,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Контрольные кейсы UTC, Asia/Almaty и DST-зоны дают ожидаемые даты.
   - **КОММИТ СЕЙЧАС:** `test(calendar): cover leap days timezone changes and DST`
 
-- [ ] **C064. Приёмка календаря**
+- [x] **C064. Приёмка календаря**
   - **Сделать:** Собрать E2E создания серии, исключения, переноса и синхронизации со списком задач.
   - **Проверить:** После reload и перезапуска worker нет дублей и потерянных исключений.
   - **КОММИТ СЕЙЧАС:** `test(calendar): verify recurring edits across all calendar views`

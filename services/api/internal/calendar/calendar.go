@@ -127,12 +127,12 @@ func (s *Service) lock(ctx context.Context, tx pgx.Tx, id string) error {
 	return tx.QueryRow(ctx, `SELECT owner_id::text FROM profiles WHERE owner_id=$1 FOR UPDATE`, id).Scan(&v)
 }
 
-const columns = `e.payload,e.id::text,e.version,e.cancelled,COALESCE(q.version,0),COALESCE(q.status,'planned'),e.series_id::text,e.occurrence_key::text,COALESCE((SELECT version FROM recurrence_series WHERE owner_id=e.owner_id AND id=e.series_id),0)`
+const columns = `e.payload,e.id::text,e.version,e.cancelled,COALESCE(q.version,0),COALESCE(q.status,'planned'),e.series_id::text,e.occurrence_key::text,COALESCE((SELECT version FROM recurrence_series WHERE owner_id=e.owner_id AND id=e.series_id),0),COALESCE((SELECT reason FROM calendar_event_history WHERE owner_id=e.owner_id AND event_id=e.id ORDER BY id DESC LIMIT 1),'')`
 
 func scan(row pgx.Row) (Event, error) {
 	var v Event
 	var data []byte
-	e := row.Scan(&data, &v.ID, &v.Version, &v.Cancelled, &v.QuestVersion, &v.Status, &v.SeriesID, &v.OccurrenceKey, &v.SeriesVersion)
+	e := row.Scan(&data, &v.ID, &v.Version, &v.Cancelled, &v.QuestVersion, &v.Status, &v.SeriesID, &v.OccurrenceKey, &v.SeriesVersion, &v.Reason)
 	if e == nil {
 		e = json.Unmarshal(data, &v.Input)
 	}
@@ -240,6 +240,8 @@ func (s *Service) idempotent(r *http.Request, in any, fn func(pgx.Tx) (any, erro
 		e = invalid("idempotency_key", "Нужен ключ запроса: 16–128 символов")
 	case errors.Is(e, storage.ErrIdempotencyMismatch):
 		e = problem(409, "IDEMPOTENCY_MISMATCH", "Ключ уже использован для другого запроса")
+	case errors.Is(e, storage.ErrOperationInProgress):
+		e = problem(409, "OPERATION_IN_PROGRESS", "Запрос выполняется")
 	}
 	if e != nil {
 		return nil, e

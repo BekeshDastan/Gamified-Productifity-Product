@@ -159,8 +159,28 @@ func (s *Service) changeSeries(r *http.Request, tx pgx.Tx, id, key string, in Se
 		if e != nil {
 			return current, e
 		}
+		// Preserve logical positions when the new series starts on another date.
+		// A completed future action must not reappear merely because its date moved.
+		oldAnchor, _, _ := seriesAnchor(current.Event)
+		oldAll := generateValidated(current.SeriesInput, split, oldAnchor.AddDate(10, 0, 1), current.EndsBefore)
+		oldFuture := []Occurrence{}
+		for _, v := range oldAll {
+			if v.Key >= in.OccurrenceKey {
+				oldFuture = append(oldFuture, v)
+			}
+		}
+		newAll := generateValidated(valid, anchor, anchor.AddDate(10, 0, 1), nil)
+		positions := map[string]int{}
+		for i, v := range oldFuture {
+			positions[v.Key] = i
+		}
 		for _, date := range preserved {
-			if _, e := tx.Exec(r.Context(), `INSERT INTO recurrence_exclusions(owner_id,series_id,occurrence_key,reason) VALUES($1,$2,$3::text::date,$4)`, id, continuation.ID, date, "Сохранена история прежней серии"); e != nil {
+			position, ok := positions[date]
+			if !ok || position >= len(newAll) {
+				continue
+			}
+			mapped := newAll[position].Key
+			if _, e := tx.Exec(r.Context(), `INSERT INTO recurrence_exclusions(owner_id,series_id,occurrence_key,reason) VALUES($1,$2,$3::text::date,$4)`, id, continuation.ID, mapped, "Сохранена история прежней серии: "+date); e != nil {
 				return current, e
 			}
 		}

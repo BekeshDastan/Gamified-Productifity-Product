@@ -37,6 +37,53 @@ func readEvent(t *testing.T, r authResponse) calendar.Event {
 	return v.Data
 }
 func eventVersion(v calendar.Event) string { return fmt.Sprintf(`"%d"`, v.Version) }
+func TestCalendarConcurrentMaterializationAndRollback(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "calendar-atomic@example.test")
+	in := calendar.SeriesInput{Event: calendarInput("Атомарное повторение"), Kind: "task", Rule: calendar.Rule{Frequency: "daily", Interval: 1, Count: 2, Weekdays: []int{}}}
+	readSeries(t, f.privateRequest(t, client, "POST", "/calendar/series", "", in))
+	_, e := f.pool.Exec(t.Context(), `CREATE FUNCTION reject_calendar_history() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced_calendar_history_failure'; END $$; CREATE TRIGGER reject_calendar_history BEFORE INSERT ON calendar_event_history FOR EACH ROW EXECUTE FUNCTION reject_calendar_history()`)
+	if e != nil {
+		t.Fatal(e)
+	}
+	path := "/calendar?from=2026-10-12&to=2026-10-15"
+	if r := f.privateRequest(t, client, "GET", path, "", nil); r.status != 500 {
+		t.Fatal("forced failure missing")
+	}
+	var count int
+	if e := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM quests`).Scan(&count); e != nil || count != 0 {
+		t.Fatal("orphan task after rollback", count, e)
+	}
+	if _, e := f.pool.Exec(t.Context(), `DROP TRIGGER reject_calendar_history ON calendar_event_history`); e != nil {
+		t.Fatal(e)
+	}
+	results := make(chan authResponse, 2)
+	for i := 0; i < 2; i++ {
+		go func() { results <- f.privateRequest(t, client, "GET", path, "", nil) }()
+	}
+	for i := 0; i < 2; i++ {
+		page := readCalendar(t, <-results)
+		if len(page.Items) != 4 {
+			t.Fatal("concurrent range", len(page.Items))
+		}
+	}
+	if e := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM quests`).Scan(&count); e != nil || count != 2 {
+		t.Fatal("concurrent duplicated task", count, e)
+	}
+	event := readEvent(t, f.privateRequest(t, client, "POST", "/calendar/events", "", calendarInput("Конкурирующее изменение")))
+	edit := calendar.Edit{Input: event.Input, Reason: "Изменение из двух окон"}
+	edit.Start = "2026-10-16"
+	edit.End = "2026-10-17"
+	for i := 0; i < 2; i++ {
+		go func() {
+			results <- f.privateRequest(t, client, "PATCH", "/calendar/events/"+event.ID, eventVersion(event), edit)
+		}()
+	}
+	a, b := <-results, <-results
+	if !((a.status == 200 && b.status == 409) || (a.status == 409 && b.status == 200)) {
+		t.Fatal("lost update", a.status, b.status)
+	}
+}
 func TestCalendarTimezoneChangeAndClockHorizon(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, account := f.signedIn(t, "calendar-zone@example.test")
@@ -132,7 +179,7 @@ func TestCalendarExceptionsSplitEndAndCompletedHistory(t *testing.T) {
 	other, _ := f.signedIn(t, "foreign-series@example.test")
 	in := calendar.SeriesInput{Event: calendarInput("Серия задач"), Kind: "task", Rule: calendar.Rule{Frequency: "daily", Interval: 1, Count: 5, Weekdays: []int{}}}
 	series := readSeries(t, f.privateRequest(t, client, "POST", "/calendar/series", "", in))
-	path := "/calendar?from=2026-10-12&to=2026-10-18"
+	path := "/calendar?from=2026-10-12&to=2026-10-21"
 	page := readCalendar(t, f.privateRequest(t, client, "GET", path, "", nil))
 	byDate := map[string]calendar.Event{}
 	for _, v := range page.Items {
@@ -150,8 +197,8 @@ func TestCalendarExceptionsSplitEndAndCompletedHistory(t *testing.T) {
 		t.Fatal("cancel not reflected in task")
 	}
 	replacement := in
-	replacement.Event.Start = "2026-10-13"
-	replacement.Event.End = "2026-10-14"
+	replacement.Event.Start = "2026-10-16"
+	replacement.Event.End = "2026-10-17"
 	replacement.Event.Title = "Продолжение"
 	replacement.Rule.Count = 4
 	edit := calendar.SeriesEdit{Action: "split", OccurrenceKey: "2026-10-13", Replacement: &replacement, Reason: "Меняю будущий план"}
@@ -168,7 +215,7 @@ func TestCalendarExceptionsSplitEndAndCompletedHistory(t *testing.T) {
 	for _, v := range page.Items {
 		if v.SeriesID != nil && *v.SeriesID == next.ID && !v.Cancelled {
 			active++
-			if *v.OccurrenceKey == "2026-10-14" || *v.OccurrenceKey == "2026-10-15" {
+			if *v.OccurrenceKey == "2026-10-17" || *v.OccurrenceKey == "2026-10-18" {
 				t.Fatal("history resurrected")
 			}
 		}
@@ -180,7 +227,7 @@ func TestCalendarExceptionsSplitEndAndCompletedHistory(t *testing.T) {
 	if q.Version != completedVersion || q.Status != "completed" || *q.PlannedDate != "2026-10-14" {
 		t.Fatal("completion rewritten")
 	}
-	until := "2026-10-13"
+	until := "2026-10-16"
 	next = readSeries(t, f.privateRequest(t, client, "PATCH", "/calendar/series/"+next.ID, fmt.Sprintf(`"%d"`, next.Version), calendar.SeriesEdit{Action: "end", Until: &until, Reason: "Сокращаю серию"}))
 	page = readCalendar(t, f.privateRequest(t, client, "GET", path, "", nil))
 	for _, v := range page.Items {

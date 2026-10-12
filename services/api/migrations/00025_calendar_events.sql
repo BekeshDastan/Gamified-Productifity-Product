@@ -31,6 +31,7 @@ CREATE TABLE calendar_event_history (
  created_at timestamptz NOT NULL,
  FOREIGN KEY(owner_id,event_id) REFERENCES calendar_events(owner_id,id)
 );
+CREATE INDEX calendar_history_event ON calendar_event_history(owner_id,event_id,id DESC);
 -- +goose Down
 DROP TABLE calendar_event_history;
 DROP TABLE calendar_events;

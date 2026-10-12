@@ -33,7 +33,7 @@ func (s *Service) ScheduleInTx(ctx context.Context, tx pgx.Tx, id, key string, v
 		return q, e
 	}
 	q.Input = in
-	if before.PlannedDate != nil && *before.PlannedDate == planned {
+	if before.PlannedDate != nil && *before.PlannedDate == planned && before.Status == q.Status {
 		return q, nil
 	}
 	data, e := json.Marshal(in)

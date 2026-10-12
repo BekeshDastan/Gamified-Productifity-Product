@@ -1484,3 +1484,7 @@ html[data-motion="reduce"] *::after {
 .calendar-scroll .fc .fc-list {
   border: 0;
 }
+.calendar-scroll .fc .fc-day-other .fc-daygrid-day-top {
+  opacity: 1;
+  color: var(--muted-foreground);
+}

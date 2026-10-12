@@ -120,6 +120,7 @@ export async function editCalendar(
   key: string,
   cancelled = false,
 ) {
+  const clean = calendarInput.parse(input);
   await requireAccount();
   return withAuthLock(async () => {
     const api = await authClient();
@@ -131,13 +132,13 @@ export async function editCalendar(
     if (current.source === "quest") {
       await api.PATCH("/api/v1/calendar/quests/{id}", {
         params: { path: { id: current.quest_id! }, header },
-        body: { planned_date: input.start.slice(0, 10), reason },
+        body: { planned_date: clean.start.slice(0, 10), reason },
       });
       return;
     }
     await api.PATCH("/api/v1/calendar/events/{id}", {
       params: { path: { id: current.id }, header },
-      body: { ...input, reason, quest_version: current.quest_version, cancelled },
+      body: { ...clean, reason, quest_version: current.quest_version, cancelled },
     });
   });
 }
