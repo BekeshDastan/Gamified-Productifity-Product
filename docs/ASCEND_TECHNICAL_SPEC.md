@@ -1646,7 +1646,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Недельный период не закрывается раньше конца; повтор materialize не создаёт дубли.
   - **КОММИТ СЕЙЧАС:** `feat(habits): materialize daily weekly and monthly periods`
 
-- [ ] **C075. Отметки привычек**
+- [x] **C075. Отметки привычек**
   - **Сделать:** Добавить количественные отметки, исправления, факт времени и backfilled.
   - **Проверить:** Двойной запрос не удваивает количество; отрицательная отметка не используется вместо явной корректировки.
   - **КОММИТ СЕЙЧАС:** `feat(habits): add idempotent quantitative logs and corrections`

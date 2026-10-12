@@ -111,3 +111,66 @@ func TestHabitPeriodsDedupeAndTimezone(t *testing.T) {
 		}
 	}
 }
+func readHabitLogs(t *testing.T, r authResponse) []habits.Log {
+	t.Helper()
+	var out struct {
+		Data []habits.Log `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+		t.Fatalf("logs %d %s", r.status, r.body)
+	}
+	return out.Data
+}
+func TestHabitQuantitativeLogsAndCorrections(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "habit-logs@example.test")
+	b, _ := f.signedIn(t, "habit-logs-other@example.test")
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", habitInput()))
+	path := "/habits/" + h.ID
+	in := habits.LogInput{PeriodID: h.Periods[0].ID, Amount: 10, OccurredAt: f.clock.Now().Add(-time.Hour)}
+	key := "habit-log-replay-0001"
+	v := habitVersion(h)
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/logs", v, in, key))
+	if h.Periods[0].Amount != 10 || h.Periods[0].Progress != 50 || h.Periods[0].State != "open" {
+		t.Fatal(h.Periods)
+	}
+	replay := readHabit(t, f.privateRequest(t, a, "POST", path+"/logs", v, in, key))
+	if replay.Version != h.Version || replay.Periods[0].Amount != 10 {
+		t.Fatal("double log", replay)
+	}
+	in.Amount = -10
+	if r := f.privateRequest(t, a, "POST", path+"/logs", habitVersion(h), in); r.status != 422 {
+		t.Fatal("negative normal log", r.status)
+	}
+	in.Amount = 10
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/logs", habitVersion(h), in))
+	if h.Periods[0].Amount != 20 || h.Periods[0].State != "success" {
+		t.Fatal(h.Periods)
+	}
+	logs := readHabitLogs(t, f.privateRequest(t, a, "GET", path+"/logs", "", nil))
+	if len(logs) != 2 || logs[0].Backfilled {
+		t.Fatal(logs)
+	}
+	corr := habits.CorrectionInput{Amount: 0, Reason: "Ошибочная отметка"}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/logs/"+logs[0].ID+"/correct", habitVersion(h), corr))
+	if h.Periods[0].Amount != 10 || h.Periods[0].Progress != 50 {
+		t.Fatal("correction projection", h.Periods)
+	}
+	logs = readHabitLogs(t, f.privateRequest(t, a, "GET", path+"/logs", "", nil))
+	if logs[0].OriginalAmount != 10 || logs[0].Amount != 0 || len(logs[0].Corrections) != 1 || logs[0].Corrections[0].Before != 10 {
+		t.Fatal("correction history", logs)
+	}
+	if r := f.privateRequest(t, b, "POST", path+"/logs", habitVersion(h), in); r.status != 404 {
+		t.Fatal("foreign log", r.status)
+	}
+	f.clock.Advance(24 * time.Hour)
+	if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+		t.Fatal(r.status)
+	}
+	h = readHabit(t, f.privateRequest(t, a, "GET", path, "", nil))
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/logs", habitVersion(h), in))
+	logs = readHabitLogs(t, f.privateRequest(t, a, "GET", path+"/logs", "", nil))
+	if !logs[0].Backfilled || h.Periods[0].Amount != 20 {
+		t.Fatal("backfilled fact", logs)
+	}
+}

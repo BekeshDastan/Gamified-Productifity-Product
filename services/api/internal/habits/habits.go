@@ -329,6 +329,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountSchedules(r)
+		s.mountLogs(r)
 		r.Get("/api/v1/habits", func(w http.ResponseWriter, r *http.Request) {
 			id, e := owner(r.Context())
 			var out []Habit

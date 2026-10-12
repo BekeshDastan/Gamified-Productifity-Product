@@ -6,6 +6,155 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/habits/{id}/logs/{log}/correct:
+    post:
+      operationId: correctHabitLog
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: log
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitCorrectionInput"
+  /api/v1/habits/{id}/logs:
+    get:
+      operationId: getHabitLogs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HabitLog"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: logHabit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitLogInput"
   /api/v1/habits/{id}/schedules:
     post:
       operationId: changeHabitSchedule
@@ -4560,6 +4709,82 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    HabitLog:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - period_id
+        - amount
+        - original_amount
+        - occurred_at
+        - accepted_at
+        - backfilled
+        - corrections
+      properties:
+        id:
+          type: string
+        period_id:
+          type: string
+        amount:
+          type: number
+        original_amount:
+          type: number
+        occurred_at:
+          type: string
+        accepted_at:
+          type: string
+        backfilled:
+          type: boolean
+        corrections:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitLogCorrection"
+    HabitLogCorrection:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - before
+        - after
+        - reason
+        - created_at
+      properties:
+        id:
+          type: integer
+        before:
+          type: number
+        after:
+          type: number
+        reason:
+          type: string
+        created_at:
+          type: string
+    HabitCorrectionInput:
+      type: object
+      additionalProperties: false
+      required:
+        - amount
+        - reason
+      properties:
+        amount:
+          type: number
+        reason:
+          type: string
+    HabitLogInput:
+      type: object
+      additionalProperties: false
+      required:
+        - period_id
+        - amount
+        - occurred_at
+      properties:
+        period_id:
+          type: string
+        amount:
+          type: number
+        occurred_at:
+          type: string
     HabitPeriod:
       type: object
       additionalProperties: false
