@@ -330,3 +330,5 @@ production build, 13 UI E2E, 6 real browser E2E). Повторная прове�
 личный settings API для анонимного клиента 401; forward migrations применены.
 Следующий этап — 06, задачи; подключение стартового task draft должно быть
 однократным по onboarding_starters.id и не создавать повторные записи/награды.
+
+C041: Добавлены owner-scoped задачи, поля сроков и оценок, FK направлений/тегов, If-Match и пагинация. Черновик task из onboarding переносится один раз транзакционно. PostgreSQL integration suite пройден (51 с).

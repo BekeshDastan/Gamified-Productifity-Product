@@ -131,6 +131,25 @@ type Profile struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Quest struct {
+	ID          pgtype.UUID        `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	AreaID      pgtype.UUID        `json:"area_id"`
+	Payload     []byte             `json:"payload"`
+	Status      string             `json:"status"`
+	Version     int64              `json:"version"`
+	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+	ArchivedAt  pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type QuestTag struct {
+	OwnerID pgtype.UUID `json:"owner_id"`
+	QuestID pgtype.UUID `json:"quest_id"`
+	TagID   pgtype.UUID `json:"tag_id"`
+}
+
 type Tag struct {
 	ID        pgtype.UUID        `json:"id"`
 	OwnerID   pgtype.UUID        `json:"owner_id"`

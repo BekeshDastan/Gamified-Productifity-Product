@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/quests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listQuests"];
+        put?: never;
+        post: operations["createQuest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getQuest"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateQuest"];
+        trace?: never;
+    };
     "/api/v1/me/password": {
         parameters: {
             query?: never;
@@ -411,6 +443,51 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        QuestInput: {
+            title: string;
+            description: string;
+            area_id: string | null;
+            /** @enum {string} */
+            priority: "low" | "normal" | "high";
+            difficulty: number;
+            deadline: string | null;
+            planned_date: string | null;
+            estimated_minutes: number;
+            actual_minutes: number;
+            tags: string[];
+            /** @enum {string} */
+            status: "backlog" | "todo" | "in_progress" | "postponed" | "completed" | "failed" | "skipped";
+        };
+        QuestDTO: {
+            title: string;
+            description: string;
+            area_id: string | null;
+            /** @enum {string} */
+            priority: "low" | "normal" | "high";
+            difficulty: number;
+            deadline: string | null;
+            planned_date: string | null;
+            estimated_minutes: number;
+            actual_minutes: number;
+            tags: string[];
+            /** @enum {string} */
+            status: "backlog" | "todo" | "in_progress" | "postponed" | "completed" | "failed" | "skipped";
+            /** Format: uuid */
+            id: string;
+            version: number;
+            completed_at: string | null;
+            archived_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        QuestPageDTO: {
+            items: components["schemas"]["QuestDTO"][];
+            total: number;
+            page: number;
+            page_size: number;
+        };
         ChangePasswordInput: {
             /** Format: password */
             current_password: string;
@@ -597,6 +674,30 @@ export interface components {
     };
     responses: {
         /** @description Личные данные владельца */
+        Quest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["QuestDTO"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        QuestPage: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["QuestPageDTO"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
         Onboarding: {
             headers: {
                 [name: string]: unknown;
@@ -722,6 +823,92 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listQuests: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["QuestPage"];
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    createQuest: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestInput"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Quest"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getQuest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Quest"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    updateQuest: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestInput"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Quest"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     changePassword: {
         parameters: {
             query?: never;

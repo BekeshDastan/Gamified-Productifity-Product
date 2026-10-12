@@ -14,6 +14,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 )
 
@@ -53,6 +54,7 @@ func main() {
 		os.Exit(1)
 	}
 	profile.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
+	quests.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
 	server := &http.Server{
 		Addr:              cfg.Address,
 		Handler:           router,

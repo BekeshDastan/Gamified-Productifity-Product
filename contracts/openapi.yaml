@@ -6,6 +6,105 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/quests:
+    get:
+      operationId: listQuests
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestPage"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}:
+    get:
+      operationId: getQuest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: updateQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/me/password:
     patch:
       operationId: changePassword
@@ -663,6 +762,34 @@ components:
             type: object
             additionalProperties: false
   responses:
+    Quest:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/QuestDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    QuestPage:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/QuestPageDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
     Onboarding:
       description: Личные данные владельца
       content:
@@ -817,6 +944,198 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    QuestInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - description
+        - area_id
+        - priority
+        - difficulty
+        - deadline
+        - planned_date
+        - estimated_minutes
+        - actual_minutes
+        - tags
+        - status
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 10000
+        area_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 5
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        planned_date:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        estimated_minutes:
+          type: integer
+          minimum: 0
+          maximum: 525600
+        actual_minutes:
+          type: integer
+          minimum: 0
+          maximum: 525600
+        tags:
+          type: array
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum:
+            - backlog
+            - todo
+            - in_progress
+            - postponed
+            - completed
+            - failed
+            - skipped
+    QuestDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - description
+        - area_id
+        - priority
+        - difficulty
+        - deadline
+        - planned_date
+        - estimated_minutes
+        - actual_minutes
+        - tags
+        - status
+        - id
+        - version
+        - completed_at
+        - archived_at
+        - created_at
+        - updated_at
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 10000
+        area_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 5
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        planned_date:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        estimated_minutes:
+          type: integer
+          minimum: 0
+          maximum: 525600
+        actual_minutes:
+          type: integer
+          minimum: 0
+          maximum: 525600
+        tags:
+          type: array
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum:
+            - backlog
+            - todo
+            - in_progress
+            - postponed
+            - completed
+            - failed
+            - skipped
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 1
+        completed_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        archived_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    QuestPageDTO:
+      type: object
+      required:
+        - items
+        - total
+        - page
+        - page_size
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestDTO"
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
     ChangePasswordInput:
       type: object
       additionalProperties: false
