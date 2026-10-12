@@ -6,6 +6,617 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/dashboard:
+    get:
+      operationId: getDashboard
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Dashboard"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/plans/week:
+    get:
+      operationId: getPlanWeek
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/templates/routines/{id}/apply:
+    post:
+      operationId: applyRoutineTemplate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RoutinePreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineApply"
+  /api/v1/templates/routines/{id}/preview:
+    post:
+      operationId: previewRoutineTemplate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RoutinePreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - start_date
+              properties:
+                start_date:
+                  type: string
+  /api/v1/templates/routines/{id}:
+    patch:
+      operationId: editRoutineTemplate
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Routine"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineInput"
+  /api/v1/templates/routines:
+    get:
+      operationId: listRoutineTemplates
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Routine"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createRoutineTemplate
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Routine"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoutineInput"
+  /api/v1/plans/day/{date}/blocks:
+    post:
+      operationId: createPlanBlock
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CalendarEventDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanBlock"
+  /api/v1/plans/day/{date}/move:
+    post:
+      operationId: movePlannedQuest
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanMove"
+  /api/v1/plans/day/{date}/addendum:
+    post:
+      operationId: amendDayPlan
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanAmendment"
+  /api/v1/plans/day/{date}/confirm:
+    post:
+      operationId: confirmDayPlan
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: []
+              properties: {}
+  /api/v1/plans/day/{date}:
+    get:
+      operationId: getDayPlan
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: saveDayPlan
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanInput"
   /api/v1/calendar/series/{id}:
     patch:
       operationId: changeCalendarSeries
@@ -3781,6 +4392,552 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    Dashboard:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - timezone
+        - plan
+        - tasks
+        - deadlines
+        - events
+        - more_tasks
+        - more_deadlines
+        - more_events
+        - updated_at
+      properties:
+        date:
+          type: string
+        timezone:
+          type: string
+        plan:
+          $ref: "#/components/schemas/DayPlan"
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestDTO"
+        deadlines:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestDTO"
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+        more_tasks:
+          type: boolean
+        more_deadlines:
+          type: boolean
+        more_events:
+          type: boolean
+        updated_at:
+          type: string
+    RoutineApply:
+      type: object
+      additionalProperties: false
+      required:
+        - start_date
+        - preview_hash
+        - accept_conflicts
+        - reason
+      properties:
+        start_date:
+          type: string
+        preview_hash:
+          type: string
+        accept_conflicts:
+          type: boolean
+        reason:
+          type: string
+    RoutinePreview:
+      type: object
+      additionalProperties: false
+      required:
+        - template
+        - start_date
+        - days
+        - hash
+      properties:
+        template:
+          $ref: "#/components/schemas/Routine"
+        start_date:
+          type: string
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutinePreviewDay"
+        hash:
+          type: string
+    RoutinePreviewDay:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - timezone
+        - items
+        - plan_version
+        - already_applied
+        - past
+        - confirmed
+        - input
+        - actions
+        - availability
+      properties:
+        date:
+          type: string
+        timezone:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanItem"
+        plan_version:
+          type: integer
+        already_applied:
+          type: boolean
+        past:
+          type: boolean
+        confirmed:
+          type: boolean
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineAction"
+        availability:
+          $ref: "#/components/schemas/PlanAvailability"
+    Routine:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - period
+        - days
+        - id
+        - version
+      properties:
+        title:
+          type: string
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineDay"
+        id:
+          type: string
+        version:
+          type: integer
+    RoutineInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - period
+        - days
+      properties:
+        title:
+          type: string
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineDay"
+    RoutineDay:
+      type: object
+      additionalProperties: false
+      required:
+        - day
+        - available_minutes
+        - windows
+        - rest
+        - actions
+      properties:
+        day:
+          type: integer
+        available_minutes:
+          type: integer
+        windows:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanWindow"
+        rest:
+          type: boolean
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoutineAction"
+    RoutineAction:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - title
+        - minutes
+        - priority
+        - start
+        - end
+      properties:
+        key:
+          type: string
+        title:
+          type: string
+        minutes:
+          type: integer
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+        start:
+          type: string
+        end:
+          type: string
+    PlanAvailability:
+      type: object
+      additionalProperties: false
+      required:
+        - work_minutes
+        - busy_minutes
+        - free_minutes
+        - scheduled_minutes
+        - remaining_capacity
+        - planned_minutes
+        - remaining_minutes
+        - deficit_minutes
+        - free_slots
+        - conflicts
+        - more_conflicts
+        - unfit_ids
+        - unknown_ids
+        - blocks
+        - materializing
+      properties:
+        work_minutes:
+          type: integer
+        busy_minutes:
+          type: integer
+        free_minutes:
+          type: integer
+        scheduled_minutes:
+          type: integer
+        remaining_capacity:
+          type: integer
+        planned_minutes:
+          type: integer
+        remaining_minutes:
+          type: integer
+        deficit_minutes:
+          type: integer
+        free_slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanInterval"
+        conflicts:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanConflict"
+        more_conflicts:
+          type: boolean
+        unfit_ids:
+          type: array
+          items:
+            type: string
+        unknown_ids:
+          type: array
+          items:
+            type: string
+        blocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+        materializing:
+          type: boolean
+    PlanConflict:
+      type: object
+      additionalProperties: false
+      required:
+        - first
+        - second
+        - start
+        - end
+      properties:
+        first:
+          type: string
+        second:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+    PlanInterval:
+      type: object
+      additionalProperties: false
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+        end:
+          type: string
+    PlanBlock:
+      type: object
+      additionalProperties: false
+      required:
+        - quest_id
+        - quest_version
+        - reason
+        - start
+        - end
+      properties:
+        quest_id:
+          type: string
+        quest_version:
+          type: integer
+        reason:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+    PlanMove:
+      type: object
+      additionalProperties: false
+      required:
+        - quest_id
+        - quest_version
+        - reason
+      properties:
+        quest_id:
+          type: string
+        quest_version:
+          type: integer
+        reason:
+          type: string
+    PlanAmendment:
+      type: object
+      additionalProperties: false
+      required:
+        - input
+        - reason
+      properties:
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        reason:
+          type: string
+    PlanChange:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - reason
+        - at
+        - before
+        - after
+      properties:
+        kind:
+          type: string
+        reason:
+          type: string
+        at:
+          type: string
+        before:
+          type: object
+          additionalProperties: true
+        after:
+          type: object
+          additionalProperties: true
+    PlanProgress:
+      type: object
+      additionalProperties: false
+      required:
+        - committed
+        - completed
+        - total_weight
+        - completed_weight
+        - score
+      properties:
+        committed:
+          type: integer
+        completed:
+          type: integer
+        total_weight:
+          type: integer
+        completed_weight:
+          type: integer
+        score:
+          anyOf:
+            - type: integer
+            - type: "null"
+    DayPlan:
+      type: object
+      additionalProperties: false
+      required:
+        - available_minutes
+        - windows
+        - quest_ids
+        - top_ids
+        - rest
+        - id
+        - date
+        - timezone
+        - version
+        - confirmed_at
+        - snapshot
+        - items
+        - changes
+        - progress
+        - availability
+      properties:
+        available_minutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        windows:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanWindow"
+        quest_ids:
+          type: array
+          items:
+            type: string
+        top_ids:
+          type: array
+          maxItems: 3
+          items:
+            type: string
+        rest:
+          type: boolean
+        id:
+          type: string
+        date:
+          type: string
+        timezone:
+          type: string
+        version:
+          type: integer
+        confirmed_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        snapshot:
+          anyOf:
+            - $ref: "#/components/schemas/PlanSnapshot"
+            - type: "null"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanItem"
+        changes:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanChange"
+        progress:
+          $ref: "#/components/schemas/PlanProgress"
+        availability:
+          anyOf:
+            - $ref: "#/components/schemas/PlanAvailability"
+            - type: "null"
+    PlanSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - input
+        - items
+        - blocks
+      properties:
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanItem"
+        blocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+    PlanItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - version
+        - estimated_minutes
+        - weight
+        - status
+        - archived
+        - completed_at
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        version:
+          type: integer
+        estimated_minutes:
+          type: integer
+        weight:
+          type: integer
+        status:
+          type: string
+        archived:
+          type: boolean
+        completed_at:
+          anyOf:
+            - type: string
+            - type: "null"
+    PlanInput:
+      type: object
+      additionalProperties: false
+      required:
+        - available_minutes
+        - windows
+        - quest_ids
+        - top_ids
+        - rest
+      properties:
+        available_minutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        windows:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanWindow"
+        quest_ids:
+          type: array
+          items:
+            type: string
+        top_ids:
+          type: array
+          maxItems: 3
+          items:
+            type: string
+        rest:
+          type: boolean
+    PlanWindow:
+      type: object
+      additionalProperties: false
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+        end:
+          type: string
     RecurrenceRule:
       type: object
       additionalProperties: false
@@ -5235,6 +6392,18 @@ components:
             widget_order:
               type: array
               minItems: 5
+              maxItems: 5
+              uniqueItems: true
+              items:
+                type: string
+                enum:
+                  - today
+                  - calendar
+                  - habits
+                  - focus
+                  - progress
+            hidden_widgets:
+              type: array
               maxItems: 5
               uniqueItems: true
               items:

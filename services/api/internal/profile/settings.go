@@ -41,11 +41,12 @@ type Privacy struct {
 func DefaultPrivacy() Privacy { return Privacy{ProfileVisibility: "private"} }
 
 type Personalization struct {
-	Theme       string   `json:"theme"`
-	Motion      string   `json:"motion"`
-	Sound       bool     `json:"sound"`
-	GameMode    string   `json:"game_mode"`
-	WidgetOrder []string `json:"widget_order"`
+	Theme         string   `json:"theme"`
+	Motion        string   `json:"motion"`
+	Sound         bool     `json:"sound"`
+	GameMode      string   `json:"game_mode"`
+	WidgetOrder   []string `json:"widget_order"`
+	HiddenWidgets []string `json:"hidden_widgets,omitempty"`
 }
 
 func DefaultPersonalization() Personalization {
@@ -81,6 +82,13 @@ func ValidatePreferences(p Preferences) error {
 			return invalid("personalization.widget_order", "Виджеты не должны повторяться")
 		}
 		delete(allowed, key)
+	}
+	widgets := map[string]bool{"today": true, "calendar": true, "habits": true, "focus": true, "progress": true}
+	for _, key := range a.HiddenWidgets {
+		if !widgets[key] {
+			return invalid("personalization.hidden_widgets", "Выберите разные виджеты из списка")
+		}
+		delete(widgets, key)
 	}
 	if p.Privacy.ProfileVisibility != "private" && p.Privacy.ProfileVisibility != "friends" {
 		return invalid("privacy.profile_visibility", "Выберите закрытый профиль или будущий доступ друзьям")

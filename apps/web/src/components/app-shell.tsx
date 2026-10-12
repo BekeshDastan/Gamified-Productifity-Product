@@ -42,6 +42,7 @@ const planned = [
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/planning", label: "План дня и недели", icon: ListTodo },
   { href: "/app/calendar", label: "Календарь", icon: CalendarDays },
   { href: "/app/goals", label: "Цели", icon: Flag },
   { href: "/app/quests", label: "Задачи", icon: ListTodo },

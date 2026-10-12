@@ -39,9 +39,7 @@ for (const width of [360, 768, 1280, 1440]) {
         await page.screenshot({ path: info.outputPath("landing.png"), fullPage: true });
       await page.getByRole("link", { name: "Открыть пространство" }).click();
       await expect(page).toHaveURL("/app");
-      await expect(
-        page.getByRole("heading", { name: "Ваше пространство готовится" }),
-      ).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Ваш день. В вашем ритме." })).toBeVisible();
       if (width >= 768)
         await expect(page.getByRole("link", { name: "Задачи", exact: true })).toHaveAttribute(
           "href",

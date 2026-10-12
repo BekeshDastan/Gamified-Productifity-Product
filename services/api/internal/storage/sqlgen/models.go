@@ -94,6 +94,26 @@ type CalendarEventHistory struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type DayPlan struct {
+	ID          pgtype.UUID        `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	LocalDate   pgtype.Date        `json:"local_date"`
+	Timezone    string             `json:"timezone"`
+	Payload     []byte             `json:"payload"`
+	Version     int64              `json:"version"`
+	ConfirmedAt pgtype.Timestamptz `json:"confirmed_at"`
+	Snapshot    []byte             `json:"snapshot"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type DayPlanItem struct {
+	OwnerID  pgtype.UUID `json:"owner_id"`
+	PlanID   pgtype.UUID `json:"plan_id"`
+	QuestID  pgtype.UUID `json:"quest_id"`
+	Position int32       `json:"position"`
+}
+
 type Goal struct {
 	ID         pgtype.UUID        `json:"id"`
 	OwnerID    pgtype.UUID        `json:"owner_id"`
@@ -247,6 +267,17 @@ type OutboxEvent struct {
 	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
 }
 
+type PlanChange struct {
+	ID          int64              `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	PlanID      pgtype.UUID        `json:"plan_id"`
+	Kind        string             `json:"kind"`
+	BeforeState []byte             `json:"before_state"`
+	AfterState  []byte             `json:"after_state"`
+	Reason      string             `json:"reason"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Profile struct {
 	OwnerID   pgtype.UUID        `json:"owner_id"`
 	Name      string             `json:"name"`
@@ -328,6 +359,22 @@ type RecurrenceSeriesHistory struct {
 	AfterState  []byte             `json:"after_state"`
 	Reason      string             `json:"reason"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type RoutineApplication struct {
+	OwnerID         pgtype.UUID        `json:"owner_id"`
+	TemplateID      string             `json:"template_id"`
+	LocalDate       pgtype.Date        `json:"local_date"`
+	PlanID          pgtype.UUID        `json:"plan_id"`
+	TemplateVersion int64              `json:"template_version"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
+type RoutineTemplate struct {
+	OwnerID pgtype.UUID `json:"owner_id"`
+	ID      string      `json:"id"`
+	Payload []byte      `json:"payload"`
+	Version int64       `json:"version"`
 }
 
 type Tag struct {
