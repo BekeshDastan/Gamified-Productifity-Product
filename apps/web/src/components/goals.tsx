@@ -26,6 +26,7 @@ import { Form } from "./ui/form";
 import { GoalPlanPanel } from "./goal-plan";
 import { GoalMetrics } from "./goal-metrics";
 import { GoalTemplates } from "./goal-templates";
+import { GoalDecisions, GoalHistory } from "./goal-lifecycle";
 
 export function Goals({ id }: { id?: string }) {
   const auth = useAuth();
@@ -161,10 +162,12 @@ export function Goals({ id }: { id?: string }) {
             />
           ) : (
             <>
+              <GoalDecisions key={current.id + revision} goal={current} onChanged={changed} />
               {current.progress_type === "metric" && (
                 <GoalMetrics goal={current} onChanged={changed} />
               )}
               <GoalPlanPanel goal={current} onChanged={changed} />
+              <GoalHistory goal={current} />
             </>
           )}
         </>

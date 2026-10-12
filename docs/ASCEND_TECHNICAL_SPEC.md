@@ -1519,7 +1519,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Отмена одного обязательного листа корректирует цель; контейнер не считается дважды.
   - **КОММИТ СЕЙЧАС:** `feat(goals): update progress from quest completion events`
 
-- [ ] **C055. Завершение и пересмотр**
+- [x] **C055. Завершение и пересмотр**
   - **Сделать:** Реализовать pause/resume/achieve/close-unachieved/cancel, причины и смену будущего плана.
   - **Проверить:** История прежних критериев остаётся; достигнутый порог требует явного подтверждения цели.
   - **КОММИТ СЕЙЧАС:** `feat(goals): add achieved unachieved and review workflows`

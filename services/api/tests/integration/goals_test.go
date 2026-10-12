@@ -182,6 +182,100 @@ func TestGoalQuestEventsTreeAndRollback(t *testing.T) {
 		t.Fatal("goal filter", r.status, string(r.body))
 	}
 }
+func TestGoalDecisionsCorrectionReviewAndArchive(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "goal-decisions@example.test")
+	input := goalInput("Книги")
+	input.ProgressType = "metric"
+	input.Unit = "книги"
+	input.Target = 2
+	g := readGoal(t, f.privateRequest(t, client, "POST", "/goals", "", goals.Create{Input: input, State: "draft"}))
+	transition := goals.Transition{Reason: "Начинаю"}
+	apply := func(action string) goals.Goal {
+		return readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/"+action, goalVersion(g), transition))
+	}
+	g = apply("resume")
+	g = apply("pause")
+	g = apply("resume")
+	transition.CriteriaConfirmed = true
+	if r := f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/achieve", goalVersion(g), transition); r.status != 422 {
+		t.Fatal("premature achievement")
+	}
+	entry := goals.MetricInput{Value: 2, Unit: "книги", OccurredOn: "2026-10-12"}
+	g = readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/entries", goalVersion(g), entry))
+	if g.State != "active" {
+		t.Fatal("auto achieved")
+	}
+	transition.CriteriaConfirmed = false
+	if r := f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/achieve", goalVersion(g), transition); r.status != 422 {
+		t.Fatal("criterion unconfirmed")
+	}
+	transition.CriteriaConfirmed = true
+	old := goalVersion(g)
+	g = readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/achieve", old, transition, "goal-achievement-replay"))
+	repeated := readGoal(t, f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/achieve", old, transition, "goal-achievement-replay"))
+	if g.State != "achieved" || repeated.Version != g.Version {
+		t.Fatal("achievement replay")
+	}
+	var entries struct{ Data []goals.Entry }
+	r := f.privateRequest(t, client, "GET", "/goals/"+g.ID+"/entries", "", nil)
+	if json.Unmarshal(r.body, &entries) != nil || len(entries.Data) != 1 {
+		t.Fatal("entries")
+	}
+	entry.Value = 1
+	entry.Reason = "Одна книга ещё не прочитана"
+	entry.EntryVersion = entries.Data[0].Version
+	g = readGoal(t, f.privateRequest(t, client, "PATCH", fmt.Sprintf("/goals/%s/entries/%d", g.ID, entries.Data[0].ID), goalVersion(g), entry))
+	if g.State != "active" || g.Progress != 50 {
+		t.Fatal("achievement not reverted")
+	}
+	var history struct{ Data []goals.Version }
+	r = f.privateRequest(t, client, "GET", "/goals/"+g.ID+"/history", "", nil)
+	if json.Unmarshal(r.body, &history) != nil || history.Data[0].Kind != "goal.achievement_reverted" {
+		t.Fatal("reversal history", string(r.body))
+	}
+	transition.Completed = "Прочитана одна книга"
+	transition.Obstacles = "Вторая требует больше времени"
+	g = apply("close-unachieved")
+	if g.State != "not_achieved" {
+		t.Fatal("unachieved")
+	}
+	g = apply("archive")
+	if g.ArchivedAt == nil {
+		t.Fatal("archive")
+	}
+	if r = f.privateRequest(t, client, "POST", "/goals/"+g.ID+"/resume", goalVersion(g), transition); r.status != 409 {
+		t.Fatal("archived mutation")
+	}
+	g = apply("restore")
+	next := g.Input
+	next.Criteria = "Прочитать и написать конспекты"
+	date := "2026-11-30"
+	next.TargetDate = &date
+	transition.Resolution = "continue"
+	transition.NextInput = &next
+	transition.Reason = "Уточнил объём"
+	g = apply("review")
+	if g.State != "active" || g.Criteria != next.Criteria || g.Progress != 50 || g.ArchivedAt != nil {
+		t.Fatal("review")
+	}
+	r = f.privateRequest(t, client, "GET", "/goals/"+g.ID+"/history", "", nil)
+	if json.Unmarshal(r.body, &history) != nil {
+		t.Fatal("history")
+	}
+	var oldest goals.Goal
+	if json.Unmarshal(history.Data[len(history.Data)-1].Snapshot, &oldest) != nil || oldest.Criteria != input.Criteria {
+		t.Fatal("criteria history overwritten")
+	}
+	transition.NextInput = nil
+	transition.Resolution = ""
+	transition.Reason = "Изменились планы"
+	g = apply("cancel")
+	g = apply("archive")
+	if g.State != "cancelled" || g.ArchivedAt == nil {
+		t.Fatal("cancel archive")
+	}
+}
 func TestGoalMetricUnitJournalCorrectionAndReplay(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, _ := f.signedIn(t, "goal-metric@example.test")

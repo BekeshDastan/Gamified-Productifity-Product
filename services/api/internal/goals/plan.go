@@ -138,7 +138,7 @@ func (s *Service) touch(ctx context.Context, tx pgx.Tx, id string, g Goal, kind,
 	state := g.State
 	if state == "achieved" && progress < 100 {
 		state = "active"
-		kind = "achievement_reverted"
+		kind = "goal.achievement_reverted"
 		reason = "Исправление источников снизило подтверждённый результат. " + reason
 	}
 	current := float64(0)
