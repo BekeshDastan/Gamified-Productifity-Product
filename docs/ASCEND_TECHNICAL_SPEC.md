@@ -1308,7 +1308,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** На 360 px нет недоступных пунктов; скрытая функция не ведёт на фиктивный рабочий экран.
   - **КОММИТ СЕЙЧАС:** `feat(web): add responsive application navigation`
 
-- [ ] **C020. Типизированный API-клиент**
+- [x] **C020. Типизированный API-клиент**
   - **Сделать:** Подключить типы OpenAPI, TanStack Query, обработку 401/409/429, request ID и централизованный запрос.
   - **Проверить:** Ошибка сервера не маскируется успехом; пользовательские кэши разделены.
   - **КОММИТ СЕЙЧАС:** `feat(web): add typed API client and query cache`

@@ -96,3 +96,9 @@
 - C019: sidebar/header, mobile Dialog и нижняя навигация; skip-link, aria-current.
   Доступны только обзор, описание и реальное локальное оформление. Будущие модули
   помечены как недоступные и не ведут на фиктивные экраны. Проверены меню и Escape.
+
+- C020: openapi-fetch 0.17.0 и TanStack Query 5.104.2, same-origin cookies,
+  request ID, безопасные 401/409/429, Retry-After и отказ при неверном envelope.
+  Нет автоматического retry mutations/4xx. Кэш отдельный на account ID,
+  старый очищается и отменяется при смене. SSR запрещён для browser client.
+  Тесты отвергают чужой origin, HTML/неполный ответ и смешивание аккаунтов.
