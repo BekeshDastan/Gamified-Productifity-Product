@@ -1215,7 +1215,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Намеренная синтаксическая или статическая ошибка делает проверку красной.
   - **КОММИТ СЕЙЧАС:** `chore(tooling): configure formatters and static checks`
 
-- [ ] **C005. Локальная PostgreSQL**
+- [x] **C005. Локальная PostgreSQL**
   - **Сделать:** Добавить Compose, volume, healthcheck и безопасные dev-порты; описать reset только тестовых данных.
   - **Проверить:** После перезапуска данные сохраняются; production не использует dev-пароль.
   - **КОММИТ СЕЙЧАС:** `chore(dev): add Docker Compose database environment`
