@@ -4709,6 +4709,29 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    HabitStats:
+      type: object
+      additionalProperties: false
+      required:
+        - current
+        - best
+        - successful
+        - missed
+        - rate
+        - recovering
+      properties:
+        current:
+          type: integer
+        best:
+          type: integer
+        successful:
+          type: integer
+        missed:
+          type: integer
+        rate:
+          type: integer
+        recovering:
+          type: boolean
     HabitLog:
       type: object
       additionalProperties: false
@@ -4864,6 +4887,7 @@ components:
         - schedules
         - periods
         - has_more
+        - stats
       properties:
         title:
           type: string
@@ -4909,6 +4933,8 @@ components:
             $ref: "#/components/schemas/HabitPeriod"
         has_more:
           type: boolean
+        stats:
+          $ref: "#/components/schemas/HabitStats"
     HabitScheduleVersion:
       type: object
       additionalProperties: false

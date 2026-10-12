@@ -39,6 +39,7 @@ type ScheduleVersion struct {
 	Reason        string   `json:"reason"`
 }
 type Habit struct {
+	Stats   Stats    `json:"stats"`
 	Periods []Period `json:"periods"`
 	HasMore bool     `json:"has_more"`
 	Input

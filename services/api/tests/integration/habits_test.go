@@ -174,3 +174,36 @@ func TestHabitQuantitativeLogsAndCorrections(t *testing.T) {
 		t.Fatal("backfilled fact", logs)
 	}
 }
+func TestHabitStreakWeekendAndBestCorrection(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "habit-streak@example.test")
+	in := habitInput()
+	in.StartsOn = "2026-10-09"
+	in.Schedule.Weekdays = []int{1, 3, 5}
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", in))
+	if len(h.Periods) != 2 {
+		t.Fatal("weekend obligation", h.Periods)
+	}
+	path := "/habits/" + h.ID
+	first := h.Periods[0]
+	last := h.Periods[1]
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/logs", habitVersion(h), habits.LogInput{PeriodID: first.ID, Amount: 20, OccurredAt: first.Start.Add(time.Hour)}))
+	if h.Stats.Current != 1 || h.Stats.Best != 1 || h.Stats.Missed != 0 {
+		t.Fatal("open or weekend broke series", h.Stats)
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/logs", habitVersion(h), habits.LogInput{PeriodID: last.ID, Amount: 20, OccurredAt: last.Start.Add(time.Hour)}))
+	if h.Stats.Current != 2 || h.Stats.Best != 2 {
+		t.Fatal(h.Stats)
+	}
+	logs := readHabitLogs(t, f.privateRequest(t, a, "GET", path+"/logs", "", nil))
+	var old habits.Log
+	for _, l := range logs {
+		if l.PeriodID == first.ID {
+			old = l
+		}
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/logs/"+old.ID+"/correct", habitVersion(h), habits.CorrectionInput{Amount: 0, Reason: "Исправляю прошлый факт"}))
+	if h.Stats.Current != 1 || h.Stats.Best != 1 || h.Stats.Missed != 1 || !h.Stats.Recovering {
+		t.Fatal("best retained false run", h.Stats)
+	}
+}

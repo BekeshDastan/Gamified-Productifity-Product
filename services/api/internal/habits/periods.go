@@ -126,5 +126,9 @@ func (s *Service) view(ctx context.Context, tx pgx.Tx, id, key string) (Habit, e
 		return h, e
 	}
 	h.Periods, e = s.periods(ctx, tx, id, h)
+	h.Stats = CalculateStats(h.Periods, s.clock.Now())
+	if len(h.Periods) > 120 {
+		h.Periods = h.Periods[len(h.Periods)-120:]
+	}
 	return h, e
 }

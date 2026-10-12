@@ -1547,6 +1547,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        HabitStats: {
+            current: number;
+            best: number;
+            successful: number;
+            missed: number;
+            rate: number;
+            recovering: boolean;
+        };
         HabitLog: {
             id: string;
             period_id: string;
@@ -1610,6 +1618,7 @@ export interface components {
             schedules: components["schemas"]["HabitScheduleVersion"][];
             periods: components["schemas"]["HabitPeriod"][];
             has_more: boolean;
+            stats: components["schemas"]["HabitStats"];
         };
         HabitScheduleVersion: {
             version: number;
