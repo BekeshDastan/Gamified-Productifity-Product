@@ -267,6 +267,17 @@ type OutboxEvent struct {
 	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
 }
 
+type PlanChange struct {
+	ID          int64              `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	PlanID      pgtype.UUID        `json:"plan_id"`
+	Kind        string             `json:"kind"`
+	BeforeState []byte             `json:"before_state"`
+	AfterState  []byte             `json:"after_state"`
+	Reason      string             `json:"reason"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Profile struct {
 	OwnerID   pgtype.UUID        `json:"owner_id"`
 	Name      string             `json:"name"`

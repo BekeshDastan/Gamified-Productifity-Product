@@ -54,3 +54,53 @@ func TestPlanningDraftOwnershipAndVersion(t *testing.T) {
 		t.Fatal("invalid top accepted", r.status)
 	}
 }
+
+func TestPlanningFrozenSnapshotAndAddenda(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "snapshot-plan@example.test")
+	a := questInput("Важное действие")
+	a.Priority = "high"
+	a.EstimatedMinutes = 90
+	q1 := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", a))
+	a.Title = "Малое действие"
+	a.Priority = "low"
+	a.EstimatedMinutes = 30
+	q2 := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", a))
+	in := planInput()
+	in.QuestIDs = []string{q1.ID, q2.ID}
+	in.TopIDs = []string{q1.ID}
+	path := "/plans/day/2026-10-12"
+	p := readPlan(t, f.privateRequest(t, client, "PUT", path, `"0"`, in))
+	p = readPlan(t, f.privateRequest(t, client, "POST", path+"/confirm", planVersion(p), struct{}{}))
+	if p.Snapshot == nil || p.Progress.TotalWeight != 4 || p.Progress.Committed != 2 || p.Progress.Score == nil || *p.Progress.Score != 0 {
+		t.Fatal("snapshot missing", p)
+	}
+	if r := f.privateRequest(t, client, "PUT", path, planVersion(p), planInput()); r.status != 409 {
+		t.Fatal("confirmed overwritten", r.status)
+	}
+	in.QuestIDs = []string{q1.ID}
+	p = readPlan(t, f.privateRequest(t, client, "POST", path+"/addendum", planVersion(p), planning.Amendment{Input: in, Reason: "Меньше времени"}))
+	if len(p.Snapshot.Items) != 2 || p.Progress.TotalWeight != 4 || len(p.QuestIDs) != 1 || len(p.Changes) != 2 {
+		t.Fatal("denominator changed", p)
+	}
+	readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+q1.ID+"/complete", version(q1), map[string]string{"reason": "Готово"}))
+	p = readPlan(t, f.privateRequest(t, client, "GET", path, "", nil))
+	if p.Progress.CompletedWeight != 3 || *p.Progress.Score != 75 {
+		t.Fatal("weighted snapshot", p.Progress)
+	}
+	f.clock.Advance(24 * 60 * 60 * 1e9)
+	if r := f.request(t, client, "POST", "/refresh", f.csrf(t, client), struct{}{}); r.status != 200 {
+		t.Fatal("refresh after advancing clock", r.status)
+	}
+	readQuest(t, f.privateRequest(t, client, "POST", "/quests/"+q2.ID+"/complete", version(q2), map[string]string{"reason": "На следующий день"}))
+	p = readPlan(t, f.privateRequest(t, client, "GET", path, "", nil))
+	if *p.Progress.Score != 75 {
+		t.Fatal("late completion changed prior day")
+	}
+	rest := planning.Input{Rest: true}
+	r := readPlan(t, f.privateRequest(t, client, "PUT", "/plans/day/2026-10-14", `"0"`, rest))
+	r = readPlan(t, f.privateRequest(t, client, "POST", "/plans/day/2026-10-14/confirm", planVersion(r), struct{}{}))
+	if r.Progress.Score != nil {
+		t.Fatal("rest scored")
+	}
+}

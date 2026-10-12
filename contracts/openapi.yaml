@@ -6,6 +6,117 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/plans/day/{date}/addendum:
+    post:
+      operationId: amendDayPlan
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanAmendment"
+  /api/v1/plans/day/{date}/confirm:
+    post:
+      operationId: confirmDayPlan
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DayPlan"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: []
+              properties: {}
   /api/v1/plans/day/{date}:
     get:
       operationId: getDayPlan
@@ -3872,6 +3983,61 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    PlanAmendment:
+      type: object
+      additionalProperties: false
+      required:
+        - input
+        - reason
+      properties:
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        reason:
+          type: string
+    PlanChange:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - reason
+        - at
+        - before
+        - after
+      properties:
+        kind:
+          type: string
+        reason:
+          type: string
+        at:
+          type: string
+        before:
+          type: object
+          additionalProperties: true
+        after:
+          type: object
+          additionalProperties: true
+    PlanProgress:
+      type: object
+      additionalProperties: false
+      required:
+        - committed
+        - completed
+        - total_weight
+        - completed_weight
+        - score
+      properties:
+        committed:
+          type: integer
+        completed:
+          type: integer
+        total_weight:
+          type: integer
+        completed_weight:
+          type: integer
+        score:
+          anyOf:
+            - type: integer
+            - type: "null"
     DayPlan:
       type: object
       additionalProperties: false
@@ -3888,6 +4054,8 @@ components:
         - confirmed_at
         - snapshot
         - items
+        - changes
+        - progress
       properties:
         available_minutes:
           type: integer
@@ -3928,6 +4096,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PlanItem"
+        changes:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanChange"
+        progress:
+          $ref: "#/components/schemas/PlanProgress"
     PlanSnapshot:
       type: object
       additionalProperties: false

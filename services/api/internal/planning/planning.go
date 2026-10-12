@@ -52,6 +52,8 @@ type Plan struct {
 	ConfirmedAt *time.Time `json:"confirmed_at"`
 	Snapshot    *Snapshot  `json:"snapshot"`
 	Items       []Item     `json:"items"`
+	Changes     []Change   `json:"changes"`
+	Progress    Progress   `json:"progress"`
 }
 type Service struct {
 	pool     *pgxpool.Pool
@@ -166,7 +168,7 @@ func (s *Service) items(ctx context.Context, tx pgx.Tx, id string, keys []string
 	return out, nil
 }
 func (s *Service) get(ctx context.Context, tx pgx.Tx, id, date string) (Plan, error) {
-	p := Plan{Input: emptyInput(), Date: date, Items: []Item{}}
+	p := Plan{Input: emptyInput(), Date: date, Items: []Item{}, Changes: []Change{}}
 	var data, snapshot []byte
 	e := tx.QueryRow(ctx, `SELECT id::text,timezone,payload,version,confirmed_at,snapshot FROM day_plans WHERE owner_id=$1 AND local_date=$2::text::date`, id, date).Scan(&p.ID, &p.Timezone, &data, &p.Version, &p.ConfirmedAt, &snapshot)
 	if errors.Is(e, pgx.ErrNoRows) {
@@ -185,9 +187,12 @@ func (s *Service) get(ctx context.Context, tx pgx.Tx, id, date string) (Plan, er
 		}
 	}
 	p.Items, e = s.items(ctx, tx, id, p.QuestIDs, false)
+	if e == nil {
+		e = s.project(ctx, tx, id, &p)
+	}
 	return p, e
 }
-func (s *Service) save(ctx context.Context, tx pgx.Tx, id, date string, in Input, version int64) (Plan, error) {
+func (s *Service) save(ctx context.Context, tx pgx.Tx, id, date string, in Input, version int64, amendment ...bool) (Plan, error) {
 	items, e := s.items(ctx, tx, id, in.QuestIDs, true)
 	if e != nil {
 		return Plan{}, e
@@ -199,7 +204,7 @@ func (s *Service) save(ctx context.Context, tx pgx.Tx, id, date string, in Input
 	if old.Version != version {
 		return old, problem(409, "VERSION_CONFLICT", "План изменился. Загрузите свежую версию")
 	}
-	if old.ConfirmedAt != nil {
+	if old.ConfirmedAt != nil && (len(amendment) == 0 || !amendment[0]) {
 		return old, problem(409, "PLAN_CONFIRMED", "Подтверждённый план меняется дополнением с причиной")
 	}
 	data, e := json.Marshal(in)
@@ -279,6 +284,7 @@ func decode[T any](s *Service, w http.ResponseWriter, r *http.Request, fn func(T
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountCommitments(r)
 		r.Get("/api/v1/plans/day/{date}", func(w http.ResponseWriter, r *http.Request) {
 			date := chi.URLParam(r, "date")
 			_, e := day(date)

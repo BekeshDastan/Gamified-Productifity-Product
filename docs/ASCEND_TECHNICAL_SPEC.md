@@ -1592,7 +1592,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** На одну дату один план; черновик не считается подтверждённым обязательством.
   - **КОММИТ СЕЙЧАС:** `feat(planning): add daily plans and capacity settings`
 
-- [ ] **C066. Подтверждённый снимок**
+- [x] **C066. Подтверждённый снимок**
   - **Сделать:** Реализовать confirm, snapshot и addendum для изменений после подтверждения.
   - **Проверить:** Удаление пункта позже не уменьшает исходный знаменатель выполнения.
   - **КОММИТ СЕЙЧАС:** `feat(planning): freeze commitments and record later plan changes`
