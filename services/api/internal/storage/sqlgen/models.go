@@ -8,6 +8,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Attachment struct {
+	ID         pgtype.UUID        `json:"id"`
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	QuestID    pgtype.UUID        `json:"quest_id"`
+	StorageKey string             `json:"storage_key"`
+	Name       string             `json:"name"`
+	Mime       string             `json:"mime"`
+	Size       int64              `json:"size"`
+	Checksum   string             `json:"checksum"`
+	Verdict    string             `json:"verdict"`
+	DeletedAt  pgtype.Timestamptz `json:"deleted_at"`
+	Version    int64              `json:"version"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type AuditEvent struct {
 	ID         pgtype.UUID        `json:"id"`
 	ActorID    pgtype.UUID        `json:"actor_id"`
@@ -131,6 +146,53 @@ type Profile struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type Quest struct {
+	ID          pgtype.UUID        `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	AreaID      pgtype.UUID        `json:"area_id"`
+	Payload     []byte             `json:"payload"`
+	Status      string             `json:"status"`
+	Version     int64              `json:"version"`
+	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+	ArchivedAt  pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ParentID    pgtype.UUID        `json:"parent_id"`
+	PlannedDate pgtype.Date        `json:"planned_date"`
+	Deadline    pgtype.Timestamptz `json:"deadline"`
+}
+
+type QuestDependency struct {
+	OwnerID   pgtype.UUID `json:"owner_id"`
+	QuestID   pgtype.UUID `json:"quest_id"`
+	DependsOn pgtype.UUID `json:"depends_on"`
+}
+
+type QuestTag struct {
+	OwnerID pgtype.UUID `json:"owner_id"`
+	QuestID pgtype.UUID `json:"quest_id"`
+	TagID   pgtype.UUID `json:"tag_id"`
+}
+
+type QuestTemplate struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Name      string             `json:"name"`
+	Payload   []byte             `json:"payload"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type QuestView struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Name      string             `json:"name"`
+	Filters   []byte             `json:"filters"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Tag struct {
 	ID        pgtype.UUID        `json:"id"`
 	OwnerID   pgtype.UUID        `json:"owner_id"`
@@ -141,6 +203,19 @@ type Tag struct {
 	Version   int64              `json:"version"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type TaskEvent struct {
+	ID           int64              `json:"id"`
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	QuestID      pgtype.UUID        `json:"quest_id"`
+	Kind         string             `json:"kind"`
+	Reason       string             `json:"reason"`
+	BeforeState  []byte             `json:"before_state"`
+	AfterState   []byte             `json:"after_state"`
+	QuestVersion int64              `json:"quest_version"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	Details      []byte             `json:"details"`
 }
 
 type User struct {

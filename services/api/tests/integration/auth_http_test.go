@@ -18,7 +18,9 @@ import (
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -32,7 +34,7 @@ type authFixture struct {
 	server   *httptest.Server
 }
 
-func newAuthFixture(t *testing.T, limits auth.Limits) authFixture {
+func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) authFixture {
 	t.Helper()
 	pool, ctx := database(t)
 	clock := testkit.NewClock(time.Date(2026, 10, 12, 12, 0, 0, 0, time.UTC))
@@ -46,6 +48,16 @@ func newAuthFixture(t *testing.T, limits auth.Limits) authFixture {
 		t.Fatal(err)
 	}
 	profile.NewService(pool, clock).Mount(router, sessions.Protect)
+	files, err := blob.NewLocal(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = files.Close() })
+	var scanner blob.Scanner = blob.UnavailableScanner{}
+	if len(scanners) > 0 {
+		scanner = scanners[0]
+	}
+	quests.NewService(pool, clock).WithFiles(files, scanner).Mount(router, sessions.Protect)
 	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)
 	return authFixture{pool: pool, ctx: ctx, clock: clock, sessions: sessions, service: service, server: server}

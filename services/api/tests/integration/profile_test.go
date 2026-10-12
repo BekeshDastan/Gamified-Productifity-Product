@@ -4,6 +4,7 @@ package integration
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,7 +16,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
 )
 
-func (f authFixture) privateRequest(t *testing.T, client *http.Client, method, path, version string, input any) authResponse {
+func (f authFixture) privateRequest(t *testing.T, client *http.Client, method, path, version string, input any, keys ...string) authResponse {
 	t.Helper()
 	csrf := f.csrf(t, client)
 	body, err := json.Marshal(input)
@@ -30,6 +31,11 @@ func (f authFixture) privateRequest(t *testing.T, client *http.Client, method, p
 	r.Header.Set("X-CSRF-Token", csrf)
 	r.Header.Set("Content-Type", "application/json")
 	r.Header.Set("If-Match", version)
+	key := rand.Text()
+	if len(keys) > 0 {
+		key = keys[0]
+	}
+	r.Header.Set("Idempotency-Key", key)
 	response, err := client.Do(r)
 	if err != nil {
 		t.Fatal(err)

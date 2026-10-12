@@ -6,6 +6,1079 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/quests/{id}/archive:
+    post:
+      operationId: archiveQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/restore:
+    post:
+      operationId: restoreQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/templates/quests/{id}/preview:
+    post:
+      operationId: previewQuestTemplate
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestTemplateDates"
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestTemplatePreview"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/templates/quests/{id}/apply:
+    post:
+      operationId: applyQuestTemplate
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestTemplateDates"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/templates/quests:
+    get:
+      operationId: questTemplates
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestTemplates"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createQuestTemplate
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - name
+                - quest_id
+              properties:
+                name:
+                  type: string
+                  maxLength: 80
+                quest_id:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestTemplate"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/templates/quests/{id}:
+    patch:
+      operationId: updateQuestTemplate
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - name
+                - input
+              properties:
+                name:
+                  type: string
+                  maxLength: 80
+                input:
+                  $ref: "#/components/schemas/QuestInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestTemplate"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    delete:
+      operationId: deleteQuestTemplate
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/batch:
+    post:
+      operationId: applyQuestBatch
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestBatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quests"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/batch/preview:
+    post:
+      operationId: previewQuestBatch
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestBatch"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quests"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/attachments:
+    post:
+      operationId: uploadQuestFile
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - quest_id
+                - version
+                - file
+              properties:
+                quest_id:
+                  type: string
+                  format: uuid
+                version:
+                  type: string
+                  description: Quoted quest version, same semantics as If-Match
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          $ref: "#/components/responses/Attachment"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "413":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/attachments:
+    get:
+      operationId: questAttachments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Attachments"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/attachments/{id}:
+    delete:
+      operationId: deleteAttachment
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/attachments/{id}/scan:
+    post:
+      operationId: rescanAttachment
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          $ref: "#/components/responses/Attachment"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/attachments/{id}/download:
+    get:
+      operationId: downloadAttachment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Private download; attachment disposition, nosniff, sandbox
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/structure:
+    get:
+      operationId: questStructure
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestStructure"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/dependencies:
+    put:
+      operationId: questDependencies
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestDependencies"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/start:
+    post:
+      operationId: startQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestTransition"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/ready:
+    post:
+      operationId: readyQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestTransition"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/complete:
+    post:
+      operationId: completeQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestTransition"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/reopen:
+    post:
+      operationId: reopenQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestTransition"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/postpone:
+    post:
+      operationId: postponeQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestTransition"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/skip:
+    post:
+      operationId: skipQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestTransition"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/fail:
+    post:
+      operationId: failQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestTransition"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}/history:
+    get:
+      operationId: questHistory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: before
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestEvents"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/views:
+    get:
+      operationId: getQuestViews
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestViews"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: saveQuestView
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestViewInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestView"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/views/{id}:
+    delete:
+      operationId: deleteQuestView
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests:
+    get:
+      operationId: listQuests
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: area_id
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: string
+        - name: planned_from
+          in: query
+          schema:
+            type: string
+        - name: planned_to
+          in: query
+          schema:
+            type: string
+        - name: overdue
+          in: query
+          schema:
+            type: boolean
+        - name: archived
+          in: query
+          schema:
+            type: boolean
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - newest
+              - oldest
+              - title
+              - planned
+              - priority
+      responses:
+        "200":
+          $ref: "#/components/responses/QuestPage"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/quests/{id}:
+    get:
+      operationId: getQuest
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: updateQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/me/password:
     patch:
       operationId: changePassword
@@ -461,11 +1534,14 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [data, meta]
+                required:
+                  - data
+                  - meta
                 properties:
                   data:
                     type: object
-                    required: [token]
+                    required:
+                      - token
                     properties:
                       token:
                         type: string
@@ -492,7 +1568,9 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [data, meta]
+                required:
+                  - data
+                  - meta
                 properties:
                   data:
                     $ref: "#/components/schemas/Account"
@@ -600,7 +1678,9 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [data, meta]
+                required:
+                  - data
+                  - meta
                 properties:
                   data:
                     type: array
@@ -663,6 +1743,184 @@ components:
             type: object
             additionalProperties: false
   responses:
+    Quests:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    QuestTemplate:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/QuestTemplateDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    QuestTemplates:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestTemplateDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    QuestTemplatePreview:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/QuestTemplatePreviewDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    Attachment:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/AttachmentDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    Attachments:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttachmentDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    QuestStructure:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/QuestStructureDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    QuestEvents:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestEvent"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    QuestView:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/QuestViewDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    QuestViews:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuestViewDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    Quest:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/QuestDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    QuestPage:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/QuestPageDTO"
+              meta:
+                $ref: "#/components/schemas/Meta"
     Onboarding:
       description: Личные данные владельца
       content:
@@ -713,7 +1971,9 @@ components:
         application/json:
           schema:
             type: object
-            required: [data, meta]
+            required:
+              - data
+              - meta
             properties:
               data:
                 $ref: "#/components/schemas/Settings"
@@ -725,7 +1985,9 @@ components:
         application/json:
           schema:
             type: object
-            required: [data, meta]
+            required:
+              - data
+              - meta
             properties:
               data:
                 $ref: "#/components/schemas/Profile"
@@ -737,11 +1999,14 @@ components:
         application/json:
           schema:
             type: object
-            required: [data, meta]
+            required:
+              - data
+              - meta
             properties:
               data:
                 type: object
-                required: [ok]
+                required:
+                  - ok
                 properties:
                   ok:
                     type: boolean
@@ -754,7 +2019,9 @@ components:
         application/json:
           schema:
             type: object
-            required: [data, meta]
+            required:
+              - data
+              - meta
             properties:
               data:
                 $ref: "#/components/schemas/Session"
@@ -807,7 +2074,7 @@ components:
       required: true
       schema:
         type: string
-        pattern: '^"[1-9][0-9]*"$'
+        pattern: ^"[1-9][0-9]*"$
     IdempotencyKey:
       in: header
       name: Idempotency-Key
@@ -817,6 +2084,489 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    QuestBatch:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - action
+        - transition
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - version
+            properties:
+              id:
+                type: string
+                format: uuid
+              version:
+                type: integer
+                minimum: 1
+        action:
+          type: string
+          enum:
+            - archive
+            - restore
+            - start
+            - ready
+            - complete
+            - reopen
+            - postpone
+            - skip
+            - fail
+        transition:
+          $ref: "#/components/schemas/QuestTransition"
+    QuestTemplateDates:
+      type: object
+      additionalProperties: false
+      properties:
+        planned_date:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+    QuestTemplateDTO:
+      type: object
+      required:
+        - id
+        - name
+        - input
+        - version
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        input:
+          $ref: "#/components/schemas/QuestInput"
+        version:
+          type: integer
+    QuestTemplatePreviewDTO:
+      type: object
+      required:
+        - input
+        - version
+      properties:
+        input:
+          $ref: "#/components/schemas/QuestInput"
+        version:
+          type: integer
+    AttachmentDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - quest_id
+        - name
+        - mime
+        - size
+        - verdict
+        - version
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        mime:
+          type: string
+        size:
+          type: integer
+        verdict:
+          type: string
+          enum:
+            - pending
+            - clean
+            - rejected
+        version:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    QuestDependencies:
+      type: object
+      additionalProperties: false
+      required:
+        - ids
+        - reason
+      properties:
+        ids:
+          type: array
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        reason:
+          type: string
+          maxLength: 1000
+    QuestStructureDTO:
+      type: object
+      required:
+        - container
+        - required_leaves
+        - completed_leaves
+        - children
+        - dependencies
+      properties:
+        container:
+          type: boolean
+        required_leaves:
+          type: integer
+        completed_leaves:
+          type: integer
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestDTO"
+        dependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestDTO"
+    QuestTransition:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          maxLength: 1000
+        planned_date:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        return_to_backlog:
+          type: boolean
+        shift_deadline:
+          type: boolean
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+    QuestEvent:
+      type: object
+      required:
+        - id
+        - kind
+        - reason
+        - before
+        - after
+        - created_at
+        - details
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+        reason:
+          type: string
+        before:
+          anyOf:
+            - $ref: "#/components/schemas/QuestDTO"
+            - type: "null"
+        after:
+          $ref: "#/components/schemas/QuestDTO"
+        created_at:
+          type: string
+          format: date-time
+        details:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    QuestFilters:
+      type: object
+      additionalProperties: false
+      required:
+        - search
+        - status
+        - area_id
+        - priority
+        - planned_from
+        - planned_to
+        - overdue
+        - archived
+        - sort
+      properties:
+        search:
+          type: string
+          maxLength: 200
+        status:
+          type: string
+        area_id:
+          type: string
+        priority:
+          type: string
+        planned_from:
+          type: string
+        planned_to:
+          type: string
+        overdue:
+          type: boolean
+        archived:
+          type: boolean
+        sort:
+          type: string
+          enum:
+            - newest
+            - oldest
+            - title
+            - planned
+            - priority
+    QuestViewInput:
+      type: object
+      required:
+        - name
+        - filters
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        filters:
+          $ref: "#/components/schemas/QuestFilters"
+    QuestViewDTO:
+      allOf:
+        - $ref: "#/components/schemas/QuestViewInput"
+        - type: object
+          required:
+            - id
+            - version
+          properties:
+            id:
+              type: string
+              format: uuid
+            version:
+              type: integer
+    QuestInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - description
+        - area_id
+        - priority
+        - difficulty
+        - deadline
+        - planned_date
+        - estimated_minutes
+        - actual_minutes
+        - tags
+        - status
+        - parent_id
+        - required
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 10000
+        area_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 5
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        planned_date:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        estimated_minutes:
+          type: integer
+          minimum: 0
+          maximum: 525600
+        actual_minutes:
+          type: integer
+          minimum: 0
+          maximum: 525600
+        tags:
+          type: array
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum:
+            - backlog
+            - todo
+            - in_progress
+            - postponed
+            - completed
+            - failed
+            - skipped
+        parent_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        required:
+          type: boolean
+    QuestDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - description
+        - area_id
+        - priority
+        - difficulty
+        - deadline
+        - planned_date
+        - estimated_minutes
+        - actual_minutes
+        - tags
+        - status
+        - id
+        - version
+        - completed_at
+        - archived_at
+        - created_at
+        - updated_at
+        - parent_id
+        - required
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 10000
+        area_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 5
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        planned_date:
+          anyOf:
+            - type: string
+              format: date
+            - type: "null"
+        estimated_minutes:
+          type: integer
+          minimum: 0
+          maximum: 525600
+        actual_minutes:
+          type: integer
+          minimum: 0
+          maximum: 525600
+        tags:
+          type: array
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum:
+            - backlog
+            - todo
+            - in_progress
+            - postponed
+            - completed
+            - failed
+            - skipped
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 1
+        completed_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        archived_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        parent_id:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: "null"
+        required:
+          type: boolean
+    QuestPageDTO:
+      type: object
+      required:
+        - items
+        - total
+        - page
+        - page_size
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestDTO"
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
     ChangePasswordInput:
       type: object
       additionalProperties: false
@@ -1065,7 +2815,10 @@ components:
       allOf:
         - $ref: "#/components/schemas/Preferences"
         - type: object
-          required: [version, created_at, updated_at]
+          required:
+            - version
+            - created_at
+            - updated_at
           properties:
             version:
               type: integer
@@ -1079,21 +2832,37 @@ components:
     ProfileInput:
       type: object
       additionalProperties: false
-      required: [name, nickname, avatar]
+      required:
+        - name
+        - nickname
+        - avatar
       properties:
         name:
           type: string
           maxLength: 80
         nickname:
           type: string
-          pattern: "^([a-z0-9_]{3,24})?$"
+          pattern: ^([a-z0-9_]{3,24})?$
         avatar:
           type: string
-          enum: [mountain, compass, sprout, sun, moon, star]
+          enum:
+            - mountain
+            - compass
+            - sprout
+            - sun
+            - moon
+            - star
     Profile:
       type: object
       additionalProperties: false
-      required: [name, nickname, avatar, owner_id, version, created_at, updated_at]
+      required:
+        - name
+        - nickname
+        - avatar
+        - owner_id
+        - version
+        - created_at
+        - updated_at
       properties:
         name:
           $ref: "#/components/schemas/ProfileInput/properties/name"
@@ -1116,7 +2885,8 @@ components:
     ForgotInput:
       type: object
       additionalProperties: false
-      required: [email]
+      required:
+        - email
       properties:
         email:
           type: string
@@ -1125,7 +2895,9 @@ components:
     ResetInput:
       type: object
       additionalProperties: false
-      required: [token, password]
+      required:
+        - token
+        - password
       properties:
         token:
           type: string
@@ -1141,7 +2913,8 @@ components:
     TokenInput:
       type: object
       additionalProperties: false
-      required: [token]
+      required:
+        - token
       properties:
         token:
           type: string
@@ -1151,7 +2924,12 @@ components:
     SessionInfo:
       type: object
       additionalProperties: false
-      required: [id, created_at, expires_at, remember_me, current]
+      required:
+        - id
+        - created_at
+        - expires_at
+        - remember_me
+        - current
       properties:
         id:
           type: string
@@ -1169,7 +2947,9 @@ components:
     Meta:
       type: object
       additionalProperties: false
-      required: [request_id, server_time]
+      required:
+        - request_id
+        - server_time
       properties:
         request_id:
           type: string
@@ -1180,22 +2960,30 @@ components:
     HealthEnvelope:
       type: object
       additionalProperties: false
-      required: [data, meta]
+      required:
+        - data
+        - meta
       properties:
         data:
           type: object
           additionalProperties: false
-          required: [status]
+          required:
+            - status
           properties:
             status:
               type: string
-              enum: [ok, unavailable]
+              enum:
+                - ok
+                - unavailable
         meta:
           $ref: "#/components/schemas/Meta"
     LoginInput:
       type: object
       additionalProperties: false
-      required: [email, password, remember_me]
+      required:
+        - email
+        - password
+        - remember_me
       description: Вход требует pre-auth CSRF и Origin. Токены выдаются только в HttpOnly cookies.
       properties:
         email:
@@ -1212,7 +3000,9 @@ components:
     RegisterInput:
       type: object
       additionalProperties: false
-      required: [email, password]
+      required:
+        - email
+        - password
       description: Регистрация требует pre-auth CSRF и Origin; роль задаётся сервером.
       properties:
         email:
@@ -1229,7 +3019,10 @@ components:
     Session:
       type: object
       additionalProperties: false
-      required: [account, session_id, expires_at]
+      required:
+        - account
+        - session_id
+        - expires_at
       properties:
         account:
           $ref: "#/components/schemas/Account"
@@ -1242,7 +3035,12 @@ components:
     Account:
       type: object
       additionalProperties: false
-      required: [id, email, role, email_verified, created_at]
+      required:
+        - id
+        - email
+        - role
+        - email_verified
+        - created_at
       properties:
         id:
           type: string
@@ -1252,7 +3050,9 @@ components:
           format: email
         role:
           type: string
-          enum: [user, admin]
+          enum:
+            - user
+            - admin
           readOnly: true
         email_verified:
           type: boolean
@@ -1264,38 +3064,40 @@ components:
     ErrorEnvelope:
       type: object
       additionalProperties: false
-      required: [error]
+      required:
+        - error
       properties:
         error:
           type: object
           additionalProperties: false
-          required: [code, message, request_id]
+          required:
+            - code
+            - message
+            - request_id
           properties:
             code:
               type: string
               enum:
-                [
-                  INVALID_JSON,
-                  VALIDATION_ERROR,
-                  EMAIL_TAKEN,
-                  UNAUTHORIZED,
-                  ORIGIN_REJECTED,
-                  CSRF_REJECTED,
-                  REFRESH_IN_PROGRESS,
-                  TOKEN_INVALID,
-                  EMAIL_UNVERIFIED,
-                  FORBIDDEN,
-                  NOT_FOUND,
-                  METHOD_NOT_ALLOWED,
-                  VERSION_CONFLICT,
-                  IDEMPOTENCY_MISMATCH,
-                  OPERATION_IN_PROGRESS,
-                  RATE_LIMITED,
-                  INTERNAL_ERROR,
-                  BODY_TOO_LARGE,
-                  UNSUPPORTED_MEDIA_TYPE,
-                  DEADLINE_EXCEEDED,
-                ]
+                - INVALID_JSON
+                - VALIDATION_ERROR
+                - EMAIL_TAKEN
+                - UNAUTHORIZED
+                - ORIGIN_REJECTED
+                - CSRF_REJECTED
+                - REFRESH_IN_PROGRESS
+                - TOKEN_INVALID
+                - EMAIL_UNVERIFIED
+                - FORBIDDEN
+                - NOT_FOUND
+                - METHOD_NOT_ALLOWED
+                - VERSION_CONFLICT
+                - IDEMPOTENCY_MISMATCH
+                - OPERATION_IN_PROGRESS
+                - RATE_LIMITED
+                - INTERNAL_ERROR
+                - BODY_TOO_LARGE
+                - UNSUPPORTED_MEDIA_TYPE
+                - DEADLINE_EXCEEDED
             message:
               type: string
             request_id:

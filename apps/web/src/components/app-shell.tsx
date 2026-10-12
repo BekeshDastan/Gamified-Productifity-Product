@@ -31,7 +31,6 @@ import { AccountQueryProvider } from "@/lib/api/query-provider";
 
 const planned = [
   { label: "Календарь", icon: CalendarDays },
-  { label: "Задачи", icon: ListTodo },
   { label: "Цели", icon: Flag },
   { label: "Привычки", icon: Repeat2 },
   { label: "Фокус", icon: Timer },
@@ -45,6 +44,7 @@ const planned = [
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/quests", label: "Задачи", icon: ListTodo },
   { href: "/app/settings/privacy", label: "Приватность", icon: LockKeyhole },
   { href: "/app/settings/security", label: "Безопасность", icon: LockKeyhole },
   { href: "/app/onboarding", label: "Первые шаги", icon: Compass },

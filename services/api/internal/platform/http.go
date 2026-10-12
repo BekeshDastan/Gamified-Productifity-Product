@@ -18,11 +18,15 @@ func NewRouter(logger *slog.Logger, c Clock, readiness ...func(context.Context) 
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			w.Header().Set("X-Content-Type-Options", "nosniff")
 			w.Header().Set("Cache-Control", "no-store")
-			if req.ContentLength > 1<<20 {
+			limit := int64(1 << 20)
+			if req.Method == http.MethodPost && req.URL.Path == "/api/v1/attachments" {
+				limit = 11 << 20
+			}
+			if req.ContentLength > limit {
 				WriteError(w, req, problem(413, "BODY_TOO_LARGE", "Запрос слишком большой"))
 				return
 			}
-			req.Body = http.MaxBytesReader(w, req.Body, 1<<20)
+			req.Body = http.MaxBytesReader(w, req.Body, limit)
 			defer func() {
 				if recover() != nil {
 					logger.Error("http_panic", "request_id", RequestMeta(req.Context()).RequestID)
