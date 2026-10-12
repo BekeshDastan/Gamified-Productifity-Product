@@ -1298,7 +1298,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Светлая и тёмная темы читаемы; статусы различаются не только цветом.
   - **КОММИТ СЕЙЧАС:** `feat(ui): define themes typography and design tokens`
 
-- [ ] **C018. Базовые компоненты**
+- [x] **C018. Базовые компоненты**
   - **Сделать:** Подготовить Button, Input, Dialog, Select, Tabs, Toast, Tooltip, Card, Progress и DatePicker на согласованной основе.
   - **Проверить:** Диалог удерживает и возвращает фокус; формы имеют labels и тексты ошибок.
   - **КОММИТ СЕЙЧАС:** `feat(ui): add accessible shared interface components`
