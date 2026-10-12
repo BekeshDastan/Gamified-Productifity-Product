@@ -54,6 +54,14 @@ export interface components {
             };
             meta: components["schemas"]["Meta"];
         };
+        /** @description Вход подключается с pre-auth CSRF и ограничениями в C027. Токены выдаются только в HttpOnly cookies. */
+        LoginInput: {
+            /** Format: email */
+            email: string;
+            /** Format: password */
+            password: string;
+            remember_me: boolean;
+        };
         /** @description DTO регистрации. Публичный endpoint подключается после pre-auth CSRF и rate limits (C027). */
         RegisterInput: {
             /** Format: email */

@@ -18,6 +18,23 @@ type AuditEvent struct {
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 
+type AuthRefreshToken struct {
+	TokenHash []byte             `json:"-"`
+	SessionID pgtype.UUID        `json:"session_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UsedAt    pgtype.Timestamptz `json:"used_at"`
+}
+
+type AuthSession struct {
+	ID         pgtype.UUID        `json:"id"`
+	UserID     pgtype.UUID        `json:"user_id"`
+	CsrfSecret []byte             `json:"-"`
+	RememberMe bool               `json:"remember_me"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
+}
+
 type IdempotencyRecord struct {
 	UserID         pgtype.UUID        `json:"user_id"`
 	Method         string             `json:"method"`

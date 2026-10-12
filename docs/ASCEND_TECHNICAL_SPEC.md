@@ -1347,7 +1347,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** В БД нет открытого пароля; параллельная регистрация email создаёт один аккаунт.
   - **КОММИТ СЕЙЧАС:** `feat(auth): add registration and Argon2id password storage`
 
-- [ ] **C026. Вход и выдача сессии**
+- [x] **C026. Вход и выдача сессии**
   - **Сделать:** Реализовать проверку пароля, access JWT, opaque refresh, серверную сессию и secure cookies.
   - **Проверить:** Успешный вход даёт доступ только своему пользователю; истёкший JWT отвергается.
   - **КОММИТ СЕЙЧАС:** `feat(auth): add login and session creation`

@@ -93,6 +93,23 @@ components:
               enum: [ok, unavailable]
         meta:
           $ref: "#/components/schemas/Meta"
+    LoginInput:
+      type: object
+      additionalProperties: false
+      required: [email, password, remember_me]
+      description: Вход подключается с pre-auth CSRF и ограничениями в C027. Токены выдаются только в HttpOnly cookies.
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          maxLength: 128
+        remember_me:
+          type: boolean
     RegisterInput:
       type: object
       additionalProperties: false
