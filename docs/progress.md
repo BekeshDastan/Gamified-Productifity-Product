@@ -48,3 +48,7 @@
 
 - C010: health/live и health/ready, pgx pool.Ping, таймауты и лимит тела.
   Тесты подтверждают 503 readiness при отказе БД, живой liveness, 413 и безопасный 500.
+
+- C011: pgx pool, goose forward CLI, служебная миграция audit_events, sqlc 1.31.1.
+  Реальная БД: миграции повторяемы, rollback оставляет 0 строк, commit — 1.
+  Тестовая схема удалена автоматически; production/основная БД не очищается.

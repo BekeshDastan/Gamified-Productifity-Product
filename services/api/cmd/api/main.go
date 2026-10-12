@@ -10,10 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 )
 
 func main() {
@@ -25,7 +24,7 @@ func main() {
 	logger := platform.NewLogger(os.Stdout, cfg.LogLevel)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	pool, err := storage.Open(ctx, cfg.DatabaseURL)
 	if err != nil {
 		logger.Error("invalid database configuration")
 		os.Exit(1)

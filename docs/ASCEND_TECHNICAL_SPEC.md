@@ -1254,7 +1254,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** При недоступной БД readiness возвращает отказ, liveness остаётся корректным.
   - **КОММИТ СЕЙЧАС:** `feat(api): add routing health and readiness endpoints`
 
-- [ ] **C011. Миграции и транзакции**
+- [x] **C011. Миграции и транзакции**
   - **Сделать:** Подключить pgx/sqlc/goose, pool и единый transaction runner; создать служебную миграцию.
   - **Проверить:** Поднятие чистой БД проходит; rollback транзакции не оставляет частичных строк.
   - **КОММИТ СЕЙЧАС:** `feat(storage): add PostgreSQL migrations and transaction support`

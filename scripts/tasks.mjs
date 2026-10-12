@@ -108,13 +108,16 @@ const commands = {
     await npm("run", "build:web");
     await buildGo();
   },
+  migrate: async () => {
+    requireLocalEnv();
+    await run("go", ["run", "./cmd/migrate"], api);
+  },
   "check-changed": async () => {
     await commands.lint();
     await commands.test();
   },
 };
 for (const [name, milestone] of Object.entries({
-  migrate: "C011",
   seed: "C167",
   "seed-demo": "C194",
   "test-integration": "C016",
