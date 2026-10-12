@@ -2,12 +2,16 @@ package quests
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -41,7 +45,7 @@ func validateFilters(f Filters) (Filters, error) {
 	}
 	for _, v := range []string{f.PlannedFrom, f.PlannedTo} {
 		if v != "" {
-			if _, e := time.Parse("2006-01-02", v); e != nil {
+			if date, e := time.Parse("2006-01-02", v); e != nil || date.Year() < 1 {
 				return f, invalid("planned_from", "Укажите дату")
 			}
 		}
@@ -61,7 +65,7 @@ func validateFilters(f Filters) (Filters, error) {
 var sorts = map[string]string{
 	"newest": "created_at DESC,id DESC", "oldest": "created_at,id",
 	"title":    "lower(payload->>'title'),id",
-	"planned":  "payload->>'planned_date' ASC NULLS LAST,id",
+	"planned":  "planned_date ASC NULLS LAST,id",
 	"priority": "CASE payload->>'priority' WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END,id",
 }
 
@@ -79,8 +83,8 @@ const filteredWhere = `owner_id=$1 AND (archived_at IS NOT NULL)=$2
  AND ($3='' OR strpos(lower((payload->>'title')||' '||(payload->>'description')),lower($3))>0)
  AND ($4='' OR status=$4) AND ($5='' OR area_id::text=$5)
  AND ($6='' OR payload->>'priority'=$6)
- AND ($7='' OR payload->>'planned_date'>=$7) AND ($8='' OR payload->>'planned_date'<=$8)
- AND (NOT $9 OR (status NOT IN ('completed','failed','skipped') AND (payload->>'deadline')::timestamptz<$10))`
+ AND ($7='' OR planned_date>=NULLIF($7,'')::date) AND ($8='' OR planned_date<=NULLIF($8,'')::date)
+ AND (NOT $9 OR (status NOT IN ('completed','failed','skipped') AND deadline<$10))`
 
 func (f Filters) args(id string, now time.Time) []any {
 	return []any{id, f.Archived, f.Search, f.Status, f.AreaID, f.Priority, f.PlannedFrom, f.PlannedTo, f.Overdue, now}
@@ -134,7 +138,7 @@ func (s *Service) mountViews(r chi.Router) {
 				return nil, e
 			}
 			in.Name = strings.TrimSpace(in.Name)
-			if in.Name == "" || utf8.RuneCountInString(in.Name) > 60 {
+			if in.Name == "" || utf8.RuneCountInString(in.Name) > 60 || strings.IndexFunc(in.Name, unicode.IsControl) >= 0 {
 				return nil, invalid("name", "Название: 1–60 символов")
 			}
 			in.Filters, e = validateFilters(in.Filters)
@@ -147,11 +151,16 @@ func (s *Service) mountViews(r chi.Router) {
 			}
 			var v View
 			v.ViewInput = in
-			e = s.pool.QueryRow(r.Context(), `INSERT INTO quest_views(owner_id,name,filters,created_at) SELECT $1,$2,$3,$4 WHERE (SELECT count(*) FROM quest_views WHERE owner_id=$1)<50 ON CONFLICT(owner_id,name) DO NOTHING RETURNING id::text,version`, id, in.Name, data, s.clock.Now().UTC()).Scan(&v.ID, &v.Version)
-			if e != nil {
+			e = storage.WithinTx(r.Context(), s.pool, func(tx pgx.Tx) error {
+				if e := s.lockOwner(r.Context(), tx, id); e != nil {
+					return e
+				}
+				return tx.QueryRow(r.Context(), `INSERT INTO quest_views(owner_id,name,filters,created_at) SELECT $1,$2,$3,$4 WHERE (SELECT count(*) FROM quest_views WHERE owner_id=$1)<50 ON CONFLICT(owner_id,name) DO NOTHING RETURNING id::text,version`, id, in.Name, data, s.clock.Now().UTC()).Scan(&v.ID, &v.Version)
+			})
+			if errors.Is(e, pgx.ErrNoRows) {
 				return nil, invalid("name", "Название занято или достигнут лимит 50 представлений")
 			}
-			return v, nil
+			return v, e
 		}, s)
 	})
 	r.Delete("/api/v1/quests/views/{id}", func(w http.ResponseWriter, r *http.Request) {

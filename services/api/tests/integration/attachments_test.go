@@ -12,10 +12,69 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 type cleanFixtureScanner struct{}
+
+type concurrentFixtureScanner struct {
+	calls   atomic.Int32
+	started chan struct{}
+	release chan struct{}
+}
+
+func (s *concurrentFixtureScanner) Scan(ctx context.Context, _ blob.Object) (blob.Verdict, error) {
+	switch s.calls.Add(1) {
+	case 1:
+		return blob.Pending, nil
+	case 2:
+		close(s.started)
+		select {
+		case <-s.release:
+			return blob.Clean, nil
+		case <-ctx.Done():
+			return blob.Pending, ctx.Err()
+		}
+	default:
+		return blob.Rejected, nil
+	}
+}
+
+func TestAttachmentConcurrentScanPreservesNewerVerdict(t *testing.T) {
+	scanner := &concurrentFixtureScanner{started: make(chan struct{}), release: make(chan struct{})}
+	defer close(scanner.release)
+	f := newAuthFixture(t, auth.DefaultLimits(), scanner)
+	client, _ := f.signedIn(t, "scan-race@example.test")
+	q := readQuest(t, f.privateRequest(t, client, "POST", "/quests", "", questInput("Проверка файла")))
+	a := readAttachment(t, f.uploadFile(t, client, q, "notes.txt", []byte("pending")))
+	results := make(chan authResponse, 1)
+	go func() {
+		results <- f.privateRequest(t, client, "POST", "/attachments/"+a.ID+"/scan", `"1"`, struct{}{})
+	}()
+	select {
+	case <-scanner.started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("first scan did not start")
+	}
+	fresh := readAttachment(t, f.privateRequest(t, client, "POST", "/attachments/"+a.ID+"/scan", `"1"`, struct{}{}))
+	if fresh.Verdict != blob.Rejected || fresh.Version != 2 {
+		t.Fatal("newer verdict missing")
+	}
+	scanner.release <- struct{}{}
+	select {
+	case r := <-results:
+		if r.status != 409 {
+			t.Fatal("stale clean scan overwritten newer rejection", r.status)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("stale scan did not finish")
+	}
+	if r := f.privateRequest(t, client, "GET", "/attachments/"+a.ID+"/download", "", nil); r.status != 409 {
+		t.Fatal("rejected file became downloadable")
+	}
+}
 
 func (cleanFixtureScanner) Scan(context.Context, blob.Object) (blob.Verdict, error) {
 	return blob.Clean, nil

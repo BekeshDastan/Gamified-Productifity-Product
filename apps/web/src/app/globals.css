@@ -1398,3 +1398,21 @@ html[data-motion="reduce"] *::after {
   padding: 0;
   list-style: none;
 }
+.quest-workspace .check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.5rem;
+  margin: 0.25rem 0;
+  overflow-wrap: anywhere;
+}
+.quest-workspace .check-row input {
+  flex: 0 0 auto;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+}
+.quest-batch {
+  padding: 0;
+  list-style: none;
+}

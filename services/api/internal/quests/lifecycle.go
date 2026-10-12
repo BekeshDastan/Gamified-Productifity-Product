@@ -23,12 +23,13 @@ type Transition struct {
 	Deadline        *time.Time `json:"deadline"`
 }
 type Event struct {
-	ID        int64     `json:"id"`
-	Kind      string    `json:"kind"`
-	Reason    string    `json:"reason"`
-	Before    *Quest    `json:"before"`
-	After     Quest     `json:"after"`
-	CreatedAt time.Time `json:"created_at"`
+	Details   map[string][]string `json:"details"`
+	ID        int64               `json:"id"`
+	Kind      string              `json:"kind"`
+	Reason    string              `json:"reason"`
+	Before    *Quest              `json:"before"`
+	After     Quest               `json:"after"`
+	CreatedAt time.Time           `json:"created_at"`
 }
 
 func (s *Service) event(ctx context.Context, tx pgx.Tx, id, kind, reason string, before *Quest, after Quest) error {
@@ -144,7 +145,7 @@ func (s *Service) transitionTx(r *http.Request, tx pgx.Tx, id, key, action strin
 	if err != nil {
 		return q, err
 	}
-	q, err = scan(tx.QueryRow(ctx, `UPDATE quests SET payload=$3,status=$4,completed_at=$5,version=version+1,updated_at=$6 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, next, q.CompletedAt, s.clock.Now().UTC()))
+	q, err = scan(tx.QueryRow(ctx, `UPDATE quests SET payload=$3,status=$4,completed_at=$5,planned_date=$7::text::date,deadline=$8,version=version+1,updated_at=$6 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, next, q.CompletedAt, s.clock.Now().UTC(), q.PlannedDate, q.Deadline))
 	if err == nil {
 		err = s.event(ctx, tx, id, action, in.Reason, &before, q)
 	}
@@ -219,7 +220,7 @@ func (s *Service) mountLifecycle(r chi.Router) {
 				return
 			}
 		}
-		rows, e := s.pool.Query(r.Context(), `SELECT id,kind,reason,before_state,after_state,created_at FROM task_events WHERE owner_id=$1 AND quest_id=$2 AND id<$3 ORDER BY id DESC LIMIT 50`, id, key, before)
+		rows, e := s.pool.Query(r.Context(), `SELECT id,kind,reason,before_state,after_state,created_at,details FROM task_events WHERE owner_id=$1 AND quest_id=$2 AND id<$3 ORDER BY id DESC LIMIT 50`, id, key, before)
 		if e != nil {
 			s.reply(w, r, nil, e)
 			return
@@ -228,8 +229,11 @@ func (s *Service) mountLifecycle(r chi.Router) {
 		out := []Event{}
 		for rows.Next() {
 			var v Event
-			var old, fresh []byte
-			e = rows.Scan(&v.ID, &v.Kind, &v.Reason, &old, &fresh, &v.CreatedAt)
+			var old, fresh, details []byte
+			e = rows.Scan(&v.ID, &v.Kind, &v.Reason, &old, &fresh, &v.CreatedAt, &details)
+			if e == nil {
+				e = json.Unmarshal(details, &v.Details)
+			}
 			if e == nil {
 				e = json.Unmarshal(old, &v.Before)
 			}

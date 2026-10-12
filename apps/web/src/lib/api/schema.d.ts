@@ -908,6 +908,9 @@ export interface components {
             after: components["schemas"]["QuestDTO"];
             /** Format: date-time */
             created_at: string;
+            details: {
+                [key: string]: string[];
+            };
         };
         QuestFilters: {
             search: string;

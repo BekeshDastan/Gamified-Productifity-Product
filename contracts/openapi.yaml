@@ -2270,6 +2270,7 @@ components:
         - before
         - after
         - created_at
+        - details
       properties:
         id:
           type: integer
@@ -2286,6 +2287,12 @@ components:
         created_at:
           type: string
           format: date-time
+        details:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
     QuestFilters:
       type: object
       additionalProperties: false

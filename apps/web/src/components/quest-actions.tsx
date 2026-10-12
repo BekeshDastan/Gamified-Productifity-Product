@@ -170,9 +170,26 @@ export function QuestHistory({ quest }: { quest: Quest }) {
         {history.data?.map((e) => (
           <li key={e.id}>
             <strong>
-              {({ created: "Создана", edited: "Изменена", ...names } as Record<string, string>)[
-                e.kind
-              ] ?? e.kind}
+              {(
+                {
+                  created: "Создана",
+                  edited: "Изменена",
+                  start: "Начата",
+                  ready: "Готова к выполнению",
+                  complete: "Завершена",
+                  reopen: "Открыта снова",
+                  postpone: "Перенесена",
+                  skip: "Пропущена",
+                  fail: "Отмечена неудача",
+                  archive: "В архиве",
+                  restore: "Восстановлена",
+                  dependencies: "Изменены блокировки",
+                  attachment_added: "Добавлен файл",
+                  attachment_removed: "Удалён файл",
+                  rollup_completed: "Выполнены обязательные подзадачи",
+                  rollup_reopened: "Изменён прогресс подзадач",
+                } as Record<string, string>
+              )[e.kind] ?? "Изменение"}
             </strong>{" "}
             · версия {e.after.version}
             <p>
@@ -180,6 +197,32 @@ export function QuestHistory({ quest }: { quest: Quest }) {
               {statuses[e.after.status]}
             </p>
             {e.reason && <p>{e.reason}</p>}
+            {e.kind === "dependencies" && (
+              <p>
+                Блокировки: {e.details.previous_titles?.join(", ") || "нет"} →{" "}
+                {e.details.titles?.join(", ") || "нет"}
+              </p>
+            )}
+            {e.before && e.before.title !== e.after.title && (
+              <p>
+                Название: {e.before.title} → {e.after.title}
+              </p>
+            )}
+            {e.kind === "edited" && (
+              <details>
+                <summary>Сохранённые поля</summary>
+                <dl>
+                  <dt>Описание</dt>
+                  <dd className="quest-description">{e.after.description || "Не добавлено"}</dd>
+                  <dt>Сложность</dt>
+                  <dd>{e.after.difficulty}/5</dd>
+                  <dt>Оценка / фактически</dt>
+                  <dd>
+                    {e.after.estimated_minutes} / {e.after.actual_minutes} мин.
+                  </dd>
+                </dl>
+              </details>
+            )}
             <p>
               План: {e.after.planned_date ?? "не задан"}; дедлайн:{" "}
               {e.after.deadline && settings.data

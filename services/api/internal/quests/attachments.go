@@ -206,7 +206,12 @@ func (s *Service) upload(r *http.Request) (Attachment, error) {
 		return Attachment{}, e
 	}
 	committed = true
-	return s.scanFile(r.Context(), id, a)
+	result, err := s.scanFile(r.Context(), id, a)
+	var conflict *platform.APIError
+	if errors.As(err, &conflict) && conflict.Code == "VERSION_CONFLICT" {
+		return attachment(r.Context(), s.pool, id, a.ID)
+	}
+	return result, err
 }
 func (s *Service) scanFile(ctx context.Context, id string, a Attachment) (Attachment, error) {
 	if s.scanner == nil {
@@ -219,7 +224,15 @@ func (s *Service) scanFile(ctx context.Context, id string, a Attachment) (Attach
 	if verdict != blob.Clean && verdict != blob.Rejected {
 		return a, nil
 	}
-	return scanAttachment(s.pool.QueryRow(ctx, `UPDATE attachments SET verdict=$3,version=version+1 WHERE owner_id=$1 AND id=$2 AND deleted_at IS NULL RETURNING `+attachmentColumns, id, a.ID, verdict))
+	result, err := scanAttachment(s.pool.QueryRow(ctx, `UPDATE attachments SET verdict=$3,version=version+1 WHERE owner_id=$1 AND id=$2 AND version=$4 AND deleted_at IS NULL RETURNING `+attachmentColumns, id, a.ID, verdict, a.Version))
+	if errors.Is(err, pgx.ErrNoRows) {
+		fresh, e := attachment(ctx, s.pool, id, a.ID)
+		if e != nil {
+			return a, e
+		}
+		return a, &platform.APIError{Status: 409, Code: "VERSION_CONFLICT", Message: "Файл уже изменён", CurrentVersion: &fresh.Version}
+	}
+	return result, err
 }
 func (s *Service) mountAttachments(r chi.Router) {
 	r.Post("/api/v1/attachments", func(w http.ResponseWriter, r *http.Request) { a, e := s.upload(r); s.reply(w, r, a, e) })

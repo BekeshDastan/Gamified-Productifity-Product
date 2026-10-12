@@ -16,14 +16,16 @@ import { Input, Select, DatePicker } from "./ui/field";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 export function QuestFiltersPanel({
+  filters,
   labels,
   onApply,
 }: {
+  filters: QuestFilters;
   labels: Awaited<ReturnType<typeof questLabels>>;
   onApply: (f: QuestFilters) => void;
 }) {
   const auth = useAuth();
-  const [draft, setDraft] = useState(emptyFilters);
+  const [draft, setDraft] = useState(filters);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);

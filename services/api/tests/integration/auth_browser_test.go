@@ -62,6 +62,9 @@ func TestBrowserAuth(t *testing.T) {
 	limits := auth.DefaultLimits()
 	limits.Registrations = 30
 	limits.MailRequests = 20
+	// Acceptance compresses many lifecycle actions into seconds. Production's
+	// default 120/min quota is covered separately by HTTP integration tests.
+	limits.UserRequests = 600
 	if err := sessions.Mount(router, limits); err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +100,11 @@ func TestBrowserAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	command := exec.CommandContext(ctx, "node", filepath.Join(root, "node_modules", "@playwright", "test", "cli.js"), "test", "--config=playwright.auth.config.ts")
+	args := []string{filepath.Join(root, "node_modules", "@playwright", "test", "cli.js"), "test", "--config=playwright.auth.config.ts"}
+	if pattern := os.Getenv("AUTH_E2E_GREP"); pattern != "" {
+		args = append(args, "--grep", pattern)
+	}
+	command := exec.CommandContext(ctx, "node", args...)
 	command.Dir = filepath.Join(root, "apps", "web")
 	command.Env = os.Environ()
 	command.Stdout = os.Stdout

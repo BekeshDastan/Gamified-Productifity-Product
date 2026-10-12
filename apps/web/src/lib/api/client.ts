@@ -41,11 +41,21 @@ export async function responseError(response: Response): Promise<ApiError> {
       if (/^[a-zA-Z0-9_.]{1,100}$/.test(key) && typeof value === "string")
         fields[key] = value.slice(0, 500);
     }
+  const code =
+    typeof error.code === "string" && /^[A-Z_]{1,80}$/.test(error.code) ? error.code : "HTTP_ERROR";
+  const conflicts: Record<string, string> = {
+    DEPENDENCY_BLOCKED: "Сначала завершите блокирующие задачи.",
+    CHILDREN_INCOMPLETE: "Сначала завершите обязательные подзадачи.",
+    INVALID_TRANSITION: "Это действие недоступно в текущем состоянии задачи.",
+    ARCHIVED: "Сначала восстановите задачу из архива.",
+    FILE_QUARANTINED: "Файл ожидает проверки или отклонён.",
+    IDEMPOTENCY_MISMATCH: "Этот запрос уже использован с другими данными. Обновите страницу.",
+  };
   const message =
     response.status === 401
       ? "Сессия завершена. Войдите снова."
       : response.status === 409
-        ? "Запись изменилась. Обновите данные перед сохранением."
+        ? (conflicts[code] ?? "Запись изменилась. Обновите данные перед сохранением.")
         : response.status === 429
           ? "Слишком много попыток. Попробуйте позже."
           : response.status === 422
@@ -53,7 +63,7 @@ export async function responseError(response: Response): Promise<ApiError> {
             : "Не удалось выполнить запрос. Попробуйте снова.";
   return new ApiError(
     response.status,
-    typeof error.code === "string" && /^[A-Z_]{1,80}$/.test(error.code) ? error.code : "HTTP_ERROR",
+    code,
     message,
     safeId(error.request_id) ?? safeId(response.headers.get("X-Request-ID")),
     fields,

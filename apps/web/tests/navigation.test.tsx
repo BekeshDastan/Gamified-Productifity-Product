@@ -7,11 +7,10 @@ vi.mock("../src/lib/auth/provider", () => ({ useAuth: () => ({ session: null }) 
 describe("application navigation", () => {
   it("does not link unfinished modules to fake screens", () => {
     render(<AppShell>Содержание</AppShell>);
-    expect(screen.queryByRole("link", { name: "Задачи" })).not.toBeInTheDocument();
-    expect(screen.getByText("Задачи").closest("[aria-disabled]")).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    expect(screen.getByRole("link", { name: "Задачи" })).toHaveAttribute("href", "/app/quests");
+    expect(screen.queryByRole("link", { name: "Календарь" })).not.toBeInTheDocument();
+    for (const label of screen.getAllByText("Календарь"))
+      expect(label.closest("[aria-disabled]")).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByRole("link", { name: "Оформление" })).toHaveAttribute(
       "href",
       "/app/settings/appearance",

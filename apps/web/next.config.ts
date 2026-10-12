@@ -4,6 +4,8 @@ import path from "node:path";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   output: "standalone",
+  // Allows the 10 MiB file plus multipart framing; Go keeps per-route limits.
+  experimental: { proxyClientMaxBodySize: 12 * 1024 * 1024 },
   outputFileTracingRoot: path.resolve(process.cwd(), "../.."),
   // Same-origin browser API; production reverse proxy supplies these routes itself.
   async rewrites() {

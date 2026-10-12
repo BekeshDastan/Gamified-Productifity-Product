@@ -1475,7 +1475,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Повтор применения шаблона с тем же ключом не создаёт дубли; batch с чужим ID отклоняется целиком.
   - **КОММИТ СЕЙЧАС:** `feat(quests): add templates bulk actions and archive recovery`
 
-- [ ] **C048. Приёмка задач**
+- [x] **C048. Приёмка задач**
   - **Сделать:** Добавить интеграционные/E2E проверки всех состояний, истории, фильтров, вложений и If-Match.
   - **Проверить:** Сценарий F04 проходит; два редактора не теряют изменения без предупреждения.
   - **КОММИТ СЕЙЧАС:** `test(quests): cover lifecycle hierarchy and concurrent editing`

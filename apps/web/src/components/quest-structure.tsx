@@ -5,7 +5,7 @@ import { z } from "zod";
 import { useAuth } from "@/lib/auth/provider";
 import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
-import { emptyFilters, listQuests, statuses, type Quest } from "@/lib/quests";
+import { emptyFilters, listQuests, getQuest, statuses, type Quest } from "@/lib/quests";
 import { questStructure, saveDependencies } from "@/lib/quest-structure";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -160,6 +160,8 @@ function Dependencies({
 }) {
   const [picked, setPicked] = useState("");
   const [known, setKnown] = useState(initial);
+  const [lookupError, setLookupError] = useState("");
+  const [lookupBusy, setLookupBusy] = useState(false);
   const flow = useValidatedForm({
     schema,
     defaultValues: { ids: initial.map((q) => q.id), reason: "" },
@@ -185,17 +187,25 @@ function Dependencies({
         />
         <Button
           variant="secondary"
-          disabled={!picked || selected.includes(picked) || selected.length >= 50}
+          disabled={lookupBusy || !picked || selected.includes(picked) || selected.length >= 50}
           onClick={async () => {
-            const q = (await import("@/lib/quests")).getQuest;
-            const value = await q(picked);
-            setKnown((v) => [...v.filter((x) => x.id !== value.id), value]);
-            flow.form.setValue("ids", [...selected, picked], { shouldDirty: true });
-            setPicked("");
+            setLookupBusy(true);
+            setLookupError("");
+            try {
+              const value = await getQuest(picked);
+              setKnown((v) => [...v.filter((x) => x.id !== value.id), value]);
+              flow.form.setValue("ids", [...selected, picked], { shouldDirty: true });
+              setPicked("");
+            } catch {
+              setLookupError("Не удалось загрузить задачу. Попробуйте снова.");
+            } finally {
+              setLookupBusy(false);
+            }
           }}
         >
           Добавить блокировку
         </Button>
+        {lookupError && <p role="alert">{lookupError}</p>}
         <ul>
           {selected.map((id) => (
             <li key={id}>

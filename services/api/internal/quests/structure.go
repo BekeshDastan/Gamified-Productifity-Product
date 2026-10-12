@@ -166,6 +166,9 @@ func (s *Service) rollup(ctx context.Context, tx pgx.Tx, id, key string) error {
 			if err := s.event(ctx, tx, id, kind, "Прогресс обязательных подзадач", &before, q); err != nil {
 				return err
 			}
+			if err := s.rollupDependents(ctx, tx, id, q.ID); err != nil {
+				return err
+			}
 		}
 		if q.ParentID == nil {
 			break
@@ -309,6 +312,13 @@ func (s *Service) mountStructure(r chi.Router) {
 				if removed && in.Reason == "" {
 					return invalid("reason", "Укажите причину снятия блокировки")
 				}
+				var previousIDs, previousTitles []string
+				e = tx.QueryRow(r.Context(), `SELECT ARRAY(SELECT depends_on::text FROM quest_dependencies WHERE owner_id=$1 AND quest_id=$2 ORDER BY depends_on),
+				ARRAY(SELECT q.payload->>'title' FROM quest_dependencies d JOIN quests q ON q.owner_id=d.owner_id AND q.id=d.depends_on WHERE d.owner_id=$1 AND d.quest_id=$2 ORDER BY d.depends_on)`, id, key).Scan(&previousIDs, &previousTitles)
+				if e != nil {
+					return e
+				}
+				titles := []string{}
 				for _, v := range in.IDs {
 					dep, e := get(r.Context(), tx, id, v, false)
 					if e != nil || dep.ArchivedAt != nil {
@@ -324,6 +334,7 @@ func (s *Service) mountStructure(r chi.Router) {
 					if (current.Status == "in_progress" || current.Status == "completed") && dep.Status != "completed" {
 						return invalid("ids", "Сначала верните задачу к выполнению")
 					}
+					titles = append(titles, dep.Title)
 				}
 				if _, e := tx.Exec(r.Context(), `DELETE FROM quest_dependencies WHERE owner_id=$1 AND quest_id=$2`, id, key); e != nil {
 					return e
@@ -336,6 +347,19 @@ func (s *Service) mountStructure(r chi.Router) {
 				q, e = scan(tx.QueryRow(r.Context(), `UPDATE quests SET version=version+1,updated_at=$3 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, s.clock.Now().UTC()))
 				if e == nil {
 					e = s.event(r.Context(), tx, id, "dependencies", in.Reason, &current, q)
+				}
+				if e == nil {
+					details, err := json.Marshal(map[string][]string{"previous_ids": previousIDs, "ids": in.IDs, "previous_titles": previousTitles, "titles": titles})
+					if err != nil {
+						return err
+					}
+					_, e = tx.Exec(r.Context(), `UPDATE task_events SET details=$4 WHERE owner_id=$1 AND quest_id=$2 AND quest_version=$3`, id, key, q.Version, details)
+				}
+				if e == nil {
+					e = s.rollup(r.Context(), tx, id, key)
+				}
+				if e == nil {
+					q, e = get(r.Context(), tx, id, key, false)
 				}
 				return e
 			})

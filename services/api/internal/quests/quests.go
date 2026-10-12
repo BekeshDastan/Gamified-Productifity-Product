@@ -99,7 +99,7 @@ func Validate(in Input) (Input, error) {
 	}
 	if in.PlannedDate != nil {
 		v, e := time.Parse("2006-01-02", *in.PlannedDate)
-		if e != nil || v.Format("2006-01-02") != *in.PlannedDate {
+		if e != nil || v.Format("2006-01-02") != *in.PlannedDate || v.Year() < 1 {
 			return in, invalid("planned_date", "Укажите календарную дату")
 		}
 	}
@@ -212,7 +212,7 @@ func (s *Service) insert(ctx context.Context, tx pgx.Tx, id string, in Input) (Q
 	if err != nil {
 		return Quest{}, err
 	}
-	q, err := scan(tx.QueryRow(ctx, `INSERT INTO quests(owner_id,area_id,parent_id,payload,status,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$6) RETURNING `+columns, id, in.AreaID, in.ParentID, data, in.Status, s.clock.Now().UTC()))
+	q, err := scan(tx.QueryRow(ctx, `INSERT INTO quests(owner_id,area_id,parent_id,payload,status,created_at,updated_at,planned_date,deadline) VALUES($1,$2,$3,$4,$5,$6,$6,$7::text::date,$8) RETURNING `+columns, id, in.AreaID, in.ParentID, data, in.Status, s.clock.Now().UTC(), in.PlannedDate, in.Deadline))
 	if err == nil {
 		err = syncTags(ctx, tx, id, q.ID, in.Tags)
 	}
@@ -284,7 +284,7 @@ func (s *Service) Update(r *http.Request, key string, in Input) (Quest, error) {
 		if err != nil {
 			return err
 		}
-		q, err = scan(tx.QueryRow(r.Context(), `UPDATE quests SET payload=$3,area_id=$4,parent_id=$6,version=version+1,updated_at=$5 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, in.AreaID, s.clock.Now().UTC(), in.ParentID))
+		q, err = scan(tx.QueryRow(r.Context(), `UPDATE quests SET payload=$3,area_id=$4,parent_id=$6,planned_date=$7::text::date,deadline=$8,version=version+1,updated_at=$5 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, in.AreaID, s.clock.Now().UTC(), in.ParentID, in.PlannedDate, in.Deadline))
 		if err == nil {
 			err = syncTags(r.Context(), tx, id, key, in.Tags)
 		}

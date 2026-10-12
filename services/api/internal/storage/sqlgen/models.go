@@ -158,6 +158,8 @@ type Quest struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	ParentID    pgtype.UUID        `json:"parent_id"`
+	PlannedDate pgtype.Date        `json:"planned_date"`
+	Deadline    pgtype.Timestamptz `json:"deadline"`
 }
 
 type QuestDependency struct {
@@ -213,6 +215,7 @@ type TaskEvent struct {
 	AfterState   []byte             `json:"after_state"`
 	QuestVersion int64              `json:"quest_version"`
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	Details      []byte             `json:"details"`
 }
 
 type User struct {

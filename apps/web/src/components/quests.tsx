@@ -141,16 +141,14 @@ export function Quests({ id }: { id?: string }) {
           <QuestActions
             quest={current}
             onChanged={() => {
-              setRevision((v) => v + 1);
-              void query.refetch();
+              void query.refetch().then(() => setRevision((v) => v + 1));
             }}
           />
           <QuestHistory quest={current} />
           <QuestArchive
             quest={current}
             onChanged={() => {
-              setRevision((v) => v + 1);
-              void query.refetch();
+              void query.refetch().then(() => setRevision((v) => v + 1));
             }}
           />
           <QuestTemplates
@@ -163,15 +161,13 @@ export function Quests({ id }: { id?: string }) {
           <QuestFiles
             quest={current}
             onChanged={() => {
-              setRevision((v) => v + 1);
-              void query.refetch();
+              void query.refetch().then(() => setRevision((v) => v + 1));
             }}
           />
           <QuestStructure
             quest={current}
             onChanged={() => {
-              setRevision((v) => v + 1);
-              void query.refetch();
+              void query.refetch().then(() => setRevision((v) => v + 1));
             }}
             onAddChild={() => {
               if (confirmDiscard()) {
@@ -191,6 +187,7 @@ export function Quests({ id }: { id?: string }) {
             }}
           />
           <QuestFiltersPanel
+            filters={filters}
             labels={labels.data}
             onApply={(f) => {
               setFilters(f);
@@ -214,9 +211,7 @@ export function Quests({ id }: { id?: string }) {
               Доска
             </Button>
           </div>
-          <p className="ui-hint">
-            Найдено: {collection.total}. Награды подключатся на этапе системы прогресса.
-          </p>
+          <p className="ui-hint">Найдено: {collection.total}.</p>
           {!board && (
             <div className="quest-list">
               {collection.items.map((q) => (

@@ -213,6 +213,7 @@ export async function actOnQuest(
   });
 }
 export const questEventSchema = z.object({
+  details: z.record(z.string(), z.array(z.string())),
   id: z.number().int(),
   kind: z.string(),
   reason: z.string(),
