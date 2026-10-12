@@ -6,6 +6,73 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/templates/goals:
+    get:
+      operationId: goalTemplates
+      responses:
+        "200":
+          $ref: "#/components/responses/GoalTemplates"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/templates/goals/preview:
+    post:
+      operationId: previewGoalTemplate
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalTemplateDraft"
+      responses:
+        "200":
+          $ref: "#/components/responses/GoalTemplatePreview"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/templates/goals/apply:
+    post:
+      operationId: applyGoalTemplate
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalTemplateDraft"
+      responses:
+        "200":
+          $ref: "#/components/responses/Goal"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/goals/{id}/entries:
     post:
       operationId: postGoalMetric
@@ -2537,6 +2604,36 @@ components:
             type: object
             additionalProperties: false
   responses:
+    GoalTemplates:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GoalTemplate"
+              meta:
+                $ref: "#/components/schemas/Meta"
+    GoalTemplatePreview:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/GoalTemplatePreview"
+              meta:
+                $ref: "#/components/schemas/Meta"
     GoalEntries:
       description: Личные данные владельца
       content:
@@ -2950,6 +3047,117 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    GoalTemplateTask:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - description
+        - day_offset
+        - milestone
+        - required
+        - estimated_minutes
+        - difficulty
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        day_offset:
+          type: integer
+          minimum: 0
+        milestone:
+          type: integer
+          minimum: -1
+        required:
+          type: boolean
+        estimated_minutes:
+          type: integer
+        difficulty:
+          type: integer
+    GoalTemplateDraft:
+      type: object
+      additionalProperties: false
+      required:
+        - template_id
+        - input
+        - duration_days
+        - milestones
+        - tasks
+        - confirmed
+      properties:
+        input:
+          $ref: "#/components/schemas/GoalInput"
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoalMilestoneInput"
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoalTemplateTask"
+        template_id:
+          type: string
+        duration_days:
+          type: integer
+          minimum: 1
+          maximum: 3660
+        confirmed:
+          type: boolean
+    GoalTemplatePreview:
+      type: object
+      required:
+        - input
+        - milestones
+        - tasks
+        - notice
+      properties:
+        input:
+          $ref: "#/components/schemas/GoalInput"
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoalMilestoneInput"
+        tasks:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/GoalTemplateTask"
+              - type: object
+                required:
+                  - planned_date
+                properties:
+                  planned_date:
+                    type: string
+                    format: date
+        notice:
+          type: string
+    GoalTemplate:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - input
+        - milestones
+        - tasks
+      properties:
+        input:
+          $ref: "#/components/schemas/GoalInput"
+        milestones:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoalMilestoneInput"
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoalTemplateTask"
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
     GoalMetricInput:
       type: object
       additionalProperties: false

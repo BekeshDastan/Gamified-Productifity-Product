@@ -1509,7 +1509,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Нельзя суммировать книги и минуты; current/target дают ожидаемый процент.
   - **КОММИТ СЕЙЧАС:** `feat(goals): add typed metric entries and progress calculation`
 
-- [ ] **C053. Шаблоны целей**
+- [x] **C053. Шаблоны целей**
   - **Сделать:** Добавить минимум 6 шаблонов с конструктором дат, этапов и будущих задач.
   - **Проверить:** Применение требует подтверждения и не обещает гарантированного результата обучения.
   - **КОММИТ СЕЙЧАС:** `feat(goals): add editable goal templates and preview`

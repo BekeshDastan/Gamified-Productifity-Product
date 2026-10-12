@@ -25,6 +25,7 @@ import { Input, Select, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
 import { GoalPlanPanel } from "./goal-plan";
 import { GoalMetrics } from "./goal-metrics";
+import { GoalTemplates } from "./goal-templates";
 
 export function Goals({ id }: { id?: string }) {
   const auth = useAuth();
@@ -170,6 +171,14 @@ export function Goals({ id }: { id?: string }) {
       )}
       {collection && (
         <>
+          {!editing && (
+            <GoalTemplates
+              onSaved={(g) => {
+                setCreated(g);
+                changed();
+              }}
+            />
+          )}
           <GoalFilterPanel
             filters={filters}
             labels={labels.data}

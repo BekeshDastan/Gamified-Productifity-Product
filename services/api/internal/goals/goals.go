@@ -304,6 +304,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		r.Use(protect)
 		s.mountPlan(r)
 		s.mountMetrics(r)
+		s.mountTemplates(r)
 		r.Get("/api/v1/goals", func(w http.ResponseWriter, r *http.Request) { v, e := s.list(r); s.reply(w, r, v, e) })
 		r.Get("/api/v1/goals/{id}", func(w http.ResponseWriter, r *http.Request) {
 			id, e := owner(r.Context())

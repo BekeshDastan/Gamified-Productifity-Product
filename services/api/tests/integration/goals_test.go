@@ -73,6 +73,56 @@ func readGoal(t *testing.T, r authResponse) goals.Goal {
 	return v.Data
 }
 func goalVersion(g goals.Goal) string { return fmt.Sprintf(`"%d"`, g.Version) }
+func TestGoalTemplatePreviewApplyAndReplay(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, _ := f.signedIn(t, "goal-template@example.test")
+	var catalog struct {
+		Data []goals.GoalTemplate `json:"data"`
+	}
+	r := f.privateRequest(t, client, "GET", "/templates/goals", "", nil)
+	if r.status != 200 || json.Unmarshal(r.body, &catalog) != nil || len(catalog.Data) < 6 {
+		t.Fatal("catalog", r.status, string(r.body))
+	}
+	date := "2026-12-25"
+	source := catalog.Data[1]
+	source.Input.StartDate = &date
+	in := goals.TemplateDraft{TemplateID: source.ID, Input: source.Input, DurationDays: 30, Milestones: source.Milestones, Tasks: source.Tasks}
+	in.Tasks[0].Title = "Мой первый шаг"
+	r = f.privateRequest(t, client, "POST", "/templates/goals/preview", "", in)
+	var preview struct {
+		Data goals.GoalPreview `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &preview) != nil || *preview.Data.Input.TargetDate != "2027-01-23" || preview.Data.Tasks[1].PlannedDate != "2027-01-04" {
+		t.Fatal("preview dates", r.status, string(r.body))
+	}
+	var count int
+	if err := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM goals`).Scan(&count); err != nil || count != 0 {
+		t.Fatal("preview persisted", count, err)
+	}
+	if r = f.privateRequest(t, client, "POST", "/templates/goals/apply", "", in); r.status != 422 {
+		t.Fatal("confirmation missing")
+	}
+	in.Confirmed = true
+	g := readGoal(t, f.privateRequest(t, client, "POST", "/templates/goals/apply", "", in, "goal-template-replay-key"))
+	repeated := readGoal(t, f.privateRequest(t, client, "POST", "/templates/goals/apply", "", in, "goal-template-replay-key"))
+	if g.ID != repeated.ID || g.State != "draft" || g.Progress != 0 {
+		t.Fatal("template replay")
+	}
+	r = f.privateRequest(t, client, "GET", "/goals/"+g.ID+"/plan", "", nil)
+	var plan struct {
+		Data goals.Plan `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &plan) != nil || len(plan.Data.Links) != 3 || len(plan.Data.Milestones) != 3 || plan.Data.Links[0].Title == "" {
+		t.Fatal("template plan", r.status, string(r.body))
+	}
+	if err := f.pool.QueryRow(t.Context(), `SELECT count(*) FROM quests`).Scan(&count); err != nil || count != 3 {
+		t.Fatal("tasks duplicated", count, err)
+	}
+	in.DurationDays = 2
+	if r = f.privateRequest(t, client, "POST", "/templates/goals/preview", "", in); r.status != 422 {
+		t.Fatal("tasks outside plan")
+	}
+}
 func TestGoalMetricUnitJournalCorrectionAndReplay(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, _ := f.signedIn(t, "goal-metric@example.test")

@@ -37,6 +37,22 @@ func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
 	return &Service{pool: pool, clock: clock}
 }
 
+// CreateInTx shares quest validation and history with confirmed goal templates.
+// The caller owns the transaction; templates create new, unparented roots.
+func (s *Service) CreateInTx(ctx context.Context, tx pgx.Tx, id string, in Input) (Quest, error) {
+	in, e := Validate(in)
+	if e != nil {
+		return Quest{}, e
+	}
+	if in.Status != "todo" && in.Status != "backlog" {
+		return Quest{}, invalid("status", "Новая задача: идеи или к выполнению")
+	}
+	if e = s.lockOwner(ctx, tx, id); e != nil {
+		return Quest{}, e
+	}
+	return s.insert(ctx, tx, id, in)
+}
+
 type Input struct {
 	Title            string     `json:"title"`
 	Description      string     `json:"description"`
