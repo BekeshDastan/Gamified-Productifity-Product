@@ -64,3 +64,13 @@ origin и отвергает известный dev-пароль. Ошибки �
 к glob-шаблонам линтера не поступает. Production audit выполняется отдельно.
 Переход на старый несовместимый Next.js ради предложенного audit downgrade не
 выполняется. До публичного выпуска повторно проверить advisory и исправление.
+
+## Этап 03: оформление
+
+На 12.10.2026 npm registry: Tailwind CSS и PostCSS plugin 4.3.3,
+next-themes 0.4.6. Версии закреплены в lockfile. Системный шрифт не требует
+загрузки или внешнего CDN.
+
+Источники: [Tailwind + Next.js](https://tailwindcss.com/docs/installation/framework-guides/nextjs),
+[next-themes](https://github.com/pacocoursey/next-themes),
+[shadcn manual](https://ui.shadcn.com/docs/installation/manual).

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ThemeSelect } from "@/components/theme-select";
 
 export default function Home() {
   return (
@@ -6,6 +7,7 @@ export default function Home() {
       <Link className="wordmark" href="/" aria-label="ASCEND, главная">
         <span aria-hidden="true">↗</span> ASCEND
       </Link>
+      <ThemeSelect />
       <section aria-labelledby="intro-title">
         <p className="eyebrow">LEVEL UP YOUR LIFE</p>
         <h1 id="intro-title">
