@@ -106,3 +106,30 @@ func TestProfilePersistenceOwnershipAndVersion(t *testing.T) {
 		t.Fatal("profile leaked")
 	}
 }
+
+func TestSettingsPersistAndRemainOwnerScoped(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	client, account := f.signedIn(t, "settings@example.test")
+	other, _ := f.signedIn(t, "settings-other@example.test")
+	input := profile.Preferences{Timezone: "Asia/Almaty", Language: "en", WeekStart: 7, TimeFormat: "12h", WorkIntervals: []profile.WorkInterval{{Day: 1, Start: "09:00", End: "17:00"}}, RestDays: []int{6, 7}}
+	if got := f.privateRequest(t, client, "PATCH", "/me/settings", `"1"`, input); got.status != 200 {
+		t.Fatal("settings save failed", got.status)
+	}
+	if got := f.privateRequest(t, client, "PATCH", "/me/settings", `"1"`, input); got.status != 409 {
+		t.Fatal("stale settings accepted")
+	}
+	fresh := authClient(t)
+	f.loginAs(t, fresh, account.Email)
+	got := f.privateRequest(t, fresh, "GET", "/me/settings", "", nil)
+	if got.status != 200 || !bytes.Contains(got.body, []byte("Asia/Almaty")) {
+		t.Fatal("settings lost on new device")
+	}
+	got = f.privateRequest(t, other, "GET", "/me/settings", "", nil)
+	if got.status != 200 || bytes.Contains(got.body, []byte("Asia/Almaty")) {
+		t.Fatal("settings leaked to another account")
+	}
+	input.Timezone = "Local"
+	if got := f.privateRequest(t, client, "PATCH", "/me/settings", `"2"`, input); got.status != 422 {
+		t.Fatal("invalid timezone accepted")
+	}
+}

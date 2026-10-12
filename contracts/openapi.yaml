@@ -6,6 +6,41 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/me/settings:
+    get:
+      operationId: getSettings
+      responses:
+        "200":
+          $ref: "#/components/responses/Settings"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: updateSettings
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Preferences"
+      responses:
+        "200":
+          $ref: "#/components/responses/Settings"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/me:
     get:
       operationId: getProfile
@@ -334,6 +369,18 @@ components:
             type: object
             additionalProperties: false
   responses:
+    Settings:
+      description: Настройки владельца с версией
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data, meta]
+            properties:
+              data:
+                $ref: "#/components/schemas/Settings"
+              meta:
+                $ref: "#/components/schemas/Meta"
     Profile:
       description: Личный профиль владельца с версией
       content:
@@ -432,6 +479,64 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    Preferences:
+      type: object
+      required: [timezone, language, week_start, time_format, work_intervals, rest_days]
+      properties:
+        timezone:
+          type: string
+          maxLength: 100
+          description: IANA timezone; начальная UTC, браузерная зона предлагается пользователю.
+        language:
+          type: string
+          enum: [ru, en]
+        week_start:
+          type: integer
+          enum: [1, 7]
+        time_format:
+          type: string
+          enum: [24h, 12h]
+        work_intervals:
+          type: array
+          maxItems: 28
+          items:
+            type: object
+            additionalProperties: false
+            required: [day, start, end]
+            properties:
+              day:
+                type: integer
+                minimum: 1
+                maximum: 7
+              start:
+                type: string
+                pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+              end:
+                type: string
+                pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+        rest_days:
+          type: array
+          maxItems: 7
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+    Settings:
+      allOf:
+        - $ref: "#/components/schemas/Preferences"
+        - type: object
+          required: [version, created_at, updated_at]
+          properties:
+            version:
+              type: integer
+              minimum: 1
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
     ProfileInput:
       type: object
       additionalProperties: false

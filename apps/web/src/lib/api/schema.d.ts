@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["updateSettings"];
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -267,6 +283,29 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Preferences: {
+            /** @description IANA timezone; начальная UTC, браузерная зона предлагается пользователю. */
+            timezone: string;
+            /** @enum {string} */
+            language: "ru" | "en";
+            /** @enum {integer} */
+            week_start: 1 | 7;
+            /** @enum {string} */
+            time_format: "24h" | "12h";
+            work_intervals: {
+                day: number;
+                start: string;
+                end: string;
+            }[];
+            rest_days: number[];
+        };
+        Settings: components["schemas"]["Preferences"] & {
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
         ProfileInput: {
             name: string;
             nickname: string;
@@ -369,6 +408,18 @@ export interface components {
         };
     };
     responses: {
+        /** @description Настройки владельца с версией */
+        Settings: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["Settings"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
         /** @description Личный профиль владельца с версией */
         Profile: {
             headers: {
@@ -447,6 +498,45 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Settings"];
+            401: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    updateSettings: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Preferences"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Settings"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     getProfile: {
         parameters: {
             query?: never;

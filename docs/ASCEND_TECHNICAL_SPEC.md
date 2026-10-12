@@ -1396,7 +1396,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Изменения переживают перезаход; пользователь не редактирует другой profile ID.
   - **КОММИТ СЕЙЧАС:** `feat(profile): add owner-scoped profile editing`
 
-- [ ] **C034. Часовой пояс и расписание**
+- [x] **C034. Часовой пояс и расписание**
   - **Сделать:** Добавить IANA timezone, начало недели, формат времени и рабочие интервалы.
   - **Проверить:** Невалидный пояс отвергается; дата в UI соответствует выбранному поясу.
   - **КОММИТ СЕЙЧАС:** `feat(settings): add timezone locale and availability preferences`
