@@ -2,12 +2,24 @@
   "name": "ascend",
   "version": "0.0.0",
   "private": true,
-  "workspaces": ["apps/web"],
-  "engines": { "node": ">=22.22.0 <23", "npm": ">=10.9.4" },
+  "workspaces": [
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=22.22.0 <23",
+    "npm": ">=10.9.4"
+  },
   "packageManager": "npm@10.9.4",
   "scripts": {
     "dev:web": "npm run dev --workspace @ascend/web",
     "build:web": "npm run build --workspace @ascend/web",
-    "typecheck": "npm run typecheck --workspace @ascend/web"
+    "typecheck": "npm run typecheck --workspace @ascend/web",
+    "lint:web": "npm run lint --workspace @ascend/web",
+    "lint:go": "node scripts/go-check.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
   }
 }

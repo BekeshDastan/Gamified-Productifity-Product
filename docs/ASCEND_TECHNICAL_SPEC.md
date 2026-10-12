@@ -1210,7 +1210,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Оба бинарника собираются; зависимости зафиксированы в go.mod и go.sum.
   - **КОММИТ СЕЙЧАС:** `chore(api): bootstrap Go application modules`
 
-- [ ] **C004. Форматирование и линтеры**
+- [x] **C004. Форматирование и линтеры**
   - **Сделать:** Настроить frontend lint/format, gofmt, go vet и выбранный Go-linter; исключить генерируемый код корректно.
   - **Проверить:** Намеренная синтаксическая или статическая ошибка делает проверку красной.
   - **КОММИТ СЕЙЧАС:** `chore(tooling): configure formatters and static checks`

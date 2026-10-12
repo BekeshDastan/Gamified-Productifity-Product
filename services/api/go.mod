@@ -1,5 +1,5 @@
 module github.com/BekeshDastan/Gamified-Productifity-Product/services/api
 
-go 1.27.2
+go 1.26.9
 
 require github.com/go-chi/chi/v5 v5.3.2

@@ -1,0 +1,10 @@
+node_modules
+.next
+.tools
+.cache
+.data
+bin
+package-lock.json
+docs/ASCEND_TECHNICAL_SPEC.md
+apps/web/next-env.d.ts
+services/api/internal/storage/sqlgen
