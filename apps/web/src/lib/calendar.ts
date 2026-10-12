@@ -41,3 +41,31 @@ export async function createEvent(input: CalendarInput, key: string) {
     return calendarEvent.parse(r.data?.data);
   });
 }
+export async function editCalendar(
+  current: CalendarEvent,
+  input: CalendarInput,
+  reason: string,
+  key: string,
+  cancelled = false,
+) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    const header = {
+      ...authParams().header,
+      "If-Match": '"' + current.version + '"',
+      "Idempotency-Key": key,
+    };
+    if (current.source === "quest") {
+      await api.PATCH("/api/v1/calendar/quests/{id}", {
+        params: { path: { id: current.quest_id! }, header },
+        body: { planned_date: input.start.slice(0, 10), reason },
+      });
+      return;
+    }
+    await api.PATCH("/api/v1/calendar/events/{id}", {
+      params: { path: { id: current.id }, header },
+      body: { ...input, reason, quest_version: current.quest_version, cancelled },
+    });
+  });
+}

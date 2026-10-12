@@ -264,6 +264,7 @@ func decode[T any](s *Service, w http.ResponseWriter, r *http.Request, fn func(T
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountEdits(r)
 		r.Get("/api/v1/calendar", func(w http.ResponseWriter, r *http.Request) { v, e := s.List(r); s.reply(w, r, v, e) })
 		r.Post("/api/v1/calendar/events", func(w http.ResponseWriter, r *http.Request) {
 			decode(s, w, r, func(in Input) (any, error) {

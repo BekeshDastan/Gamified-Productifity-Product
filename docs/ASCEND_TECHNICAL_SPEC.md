@@ -1548,7 +1548,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Все пять видов работают без Premium-ключа и показывают одну и ту же выборку.
   - **КОММИТ СЕЙЧАС:** `feat(calendar-ui): add day week month year and list views`
 
-- [ ] **C059. Перенос и длительность**
+- [x] **C059. Перенос и длительность**
   - **Сделать:** Связать drag/resize с API и version; добавить аналогичное действие клавиатурной формой.
   - **Проверить:** Ошибка сохранения откатывает визуальное перемещение; task list отражает новую дату.
   - **КОММИТ СЕЙЧАС:** `feat(calendar): persist drag drop resize and form edits`

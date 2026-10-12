@@ -1,5 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
+import type { EventApi } from "@fullcalendar/core";
+import { z } from "zod";
 import FullCalendar from "@fullcalendar/react";
 import dayGrid from "@fullcalendar/daygrid";
 import timeGrid from "@fullcalendar/timegrid";
@@ -15,6 +17,7 @@ import {
   calendarRange,
   calendarInput,
   createEvent,
+  editCalendar,
   type CalendarInput,
   type CalendarEvent,
 } from "@/lib/calendar";
@@ -48,6 +51,8 @@ export default function CalendarWorkspace() {
   const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<CalendarEvent>();
   const [notice, setNotice] = useState("");
+  const [mutationError, setMutationError] = useState("");
+  const moving = useRef(false);
   const labels = useQuery({
     queryKey: ["account", account, "quest-labels"],
     enabled: !!account,
@@ -93,6 +98,36 @@ export default function CalendarWorkspace() {
     setNotice("Событие сохранено.");
     void cache.invalidateQueries({ queryKey: ["account"] });
   }
+  async function moved(info: { event: EventApi; revert: () => void }) {
+    const current = info.event.extendedProps.record as CalendarEvent;
+    if (moving.current || !discard()) {
+      info.revert();
+      return;
+    }
+    moving.current = true;
+    setMutationError("");
+    try {
+      await editCalendar(
+        current,
+        {
+          ...current,
+          start: info.event.startStr,
+          end: info.event.endStr,
+          all_day: info.event.allDay,
+        },
+        "Перенос или изменение длительности в календаре",
+        crypto.randomUUID(),
+      );
+      changed();
+    } catch {
+      info.revert();
+      setMutationError(
+        "Изменение не сохранено. Событие возвращено на прежнее место. Обновите диапазон и попробуйте снова.",
+      );
+    } finally {
+      moving.current = false;
+    }
+  }
   return (
     <div className="quest-workspace calendar-workspace">
       <div className="button-row">
@@ -109,6 +144,11 @@ export default function CalendarWorkspace() {
         <span>Часовой пояс: {zone}</span>
       </div>
       {notice && <p role="status">{notice}</p>}
+      {mutationError && (
+        <p role="alert">
+          {mutationError} <Button onClick={() => void data.refetch()}>Обновить диапазон</Button>
+        </p>
+      )}
       {editing && (
         <Card>
           <h2>Новое событие</h2>
@@ -122,6 +162,13 @@ export default function CalendarWorkspace() {
             {selected.start} — {selected.end}
           </p>
           <p>{statuses[selected.status as keyof typeof statuses] ?? "Запланировано"}</p>
+          <EventForm
+            key={selected.id + ":" + selected.version}
+            zone={zone}
+            areas={labels.data.areas}
+            current={selected}
+            onSaved={changed}
+          />
           {selected.quest_id && (
             <SafeLink className="text-link" href={"/app/quests/" + selected.quest_id}>
               Открыть задачу
@@ -204,6 +251,13 @@ export default function CalendarWorkspace() {
           noEventsText="В этом диапазоне нет событий"
           multiMonthMinWidth={260}
           eventInteractive={true}
+          editable={true}
+          eventDrop={(info) => void moved(info)}
+          eventResize={(info) => void moved(info)}
+          eventAllow={(_, event) => {
+            const e = event?.extendedProps.record as CalendarEvent | undefined;
+            return !!e && !e.cancelled && !["completed", "failed", "skipped"].includes(e.status);
+          }}
           datesSet={(info) =>
             setRange((old) => {
               const next = { from: info.startStr.slice(0, 10), to: info.endStr.slice(0, 10) };
@@ -219,6 +273,8 @@ export default function CalendarWorkspace() {
             end: e.end,
             allDay: e.all_day,
             extendedProps: { record: e },
+            durationEditable: e.source !== "quest",
+            startEditable: !e.cancelled && !["completed", "failed", "skipped"].includes(e.status),
             classNames: ["calendar-status-" + e.status],
             borderColor: labels.data?.areas.find((a) => a.id === e.area_id)?.color,
           }))}
@@ -257,26 +313,35 @@ function EventForm({
   zone,
   areas,
   onSaved,
+  current,
 }: {
   zone: string;
   areas: { id: string; name: string }[];
   onSaved: () => void;
+  current?: CalendarEvent;
 }) {
   const key = useRef(crypto.randomUUID());
-  const editor = useValidatedForm<CalendarInput>({
-    schema: calendarInput,
+  const schema = calendarInput.extend({ reason: z.string().max(1000), cancelled: z.boolean() });
+  const editor = useValidatedForm<CalendarInput & { reason: string; cancelled: boolean }>({
+    schema,
     defaultValues: {
-      title: "",
-      area_id: null,
-      quest_id: null,
-      all_day: true,
-      start: "",
-      end: "",
-      timezone: zone,
+      ...(current ?? {
+        title: "",
+        area_id: null,
+        quest_id: null,
+        all_day: true,
+        start: "",
+        end: "",
+        timezone: zone,
+      }),
+      reason: "",
+      cancelled: current?.cancelled ?? false,
     },
-    fields: ["title", "area_id", "quest_id", "all_day", "start", "end", "timezone"],
+    fields: ["title", "area_id", "quest_id", "all_day", "start", "end", "timezone", "reason"],
     save: async (values) => {
-      await createEvent(values, key.current);
+      const input = calendarInput.parse(values);
+      if (current) await editCalendar(current, input, values.reason, key.current, values.cancelled);
+      else await createEvent(input, key.current);
       key.current = crypto.randomUUID();
       onSaved();
     },
@@ -298,13 +363,19 @@ function EventForm({
           </option>
         ))}
       </Select>
-      <QuestPicker
-        label="Связанная задача"
-        value={form.watch("quest_id") ?? ""}
-        onChange={(v) => form.setValue("quest_id", v || null, { shouldDirty: true })}
-      />
+      {!current && (
+        <QuestPicker
+          label="Связанная задача"
+          value={form.watch("quest_id") ?? ""}
+          onChange={(v) => form.setValue("quest_id", v || null, { shouldDirty: true })}
+        />
+      )}
       <label className="check-row">
-        <input type="checkbox" {...form.register("all_day")} />
+        <input
+          type="checkbox"
+          disabled={current?.source === "quest"}
+          {...form.register("all_day")}
+        />
         Без времени
       </label>
       <Input
@@ -320,11 +391,25 @@ function EventForm({
       />
       <Input
         label="Конец события"
+        disabled={current?.source === "quest"}
         type={form.watch("all_day") ? "date" : "text"}
         hint="Конец не включён: для одного дня выберите следующий день."
         {...form.register("end")}
         error={errors.end?.message}
       />
+      {current && (
+        <Input
+          label="Причина изменения"
+          {...form.register("reason")}
+          error={errors.reason?.message}
+        />
+      )}
+      {current && current.source !== "quest" && (
+        <label className="check-row">
+          <input type="checkbox" {...form.register("cancelled")} />
+          Отменить событие
+        </label>
+      )}
       <Button type="submit">Сохранить событие</Button>
     </Form>
   );

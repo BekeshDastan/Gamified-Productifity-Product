@@ -6,6 +6,111 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/calendar/events/{id}:
+    patch:
+      operationId: editCalendarEvent
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/CalendarInput"
+                - type: object
+                  required:
+                    - reason
+                    - quest_version
+                    - cancelled
+                  properties:
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 1000
+                    quest_version:
+                      type: integer
+                    cancelled:
+                      type: boolean
+      responses:
+        "200":
+          $ref: "#/components/responses/CalendarEvent"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/calendar/quests/{id}:
+    patch:
+      operationId: scheduleCalendarQuest
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - planned_date
+                - reason
+              properties:
+                planned_date:
+                  type: string
+                  format: date
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+      responses:
+        "200":
+          $ref: "#/components/responses/Quest"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/calendar:
     get:
       operationId: calendarRange
