@@ -6,6 +6,7 @@
     "tests/**/*.ts",
     "tests/**/*.tsx",
     "playwright.config.ts",
+    "playwright.auth.config.ts",
     "vitest.config.mts"
   ],
   "exclude": ["node_modules"]

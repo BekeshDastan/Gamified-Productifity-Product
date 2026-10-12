@@ -19,6 +19,10 @@ import (
 )
 
 func database(t *testing.T) (*pgxpool.Pool, context.Context) {
+	return databaseWithTimeout(t, 30*time.Second)
+}
+
+func databaseWithTimeout(t *testing.T, timeout time.Duration) (*pgxpool.Pool, context.Context) {
 	t.Helper()
 	databaseURL := os.Getenv("TEST_DATABASE_URL")
 	if databaseURL == "" {
@@ -31,7 +35,7 @@ func database(t *testing.T) (*pgxpool.Pool, context.Context) {
 	if u.Path != "/ascend_test" {
 		t.Fatal("integration tests require a database named ascend_test")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	t.Cleanup(cancel)
 	admin, err := pgx.Connect(ctx, databaseURL)
 	if err != nil {

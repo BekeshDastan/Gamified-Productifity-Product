@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { AppShell } from "../src/components/app-shell";
 vi.mock("next/navigation", () => ({ usePathname: () => "/app" }));
+vi.mock("../src/lib/auth/provider", () => ({ useAuth: () => ({ session: null }) }));
 describe("application navigation", () => {
   it("does not link unfinished modules to fake screens", () => {
     render(<AppShell>Содержание</AppShell>);

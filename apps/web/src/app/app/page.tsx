@@ -2,6 +2,7 @@ import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { ArrowUpRight, LockKeyhole, Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { AccountPanel } from "@/components/account-panel";
 export default function TodayPage() {
   return (
     <>
@@ -16,6 +17,7 @@ export default function TodayPage() {
         <br />
         Отдых — тоже часть пути.
       </p>
+      <AccountPanel />
       <Card className="welcome-card">
         <div className="welcome-symbol">
           <Sprout size={32} aria-hidden="true" />
@@ -23,8 +25,8 @@ export default function TodayPage() {
         <div>
           <h2>Ваше пространство готовится</h2>
           <p className="ui-hint">
-            Сейчас доступны оформление и описание продукта. Регистрация, задачи и персональная
-            сводка появятся на следующих этапах.
+            Сейчас доступны аккаунт, оформление и описание продукта. Задачи и персональная сводка
+            появятся на следующих этапах.
           </p>
           <Button asChild variant="secondary">
             <Link href="/app/guide">

@@ -18,6 +18,39 @@ type AuditEvent struct {
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 
+type AuthOneTimeToken struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	Kind      string             `json:"kind"`
+	TokenHash []byte             `json:"-"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	UsedAt    pgtype.Timestamptz `json:"used_at"`
+}
+
+type AuthRateLimit struct {
+	BucketHash []byte             `json:"bucket_hash"`
+	Attempts   int32              `json:"attempts"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+}
+
+type AuthRefreshToken struct {
+	TokenHash []byte             `json:"-"`
+	SessionID pgtype.UUID        `json:"session_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UsedAt    pgtype.Timestamptz `json:"used_at"`
+}
+
+type AuthSession struct {
+	ID         pgtype.UUID        `json:"id"`
+	UserID     pgtype.UUID        `json:"user_id"`
+	CsrfSecret []byte             `json:"-"`
+	RememberMe bool               `json:"remember_me"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
+}
+
 type IdempotencyRecord struct {
 	UserID         pgtype.UUID        `json:"user_id"`
 	Method         string             `json:"method"`
@@ -54,4 +87,15 @@ type OutboxEvent struct {
 	Payload      []byte             `json:"payload"`
 	OccurredAt   pgtype.Timestamptz `json:"occurred_at"`
 	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
+}
+
+type User struct {
+	ID              pgtype.UUID        `json:"id"`
+	Email           string             `json:"email"`
+	PasswordHash    string             `json:"-"`
+	Role            string             `json:"role"`
+	EmailVerifiedAt pgtype.Timestamptz `json:"email_verified_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	DisabledAt      pgtype.Timestamptz `json:"disabled_at"`
 }

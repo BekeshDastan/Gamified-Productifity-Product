@@ -88,3 +88,18 @@ Playwright 1.64.0 и axe Playwright 4.13.0. Все версии точные, lo
 [Zod](https://zod.dev/api),
 [Playwright web server](https://playwright.dev/docs/test-webserver),
 [Playwright accessibility](https://playwright.dev/docs/accessibility-testing).
+
+## Этап 04: пароли
+
+Официальный golang.org/x/crypto v0.58.0 (Go >=1.26.0) проверен через Go module
+proxy 12.10.2026 и закреплён в go.mod/sum. Argon2id 64 MiB / t=3 / p=2
+превышает стартовый минимум OWASP (19 MiB / t=2 / p=1). Параметры и соль
+в PHC-хеше; хеш сравнивается в постоянное время. Нагрузка на целевом production
+сервере ещё не измерена; параметры нельзя объявлять прошедшими нагрузочную приёмку.
+
+[OWASP Password Storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html),
+[официальный Argon2](https://pkg.go.dev/golang.org/x/crypto/argon2).
+
+JWT: github.com/golang-jwt/jwt/v5 v5.3.1, версия закреплена. HS256 — единственный
+разрешённый алгоритм; проверяются issuer/audience/iat/exp, затем sid и роль в БД.
+[Документация JWT v5.3.1](https://pkg.go.dev/github.com/golang-jwt/jwt/v5@v5.3.1).

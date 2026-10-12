@@ -1173,3 +1173,64 @@
     gap: 8px;
   }
 }
+
+/* Account and recovery forms use the shared fields and accessible focus styles. */
+.auth-page .ui-form-fields {
+  display: grid;
+  gap: 1.1rem;
+}
+.auth-page .ui-form-fields > .ui-button {
+  width: 100%;
+  margin-top: 0.35rem;
+}
+.auth-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.auth-checkbox input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--primary);
+}
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+.account-panel {
+  margin-bottom: 1.5rem;
+}
+.account-email {
+  overflow-wrap: anywhere;
+}
+.session-list {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+.session-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+.session-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.session-list .ui-hint {
+  margin: 0.3rem 0 0;
+}
+@media (max-width: 500px) {
+  .session-list li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

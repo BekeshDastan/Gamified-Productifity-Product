@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/mail"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 )
 
@@ -28,7 +31,22 @@ func main() {
 		os.Exit(1)
 	}
 	defer pool.Close()
+	authConfig, err := auth.LoadSessionConfig(cfg.Origin, cfg.Environment, os.LookupEnv)
+	if err != nil {
+		logger.Error("invalid auth configuration")
+		os.Exit(1)
+	}
+	sessions, err := auth.NewSessions(ctx, auth.NewService(pool, auth.NewPasswordHasher(), platform.RealClock{}), authConfig)
+	if err != nil {
+		logger.Error("invalid auth configuration")
+		os.Exit(1)
+	}
+	mailer, err := mail.NewSMTP(cfg.Environment, net.JoinHostPort(os.Getenv("SMTP_HOST"), os.Getenv("SMTP_PORT")), os.Getenv("MAIL_FROM"), os.Getenv("SMTP_USERNAME"), os.Getenv("SMTP_PASSWORD"))
+	if err != nil {
+		logger.Error("invalid mail configuration")
+		os.Exit(1)
+	}
 	logger.Info("worker starting")
-	jobs.Run(ctx, jobs.Store{Pool: pool, Clock: platform.RealClock{}}, map[string]jobs.Handler{}, logger)
+	jobs.Run(ctx, jobs.Store{Pool: pool, Clock: platform.RealClock{}}, sessions.MailHandlers(mailer), logger)
 	logger.Info("worker stopped")
 }

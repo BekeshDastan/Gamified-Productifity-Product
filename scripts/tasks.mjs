@@ -127,9 +127,29 @@ const commands = {
     await commands["test-integration"]();
     await npm("run", "build:web");
     await commands["test-e2e"]();
+    await commands["test-auth-e2e"]();
   },
   "test-e2e": async () => {
     await npm("run", "test:e2e", "--workspace", "@ascend/web");
+  },
+  "test-auth-e2e": async () => {
+    if (existsSync(path.join(root, ".env"))) requireLocalEnv();
+    for (const setting of ["TEST_DATABASE_URL", "TEST_SMTP_ADDR", "TEST_MAIL_HTTP"])
+      if (!env[setting]) throw new Error(`${setting} must be explicitly configured`);
+    env.RUN_BROWSER_AUTH = "1";
+    await run(
+      "go",
+      [
+        "test",
+        "-tags=integration",
+        "-run",
+        "^TestBrowserAuth$",
+        "-count=1",
+        "-timeout=4m",
+        "./tests/integration/...",
+      ],
+      api,
+    );
   },
 };
 for (const [name, milestone] of Object.entries({
