@@ -1205,7 +1205,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Сборка и typecheck проходят без any-заглушек; открывается техническая стартовая страница.
   - **КОММИТ СЕЙЧАС:** `chore(web): bootstrap typed Next.js application`
 
-- [ ] **C003. Каркас backend**
+- [x] **C003. Каркас backend**
   - **Сделать:** Инициализировать Go module, cmd/api, cmd/worker и базовые границы platform / domain.
   - **Проверить:** Оба бинарника собираются; зависимости зафиксированы в go.mod и go.sum.
   - **КОММИТ СЕЙЧАС:** `chore(api): bootstrap Go application modules`

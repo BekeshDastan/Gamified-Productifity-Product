@@ -12,3 +12,6 @@
 
 - C002: Next.js 16.4.0 / React 19.3.0 / TypeScript strict; lockfile сохранён.
   Typecheck и production build прошли. Стартовая страница без фиктивных метрик.
+
+- C003: Go 1.27.2, chi 5.3.2; API и worker собираются, go vet проходит.
+  Публичных доменных маршрутов пока нет.
