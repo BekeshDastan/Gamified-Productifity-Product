@@ -1269,7 +1269,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Два тела с одним ключом дают 409; результаты разных пользователей не смешиваются.
   - **КОММИТ СЕЙЧАС:** `feat(platform): add ownership versioning and idempotency primitives`
 
-- [ ] **C014. Очередь и outbox**
+- [x] **C014. Очередь и outbox**
   - **Сделать:** Создать таблицы jobs/outbox, lease, retry, dedupe, dead-letter и отдельный worker-процесс.
   - **Проверить:** Убитый worker отдаёт просроченную lease; повтор события не создаёт два результата тестового обработчика.
   - **КОММИТ СЕЙЧАС:** `feat(worker): add durable jobs and transactional outbox`

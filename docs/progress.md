@@ -61,3 +61,9 @@
   user+method+concrete route+key и SHA-256 тела. 12 параллельных запросов дают
   одно выполнение; чужой пользователь/ресурс не получает чужой ответ; другое тело
   возвращает IDEMPOTENCY_MISMATCH. Unit/integration/vet/staticcheck проходят.
+
+- C014: PostgreSQL jobs/outbox, SKIP LOCKED, fenced leases, retry+jitter,
+  Retry-After, dead-letter и worker. Повтор события дал одну job; просроченная
+  lease передана новому worker, старый токен отвергнут, эффект записан один раз.
+  Ошибки хранят безопасный код; unknown handler не маскируется успехом.
+  C013a: дополнительно проверен составной недопустимый HTTP-метод.

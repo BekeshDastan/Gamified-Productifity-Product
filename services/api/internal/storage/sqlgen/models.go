@@ -29,3 +29,29 @@ type IdempotencyRecord struct {
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	ExpiresAt      pgtype.Timestamptz `json:"expires_at"`
 }
+
+type Job struct {
+	ID            pgtype.UUID        `json:"id"`
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	Kind          string             `json:"kind"`
+	Payload       []byte             `json:"payload"`
+	DedupeKey     string             `json:"dedupe_key"`
+	State         string             `json:"state"`
+	Attempts      int32              `json:"attempts"`
+	MaxAttempts   int32              `json:"max_attempts"`
+	NextRunAt     pgtype.Timestamptz `json:"next_run_at"`
+	LeaseUntil    pgtype.Timestamptz `json:"lease_until"`
+	LeaseToken    pgtype.UUID        `json:"lease_token"`
+	LastErrorCode pgtype.Text        `json:"last_error_code"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	CompletedAt   pgtype.Timestamptz `json:"completed_at"`
+}
+
+type OutboxEvent struct {
+	ID           pgtype.UUID        `json:"id"`
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	Kind         string             `json:"kind"`
+	Payload      []byte             `json:"payload"`
+	OccurredAt   pgtype.Timestamptz `json:"occurred_at"`
+	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
+}
