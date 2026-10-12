@@ -6,6 +6,29 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/me/password:
+    patch:
+      operationId: changePassword
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/me/onboarding:
     get:
       operationId: getOnboarding
@@ -794,6 +817,21 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ChangePasswordInput:
+      type: object
+      additionalProperties: false
+      required:
+        - current_password
+        - password
+      properties:
+        current_password:
+          type: string
+          format: password
+          writeOnly: true
+          minLength: 1
+          maxLength: 512
+        password:
+          $ref: "#/components/schemas/RegisterInput/properties/password"
     Starters:
       type: object
       additionalProperties: false
