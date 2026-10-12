@@ -21,10 +21,17 @@ import (
 )
 
 type Service struct {
-	pool    *pgxpool.Pool
-	clock   platform.Clock
-	files   blob.BlobStore
-	scanner blob.Scanner
+	observer func(context.Context, pgx.Tx, string, string, *Quest, Quest) error
+	pool     *pgxpool.Pool
+	clock    platform.Clock
+	files    blob.BlobStore
+	scanner  blob.Scanner
+}
+
+// WithObserver runs dependent projections in the same transaction as quest history.
+func (s *Service) WithObserver(observer func(context.Context, pgx.Tx, string, string, *Quest, Quest) error) *Service {
+	s.observer = observer
+	return s
 }
 
 func (s *Service) WithFiles(files blob.BlobStore, scanner blob.Scanner) *Service {
@@ -35,6 +42,22 @@ func (s *Service) WithFiles(files blob.BlobStore, scanner blob.Scanner) *Service
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
 	return &Service{pool: pool, clock: clock}
+}
+
+// CreateInTx shares quest validation and history with confirmed goal templates.
+// The caller owns the transaction; templates create new, unparented roots.
+func (s *Service) CreateInTx(ctx context.Context, tx pgx.Tx, id string, in Input) (Quest, error) {
+	in, e := Validate(in)
+	if e != nil {
+		return Quest{}, e
+	}
+	if in.Status != "todo" && in.Status != "backlog" {
+		return Quest{}, invalid("status", "Новая задача: идеи или к выполнению")
+	}
+	if e = s.lockOwner(ctx, tx, id); e != nil {
+		return Quest{}, e
+	}
+	return s.insert(ctx, tx, id, in)
 }
 
 type Input struct {
@@ -340,7 +363,7 @@ func (s *Service) List(r *http.Request) (Page, error) {
 		if e := tx.QueryRow(r.Context(), `SELECT count(*) FROM quests WHERE `+filteredWhere, args...).Scan(&result.Total); e != nil {
 			return e
 		}
-		rows, e := tx.Query(r.Context(), `SELECT `+columns+` FROM quests WHERE `+filteredWhere+` ORDER BY `+sorts[filters.Sort]+` LIMIT $11 OFFSET $12`, append(args, size, (page-1)*size)...)
+		rows, e := tx.Query(r.Context(), `SELECT `+columns+` FROM quests WHERE `+filteredWhere+` ORDER BY `+sorts[filters.Sort]+` LIMIT $12 OFFSET $13`, append(args, size, (page-1)*size)...)
 		if e != nil {
 			return e
 		}

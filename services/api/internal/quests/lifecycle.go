@@ -42,6 +42,9 @@ func (s *Service) event(ctx context.Context, tx pgx.Tx, id, kind, reason string,
 		return err
 	}
 	_, err = tx.Exec(ctx, `INSERT INTO task_events(owner_id,quest_id,kind,reason,before_state,after_state,quest_version,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, id, after.ID, kind, reason, old, fresh, after.Version, s.clock.Now().UTC())
+	if err == nil && s.observer != nil {
+		err = s.observer(ctx, tx, id, kind, before, after)
+	}
 	return err
 }
 func nextStatus(current, action string) (string, error) {

@@ -4,6 +4,358 @@
  */
 
 export interface paths {
+    "/api/v1/goals/{id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["pauseGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resumeGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/achieve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["achieveGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/close-unachieved": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["closeunachievedGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancelGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reviewGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["archiveGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["restoreGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["goalHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/templates/goals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["goalTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/templates/goals/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewGoalTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/templates/goals/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["applyGoalTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["goalMetricEntries"];
+        put?: never;
+        post: operations["postGoalMetric"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/entries/{entry}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["patchGoalMetric"];
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/entries/{entry}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["goalMetricHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["goalPlan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/quests/{id}/goal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["questGoal"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/milestones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["postMilestone"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/milestones/{mid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteMilestone"];
+        options?: never;
+        head?: never;
+        patch: operations["patchMilestone"];
+        trace?: never;
+    };
+    "/api/v1/goals/{id}/links/{qid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["putGoalLink"];
+        post?: never;
+        delete: operations["deleteGoalLink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listGoals"];
+        put?: never;
+        post: operations["createGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/goals/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getGoal"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["editGoal"];
+        trace?: never;
+    };
     "/api/v1/quests/{id}/archive": {
         parameters: {
             query?: never;
@@ -843,6 +1195,168 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        GoalTransition: {
+            reason: string;
+            criteria_confirmed: boolean;
+            completed: string;
+            obstacles: string;
+            resolution: string;
+            next_input: components["schemas"]["GoalInput"] | null;
+        };
+        GoalVersion: {
+            id: number;
+            goal_version: number;
+            kind: string;
+            reason: string;
+            snapshot: components["schemas"]["GoalDTO"] & {
+                plan: components["schemas"]["GoalPlanDTO"];
+            };
+            /** Format: date-time */
+            created_at: string;
+        };
+        GoalTemplateTask: {
+            title: string;
+            description: string;
+            day_offset: number;
+            milestone: number;
+            required: boolean;
+            estimated_minutes: number;
+            difficulty: number;
+        };
+        GoalTemplateDraft: {
+            input: components["schemas"]["GoalInput"];
+            milestones: components["schemas"]["GoalMilestoneInput"][];
+            tasks: components["schemas"]["GoalTemplateTask"][];
+            template_id: string;
+            duration_days: number;
+            confirmed: boolean;
+        };
+        GoalTemplatePreview: {
+            input: components["schemas"]["GoalInput"];
+            milestones: components["schemas"]["GoalMilestoneInput"][];
+            tasks: (components["schemas"]["GoalTemplateTask"] & {
+                /** Format: date */
+                planned_date: string;
+            })[];
+            notice: string;
+        };
+        GoalTemplate: {
+            input: components["schemas"]["GoalInput"];
+            milestones: components["schemas"]["GoalMilestoneInput"][];
+            tasks: components["schemas"]["GoalTemplateTask"][];
+            id: string;
+            name: string;
+            description: string;
+        };
+        GoalMetricInput: {
+            value: number;
+            unit: string;
+            /** Format: date */
+            occurred_on: string;
+            note: string;
+            reason: string;
+            entry_version: number;
+        };
+        GoalEntry: {
+            id: number;
+            value: number;
+            unit: string;
+            /** Format: date */
+            occurred_on: string;
+            note: string;
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            reason: string;
+        };
+        GoalMilestoneInput: {
+            title: string;
+            required: boolean;
+            weight: number;
+            completed: boolean;
+            reason: string;
+        };
+        GoalLinkInput: {
+            milestone_id: string | null;
+            required: boolean;
+            weight: number;
+            previous_goal_id: string | null;
+            previous_goal_version: number;
+            reason: string;
+        };
+        GoalMilestone: {
+            title: string;
+            required: boolean;
+            weight: number;
+            completed: boolean;
+            reason: string;
+            /** Format: uuid */
+            id: string;
+            version: number;
+        };
+        GoalLink: {
+            /** Format: uuid */
+            quest_id: string;
+            title: string;
+            status: string;
+            milestone_id: string | null;
+            required: boolean;
+            weight: number;
+        };
+        GoalPlanDTO: {
+            milestones: components["schemas"]["GoalMilestone"][];
+            links: components["schemas"]["GoalLink"][];
+        };
+        GoalAssignmentDTO: {
+            goal_id: string | null;
+            goal_title: string;
+            goal_version: number;
+        };
+        GoalInput: {
+            title: string;
+            motive: string;
+            criteria: string;
+            area_id: string | null;
+            start_date: string | null;
+            target_date: string | null;
+            /** @enum {string} */
+            progress_type: "milestones" | "quests" | "metric";
+            start: number;
+            target: number;
+            unit: string;
+        };
+        GoalDTO: {
+            title: string;
+            motive: string;
+            criteria: string;
+            area_id: string | null;
+            start_date: string | null;
+            target_date: string | null;
+            /** @enum {string} */
+            progress_type: "milestones" | "quests" | "metric";
+            start: number;
+            target: number;
+            unit: string;
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            state: "draft" | "active" | "paused" | "achieved" | "not_achieved" | "cancelled";
+            progress: number;
+            current: number;
+            version: number;
+            overdue: boolean;
+            archived_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        GoalPage: {
+            items: components["schemas"]["GoalDTO"][];
+            total: number;
+            page: number;
+            page_size: number;
+        };
         QuestBatch: {
             items: {
                 /** Format: uuid */
@@ -913,6 +1427,7 @@ export interface components {
             };
         };
         QuestFilters: {
+            goal_id?: string;
             search: string;
             status: string;
             area_id: string;
@@ -1167,6 +1682,102 @@ export interface components {
         };
     };
     responses: {
+        /** @description Личные данные владельца */
+        GoalHistory: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalVersion"][];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        GoalTemplates: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalTemplate"][];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        GoalTemplatePreview: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalTemplatePreview"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        GoalEntries: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalEntry"][];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        GoalPlan: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalPlanDTO"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        GoalAssignment: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalAssignmentDTO"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        Goal: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalDTO"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
+        /** @description Личные данные владельца */
+        Goals: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    data: components["schemas"]["GoalPage"];
+                    meta: components["schemas"]["Meta"];
+                };
+            };
+        };
         /** @description Личные данные владельца */
         Quests: {
             headers: {
@@ -1437,6 +2048,764 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    pauseGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalTransition"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    resumeGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalTransition"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    achieveGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalTransition"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    closeunachievedGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalTransition"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    cancelGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalTransition"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    reviewGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalTransition"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    archiveGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalTransition"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    restoreGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalTransition"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    goalHistory: {
+        parameters: {
+            query?: {
+                before?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoalHistory"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    goalTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoalTemplates"];
+            401: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    previewGoalTemplate: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalTemplateDraft"];
+            };
+        };
+        responses: {
+            200: components["responses"]["GoalTemplatePreview"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    applyGoalTemplate: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalTemplateDraft"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    goalMetricEntries: {
+        parameters: {
+            query?: {
+                before?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoalEntries"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    postGoalMetric: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    value: number;
+                    unit: string;
+                    /** Format: date */
+                    occurred_on: string;
+                    note: string;
+                    reason: string;
+                    entry_version: number;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    patchGoalMetric: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+                entry: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    value: number;
+                    unit: string;
+                    /** Format: date */
+                    occurred_on: string;
+                    note: string;
+                    reason: string;
+                    entry_version: number;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    goalMetricHistory: {
+        parameters: {
+            query?: {
+                before?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+                entry: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoalEntries"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    goalPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoalPlan"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    questGoal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["GoalAssignment"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    postMilestone: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    title: string;
+                    required: boolean;
+                    weight: number;
+                    completed: boolean;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    deleteMilestone: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                id: string;
+                mid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    title: string;
+                    required: boolean;
+                    weight: number;
+                    completed: boolean;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    patchMilestone: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                id: string;
+                mid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    title: string;
+                    required: boolean;
+                    weight: number;
+                    completed: boolean;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    putGoalLink: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                id: string;
+                qid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    milestone_id: string | null;
+                    required: boolean;
+                    weight: number;
+                    previous_goal_id: string | null;
+                    previous_goal_version: number;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    deleteGoalLink: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                id: string;
+                qid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    milestone_id: string | null;
+                    required: boolean;
+                    weight: number;
+                    previous_goal_id: string | null;
+                    previous_goal_version: number;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    listGoals: {
+        parameters: {
+            query?: {
+                state?: string;
+                search?: string;
+                area_id?: string;
+                archived?: string;
+                page?: string;
+                page_size?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Goals"];
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    createGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    title: string;
+                    motive: string;
+                    criteria: string;
+                    area_id: string | null;
+                    start_date: string | null;
+                    target_date: string | null;
+                    /** @enum {string} */
+                    progress_type: "milestones" | "quests" | "metric";
+                    start: number;
+                    target: number;
+                    unit: string;
+                    /** @enum {string} */
+                    state: "draft" | "active";
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getGoal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    editGoal: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    title: string;
+                    motive: string;
+                    criteria: string;
+                    area_id: string | null;
+                    start_date: string | null;
+                    target_date: string | null;
+                    /** @enum {string} */
+                    progress_type: "milestones" | "quests" | "metric";
+                    start: number;
+                    target: number;
+                    unit: string;
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["Goal"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     archiveQuest: {
         parameters: {
             query?: never;
@@ -2169,6 +3538,7 @@ export interface operations {
     listQuests: {
         parameters: {
             query?: {
+                goal_id?: string;
                 page?: number;
                 page_size?: number;
                 search?: string;

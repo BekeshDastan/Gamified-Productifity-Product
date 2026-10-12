@@ -139,8 +139,8 @@ function Setup({ initial, ownerId }: { initial: State; ownerId: string }) {
               ))}
             </ul>
             <p className="ui-hint">
-              Первую задачу можно открыть и дополнить в разделе задач. Идеи целей и привычек пока
-              сохраняются здесь.
+              Первую задачу и цель можно открыть и дополнить в соответствующих разделах. Идея
+              привычки пока сохраняется здесь.
             </p>
             {!state.completed_at && (
               <Button onClick={() => void change(6, state.starters, true).catch(() => {})}>

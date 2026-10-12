@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
@@ -55,6 +56,8 @@ func main() {
 		os.Exit(1)
 	}
 	profile.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
+	goalService := goals.NewService(pool, platform.RealClock{})
+	goalService.Mount(router, sessions.Protect)
 	directory := os.Getenv("BLOB_PRIVATE_DIR")
 	if directory == "" {
 		directory = ".data/blobs"
@@ -70,7 +73,7 @@ func main() {
 		logger.Error("invalid scanner configuration")
 		os.Exit(1)
 	}
-	quests.NewService(pool, platform.RealClock{}).WithFiles(files, scanner).Mount(router, sessions.Protect)
+	quests.NewService(pool, platform.RealClock{}).WithObserver(goalService.QuestChanged).WithFiles(files, scanner).Mount(router, sessions.Protect)
 	server := &http.Server{
 		Addr:              cfg.Address,
 		Handler:           router,
