@@ -1200,7 +1200,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Git не отслеживает секреты; README описывает назначение каждой директории.
   - **КОММИТ СЕЙЧАС:** `chore(repo): initialize monorepo and project documentation`
 
-- [ ] **C002. Каркас frontend**
+- [x] **C002. Каркас frontend**
   - **Сделать:** Создать Next.js App Router с TypeScript strict, зафиксировать совместимые версии и lockfile.
   - **Проверить:** Сборка и typecheck проходят без any-заглушек; открывается техническая стартовая страница.
   - **КОММИТ СЕЙЧАС:** `chore(web): bootstrap typed Next.js application`
