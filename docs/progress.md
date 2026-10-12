@@ -73,3 +73,12 @@
   dev plaintext только loopback. Тестовое письмо получено локальным Mailpit 1.31.5.
   Public URL для blobs отсутствует; path traversal, header injection и plaintext
   production отвергнуты тестами.
+
+- C016: случайные схемы PostgreSQL, fixtures владельцев, thread-safe Clock,
+  FakeMailer и HTTP clients с отдельными cookie jars. Неверная миграция отвергнута;
+  параллельные схемы не смешали данные. Реальный pool: readiness 200 → 503 при
+  закрытии; liveness остаётся 200. Полный check-changed и build прошли.
+  CI дополнен отдельными PostgreSQL/Mailpit services и race integration job.
+  Удалённый результат этапа 02 проверяется после push; F01–F28 ещё не реализованы.
+
+Следующий пункт: C017, дизайн-токены и темы (этап 03).

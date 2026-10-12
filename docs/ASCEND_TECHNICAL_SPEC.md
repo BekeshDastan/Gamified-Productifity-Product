@@ -1279,7 +1279,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Письмо видно только в dev-приёмнике; неизвестный storage key не читается через публичный URL.
   - **КОММИТ СЕЙЧАС:** `feat(platform): add private blob and mail adapters`
 
-- [ ] **C016. Интеграционный стенд**
+- [x] **C016. Интеграционный стенд**
   - **Сделать:** Создать fixtures пользователей, временную БД/схему, fake Clock, тестовый HTTP client и CI job миграций.
   - **Проверить:** Тесты параллельных запусков изолированы; ошибочная миграция останавливает CI.
   - **КОММИТ СЕЙЧАС:** `test(platform): add isolated PostgreSQL integration harness`

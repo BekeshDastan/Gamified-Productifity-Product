@@ -46,6 +46,21 @@ docker run --rm -v "${PWD}/services/api:/src" -w /src sqlc/sqlc:1.31.1 generate
 `TEST_DATABASE_URL`. Они создают случайную схему на каждый тест и удаляют только
 эту схему. `ascend_dev` и произвольные имена баз отвергаются.
 
+Один раз создайте тестовую БД после `npm run dev`:
+
+```powershell
+docker compose exec -T db psql -U ascend -d postgres -c "CREATE DATABASE ascend_test"
+```
+
+Если база уже существует, повторно создавать её не нужно. Настройте
+`TEST_DATABASE_URL`, `TEST_SMTP_ADDR`, `TEST_MAIL_HTTP` из `.env.example`, затем
+`npm run test:integration`. Команда не пропускает проверки при отсутствии
+настроек. `npm run check-changed` включает этот набор вместе с lint и unit tests.
+
+CI создаёт отдельные контейнеры PostgreSQL/Mailpit и запускает интеграционные
+тесты с race detector. Параллельные тесты получают независимые схемы. Неверная
+миграция проверяется в тестовой схеме и не считается применённой.
+
 ## Ограничения текущего этапа
 
 Доменные миграции, backup/restore и production deployment ещё не подключены.
