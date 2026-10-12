@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["verifyEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/resend-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["resendVerification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/csrf": {
         parameters: {
             query?: never;
@@ -187,6 +219,9 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        TokenInput: {
+            token: string;
+        };
         SessionInfo: {
             /** Format: uuid */
             id: string;
@@ -248,7 +283,7 @@ export interface components {
         ErrorEnvelope: {
             error: {
                 /** @enum {string} */
-                code: "INVALID_JSON" | "VALIDATION_ERROR" | "EMAIL_TAKEN" | "UNAUTHORIZED" | "ORIGIN_REJECTED" | "CSRF_REJECTED" | "REFRESH_IN_PROGRESS" | "FORBIDDEN" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "VERSION_CONFLICT" | "IDEMPOTENCY_MISMATCH" | "OPERATION_IN_PROGRESS" | "RATE_LIMITED" | "INTERNAL_ERROR" | "BODY_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "DEADLINE_EXCEEDED";
+                code: "INVALID_JSON" | "VALIDATION_ERROR" | "EMAIL_TAKEN" | "UNAUTHORIZED" | "ORIGIN_REJECTED" | "CSRF_REJECTED" | "REFRESH_IN_PROGRESS" | "TOKEN_INVALID" | "EMAIL_UNVERIFIED" | "FORBIDDEN" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "VERSION_CONFLICT" | "IDEMPOTENCY_MISMATCH" | "OPERATION_IN_PROGRESS" | "RATE_LIMITED" | "INTERNAL_ERROR" | "BODY_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "DEADLINE_EXCEEDED";
                 message: string;
                 request_id: string;
                 fields?: {
@@ -325,6 +360,46 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    verifyEmail: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenInput"];
+            };
+        };
+        responses: {
+            200: components["responses"]["OK"];
+            403: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    resendVerification: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["Empty"];
+        responses: {
+            200: components["responses"]["OK"];
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     getCSRF: {
         parameters: {
             query?: never;

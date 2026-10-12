@@ -54,6 +54,10 @@ func NormalizeEmail(value string) (string, *platform.APIError) {
 
 // Register runs behind the HTTP boundary's pre-auth CSRF and attempt limits.
 func (s *Service) Register(ctx context.Context, input RegisterInput) (Account, error) {
+	return s.register(ctx, input, nil)
+}
+
+func (s *Service) register(ctx context.Context, input RegisterInput, after func(pgx.Tx, Account) error) (Account, error) {
 	email, invalid := NormalizeEmail(input.Email)
 	if invalid != nil {
 		return Account{}, invalid
@@ -81,6 +85,9 @@ func (s *Service) Register(ctx context.Context, input RegisterInput) (Account, e
 			return errors.New("registration audit failed")
 		}
 		account = Account{ID: user.ID, Email: user.Email, Role: user.Role, EmailVerified: user.EmailVerifiedAt.Valid, CreatedAt: user.CreatedAt.Time.UTC()}
+		if after != nil {
+			return after(tx, account)
+		}
 		return nil
 	})
 	if err != nil {

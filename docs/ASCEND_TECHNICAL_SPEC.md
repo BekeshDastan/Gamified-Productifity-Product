@@ -1362,7 +1362,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Повтор старого токена по правилам блокируется; после выхода старый access не действует.
   - **КОММИТ СЕЙЧАС:** `feat(auth): rotate refresh tokens and revoke sessions`
 
-- [ ] **C029. Подтверждение email**
+- [x] **C029. Подтверждение email**
   - **Сделать:** Добавить verify/resend, срок жизни, mail job и запреты публикаций для неподтверждённого email.
   - **Проверить:** Использованный или истёкший токен не подтверждает повторно; resend ограничен.
   - **КОММИТ СЕЙЧАС:** `feat(auth): verify email with expiring one-time tokens`

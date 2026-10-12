@@ -17,3 +17,5 @@ sql:
             go_struct_tag: 'json:"-"'
           - column: auth_refresh_tokens.token_hash
             go_struct_tag: 'json:"-"'
+          - column: auth_one_time_tokens.token_hash
+            go_struct_tag: 'json:"-"'

@@ -6,6 +6,44 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/auth/verify-email:
+    post:
+      operationId: verifyEmail
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/auth/resend-verification:
+    post:
+      operationId: resendVerification
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        $ref: "#/components/requestBodies/Empty"
+      responses:
+        "200":
+          $ref: "#/components/responses/OK"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/auth/csrf:
     get:
       operationId: getCSRF
@@ -303,6 +341,16 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    TokenInput:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token:
+          type: string
+          minLength: 43
+          maxLength: 43
+          writeOnly: true
     SessionInfo:
       type: object
       additionalProperties: false
@@ -437,6 +485,8 @@ components:
                   ORIGIN_REJECTED,
                   CSRF_REJECTED,
                   REFRESH_IN_PROGRESS,
+                  TOKEN_INVALID,
+                  EMAIL_UNVERIFIED,
                   FORBIDDEN,
                   NOT_FOUND,
                   METHOD_NOT_ALLOWED,
