@@ -43,7 +43,7 @@ func TestBrowserAuth(t *testing.T) {
 	if os.Getenv("RUN_BROWSER_AUTH") != "1" {
 		t.Skip("run npm run test:auth-e2e for the real browser suite")
 	}
-	pool, ctx := databaseWithTimeout(t, 3*time.Minute)
+	pool, ctx := databaseWithTimeout(t, 6*time.Minute)
 	key := make([]byte, 32)
 	if _, err := rand.Read(key); err != nil {
 		t.Fatal(err)

@@ -1426,7 +1426,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Настройки не сбрасываются после входа на другом устройстве.
   - **КОММИТ СЕЙЧАС:** `feat(settings): persist theme motion and dashboard preferences`
 
-- [ ] **C040. Приёмка первого релиза**
+- [x] **C040. Приёмка первого релиза**
   - **Сделать:** Собрать E2E настройки нового аккаунта, локализации дат и сессионной безопасности; обновить README.
   - **Проверить:** Чистый пользователь проходит весь путь; после merge можно поставить v0.1-foundation.
   - **КОММИТ СЕЙЧАС:** `test(profile): cover onboarding preferences and account settings`
