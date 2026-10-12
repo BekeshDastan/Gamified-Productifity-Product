@@ -19,6 +19,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -66,6 +67,7 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, clock, questService)
 	calendarService.Mount(router, sessions.Protect)
+	habits.NewService(pool, clock).Mount(router, sessions.Protect)
 	planning.NewService(pool, clock, questService, calendarService).Mount(router, sessions.Protect)
 	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)

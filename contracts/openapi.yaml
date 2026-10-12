@@ -6,6 +6,174 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/habits/{id}/schedules:
+    post:
+      operationId: changeHabitSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitScheduleChange"
+  /api/v1/habits/{id}:
+    get:
+      operationId: getHabit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/habits:
+    get:
+      operationId: listHabits
+      parameters:
+        - name: archived
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createHabit
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitInput"
   /api/v1/dashboard:
     get:
       operationId: getDashboard
@@ -4392,6 +4560,150 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    HabitScheduleChange:
+      type: object
+      additionalProperties: false
+      required:
+        - effective_from
+        - schedule
+        - reason
+      properties:
+        effective_from:
+          type: string
+        schedule:
+          $ref: "#/components/schemas/HabitSchedule"
+        reason:
+          type: string
+    HabitDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - kind
+        - unit
+        - minimum
+        - area_id
+        - starts_on
+        - ends_on
+        - schedule
+        - id
+        - version
+        - timezone
+        - archived_at
+        - schedules
+      properties:
+        title:
+          type: string
+        kind:
+          type: string
+          enum:
+            - binary
+            - count
+            - duration
+        unit:
+          type: string
+        minimum:
+          type: number
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        starts_on:
+          type: string
+        ends_on:
+          anyOf:
+            - type: string
+            - type: "null"
+        schedule:
+          $ref: "#/components/schemas/HabitSchedule"
+        id:
+          type: string
+        version:
+          type: integer
+        timezone:
+          type: string
+        archived_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        schedules:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitScheduleVersion"
+    HabitScheduleVersion:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - effective_from
+        - schedule
+        - reason
+      properties:
+        version:
+          type: integer
+        effective_from:
+          type: string
+        schedule:
+          $ref: "#/components/schemas/HabitSchedule"
+        reason:
+          type: string
+    HabitInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - kind
+        - unit
+        - minimum
+        - area_id
+        - starts_on
+        - ends_on
+        - schedule
+      properties:
+        title:
+          type: string
+        kind:
+          type: string
+          enum:
+            - binary
+            - count
+            - duration
+        unit:
+          type: string
+        minimum:
+          type: number
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        starts_on:
+          type: string
+        ends_on:
+          anyOf:
+            - type: string
+            - type: "null"
+        schedule:
+          $ref: "#/components/schemas/HabitSchedule"
+    HabitSchedule:
+      type: object
+      additionalProperties: false
+      required:
+        - frequency
+        - weekdays
+        - target
+      properties:
+        frequency:
+          type: string
+          enum:
+            - daily
+            - weekly
+            - monthly
+        weekdays:
+          type: array
+          items:
+            type: integer
+        target:
+          type: number
     Dashboard:
       type: object
       additionalProperties: false

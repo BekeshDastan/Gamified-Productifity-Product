@@ -13,6 +13,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -79,6 +80,7 @@ func main() {
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, platform.RealClock{}, questService)
 	calendarService.Mount(router, sessions.Protect)
+	habits.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
 	planning.NewService(pool, platform.RealClock{}, questService, calendarService).Mount(router, sessions.Protect)
 	server := &http.Server{
 		Addr:              cfg.Address,
