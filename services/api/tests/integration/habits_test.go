@@ -65,3 +65,49 @@ func TestHabitTypedModelsAndFutureSchedules(t *testing.T) {
 	}
 	_ = time.UTC
 }
+func TestHabitPeriodsDedupeAndTimezone(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "habits-periods@example.test")
+	for _, freq := range []string{"daily", "weekly", "monthly"} {
+		in := habitInput()
+		in.Schedule.Frequency = freq
+		if freq != "daily" {
+			in.Schedule.Weekdays = nil
+		}
+		h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", in))
+		if len(h.Periods) != 1 || h.Periods[0].State != "open" {
+			t.Fatal(freq, h)
+		}
+		p := h.Periods[0]
+		again := readHabit(t, f.privateRequest(t, a, "GET", "/habits/"+h.ID, "", nil))
+		if len(again.Periods) != 1 || again.Periods[0].ID != p.ID {
+			t.Fatal("duplicate", freq)
+		}
+		if freq == "weekly" && p.End.Format(time.DateOnly) != "2026-10-19" {
+			t.Fatal("early weekly end", p.End)
+		}
+		if freq == "monthly" && p.End.Format(time.DateOnly) != "2026-11-01" {
+			t.Fatal("early monthly end", p.End)
+		}
+	}
+	f.clock.Advance(24 * time.Hour)
+	if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+		t.Fatal(r.status)
+	}
+	var out struct {
+		Data []habits.Habit `json:"data"`
+	}
+	r := f.privateRequest(t, a, "GET", "/habits", "", nil)
+	if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+		t.Fatal(r.status, string(r.body))
+	}
+	for _, h := range out.Data {
+		if h.Schedule.Frequency == "daily" {
+			if len(h.Periods) != 2 || h.Periods[0].State != "missed" || h.Periods[1].State != "open" {
+				t.Fatal(h.Periods)
+			}
+		} else if len(h.Periods) != 1 || h.Periods[0].State != "open" {
+			t.Fatal("week/month closed early", h.Periods)
+		}
+	}
+}

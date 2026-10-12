@@ -4560,6 +4560,52 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    HabitPeriod:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - key
+        - start
+        - end
+        - timezone
+        - schedule_version
+        - target
+        - amount
+        - progress
+        - state
+        - excluded
+        - emergency_reason
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+        timezone:
+          type: string
+        schedule_version:
+          type: integer
+        target:
+          type: number
+        amount:
+          type: number
+        progress:
+          type: integer
+        state:
+          type: string
+          enum:
+            - open
+            - success
+            - missed
+            - rest
+        excluded:
+          type: boolean
+        emergency_reason:
+          type: string
     HabitScheduleChange:
       type: object
       additionalProperties: false
@@ -4591,6 +4637,8 @@ components:
         - timezone
         - archived_at
         - schedules
+        - periods
+        - has_more
       properties:
         title:
           type: string
@@ -4630,6 +4678,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/HabitScheduleVersion"
+        periods:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitPeriod"
+        has_more:
+          type: boolean
     HabitScheduleVersion:
       type: object
       additionalProperties: false

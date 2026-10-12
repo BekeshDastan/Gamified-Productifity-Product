@@ -1641,7 +1641,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Норма положительна; изменение будущего расписания не переписывает прошлый период.
   - **КОММИТ СЕЙЧАС:** `feat(habits): add typed habits and schedule versions`
 
-- [ ] **C074. Запланированные периоды**
+- [x] **C074. Запланированные периоды**
   - **Сделать:** Реализовать дни недели и N раз за неделю/месяц, period keys и конец периода в его поясе.
   - **Проверить:** Недельный период не закрывается раньше конца; повтор materialize не создаёт дубли.
   - **КОММИТ СЕЙЧАС:** `feat(habits): materialize daily weekly and monthly periods`

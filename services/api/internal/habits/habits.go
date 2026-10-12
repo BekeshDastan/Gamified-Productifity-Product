@@ -39,6 +39,8 @@ type ScheduleVersion struct {
 	Reason        string   `json:"reason"`
 }
 type Habit struct {
+	Periods []Period `json:"periods"`
+	HasMore bool     `json:"has_more"`
 	Input
 	ID         string            `json:"id"`
 	Version    int64             `json:"version"`
@@ -168,7 +170,7 @@ func (s *Service) area(ctx context.Context, tx pgx.Tx, id string, key *string) e
 	return nil
 }
 func (s *Service) get(ctx context.Context, tx pgx.Tx, id, key string) (Habit, error) {
-	h := Habit{Schedules: []ScheduleVersion{}}
+	h := Habit{Schedules: []ScheduleVersion{}, Periods: []Period{}}
 	if !uuid(key) {
 		return h, problem(404, "NOT_FOUND", "Привычка не найдена")
 	}
@@ -235,7 +237,7 @@ func (s *Service) create(ctx context.Context, tx pgx.Tx, id string, in Input) (H
 	if _, e = tx.Exec(ctx, `INSERT INTO habit_schedules(owner_id,habit_id,version,effective_from,schedule,reason) VALUES($1,$2,1,$3::text::date,$4,'Начальное расписание')`, id, key, in.StartsOn, schedule); e != nil {
 		return Habit{}, e
 	}
-	return s.get(ctx, tx, id, key)
+	return s.view(ctx, tx, id, key)
 }
 func (s *Service) mutate(r *http.Request, in any, fn func(pgx.Tx, string) (any, error)) (any, error) {
 	id, e := owner(r.Context())
@@ -315,7 +317,7 @@ func (s *Service) list(ctx context.Context, tx pgx.Tx, id string, archived bool)
 	}
 	out := []Habit{}
 	for _, k := range keys {
-		v, e := s.get(ctx, tx, id, k)
+		v, e := s.view(ctx, tx, id, k)
 		if e != nil {
 			return nil, e
 		}
@@ -332,6 +334,9 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 			var out []Habit
 			if e == nil {
 				e = storage.WithinTx(r.Context(), s.pool, func(tx pgx.Tx) error {
+					if e := s.lock(r.Context(), tx, id); e != nil {
+						return e
+					}
 					var err error
 					out, err = s.list(r.Context(), tx, id, r.URL.Query().Get("archived") == "true")
 					return err
@@ -344,8 +349,11 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 			var out Habit
 			if e == nil {
 				e = storage.WithinTx(r.Context(), s.pool, func(tx pgx.Tx) error {
+					if e := s.lock(r.Context(), tx, id); e != nil {
+						return e
+					}
 					var err error
-					out, err = s.get(r.Context(), tx, id, chi.URLParam(r, "id"))
+					out, err = s.view(r.Context(), tx, id, chi.URLParam(r, "id"))
 					return err
 				})
 			}

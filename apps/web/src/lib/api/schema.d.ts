@@ -1515,6 +1515,21 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        HabitPeriod: {
+            id: string;
+            key: string;
+            start: string;
+            end: string;
+            timezone: string;
+            schedule_version: number;
+            target: number;
+            amount: number;
+            progress: number;
+            /** @enum {string} */
+            state: "open" | "success" | "missed" | "rest";
+            excluded: boolean;
+            emergency_reason: string;
+        };
         HabitScheduleChange: {
             effective_from: string;
             schedule: components["schemas"]["HabitSchedule"];
@@ -1535,6 +1550,8 @@ export interface components {
             timezone: string;
             archived_at: string | null;
             schedules: components["schemas"]["HabitScheduleVersion"][];
+            periods: components["schemas"]["HabitPeriod"][];
+            has_more: boolean;
         };
         HabitScheduleVersion: {
             version: number;
