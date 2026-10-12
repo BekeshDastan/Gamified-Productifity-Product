@@ -8,6 +8,16 @@ import { authClient, authParams, withAuthLock } from "@/lib/auth/session";
 
 const time = z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/);
 export const preferencesSchema = z.object({
+  personalization: z.object({
+    theme: z.enum(["system", "light", "dark"]),
+    motion: z.enum(["system", "reduce"]),
+    sound: z.boolean(),
+    game_mode: z.enum(["calm", "standard"]),
+    widget_order: z
+      .array(z.enum(["today", "calendar", "habits", "focus", "progress"]))
+      .length(5)
+      .refine((value) => new Set(value).size === 5, "Виджеты не должны повторяться"),
+  }),
   privacy: z.object({
     profile_visibility: z.enum(["private", "friends"]),
     share_activity: z.boolean(),

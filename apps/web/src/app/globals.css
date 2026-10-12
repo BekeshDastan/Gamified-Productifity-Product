@@ -1321,3 +1321,28 @@
   margin: 1.5rem 0;
   min-width: 0;
 }
+.widget-order {
+  padding-left: 1.5rem;
+}
+.widget-order li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0;
+}
+.widget-order li span {
+  flex: 1;
+}
+.account-theme {
+  display: flex;
+  flex-direction: column;
+  max-width: 12rem;
+}
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

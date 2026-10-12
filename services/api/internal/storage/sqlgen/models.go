@@ -80,6 +80,38 @@ type Job struct {
 	CompletedAt   pgtype.Timestamptz `json:"completed_at"`
 }
 
+type LifeArea struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Name      string             `json:"name"`
+	Color     string             `json:"color"`
+	Icon      string             `json:"icon"`
+	Archived  bool               `json:"archived"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Onboarding struct {
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	Step        int32              `json:"step"`
+	CompletedAt pgtype.Timestamptz `json:"completed_at"`
+	Version     int64              `json:"version"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type OnboardingStarter struct {
+	ID               pgtype.UUID        `json:"id"`
+	OwnerID          pgtype.UUID        `json:"owner_id"`
+	Kind             string             `json:"kind"`
+	Title            string             `json:"title"`
+	PromotedEntityID pgtype.UUID        `json:"promoted_entity_id"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	Version          int64              `json:"version"`
+}
+
 type OutboxEvent struct {
 	ID           pgtype.UUID        `json:"id"`
 	OwnerID      pgtype.UUID        `json:"owner_id"`
@@ -87,6 +119,28 @@ type OutboxEvent struct {
 	Payload      []byte             `json:"payload"`
 	OccurredAt   pgtype.Timestamptz `json:"occurred_at"`
 	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
+}
+
+type Profile struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Name      string             `json:"name"`
+	Nickname  string             `json:"nickname"`
+	Avatar    string             `json:"avatar"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Tag struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Name      string             `json:"name"`
+	Color     string             `json:"color"`
+	Icon      string             `json:"icon"`
+	Archived  bool               `json:"archived"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type User struct {
@@ -98,4 +152,12 @@ type User struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 	DisabledAt      pgtype.Timestamptz `json:"disabled_at"`
+}
+
+type UserSetting struct {
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	Preferences []byte             `json:"preferences"`
+	Version     int64              `json:"version"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }

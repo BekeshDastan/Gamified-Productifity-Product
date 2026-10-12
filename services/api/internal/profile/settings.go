@@ -22,13 +22,14 @@ type WorkInterval struct {
 	End   string `json:"end"`
 }
 type Preferences struct {
-	Privacy       Privacy        `json:"privacy"`
-	Timezone      string         `json:"timezone"`
-	Language      string         `json:"language"`
-	WeekStart     int            `json:"week_start"`
-	TimeFormat    string         `json:"time_format"`
-	WorkIntervals []WorkInterval `json:"work_intervals"`
-	RestDays      []int          `json:"rest_days"`
+	Personalization Personalization `json:"personalization"`
+	Privacy         Privacy         `json:"privacy"`
+	Timezone        string          `json:"timezone"`
+	Language        string          `json:"language"`
+	WeekStart       int             `json:"week_start"`
+	TimeFormat      string          `json:"time_format"`
+	WorkIntervals   []WorkInterval  `json:"work_intervals"`
+	RestDays        []int           `json:"rest_days"`
 }
 type Privacy struct {
 	ProfileVisibility string `json:"profile_visibility"`
@@ -38,6 +39,18 @@ type Privacy struct {
 }
 
 func DefaultPrivacy() Privacy { return Privacy{ProfileVisibility: "private"} }
+
+type Personalization struct {
+	Theme       string   `json:"theme"`
+	Motion      string   `json:"motion"`
+	Sound       bool     `json:"sound"`
+	GameMode    string   `json:"game_mode"`
+	WidgetOrder []string `json:"widget_order"`
+}
+
+func DefaultPersonalization() Personalization {
+	return Personalization{Theme: "system", Motion: "system", GameMode: "calm", WidgetOrder: []string{"today", "calendar", "habits", "focus", "progress"}}
+}
 
 type Settings struct {
 	Preferences
@@ -49,6 +62,26 @@ type Settings struct {
 var timePattern = regexp.MustCompile(`^([01][0-9]|2[0-3]):[0-5][0-9]$`)
 
 func ValidatePreferences(p Preferences) error {
+	a := p.Personalization
+	if a.Theme != "system" && a.Theme != "light" && a.Theme != "dark" {
+		return invalid("personalization.theme", "Выберите тему")
+	}
+	if a.Motion != "system" && a.Motion != "reduce" {
+		return invalid("personalization.motion", "Выберите настройку движения")
+	}
+	if a.GameMode != "calm" && a.GameMode != "standard" {
+		return invalid("personalization.game_mode", "Выберите игровой режим")
+	}
+	if len(a.WidgetOrder) != 5 {
+		return invalid("personalization.widget_order", "Укажите пять разных виджетов")
+	}
+	allowed := map[string]bool{"today": true, "calendar": true, "habits": true, "focus": true, "progress": true}
+	for _, key := range a.WidgetOrder {
+		if !allowed[key] {
+			return invalid("personalization.widget_order", "Виджеты не должны повторяться")
+		}
+		delete(allowed, key)
+	}
 	if p.Privacy.ProfileVisibility != "private" && p.Privacy.ProfileVisibility != "friends" {
 		return invalid("privacy.profile_visibility", "Выберите закрытый профиль или будущий доступ друзьям")
 	}

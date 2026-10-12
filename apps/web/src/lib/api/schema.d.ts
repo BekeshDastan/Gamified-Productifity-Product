@@ -475,6 +475,17 @@ export interface components {
                 end: string;
             }[];
             rest_days: number[];
+            personalization: {
+                /** @enum {string} */
+                theme: "system" | "light" | "dark";
+                /** @enum {string} */
+                motion: "system" | "reduce";
+                /** @default false */
+                sound: boolean;
+                /** @enum {string} */
+                game_mode: "calm" | "standard";
+                widget_order: ("today" | "calendar" | "habits" | "focus" | "progress")[];
+            };
         };
         Settings: components["schemas"]["Preferences"] & {
             version: number;

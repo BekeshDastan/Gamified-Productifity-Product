@@ -18,6 +18,13 @@ describe("account date preferences", () => {
   });
   it("rejects invalid timezone and keeps date preferences explicit", () => {
     const base = {
+      personalization: {
+        theme: "system",
+        motion: "system",
+        sound: false,
+        game_mode: "calm",
+        widget_order: ["today", "calendar", "habits", "focus", "progress"],
+      },
       privacy: {
         profile_visibility: "private",
         share_activity: false,

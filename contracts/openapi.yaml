@@ -938,16 +938,30 @@ components:
               format: date-time
     Preferences:
       type: object
-      required: [privacy, timezone, language, week_start, time_format, work_intervals, rest_days]
+      required:
+        - personalization
+        - privacy
+        - timezone
+        - language
+        - week_start
+        - time_format
+        - work_intervals
+        - rest_days
       properties:
         privacy:
           type: object
           additionalProperties: false
-          required: [profile_visibility, share_activity, share_achievements, discoverable]
+          required:
+            - profile_visibility
+            - share_activity
+            - share_achievements
+            - discoverable
           properties:
             profile_visibility:
               type: string
-              enum: [private, friends]
+              enum:
+                - private
+                - friends
             share_activity:
               type: boolean
               default: false
@@ -963,20 +977,29 @@ components:
           description: IANA timezone; начальная UTC, браузерная зона предлагается пользователю.
         language:
           type: string
-          enum: [ru, en]
+          enum:
+            - ru
+            - en
         week_start:
           type: integer
-          enum: [1, 7]
+          enum:
+            - 1
+            - 7
         time_format:
           type: string
-          enum: [24h, 12h]
+          enum:
+            - 24h
+            - 12h
         work_intervals:
           type: array
           maxItems: 28
           items:
             type: object
             additionalProperties: false
-            required: [day, start, end]
+            required:
+              - day
+              - start
+              - end
             properties:
               day:
                 type: integer
@@ -984,10 +1007,10 @@ components:
                 maximum: 7
               start:
                 type: string
-                pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
               end:
                 type: string
-                pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
         rest_days:
           type: array
           maxItems: 7
@@ -996,6 +1019,48 @@ components:
             type: integer
             minimum: 1
             maximum: 7
+        personalization:
+          type: object
+          additionalProperties: false
+          required:
+            - theme
+            - motion
+            - sound
+            - game_mode
+            - widget_order
+          properties:
+            theme:
+              type: string
+              enum:
+                - system
+                - light
+                - dark
+            motion:
+              type: string
+              enum:
+                - system
+                - reduce
+            sound:
+              type: boolean
+              default: false
+            game_mode:
+              type: string
+              enum:
+                - calm
+                - standard
+            widget_order:
+              type: array
+              minItems: 5
+              maxItems: 5
+              uniqueItems: true
+              items:
+                type: string
+                enum:
+                  - today
+                  - calendar
+                  - habits
+                  - focus
+                  - progress
     Settings:
       allOf:
         - $ref: "#/components/schemas/Preferences"

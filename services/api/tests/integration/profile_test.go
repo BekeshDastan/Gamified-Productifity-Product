@@ -111,7 +111,7 @@ func TestSettingsPersistAndRemainOwnerScoped(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
 	client, account := f.signedIn(t, "settings@example.test")
 	other, _ := f.signedIn(t, "settings-other@example.test")
-	input := profile.Preferences{Privacy: profile.DefaultPrivacy(), Timezone: "Asia/Almaty", Language: "en", WeekStart: 7, TimeFormat: "12h", WorkIntervals: []profile.WorkInterval{{Day: 1, Start: "09:00", End: "17:00"}}, RestDays: []int{6, 7}}
+	input := profile.Preferences{Personalization: profile.DefaultPersonalization(), Privacy: profile.DefaultPrivacy(), Timezone: "Asia/Almaty", Language: "en", WeekStart: 7, TimeFormat: "12h", WorkIntervals: []profile.WorkInterval{{Day: 1, Start: "09:00", End: "17:00"}}, RestDays: []int{6, 7}}
 	if got := f.privateRequest(t, client, "PATCH", "/me/settings", `"1"`, input); got.status != 200 {
 		t.Fatal("settings save failed", got.status)
 	}

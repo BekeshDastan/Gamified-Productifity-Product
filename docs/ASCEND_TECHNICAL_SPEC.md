@@ -1421,7 +1421,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Новый аккаунт не появляется в публичной выдаче и не раскрывает email.
   - **КОММИТ СЕЙЧАС:** `feat(privacy): define private defaults and sharing preferences`
 
-- [ ] **C039. Персонализация интерфейса**
+- [x] **C039. Персонализация интерфейса**
   - **Сделать:** Сохранить тему, reduced motion, звук, игровой режим и порядок будущих виджетов.
   - **Проверить:** Настройки не сбрасываются после входа на другом устройстве.
   - **КОММИТ СЕЙЧАС:** `feat(settings): persist theme motion and dashboard preferences`
