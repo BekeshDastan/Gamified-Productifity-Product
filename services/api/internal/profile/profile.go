@@ -131,6 +131,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		r.Use(protect)
 		s.mountSettings(r)
 		s.mountAreas(r)
+		s.mountOnboarding(r)
 		r.Get("/api/v1/me", func(w http.ResponseWriter, r *http.Request) {
 			value, err := s.Get(r.Context())
 			s.reply(w, r, value, err)

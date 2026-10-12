@@ -18,6 +18,15 @@ export default function TodayPage() {
         Отдых — тоже часть пути.
       </p>
       <AccountPanel />
+      <Card className="account-panel">
+        <h2>Настройте пространство под себя</h2>
+        <p className="ui-hint">
+          Имя, часовой пояс, направления и первые идеи — с сохранением каждого шага.
+        </p>
+        <Button asChild>
+          <Link href="/app/onboarding">Начальная настройка</Link>
+        </Button>
+      </Card>
       <Card className="welcome-card">
         <div className="welcome-symbol">
           <Sprout size={32} aria-hidden="true" />

@@ -1315,3 +1315,9 @@
   gap: 0.5rem;
   margin: 1rem 0;
 }
+.onboarding-content {
+  border: 0;
+  padding: 0;
+  margin: 1.5rem 0;
+  min-width: 0;
+}

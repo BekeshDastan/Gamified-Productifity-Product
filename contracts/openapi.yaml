@@ -6,6 +6,63 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/me/onboarding:
+    get:
+      operationId: getOnboarding
+      responses:
+        "200":
+          $ref: "#/components/responses/Onboarding"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: saveOnboarding
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OnboardingInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Onboarding"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/me/onboarding/complete:
+    post:
+      operationId: completeOnboarding
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        $ref: "#/components/requestBodies/Empty"
+      responses:
+        "200":
+          $ref: "#/components/responses/Onboarding"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/areas:
     get:
       operationId: listareas
@@ -583,6 +640,20 @@ components:
             type: object
             additionalProperties: false
   responses:
+    Onboarding:
+      description: Личные данные владельца
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                $ref: "#/components/schemas/Onboarding"
+              meta:
+                $ref: "#/components/schemas/Meta"
     Label:
       description: Личные данные владельца
       content:
@@ -723,6 +794,59 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    Starters:
+      type: object
+      additionalProperties: false
+      required:
+        - goal
+        - task
+        - habit
+      properties:
+        goal:
+          type: string
+          maxLength: 200
+        task:
+          type: string
+          maxLength: 200
+        habit:
+          type: string
+          maxLength: 200
+    OnboardingInput:
+      type: object
+      required:
+        - step
+        - starters
+      properties:
+        step:
+          type: integer
+          minimum: 0
+          maximum: 6
+        starters:
+          $ref: "#/components/schemas/Starters"
+    Onboarding:
+      allOf:
+        - $ref: "#/components/schemas/OnboardingInput"
+        - type: object
+          required:
+            - completed_at
+            - version
+            - created_at
+            - updated_at
+          properties:
+            completed_at:
+              type:
+                - string
+                - "null"
+              format: date-time
+            version:
+              type: integer
+              minimum: 1
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
     LabelInput:
       type: object
       required:
