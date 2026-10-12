@@ -14,6 +14,7 @@
     "dev:web": "npm run dev --workspace @ascend/web",
     "build:web": "npm run build --workspace @ascend/web",
     "typecheck": "npm run typecheck --workspace @ascend/web",
+    "generate:api": "openapi-typescript contracts/openapi.yaml -o apps/web/src/lib/api/schema.d.ts",
     "lint:web": "npm run lint --workspace @ascend/web",
     "lint:go": "node scripts/go-check.mjs",
     "format": "prettier --write .",
@@ -32,6 +33,7 @@
     "test:e2e": "node scripts/tasks.mjs test-e2e"
   },
   "devDependencies": {
+    "openapi-typescript": "7.13.0",
     "prettier": "3.9.10"
   }
 }

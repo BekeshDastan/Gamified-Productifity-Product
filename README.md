@@ -47,6 +47,7 @@ npm run dev
 При существующем `.env` не перезаписывайте его. Команда запускает базу, API,
 worker и web. Сайт: <http://localhost:3000>. API: <http://127.0.0.1:8080>.
 Доступных доменных API пока нет; неизвестные пути возвращают 404.
+Проверки сервера: `/health/live` и `/health/ready` (503 при недоступной БД).
 Ctrl+C останавливает процессы приложения; база остаётся в Docker с сохранёнными
 данными. Остановить базу: `docker compose stop`.
 
@@ -55,11 +56,11 @@ Ctrl+C останавливает процессы приложения; баз�
 | `npm run dev`              | `make dev`              | Локальное окружение                             |
 | `npm run lint`             | `make lint`             | Политика файлов, формат, ESLint, TypeScript, Go |
 | `npm test`                 | `make test`             | Tooling, component и Go unit tests              |
-| `npm run check-changed`    | `make check-changed`    | Полный существующий набор lint + test           |
+| `npm run check-changed`    | `make check-changed`    | Lint + unit/component + PostgreSQL integration  |
 | `npm run build`            | `make build`            | Production web и два Go-бинарника               |
-| `npm run migrate`          | `make migrate`          | Пока явный отказ; подключается в C011           |
+| `npm run migrate`          | `make migrate`          | Forward-миграции goose к явному DATABASE_URL    |
 | `npm run seed`             | `make seed`             | Пока явный отказ; каталог ещё не создан         |
-| `npm run test:integration` | `make test-integration` | Подключается в C016                             |
+| `npm run test:integration` | `make test-integration` | Реальные PostgreSQL и локальная почта           |
 | `npm run test:e2e`         | `make test-e2e`         | Подключается в C024                             |
 
 Windows не требует установки make: команды npm используют тот же обработчик.

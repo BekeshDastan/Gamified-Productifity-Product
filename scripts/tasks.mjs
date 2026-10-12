@@ -42,8 +42,9 @@ function requireLocalEnv() {
 async function dev() {
   requireLocalEnv();
   if (env.APP_ENV !== "development") throw new Error("dev requires APP_ENV=development");
-  await run("docker", ["compose", "up", "-d", "--wait", "db"]);
+  await run("docker", ["compose", "up", "-d", "--wait", "db", "mailpit"]);
   await buildGo();
+  await run("go", ["run", "./cmd/migrate"], api);
   const children = [];
   let stopping = false;
   function stop(code) {
@@ -108,16 +109,27 @@ const commands = {
     await npm("run", "build:web");
     await buildGo();
   },
+  migrate: async () => {
+    requireLocalEnv();
+    await run("go", ["run", "./cmd/migrate"], api);
+  },
+  "test-integration": async () => {
+    if (existsSync(path.join(root, ".env"))) requireLocalEnv();
+    for (const setting of ["TEST_DATABASE_URL", "TEST_SMTP_ADDR", "TEST_MAIL_HTTP"]) {
+      if (!env[setting])
+        throw new Error(`${setting} must be explicitly configured; see docs/runbook.md`);
+    }
+    await run("go", ["test", "-tags=integration", "-count=1", "./tests/integration/..."], api);
+  },
   "check-changed": async () => {
     await commands.lint();
     await commands.test();
+    await commands["test-integration"]();
   },
 };
 for (const [name, milestone] of Object.entries({
-  migrate: "C011",
   seed: "C167",
   "seed-demo": "C194",
-  "test-integration": "C016",
   "test-e2e": "C024",
   backup: "C197",
   "restore-verify": "C197",

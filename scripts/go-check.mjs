@@ -15,7 +15,7 @@ function run(command, args, capture = false) {
   return result.stdout;
 }
 
-const unformatted = run("gofmt", ["-l", "cmd", "internal"], true).trim();
+const unformatted = run("gofmt", ["-l", "cmd", "internal", "migrations", "tests"], true).trim();
 if (unformatted) {
   console.error(`Run gofmt on:\n${unformatted}`);
   process.exit(1);
