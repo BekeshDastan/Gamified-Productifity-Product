@@ -1543,7 +1543,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Однодневное all-day событие не съезжает на соседнюю дату в другом поясе.
   - **КОММИТ СЕЙЧАС:** `feat(calendar): add events date semantics and range queries`
 
-- [ ] **C058. Представления FullCalendar**
+- [x] **C058. Представления FullCalendar**
   - **Сделать:** Подключить Standard-компоненты, фильтры направлений, легенду статусов и форму события.
   - **Проверить:** Все пять видов работают без Premium-ключа и показывают одну и ту же выборку.
   - **КОММИТ СЕЙЧАС:** `feat(calendar-ui): add day week month year and list views`

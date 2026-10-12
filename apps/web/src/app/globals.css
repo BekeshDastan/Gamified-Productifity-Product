@@ -1433,3 +1433,54 @@ html[data-motion="reduce"] *::after {
   width: 100%;
   accent-color: var(--accent);
 }
+.calendar-workspace {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--card);
+  --fc-neutral-bg-color: var(--muted);
+  --fc-list-event-hover-bg-color: var(--muted);
+  --fc-today-bg-color: var(--muted);
+  --fc-button-bg-color: var(--accent);
+  --fc-button-border-color: var(--accent);
+  --fc-button-text-color: var(--primary-foreground);
+  --fc-event-bg-color: var(--muted);
+  --fc-event-text-color: var(--foreground);
+  --fc-event-border-color: var(--accent);
+}
+.calendar-scroll {
+  min-width: 0;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: var(--card);
+}
+.calendar-scroll .fc {
+  min-width: 280px;
+}
+.calendar-scroll .fc .fc-toolbar {
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.calendar-scroll .fc .fc-toolbar-title {
+  font-size: 1.2rem;
+}
+.calendar-scroll .fc-event {
+  border-left-width: 4px;
+  padding: 2px;
+}
+.calendar-scroll .fc-daygrid-dot-event {
+  color: var(--foreground);
+}
+.calendar-scroll .calendar-status-completed {
+  text-decoration: line-through;
+}
+.calendar-scroll .calendar-status-postponed {
+  border-style: dashed;
+}
+.calendar-scroll .fc .fc-multimonth {
+  background: var(--card);
+}
+.calendar-scroll .fc .fc-list {
+  border: 0;
+}

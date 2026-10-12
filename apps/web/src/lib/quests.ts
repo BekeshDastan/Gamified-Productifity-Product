@@ -160,7 +160,14 @@ export async function questLabels(signal?: AbortSignal) {
     api.GET("/api/v1/areas", { signal }),
     api.GET("/api/v1/tags", { signal }),
   ]);
-  const schema = z.array(z.object({ id: z.uuid(), name: z.string(), archived: z.boolean() }));
+  const schema = z.array(
+    z.object({
+      id: z.uuid(),
+      name: z.string(),
+      archived: z.boolean(),
+      color: z.string().optional(),
+    }),
+  );
   return { areas: schema.parse(areas.data?.data), tags: schema.parse(tags.data?.data) };
 }
 export const transitionSchema = z.object({
