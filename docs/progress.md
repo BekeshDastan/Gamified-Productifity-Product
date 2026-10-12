@@ -332,3 +332,5 @@ production build, 13 UI E2E, 6 real browser E2E). Повторная прове�
 однократным по onboarding_starters.id и не создавать повторные записи/награды.
 
 C041: Добавлены owner-scoped задачи, поля сроков и оценок, FK направлений/тегов, If-Match и пагинация. Черновик task из onboarding переносится один раз транзакционно. PostgreSQL integration suite пройден (51 с).
+
+C042: Список, создание, редактор и отдельная карточка задачи работают с API. Все поля переживают reload; server validation и версия не теряют ввод. Typecheck/build и 7 настоящих browser E2E пройдены; новая проверка включает два редактора, mobile 360 px и axe.
