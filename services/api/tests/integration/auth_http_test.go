@@ -18,6 +18,7 @@ import (
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -44,6 +45,7 @@ func newAuthFixture(t *testing.T, limits auth.Limits) authFixture {
 	if err := sessions.Mount(router, limits); err != nil {
 		t.Fatal(err)
 	}
+	profile.NewService(pool, clock).Mount(router, sessions.Protect)
 	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)
 	return authFixture{pool: pool, ctx: ctx, clock: clock, sessions: sessions, service: service, server: server}

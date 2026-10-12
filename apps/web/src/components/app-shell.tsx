@@ -45,6 +45,7 @@ const planned = [
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/settings/profile", label: "Профиль", icon: UserRound },
   { href: "/app", label: "Сегодня", icon: House },
   { href: "/app/guide", label: "О приложении", icon: Compass },
   { href: "/app/settings/appearance", label: "Оформление", icon: Settings },

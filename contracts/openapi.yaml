@@ -6,6 +6,41 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/me:
+    get:
+      operationId: getProfile
+      responses:
+        "200":
+          $ref: "#/components/responses/Profile"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    patch:
+      operationId: updateProfile
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          $ref: "#/components/responses/Profile"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/auth/forgot-password:
     post:
       operationId: forgotPassword
@@ -299,6 +334,18 @@ components:
             type: object
             additionalProperties: false
   responses:
+    Profile:
+      description: Личный профиль владельца с версией
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data, meta]
+            properties:
+              data:
+                $ref: "#/components/schemas/Profile"
+              meta:
+                $ref: "#/components/schemas/Meta"
     OK:
       description: Операция выполнена
       content:
@@ -385,6 +432,43 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ProfileInput:
+      type: object
+      additionalProperties: false
+      required: [name, nickname, avatar]
+      properties:
+        name:
+          type: string
+          maxLength: 80
+        nickname:
+          type: string
+          pattern: "^([a-z0-9_]{3,24})?$"
+        avatar:
+          type: string
+          enum: [mountain, compass, sprout, sun, moon, star]
+    Profile:
+      type: object
+      additionalProperties: false
+      required: [name, nickname, avatar, owner_id, version, created_at, updated_at]
+      properties:
+        name:
+          $ref: "#/components/schemas/ProfileInput/properties/name"
+        nickname:
+          $ref: "#/components/schemas/ProfileInput/properties/nickname"
+        avatar:
+          $ref: "#/components/schemas/ProfileInput/properties/avatar"
+        owner_id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     ForgotInput:
       type: object
       additionalProperties: false
