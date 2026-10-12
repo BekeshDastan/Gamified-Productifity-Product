@@ -74,5 +74,6 @@ describe("validated forms", () => {
     expect(await screen.findByText(/Имя занято/)).toBeInTheDocument();
     expect(screen.getByLabelText("Имя")).toHaveValue("Дастан");
     expect(screen.queryByText("ignored")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("Имя")).toHaveFocus());
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   House,
   CalendarDays,
@@ -51,6 +51,7 @@ const available = [
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuTrigger = useRef<HTMLButtonElement | null>(null);
   function navigation() {
     return (
       <nav aria-label="Разделы приложения">
@@ -106,8 +107,21 @@ export function AppShell({ children }: { children: ReactNode }) {
                 description="Личный кабинет находится в разработке."
                 open={menuOpen}
                 onOpenChange={setMenuOpen}
+                onCloseAutoFocus={(event) => {
+                  if (menuTrigger.current) {
+                    event.preventDefault();
+                    menuTrigger.current.focus();
+                  }
+                }}
                 trigger={
-                  <Button variant="ghost" size="icon" aria-label="Открыть меню">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Открыть меню"
+                    onClick={(event) => {
+                      menuTrigger.current = event.currentTarget;
+                    }}
+                  >
                     <Menu size={21} aria-hidden="true" />
                   </Button>
                 }
@@ -144,7 +158,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             <ChartNoAxesCombined size={21} aria-hidden="true" />
             Прогресс<span className="sr-only"> — скоро</span>
           </span>
-          <Button variant="ghost" aria-label="Ещё — открыть меню" onClick={() => setMenuOpen(true)}>
+          <Button
+            variant="ghost"
+            aria-label="Ещё — открыть меню"
+            onClick={(event) => {
+              menuTrigger.current = event.currentTarget;
+              setMenuOpen(true);
+            }}
+          >
             <Menu size={21} aria-hidden="true" />
             Ещё
           </Button>

@@ -1,7 +1,7 @@
 "use client";
 import { Dialog as Primitive } from "radix-ui";
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ReactNode, ComponentProps } from "react";
 import { Button } from "./button";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ export function Dialog({
   open,
   onOpenChange,
   className,
+  onCloseAutoFocus,
 }: {
   title: string;
   description: string;
@@ -21,13 +22,17 @@ export function Dialog({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   className?: string;
+  onCloseAutoFocus?: ComponentProps<typeof Primitive.Content>["onCloseAutoFocus"];
 }) {
   return (
     <Primitive.Root open={open} onOpenChange={onOpenChange}>
       {trigger && <Primitive.Trigger asChild>{trigger}</Primitive.Trigger>}
       <Primitive.Portal>
         <Primitive.Overlay className="ui-overlay" />
-        <Primitive.Content className={cn("ui-dialog", className)}>
+        <Primitive.Content
+          className={cn("ui-dialog", className)}
+          onCloseAutoFocus={onCloseAutoFocus}
+        >
           <div className="ui-dialog-heading">
             <Primitive.Title>{title}</Primitive.Title>
             <Primitive.Close asChild>

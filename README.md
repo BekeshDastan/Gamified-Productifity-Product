@@ -61,7 +61,7 @@ Ctrl+C останавливает процессы приложения; баз�
 | `npm run migrate`          | `make migrate`          | Forward-миграции goose к явному DATABASE_URL    |
 | `npm run seed`             | `make seed`             | Пока явный отказ; каталог ещё не создан         |
 | `npm run test:integration` | `make test-integration` | Реальные PostgreSQL и локальная почта           |
-| `npm run test:e2e`         | `make test-e2e`         | Подключается в C024                             |
+| `npm run test:e2e`         | `make test-e2e`         | Playwright Chromium: темы, меню, a11y, ошибки   |
 
 Windows не требует установки make: команды npm используют тот же обработчик.
 Неподключённые наборы завершаются с ошибкой и пояснением; фиктивных зелёных тестов
@@ -69,7 +69,20 @@ Windows не требует установки make: команды npm испо
 в выполнении. Production web после build: `npm run start --workspace @ascend/web`.
 
 Настройки и версии: [dependencies](docs/dependencies.md).
+Браузерный набор: сначала `npx playwright install chromium` из `apps/web`,
+затем `npm run build:web` и `npm run test:e2e` из корня. Он сам запускает
+production web на 127.0.0.1:3100 и останавливает его после тестов.
+`check-changed` включает сборку web и E2E; перед ним остановите dev, чтобы
+два процесса не меняли один `.next` одновременно.
 Локальная БД и сохранность данных: [runbook](docs/runbook.md).
+
+## Текущая готовность
+
+Выполнены C001–C024: серверная платформа, лендинг, светлая/тёмная/системная
+темы, адаптивная оболочка, доступные компоненты, API-клиент и основа форм.
+`/app` пока показывает статус подготовки, без вымышленных личных метрик.
+Вход и регистрация пока недоступны; следующие пункты C025–C032 реализуют F01.
+Ресурсы и лицензии: [каталог](docs/assets.md).
 
 ## Лицензия
 

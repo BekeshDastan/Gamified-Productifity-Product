@@ -1328,7 +1328,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Нет обещаний неготовых функций как уже доступных; изображения локальные и разрешены к использованию.
   - **КОММИТ СЕЙЧАС:** `feat(web): add product landing and licensed static assets`
 
-- [ ] **C024. Проверка оболочки**
+- [x] **C024. Проверка оболочки**
   - **Сделать:** Добавить component/E2E проверки меню, смены темы, route errors и reduced motion.
   - **Проверить:** Основную навигацию можно пройти с клавиатуры; тесты проходят в CI.
   - **КОММИТ СЕЙЧАС:** `test(web): cover responsive navigation and keyboard flows`

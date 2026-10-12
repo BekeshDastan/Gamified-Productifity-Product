@@ -74,3 +74,17 @@ next-themes 0.4.6. Версии закреплены в lockfile. Системн
 Источники: [Tailwind + Next.js](https://tailwindcss.com/docs/installation/framework-guides/nextjs),
 [next-themes](https://github.com/pacocoursey/next-themes),
 [shadcn manual](https://ui.shadcn.com/docs/installation/manual).
+
+Дополнения C018–C024 (npm registry, 12.10.2026): Radix UI 1.8.0,
+class-variance-authority 0.7.1, clsx 2.1.1, tailwind-merge 3.7.0, Lucide React
+1.55.0; TanStack Query 5.104.2 и openapi-fetch 0.17.0; React Hook Form 7.90.0,
+resolvers 5.9.1 и Zod 4.6.6; Testing Library user-event 14.6.7,
+Playwright 1.64.0 и axe Playwright 4.13.0. Все версии точные, lockfile отслеживается.
+
+[Radix Dialog](https://www.radix-ui.com/primitives/docs/components/dialog),
+[TanStack defaults](https://tanstack.com/query/latest/docs/framework/react/guides/important-defaults),
+[openapi-fetch](https://openapi-ts.dev/openapi-fetch/middleware-auth),
+[RHF resolvers](https://github.com/react-hook-form/resolvers),
+[Zod](https://zod.dev/api),
+[Playwright web server](https://playwright.dev/docs/test-webserver),
+[Playwright accessibility](https://playwright.dev/docs/accessibility-testing).

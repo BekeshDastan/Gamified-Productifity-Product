@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useForm, type DefaultValues, type FieldValues, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,6 +24,13 @@ export function useValidatedForm<T extends FieldValues>({
   });
   const locked = useRef(false);
   const [saving, setSaving] = useState(false);
+  const focusAfterSave = useRef<Path<T> | null>(null);
+  useEffect(() => {
+    if (!saving && focusAfterSave.current) {
+      form.setFocus(focusAfterSave.current);
+      focusAfterSave.current = null;
+    }
+  }, [saving, form]);
   useUnsavedChanges(form.formState.isDirty || saving);
   async function onSubmit(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -40,7 +47,10 @@ export function useValidatedForm<T extends FieldValues>({
           if (error instanceof ApiError)
             for (const [key, message] of Object.entries(error.fields)) {
               const field = fields.find((name) => name === key);
-              if (field) form.setError(field, { type: "server", message }, { shouldFocus: true });
+              if (field) {
+                form.setError(field, { type: "server", message });
+                focusAfterSave.current ??= field;
+              }
             }
           form.setError("root.server", {
             type: "server",
