@@ -18,6 +18,7 @@ import (
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/challenges"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/character"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/focus"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
@@ -80,6 +81,7 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	calendarService := calendar.NewService(pool, clock, questService)
 	calendarService.Mount(router, sessions.Protect)
 	habits.NewService(pool, clock).WithProgression(rewardService).Mount(router, sessions.Protect)
+	challenges.NewService(pool, clock).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, clock, questService, calendarService)
 	planService.Mount(router, sessions.Protect)
 	journal.NewService(pool, clock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)

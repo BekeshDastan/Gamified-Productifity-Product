@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/challenges/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/routine-runs/templates/{kind}": {
         parameters: {
             query?: never;
@@ -2283,6 +2299,65 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ChallengeConfig: {
+            /** @enum {string} */
+            metric: "tasks" | "habits" | "focus" | "reviews" | "manual";
+            /** @enum {string} */
+            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages";
+            /** @enum {string} */
+            kind: "cumulative" | "periodic";
+            /** @enum {string} */
+            period: "day" | "week";
+            target: number;
+            period_target: number;
+            days: number;
+            daily_cap: number;
+            allowed_misses: number;
+        };
+        ChallengeTemplate: {
+            /** @enum {string} */
+            metric: "tasks" | "habits" | "focus" | "reviews" | "manual";
+            /** @enum {string} */
+            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages";
+            /** @enum {string} */
+            kind: "cumulative" | "periodic";
+            /** @enum {string} */
+            period: "day" | "week";
+            target: number;
+            period_target: number;
+            days: number;
+            daily_cap: number;
+            allowed_misses: number;
+            id: string;
+            name: string;
+            description: string;
+            audience: string;
+            area_hint: string;
+            conditions: string;
+            safe_norm: string;
+        };
+        ChallengeQuestTemplate: {
+            id: string;
+            name: string;
+            description: string;
+            audience: string;
+            area_hint: string;
+            conditions: string;
+            safe_norm: string;
+            estimated_minutes: number;
+            difficulty: number;
+            /** @enum {string} */
+            metric: "tasks";
+            /** @enum {string} */
+            unit: "tasks";
+            /** @constant */
+            target: 1;
+        };
+        ChallengeCatalog: {
+            version: string;
+            challenges: components["schemas"]["ChallengeTemplate"][];
+            quests: components["schemas"]["ChallengeQuestTemplate"][];
+        };
         JournalTemplate: {
             /** @enum {string} */
             kind: "morning" | "evening";
@@ -4162,6 +4237,31 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getChallengeCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeCatalog"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
     getJournalTemplate: {
         parameters: {
             query?: never;

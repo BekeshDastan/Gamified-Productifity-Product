@@ -6,6 +6,28 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/challenges/catalog:
+    get:
+      operationId: getChallengeCatalog
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeCatalog"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/routine-runs/templates/{kind}:
     get:
       operationId: getJournalTemplate
@@ -6996,6 +7018,217 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ChallengeConfig:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - unit
+        - kind
+        - period
+        - target
+        - period_target
+        - days
+        - daily_cap
+        - allowed_misses
+      properties:
+        metric:
+          type: string
+          enum:
+            - tasks
+            - habits
+            - focus
+            - reviews
+            - manual
+        unit:
+          type: string
+          enum:
+            - tasks
+            - periods
+            - minutes
+            - reviews
+            - count
+            - pages
+        kind:
+          type: string
+          enum:
+            - cumulative
+            - periodic
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        period_target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        days:
+          type: integer
+          minimum: 1
+          maximum: 365
+        daily_cap:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        allowed_misses:
+          type: integer
+          minimum: 0
+          maximum: 365
+    ChallengeTemplate:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - unit
+        - kind
+        - period
+        - target
+        - period_target
+        - days
+        - daily_cap
+        - allowed_misses
+        - id
+        - name
+        - description
+        - audience
+        - area_hint
+        - conditions
+        - safe_norm
+      properties:
+        metric:
+          type: string
+          enum:
+            - tasks
+            - habits
+            - focus
+            - reviews
+            - manual
+        unit:
+          type: string
+          enum:
+            - tasks
+            - periods
+            - minutes
+            - reviews
+            - count
+            - pages
+        kind:
+          type: string
+          enum:
+            - cumulative
+            - periodic
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        period_target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        days:
+          type: integer
+          minimum: 1
+          maximum: 365
+        daily_cap:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        allowed_misses:
+          type: integer
+          minimum: 0
+          maximum: 365
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        audience:
+          type: string
+        area_hint:
+          type: string
+        conditions:
+          type: string
+        safe_norm:
+          type: string
+    ChallengeQuestTemplate:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - description
+        - audience
+        - area_hint
+        - conditions
+        - safe_norm
+        - estimated_minutes
+        - difficulty
+        - metric
+        - unit
+        - target
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        audience:
+          type: string
+        area_hint:
+          type: string
+        conditions:
+          type: string
+        safe_norm:
+          type: string
+        estimated_minutes:
+          type: integer
+          minimum: 5
+          maximum: 45
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 2
+        metric:
+          type: string
+          enum:
+            - tasks
+        unit:
+          type: string
+          enum:
+            - tasks
+        target:
+          type: integer
+          const: 1
+    ChallengeCatalog:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - challenges
+        - quests
+      properties:
+        version:
+          type: string
+        challenges:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengeTemplate"
+        quests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengeQuestTemplate"
     JournalTemplate:
       type: object
       additionalProperties: false
