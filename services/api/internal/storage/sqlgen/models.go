@@ -445,6 +445,20 @@ type Job struct {
 	CompletedAt   pgtype.Timestamptz `json:"completed_at"`
 }
 
+type JournalEntry struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Title     string             `json:"title"`
+	Body      string             `json:"body"`
+	Tags      []string           `json:"tags"`
+	GoalID    pgtype.UUID        `json:"goal_id"`
+	Archived  bool               `json:"archived"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type LifeArea struct {
 	ID        pgtype.UUID        `json:"id"`
 	OwnerID   pgtype.UUID        `json:"owner_id"`
