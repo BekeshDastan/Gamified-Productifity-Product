@@ -8,6 +8,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AchievementChange struct {
+	ID                int64              `json:"id"`
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	DefinitionID      string             `json:"definition_id"`
+	DefinitionVersion string             `json:"definition_version"`
+	Active            bool               `json:"active"`
+	Evidence          []byte             `json:"evidence"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+}
+
+type AchievementDefinition struct {
+	ID       string `json:"id"`
+	Version  string `json:"version"`
+	Snapshot []byte `json:"snapshot"`
+}
+
 type Attachment struct {
 	ID         pgtype.UUID        `json:"id"`
 	OwnerID    pgtype.UUID        `json:"owner_id"`
@@ -577,6 +593,16 @@ type User struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 	DisabledAt      pgtype.Timestamptz `json:"disabled_at"`
+}
+
+type UserAchievement struct {
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	DefinitionID      string             `json:"definition_id"`
+	DefinitionVersion string             `json:"definition_version"`
+	Active            bool               `json:"active"`
+	AwardedAt         pgtype.Timestamptz `json:"awarded_at"`
+	RevokedAt         pgtype.Timestamptz `json:"revoked_at"`
+	Evidence          []byte             `json:"evidence"`
 }
 
 type UserProgress struct {

@@ -64,13 +64,19 @@ func (s *Service) ensure(ctx context.Context, tx pgx.Tx, owner string) error {
 	return e
 }
 func (s *Service) achievementActive(ctx context.Context, tx pgx.Tx, owner, id string) (bool, error) {
-	return false, nil
+	var active bool
+	e := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM user_achievements WHERE owner_id=$1 AND definition_id=$2 AND definition_version=$3 AND active)", owner, id, AchievementVersion).Scan(&active)
+	return active, e
 }
 func (s *Service) EvaluateInTx(ctx context.Context, tx pgx.Tx, owner string) error {
 	if e := s.ensure(ctx, tx, owner); e != nil {
 		return e
 	}
 	if _, e := s.progress.RebuildInTx(ctx, tx, owner); e != nil {
+		return e
+	}
+	achievementsChanged, e := s.evaluateAchievements(ctx, tx, owner)
+	if e != nil {
 		return e
 	}
 	balance, e := s.progress.Balance(ctx, tx, owner)
@@ -85,7 +91,7 @@ func (s *Service) EvaluateInTx(ctx context.Context, tx pgx.Tx, owner string) err
 	if e = json.Unmarshal(b, &equipment); e != nil {
 		return e
 	}
-	changed := false
+	changed := achievementsChanged
 	for _, i := range Catalog() {
 		active := i.Starter || balance.Level.Number >= i.Level
 		source := "level"
@@ -247,6 +253,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	MountAssets(router)
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountAchievements(r)
 		for _, path := range []string{"/api/v1/character", "/api/v1/character/inventory", "/api/v1/skill-tree"} {
 			r.Get(path, func(w http.ResponseWriter, r *http.Request) {
 				owner, e := currentOwner(r.Context())

@@ -4796,6 +4796,40 @@ paths:
           $ref: "#/components/responses/Error"
         "429":
           $ref: "#/components/responses/Error"
+  /api/v1/achievements:
+    get:
+      operationId: getAchievements
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AchievementStatus"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
 components:
   requestBodies:
     Empty:
@@ -8562,3 +8596,47 @@ components:
           type: boolean
         explanation:
           type: string
+    AchievementStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - version
+        - name
+        - description
+        - metric
+        - threshold
+        - source_url
+        - current
+        - available
+        - active
+        - revoked
+        - awarded_at
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        metric:
+          type: string
+        source_url:
+          type: string
+        threshold:
+          type: integer
+        current:
+          type: integer
+        available:
+          type: boolean
+        active:
+          type: boolean
+        revoked:
+          type: boolean
+        awarded_at:
+          type:
+            - string
+            - "null"
+          format: date-time

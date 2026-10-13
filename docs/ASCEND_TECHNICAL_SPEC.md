@@ -1759,7 +1759,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Для каждого определения есть fixture успеха/неуспеха и понятный текст.
   - **КОММИТ СЕЙЧАС:** `feat(achievements): define versioned achievement conditions`
 
-- [ ] **C094. Выдача и пересчёт**
+- [x] **C094. Выдача и пересчёт**
   - **Сделать:** Реализовать обработку событий, уникальную выдачу, потерю условия при исправлении и пересчёт.
   - **Проверить:** Повтор outbox не выдаёт два достижения; ошибочно полученное отмечается корректно.
   - **КОММИТ СЕЙЧАС:** `feat(achievements): evaluate events with idempotent grants and corrections`

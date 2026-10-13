@@ -10,6 +10,7 @@ import (
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -248,6 +249,9 @@ func (s *Service) mutate(r *http.Request, in any, fn func(pgx.Tx, string) (any, 
 		}
 		v, e := fn(tx, id)
 		if e != nil {
+			return storage.Result{}, e
+		}
+		if e := jobs.OwnerChanged(r.Context(), tx, id, s.clock); e != nil {
 			return storage.Result{}, e
 		}
 		b, e := json.Marshal(v)

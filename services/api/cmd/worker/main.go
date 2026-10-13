@@ -10,6 +10,7 @@ import (
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/character"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
@@ -53,8 +54,13 @@ func main() {
 	logger.Info("worker starting")
 	clock := platform.RealClock{}
 	rewardService := progression.NewService(pool, clock)
+	characterService := character.NewService(pool, clock, rewardService)
+	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	go calendar.NewService(pool, clock, quests.NewService(pool, clock).WithObserver(goals.NewService(pool, clock).QuestChanged).WithProgression(rewardService)).Run(ctx, logger)
 	handlers := sessions.MailHandlers(mailer)
+	for kind, handler := range characterService.Handlers() {
+		handlers[kind] = handler
+	}
 	for kind, handler := range rewardService.Handlers() {
 		handlers[kind] = handler
 	}

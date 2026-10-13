@@ -80,7 +80,9 @@ func main() {
 	}
 	rewardService := progression.NewService(pool, platform.RealClock{})
 	rewardService.Mount(router, sessions.Protect)
-	character.NewService(pool, platform.RealClock{}, rewardService).Mount(router, sessions.Protect)
+	characterService := character.NewService(pool, platform.RealClock{}, rewardService)
+	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
+	characterService.Mount(router, sessions.Protect)
 	questService := quests.NewService(pool, platform.RealClock{}).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, scanner)
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, platform.RealClock{}, questService)

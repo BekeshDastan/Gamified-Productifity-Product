@@ -86,7 +86,9 @@ func TestBrowserAuth(t *testing.T) {
 	defer files.Close()
 	rewardService := progression.NewService(pool, domainClock)
 	rewardService.Mount(router, sessions.Protect)
-	character.NewService(pool, domainClock, rewardService).Mount(router, sessions.Protect)
+	characterService := character.NewService(pool, domainClock, rewardService)
+	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
+	characterService.Mount(router, sessions.Protect)
 	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, domainClock, questService)
@@ -112,6 +114,9 @@ func TestBrowserAuth(t *testing.T) {
 	go func() {
 		defer worker.Done()
 		handlers := sessions.MailHandlers(mailer)
+		for kind, handler := range characterService.Handlers() {
+			handlers[kind] = handler
+		}
 		for kind, handler := range rewardService.Handlers() {
 			handlers[kind] = handler
 		}

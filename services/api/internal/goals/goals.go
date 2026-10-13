@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -177,7 +178,10 @@ func (s *Service) event(ctx context.Context, tx pgx.Tx, id, kind, reason string,
 		return e
 	}
 	_, e = tx.Exec(ctx, `INSERT INTO goal_versions(owner_id,goal_id,goal_version,kind,reason,snapshot,created_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, id, g.ID, g.Version, kind, reason, data, s.clock.Now().UTC())
-	return e
+	if e != nil {
+		return e
+	}
+	return jobs.OwnerChanged(ctx, tx, id, s.clock)
 }
 func (s *Service) insert(ctx context.Context, tx pgx.Tx, id string, in Create) (Goal, error) {
 	if e := s.labels(ctx, tx, id, in.Input); e != nil {
