@@ -129,92 +129,96 @@ func (s *Service) mountBosses(r chi.Router) {
 	r.Post("/api/v1/bosses", func(w http.ResponseWriter, r *http.Request) {
 		decode(s, w, r, func(in struct {
 			GoalID string `json:"goal_id"`
-		}) (any, error) { return s.mutate(r, in, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
-			g, stages, e := goals.NewService(s.pool, s.clock).BattleSourceInTx(ctx, tx, owner, in.GoalID)
-			if e != nil {
-				return nil, e
-			}
-			if g.ArchivedAt != nil || g.State == "cancelled" || g.State == "not_achieved" {
-				return nil, problem(409, "GOAL_UNAVAILABLE", "Цель недоступна для боя")
-			}
-			required := false
-			for _, stage := range stages {
-				required = required || stage.Required
-			}
-			if !required {
-				return nil, problem(422, "STAGES_REQUIRED", "Сначала добавьте обязательные этапы или задачи в цель")
-			}
-			var existing bool
-			if e = tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM bosses WHERE owner_id=$1 AND goal_id=$2)", owner, g.ID).Scan(&existing); e != nil {
-				return nil, e
-			}
-			if existing {
-				return nil, problem(409, "BOSS_EXISTS", "Для этой цели уже есть босс")
-			}
-			var count int
-			if e = tx.QueryRow(ctx, "SELECT count(*) FROM bosses WHERE owner_id=$1", owner).Scan(&count); e != nil {
-				return nil, e
-			}
-			if count >= 100 {
-				return nil, problem(409, "LIMIT_REACHED", "Не более 100 боссов")
-			}
-			var id string
-			e = tx.QueryRow(ctx, "INSERT INTO bosses(owner_id,goal_id,state,created_at,updated_at) VALUES($1,$2,'active',$3,$3) RETURNING id::text", owner, g.ID, s.clock.Now()).Scan(&id)
-			if e != nil {
-				return nil, e
-			}
-			if e = s.character.EvaluateInTx(ctx, tx, owner); e != nil {
-				return nil, e
-			}
-			return s.boss(ctx, tx, owner, id)
-		}) })
+		}) (any, error) {
+			return s.mutate(r, in, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
+				g, stages, e := goals.NewService(s.pool, s.clock).BattleSourceInTx(ctx, tx, owner, in.GoalID)
+				if e != nil {
+					return nil, e
+				}
+				if g.ArchivedAt != nil || g.State == "cancelled" || g.State == "not_achieved" {
+					return nil, problem(409, "GOAL_UNAVAILABLE", "Цель недоступна для боя")
+				}
+				required := false
+				for _, stage := range stages {
+					required = required || stage.Required
+				}
+				if !required {
+					return nil, problem(422, "STAGES_REQUIRED", "Сначала добавьте обязательные этапы или задачи в цель")
+				}
+				var existing bool
+				if e = tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM bosses WHERE owner_id=$1 AND goal_id=$2)", owner, g.ID).Scan(&existing); e != nil {
+					return nil, e
+				}
+				if existing {
+					return nil, problem(409, "BOSS_EXISTS", "Для этой цели уже есть босс")
+				}
+				var count int
+				if e = tx.QueryRow(ctx, "SELECT count(*) FROM bosses WHERE owner_id=$1", owner).Scan(&count); e != nil {
+					return nil, e
+				}
+				if count >= 100 {
+					return nil, problem(409, "LIMIT_REACHED", "Не более 100 боссов")
+				}
+				var id string
+				e = tx.QueryRow(ctx, "INSERT INTO bosses(owner_id,goal_id,state,created_at,updated_at) VALUES($1,$2,'active',$3,$3) RETURNING id::text", owner, g.ID, s.clock.Now()).Scan(&id)
+				if e != nil {
+					return nil, e
+				}
+				if e = s.character.EvaluateInTx(ctx, tx, owner); e != nil {
+					return nil, e
+				}
+				return s.boss(ctx, tx, owner, id)
+			})
+		})
 	})
 	r.Patch("/api/v1/bosses/{id}", func(w http.ResponseWriter, r *http.Request) {
 		decode(s, w, r, func(in struct {
 			Action string `json:"action"`
 			Reason string `json:"reason"`
-		}) (any, error) { return s.mutate(r, in, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
-			b, e := s.boss(ctx, tx, owner, chi.URLParam(r, "id"))
-			if e != nil {
-				return nil, e
-			}
-			if p := platform.MatchVersion(r, b.Version); p != nil {
-				return nil, p
-			}
-			state := ""
-			switch in.Action {
-			case "pause":
-				if b.State == "active" {
-					state = "paused"
+		}) (any, error) {
+			return s.mutate(r, in, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
+				b, e := s.boss(ctx, tx, owner, chi.URLParam(r, "id"))
+				if e != nil {
+					return nil, e
 				}
-			case "resume":
-				if b.State != "active" {
-					state = "active"
+				if p := platform.MatchVersion(r, b.Version); p != nil {
+					return nil, p
 				}
-			case "close":
-				if b.State != "closed" {
-					state = "closed"
+				state := ""
+				switch in.Action {
+				case "pause":
+					if b.State == "active" {
+						state = "paused"
+					}
+				case "resume":
+					if b.State != "active" {
+						state = "active"
+					}
+				case "close":
+					if b.State != "closed" {
+						state = "closed"
+					}
 				}
-			}
-			reason := strings.TrimSpace(in.Reason)
-			if state == "" {
-				return nil, problem(409, "INVALID_TRANSITION", "Действие недоступно")
-			}
-			if len(reason) == 0 || utf8.RuneCountInString(reason) > 1000 {
-				return nil, problem(422, "VALIDATION_ERROR", "Укажите причину до 1000 символов")
-			}
-			_, e = tx.Exec(ctx, "UPDATE bosses SET state=$3,version=version+1,updated_at=$4 WHERE owner_id=$1 AND id=$2", owner, b.ID, state, s.clock.Now())
-			if e != nil {
-				return nil, e
-			}
-			if e = s.character.EvaluateInTx(ctx, tx, owner); e != nil {
-				return nil, e
-			}
-			b, e = s.boss(ctx, tx, owner, b.ID)
-			if e != nil {
-				return nil, e
-			}
-			return b, s.bossEvent(ctx, tx, owner, b, reason)
-		}) })
+				reason := strings.TrimSpace(in.Reason)
+				if state == "" {
+					return nil, problem(409, "INVALID_TRANSITION", "Действие недоступно")
+				}
+				if len(reason) == 0 || utf8.RuneCountInString(reason) > 1000 {
+					return nil, problem(422, "VALIDATION_ERROR", "Укажите причину до 1000 символов")
+				}
+				_, e = tx.Exec(ctx, "UPDATE bosses SET state=$3,version=version+1,updated_at=$4 WHERE owner_id=$1 AND id=$2", owner, b.ID, state, s.clock.Now())
+				if e != nil {
+					return nil, e
+				}
+				if e = s.character.EvaluateInTx(ctx, tx, owner); e != nil {
+					return nil, e
+				}
+				b, e = s.boss(ctx, tx, owner, b.ID)
+				if e != nil {
+					return nil, e
+				}
+				return b, s.bossEvent(ctx, tx, owner, b, reason)
+			})
+		})
 	})
 }

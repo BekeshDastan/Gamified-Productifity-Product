@@ -5271,6 +5271,248 @@ paths:
           $ref: "#/components/responses/Error"
         "429":
           $ref: "#/components/responses/Error"
+  /api/v1/bosses:
+    get:
+      operationId: listBosses
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/BossList"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createBoss
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Boss"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BossCreate"
+  /api/v1/bosses/{id}:
+    patch:
+      operationId: changeBoss
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Boss"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BossAction"
+  /api/v1/bosses/monthly:
+    get:
+      operationId: getMonthlyBoss
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MonthlyBoss"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: selectMonthlyBoss
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MonthlyBoss"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonthlyChoice"
+  /api/v1/bosses/monthly/history:
+    get:
+      operationId: getMonthlyBossHistory
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MonthlyHistory"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
 components:
   requestBodies:
     Empty:
@@ -9379,3 +9621,176 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/RewardDefinition"
+    BossStage:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - required
+        - progress
+        - source_url
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        required:
+          type: boolean
+        progress:
+          type: number
+        source_url:
+          type: string
+    Boss:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - goal_id
+        - title
+        - state
+        - status
+        - version
+        - goal_version
+        - hp
+        - progress
+        - stages
+        - won_at
+      properties:
+        id:
+          type: string
+        goal_id:
+          type: string
+        title:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+        version:
+          type: integer
+        goal_version:
+          type: integer
+        hp:
+          type: number
+        progress:
+          type: number
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/BossStage"
+        won_at:
+          type:
+            - string
+            - "null"
+    BossList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Boss"
+    BossCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - goal_id
+      properties:
+        goal_id:
+          type: string
+    BossAction:
+      type: object
+      additionalProperties: false
+      required:
+        - action
+        - reason
+      properties:
+        action:
+          type: string
+          enum:
+            - pause
+            - resume
+            - close
+        reason:
+          type: string
+    MonthlyBoss:
+      type: object
+      additionalProperties: false
+      required:
+        - month
+        - timezone
+        - version
+        - boss_id
+        - boss
+      properties:
+        month:
+          type: string
+        timezone:
+          type: string
+        version:
+          type: integer
+        boss_id:
+          type:
+            - string
+            - "null"
+        boss:
+          anyOf:
+            - $ref: "#/components/schemas/Boss"
+            - type: "null"
+    MonthlyChoice:
+      type: object
+      additionalProperties: false
+      required:
+        - month
+        - boss_id
+        - reason
+      properties:
+        month:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}$"
+        boss_id:
+          type:
+            - string
+            - "null"
+        reason:
+          type: string
+    MonthlyChange:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - month
+        - timezone
+        - boss_id
+        - title
+        - reason
+        - created_at
+      properties:
+        id:
+          type: integer
+        month:
+          type: string
+        timezone:
+          type: string
+        boss_id:
+          type:
+            - string
+            - "null"
+        title:
+          type: string
+        reason:
+          type: string
+        created_at:
+          type: string
+    MonthlyHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyChange"
+        next_cursor:
+          type:
+            - string
+            - "null"

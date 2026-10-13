@@ -261,3 +261,68 @@ func TestBossHPVictoryCorrectionAndNoDuplicateXP(t *testing.T) {
 		t.Fatal("duplicate victory grant", grants, e)
 	}
 }
+func TestBossMonthlyConcurrentSelectionHistoryAndRollover(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "monthly@example.test")
+	other, _ := f.signedIn(t, "monthly-other@example.test")
+	ids := []string{}
+	for _, title := range []string{"Первый босс", "Второй босс"} {
+		g := readGoal(t, f.privateRequest(t, a, "POST", "/goals", "", goals.Create{Input: goalInput(title), State: "active"}))
+		q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput(title)))
+		readGoal(t, f.privateRequest(t, a, "PUT", "/goals/"+g.ID+"/links/"+q.ID, goalVersion(g), goals.LinkInput{Required: true, Weight: 1}))
+		ids = append(ids, readBoss(t, f.privateRequest(t, a, "POST", "/bosses", "", map[string]string{"goal_id": g.ID})).ID)
+	}
+	get := func() rewards.MonthlyBoss {
+		r := f.privateRequest(t, a, "GET", "/bosses/monthly", "", nil)
+		var out struct{ Data rewards.MonthlyBoss }
+		if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+			t.Fatal(string(r.body))
+		}
+		return out.Data
+	}
+	initial := get()
+	results := make([]authResponse, 2)
+	var wg sync.WaitGroup
+	for i := range ids {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			results[i] = f.privateRequest(t, a, "PUT", "/bosses/monthly", `"1"`, map[string]any{"month": initial.Month, "boss_id": ids[i], "reason": "Приоритет месяца"})
+		}(i)
+	}
+	wg.Wait()
+	successes := 0
+	for _, r := range results {
+		if r.status == 200 {
+			successes++
+		} else if r.status != 409 {
+			t.Fatal(r.status, string(r.body))
+		}
+	}
+	if successes != 1 {
+		t.Fatal("concurrent selection", successes)
+	}
+	r := f.privateRequest(t, other, "PUT", "/bosses/monthly", `"1"`, map[string]any{"month": initial.Month, "boss_id": ids[0], "reason": "Чужой"})
+	if r.status != 404 {
+		t.Fatal("foreign", r.status, string(r.body))
+	}
+	f.clock.Advance(32 * 24 * time.Hour)
+	f.loginAs(t, a, "monthly@example.test")
+	fresh := get()
+	if fresh.Month == initial.Month || fresh.BossID != nil || fresh.Version != 1 {
+		t.Fatal(fresh)
+	}
+	r = f.privateRequest(t, a, "PUT", "/bosses/monthly", `"1"`, map[string]any{"month": initial.Month, "boss_id": ids[0], "reason": "Устаревший месяц"})
+	if r.status != 409 {
+		t.Fatal("stale month", r.status)
+	}
+	var n int
+	if e := f.pool.QueryRow(t.Context(), "SELECT count(*) FROM monthly_boss_changes WHERE owner_id=$1 AND month=$2", who.ID, initial.Month).Scan(&n); e != nil || n != 1 {
+		t.Fatal(n, e)
+	}
+	r = f.privateRequest(t, a, "GET", "/bosses/monthly/history", "", nil)
+	var h struct{ Data rewards.MonthlyHistory }
+	if r.status != 200 || json.Unmarshal(r.body, &h) != nil || len(h.Data.Items) != 1 || h.Data.Items[0].Month != initial.Month {
+		t.Fatal(string(r.body))
+	}
+}

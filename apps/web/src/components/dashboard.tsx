@@ -12,6 +12,7 @@ import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { DashboardHabits } from "./habits";
+import { MonthlyBossSummary } from "./bosses";
 import { ProgressionSummary, useRewardNotice } from "./progression";
 import { Input } from "./ui/field";
 import { Form } from "./ui/form";
@@ -114,6 +115,7 @@ export function Dashboard() {
     progress: (
       <>
         <ProgressionSummary compact />
+        <MonthlyBossSummary />
         <h2>Прогресс дня</h2>
         {d.plan.confirmed_at ? (
           <p>
