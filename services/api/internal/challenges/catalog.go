@@ -144,6 +144,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountRuns(r)
+		s.mountMembers(r)
 		r.Get("/api/v1/challenges/catalog", func(w http.ResponseWriter, r *http.Request) { out, e := ReadCatalog(); s.Reply(w, r, out, e) })
 	})
 }

@@ -6,6 +6,175 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/challenges/runs/{id}/membership:
+    get:
+      operationId: getChallengeMembership
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeMembership"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/join:
+    post:
+      operationId: joinChallenge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeJoin"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeMember"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/leave:
+    post:
+      operationId: leaveChallenge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeLeave"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeMember"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/cancel:
+    post:
+      operationId: cancelChallenge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeLeave"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeRun"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/challenges/runs:
     get:
       operationId: listChallengeRuns
@@ -7140,6 +7309,112 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ChallengeMember:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - run_id
+        - rules_hash
+        - state
+        - version
+        - first_joined_at
+        - left_at
+        - leave_reason
+        - updated_at
+        - progress
+        - computed_at
+        - result
+        - final_snapshot
+        - closed_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        run_id:
+          type: string
+          format: uuid
+        rules_hash:
+          type: string
+        state:
+          type: string
+          enum:
+            - joined
+            - left
+            - finished
+        version:
+          type: integer
+        first_joined_at:
+          type: string
+        left_at:
+          type:
+            - string
+            - "null"
+        leave_reason:
+          type: string
+        updated_at:
+          type: string
+        progress:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+        computed_at:
+          type:
+            - string
+            - "null"
+        result:
+          type:
+            - string
+            - "null"
+          enum:
+            - achieved
+            - not_achieved
+            - left
+            - null
+        final_snapshot:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+        closed_at:
+          type:
+            - string
+            - "null"
+    ChallengeMembership:
+      type: object
+      additionalProperties: false
+      required:
+        - member
+      properties:
+        member:
+          anyOf:
+            - $ref: "#/components/schemas/ChallengeMember"
+            - type: "null"
+    ChallengeJoin:
+      type: object
+      additionalProperties: false
+      required:
+        - rules_hash
+        - accept_rules
+        - membership_version
+      properties:
+        rules_hash:
+          type: string
+        accept_rules:
+          type: boolean
+        membership_version:
+          type: integer
+          minimum: 0
+    ChallengeLeave:
+      type: object
+      additionalProperties: false
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          maxLength: 1000
     ChallengeRuleInput:
       type: object
       additionalProperties: false

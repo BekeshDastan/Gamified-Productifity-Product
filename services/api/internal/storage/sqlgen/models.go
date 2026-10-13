@@ -132,6 +132,42 @@ type CalendarEventHistory struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type ChallengeMembershipWindow struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ParticipantID pgtype.UUID        `json:"participant_id"`
+	Sequence      int32              `json:"sequence"`
+	JoinedAt      pgtype.Timestamptz `json:"joined_at"`
+	LeftAt        pgtype.Timestamptz `json:"left_at"`
+}
+
+type ChallengeParticipant struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ID            pgtype.UUID        `json:"id"`
+	RunOwnerID    pgtype.UUID        `json:"run_owner_id"`
+	RunID         pgtype.UUID        `json:"run_id"`
+	RulesHash     string             `json:"rules_hash"`
+	State         string             `json:"state"`
+	Version       int64              `json:"version"`
+	FirstJoinedAt pgtype.Timestamptz `json:"first_joined_at"`
+	LeftAt        pgtype.Timestamptz `json:"left_at"`
+	LeaveReason   string             `json:"leave_reason"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	Progress      []byte             `json:"progress"`
+	ComputedAt    pgtype.Timestamptz `json:"computed_at"`
+	Result        pgtype.Text        `json:"result"`
+	FinalSnapshot []byte             `json:"final_snapshot"`
+	ClosedAt      pgtype.Timestamptz `json:"closed_at"`
+}
+
+type ChallengeParticipantEvent struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ParticipantID pgtype.UUID        `json:"participant_id"`
+	Version       int64              `json:"version"`
+	Kind          string             `json:"kind"`
+	Snapshot      []byte             `json:"snapshot"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
 type ChallengeRun struct {
 	OwnerID        pgtype.UUID        `json:"owner_id"`
 	ID             pgtype.UUID        `json:"id"`
