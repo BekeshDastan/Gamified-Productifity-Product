@@ -23,6 +23,7 @@ import { Card } from "./ui/card";
 import { Input, Select, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
 import { QuestFiltersPanel } from "./quest-filters";
+import { QuickFocusStart } from "./quick-focus";
 import { QuestActions, QuestHistory } from "./quest-actions";
 import { QuestStructure, QuestPicker } from "./quest-structure";
 import { QuestFiles } from "./quest-files";
@@ -139,6 +140,7 @@ export function Quests({ id }: { id?: string }) {
             labels={labels.data}
             onSaved={() => void query.refetch()}
           />
+          <QuickFocusStart key={current.id} quest={current} />
           <QuestActions
             quest={current}
             onChanged={() => {
