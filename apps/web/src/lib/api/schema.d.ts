@@ -4,6 +4,70 @@
  */
 
 export interface paths {
+    "/api/v1/habits/{id}/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getHabitPeriods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/habits/{id}/schedules/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewHabitSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/habits/{id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["restoreHabit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/habits/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["archiveHabit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/habits/{id}/emergency": {
         parameters: {
             query?: never;
@@ -1595,6 +1659,34 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        HabitLogPage: {
+            items: components["schemas"]["HabitLog"][];
+            next_cursor: string | null;
+        };
+        HabitPeriodPage: {
+            items: components["schemas"]["HabitPeriod"][];
+            next_cursor: string | null;
+        };
+        HabitSchedulePreview: {
+            habit_id: string;
+            version: number;
+            effective_from: string;
+            current: components["schemas"]["HabitSchedule"];
+            proposed: components["schemas"]["HabitSchedule"];
+            first_start: string;
+            first_end: string;
+            reason: string;
+        };
+        HabitReasonInput: {
+            reason: string;
+        };
+        HabitArchive: {
+            id: number;
+            archived_at: string;
+            restored_at: string | null;
+            archive_reason: string;
+            restore_reason: string | null;
+        };
         HabitEmergencyInput: {
             period_id: string;
             reason: string;
@@ -1691,6 +1783,7 @@ export interface components {
             stats: components["schemas"]["HabitStats"];
             pauses: components["schemas"]["HabitPause"][];
             as_of: string;
+            archives: components["schemas"]["HabitArchive"][];
         };
         HabitScheduleVersion: {
             version: number;
@@ -2833,6 +2926,161 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getHabitPeriods: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["HabitPeriodPage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    previewHabitSchedule: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                /** @description Версия 0 для создания, текущая положительная версия для изменения */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HabitScheduleChange"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["HabitSchedulePreview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    restoreHabit: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Версия 0 для создания, текущая положительная версия для изменения */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HabitReasonInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["HabitDTO"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    archiveHabit: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+                /** @description Версия 0 для создания, текущая положительная версия для изменения */
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HabitReasonInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["HabitDTO"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     excuseHabitPeriod: {
         parameters: {
             query?: never;
@@ -3001,7 +3249,9 @@ export interface operations {
     };
     getHabitLogs: {
         parameters: {
-            query?: never;
+            query?: {
+                before?: string;
+            };
             header?: never;
             path: {
                 id: string;
@@ -3017,7 +3267,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: components["schemas"]["HabitLog"][];
+                        data: components["schemas"]["HabitLogPage"];
                         meta: components["schemas"]["Meta"];
                     };
                 };

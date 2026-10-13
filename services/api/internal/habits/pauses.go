@@ -45,7 +45,7 @@ func (s *Service) pauses(ctx context.Context, tx pgx.Tx, id, key string) ([]Paus
 	}
 	return out, rows.Err()
 }
-func (s *Service) futureBoundary(h Habit, value string) error {
+func (s *Service) futureBoundary(h Habit, value, field string) error {
 	d, e := date(value)
 	if e != nil {
 		return e
@@ -56,7 +56,7 @@ func (s *Service) futureBoundary(h Habit, value string) error {
 	}
 	a := time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, z)
 	if !a.After(s.clock.Now()) || value < h.StartsOn || (h.EndsOn != nil && value > *h.EndsOn) {
-		return invalid("date", "Выберите ещё не начавшийся период в пределах действия привычки")
+		return invalid(field, "Выберите ещё не начавшийся период в пределах действия привычки")
 	}
 	v := activeSchedule(h, value)
 	start, _ := periodBounds(d, v.Schedule.Frequency, z)
@@ -80,7 +80,7 @@ func (s *Service) addPause(ctx context.Context, tx pgx.Tx, id string, h Habit, i
 	if e := validReason(in.Reason); e != nil {
 		return h, e
 	}
-	if e := s.futureBoundary(h, in.StartsOn); e != nil {
+	if e := s.futureBoundary(h, in.StartsOn, "starts_on"); e != nil {
 		return h, e
 	}
 	if len(h.Pauses) >= 100 {
@@ -91,7 +91,7 @@ func (s *Service) addPause(ctx context.Context, tx pgx.Tx, id string, h Habit, i
 		if e != nil || *in.EndsOn < in.StartsOn {
 			return h, invalid("ends_on", "Конец паузы не раньше начала")
 		}
-		if e = s.futureBoundary(h, d.AddDate(0, 0, 1).Format(time.DateOnly)); e != nil {
+		if e = s.futureBoundary(h, d.AddDate(0, 0, 1).Format(time.DateOnly), "ends_on"); e != nil {
 			return h, e
 		}
 	}
@@ -109,13 +109,16 @@ func (s *Service) addPause(ctx context.Context, tx pgx.Tx, id string, h Habit, i
 	return s.view(ctx, tx, id, h.ID)
 }
 func (s *Service) resume(ctx context.Context, tx pgx.Tx, id string, h Habit, key string, in ResumeInput) (Habit, error) {
+	if h.ArchivedAt != nil {
+		return h, problem(409, "ARCHIVED", "Сначала восстановите привычку")
+	}
 	if !uuid(key) {
 		return h, problem(404, "NOT_FOUND", "Пауза не найдена")
 	}
 	if e := validReason(in.Reason); e != nil {
 		return h, e
 	}
-	if e := s.futureBoundary(h, in.ResumesOn); e != nil {
+	if e := s.futureBoundary(h, in.ResumesOn, "resumes_on"); e != nil {
 		return h, e
 	}
 	var old *Pause
@@ -142,6 +145,9 @@ func (s *Service) resume(ctx context.Context, tx pgx.Tx, id string, h Habit, key
 	return s.view(ctx, tx, id, h.ID)
 }
 func (s *Service) emergency(ctx context.Context, tx pgx.Tx, id string, h Habit, in EmergencyInput) (Habit, error) {
+	if h.ArchivedAt != nil {
+		return h, problem(409, "ARCHIVED", "Сначала восстановите привычку")
+	}
 	if e := validReason(in.Reason); e != nil {
 		return h, e
 	}

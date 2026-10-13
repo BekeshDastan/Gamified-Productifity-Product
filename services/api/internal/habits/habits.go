@@ -39,11 +39,12 @@ type ScheduleVersion struct {
 	Reason        string   `json:"reason"`
 }
 type Habit struct {
-	AsOf    time.Time `json:"as_of"`
-	Pauses  []Pause   `json:"pauses"`
-	Stats   Stats     `json:"stats"`
-	Periods []Period  `json:"periods"`
-	HasMore bool      `json:"has_more"`
+	Archives []ArchiveSpan `json:"archives"`
+	AsOf     time.Time     `json:"as_of"`
+	Pauses   []Pause       `json:"pauses"`
+	Stats    Stats         `json:"stats"`
+	Periods  []Period      `json:"periods"`
+	HasMore  bool          `json:"has_more"`
 	Input
 	ID         string            `json:"id"`
 	Version    int64             `json:"version"`
@@ -208,6 +209,10 @@ func (s *Service) get(ctx context.Context, tx pgx.Tx, id, key string) (Habit, er
 		return h, e
 	}
 	h.Pauses, e = s.pauses(ctx, tx, id, key)
+	if e != nil {
+		return h, e
+	}
+	h.Archives, e = s.archives(ctx, tx, id, key)
 	return h, e
 }
 func (s *Service) create(ctx context.Context, tx pgx.Tx, id string, in Input) (Habit, error) {
@@ -338,6 +343,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		s.mountSchedules(r)
 		s.mountLogs(r)
 		s.mountPauses(r)
+		s.mountHistory(r)
 		r.Get("/api/v1/habits", func(w http.ResponseWriter, r *http.Request) {
 			id, e := owner(r.Context())
 			var out []Habit

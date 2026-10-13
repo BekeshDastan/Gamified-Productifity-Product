@@ -114,12 +114,12 @@ func TestHabitPeriodsDedupeAndTimezone(t *testing.T) {
 func readHabitLogs(t *testing.T, r authResponse) []habits.Log {
 	t.Helper()
 	var out struct {
-		Data []habits.Log `json:"data"`
+		Data habits.LogPage `json:"data"`
 	}
 	if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
 		t.Fatalf("logs %d %s", r.status, r.body)
 	}
-	return out.Data
+	return out.Data.Items
 }
 func TestHabitQuantitativeLogsAndCorrections(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
@@ -238,5 +238,102 @@ func TestHabitFuturePausesAndEmergencyCannotHidePast(t *testing.T) {
 	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/emergency", habitVersion(h), habits.EmergencyInput{PeriodID: h.Periods[2].ID, Reason: "Непредвиденное обстоятельство"}))
 	if h.Periods[2].State != "rest" || h.Periods[2].EmergencyReason == "" || h.Stats.Successful != 0 || h.Stats.Missed != 1 {
 		t.Fatal("emergency counted as success or hid past", h)
+	}
+}
+func TestHabitArchivePreviewAndPersistentTimezone(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "habit-history@example.test")
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", habitInput()))
+	path := "/habits/" + h.ID
+	in := habits.ScheduleChange{EffectiveFrom: "2026-10-19", Schedule: habits.Schedule{Frequency: "weekly", Target: 100}, Reason: "Новая недельная норма"}
+	r := f.privateRequest(t, a, "POST", path+"/schedules/preview", habitVersion(h), in)
+	var preview struct {
+		Data habits.SchedulePreview `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &preview) != nil || preview.Data.Proposed.Target != 100 || preview.Data.FirstEnd.Format(time.DateOnly) != "2026-10-26" {
+		t.Fatal("preview", r.status, string(r.body))
+	}
+	fresh := readHabit(t, f.privateRequest(t, a, "GET", path, "", nil))
+	if fresh.Version != h.Version || len(fresh.Schedules) != 1 {
+		t.Fatal("preview wrote state")
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/archive", habitVersion(h), habits.ReasonInput{Reason: "Убираю на время"}))
+	if h.ArchivedAt == nil || len(h.Archives) != 1 {
+		t.Fatal(h)
+	}
+	f.clock.Advance(48 * time.Hour)
+	if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+		t.Fatal(r.status)
+	}
+	if _, e := f.pool.Exec(t.Context(), `UPDATE user_settings SET preferences=jsonb_set(preferences,'{timezone}',to_jsonb('Pacific/Kiritimati'::text)) WHERE owner_id=$1`, account.ID); e != nil {
+		t.Fatal(e)
+	}
+	h = readHabit(t, f.privateRequest(t, a, "GET", path, "", nil))
+	if len(h.Periods) != 1 || h.Timezone != "UTC" || h.Periods[0].Key != "daily:2026-10-12" {
+		t.Fatal("archive generated or timezone rewrote", h)
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/restore", habitVersion(h), habits.ReasonInput{Reason: "Возвращаюсь"}))
+	if h.ArchivedAt != nil || h.Archives[0].RestoredAt == nil || len(h.Periods) != 1 {
+		t.Fatal("retro obligations after restore", h)
+	}
+	f.clock.Advance(24 * time.Hour)
+	if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+		t.Fatal(r.status)
+	}
+	h = readHabit(t, f.privateRequest(t, a, "GET", path, "", nil))
+	if len(h.Periods) != 2 || h.Periods[1].Key != "daily:2026-10-15" {
+		t.Fatal(h.Periods)
+	}
+}
+func TestHabitMaterializeContinuationAndHistoryPagination(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "habit-long@example.test")
+	in := habitInput()
+	in.StartsOn = "2024-10-12"
+	in.Schedule.Weekdays = []int{1, 2, 3, 4, 5, 6, 7}
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", in))
+	if !h.HasMore {
+		t.Fatal("silent materialization cutoff")
+	}
+	h = readHabit(t, f.privateRequest(t, a, "GET", "/habits/"+h.ID, "", nil))
+	if h.HasMore || len(h.Periods) != 120 || h.Stats.Missed < 700 {
+		t.Fatal("continuation or stats", h.Stats, len(h.Periods), h.HasMore)
+	}
+	readPage := func(path string) habits.PeriodPage {
+		r := f.privateRequest(t, a, "GET", path, "", nil)
+		var out struct {
+			Data habits.PeriodPage `json:"data"`
+		}
+		if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+			t.Fatal(r.status, string(r.body))
+		}
+		return out.Data
+	}
+	path := "/habits/" + h.ID
+	first := readPage(path + "/periods")
+	if len(first.Items) != 60 || first.NextCursor == nil {
+		t.Fatal(first)
+	}
+	second := readPage(path + "/periods?before=" + *first.NextCursor)
+	if len(second.Items) != 60 || !second.Items[0].Start.Before(first.Items[59].Start) {
+		t.Fatal("period pagination", second)
+	}
+	p := h.Periods[len(h.Periods)-1]
+	for i := 0; i < 105; i++ {
+		if _, e := f.pool.Exec(t.Context(), `INSERT INTO habit_logs(owner_id,habit_id,period_id,amount,original_amount,occurred_at,accepted_at,backfilled) VALUES($1,$2,$3,0.1,0.1,$4,$4,false)`, account.ID, h.ID, p.ID, f.clock.Now()); e != nil {
+			t.Fatal(e)
+		}
+	}
+	r := f.privateRequest(t, a, "GET", path+"/logs", "", nil)
+	var logs struct {
+		Data habits.LogPage `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &logs) != nil || len(logs.Data.Items) != 100 || logs.Data.NextCursor == nil {
+		t.Fatal("log page", r.status, string(r.body))
+	}
+	cursor := *logs.Data.NextCursor
+	r = f.privateRequest(t, a, "GET", path+"/logs?before="+cursor, "", nil)
+	if r.status != 200 || json.Unmarshal(r.body, &logs) != nil || len(logs.Data.Items) != 5 || logs.Data.NextCursor != nil {
+		t.Fatal("log tail", r.status, string(r.body))
 	}
 }

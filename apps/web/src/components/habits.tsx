@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWatch } from "react-hook-form";
 import { DateTime } from "luxon";
@@ -19,11 +19,12 @@ import {
   type HabitPeriod,
 } from "@/lib/habits";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
-import { SafeLink } from "@/lib/forms/unsaved-changes";
+import { SafeLink, useConfirmDiscard } from "@/lib/forms/unsaved-changes";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
+import { HabitHistory } from "./habit-history";
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const stateLabels = {
   open: "Период открыт",
@@ -46,14 +47,26 @@ function useRequestKey() {
   };
 }
 export function Habits() {
-  const data = useHabits(),
+  const [archived, setArchived] = useState(false),
+    discard = useConfirmDiscard();
+  const data = useHabits(archived),
     changed = useHabitChanged();
   return (
     <>
-      <Card>
-        <h2>Новая привычка</h2>
-        <HabitCreate changed={changed} />
-      </Card>
+      <Button
+        variant="secondary"
+        onClick={() => {
+          if (discard()) setArchived(!archived);
+        }}
+      >
+        {archived ? "Показать активные" : "Показать архив"}
+      </Button>
+      {!archived && (
+        <Card>
+          <h2>Новая привычка</h2>
+          <HabitCreate changed={changed} />
+        </Card>
+      )}
       {data.isPending && <p role="status">Загружаем привычки…</p>}
       {data.isError && (
         <p role="alert">
@@ -63,7 +76,7 @@ export function Habits() {
       )}
       {data.data?.length === 0 && (
         <Card>
-          <h2>Начните с малого</h2>
+          <h2>{archived ? "Архив пуст" : "Начните с малого"}</h2>
           <p>Добавьте одну привычку и удобную норму. Незапланированные дни не разрывают серию.</p>
         </Card>
       )}
@@ -286,6 +299,7 @@ export function HabitCard({
           )}
           {!compact && (
             <>
+              <HabitHistory habit={h} changed={changed} />
               <details>
                 <summary>Календарь отметок</summary>
                 <p className="ui-hint">
@@ -302,7 +316,7 @@ export function HabitCard({
                   ))}
                 </ul>
               </details>
-              <details>
+              <details hidden={!!h.archived_at}>
                 <summary>Пауза и экстренный пропуск</summary>
                 <HabitPauseForm key={"pause:" + h.version} habit={h} changed={changed} />
                 {current && !current.excluded && current.state === "open" && (

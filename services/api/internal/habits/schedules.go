@@ -84,6 +84,26 @@ func (s *Service) scheduleChange(ctx context.Context, tx pgx.Tx, id string, h Ha
 	if !a.Equal(oldStart) || !a.Equal(newStart) {
 		return h, invalid("effective_from", "Изменение начинается на общей границе прежнего и нового периодов")
 	}
+	for _, p := range h.Pauses {
+		if p.EndsOn != nil && *p.EndsOn < in.EffectiveFrom {
+			continue
+		}
+		if p.StartsOn >= in.EffectiveFrom {
+			day, _ := date(p.StartsOn)
+			bound, _ := periodBounds(day, next.Frequency, z)
+			if bound.Format(time.DateOnly) != p.StartsOn {
+				return h, invalid("effective_from", "Новое расписание несовместимо с началом сохранённой паузы")
+			}
+		}
+		if p.EndsOn != nil {
+			day, _ := date(*p.EndsOn)
+			day = day.AddDate(0, 0, 1)
+			bound, _ := periodBounds(day, next.Frequency, z)
+			if bound.Format(time.DateOnly) != day.Format(time.DateOnly) {
+				return h, invalid("effective_from", "Новое расписание несовместимо с окончанием сохранённой паузы")
+			}
+		}
+	}
 	candidate := h.Input
 	candidate.Schedule = next
 	if _, e = Validate(candidate); e != nil {

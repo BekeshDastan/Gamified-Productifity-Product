@@ -112,8 +112,28 @@ func (s *Service) correct(ctx context.Context, tx pgx.Tx, id string, h Habit, ke
 	}
 	return s.view(ctx, tx, id, h.ID)
 }
-func (s *Service) logs(ctx context.Context, tx pgx.Tx, id string, h Habit) ([]Log, error) {
-	rows, e := tx.Query(ctx, `SELECT id::text,period_id::text,amount,original_amount,occurred_at,accepted_at,backfilled FROM habit_logs WHERE owner_id=$1 AND habit_id=$2 ORDER BY accepted_at DESC,id DESC LIMIT 100`, id, h.ID)
+
+type LogPage struct {
+	Items      []Log   `json:"items"`
+	NextCursor *string `json:"next_cursor"`
+}
+
+func (s *Service) logs(ctx context.Context, tx pgx.Tx, id string, h Habit, before string) ([]Log, error) {
+	var cursor *string
+	if before != "" {
+		if !uuid(before) {
+			return nil, invalid("before", "Некорректная граница истории")
+		}
+		var exists bool
+		if e := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM habit_logs WHERE owner_id=$1 AND habit_id=$2 AND id=$3)`, id, h.ID, before).Scan(&exists); e != nil {
+			return nil, e
+		}
+		if !exists {
+			return nil, problem(404, "NOT_FOUND", "Отметка границы не найдена")
+		}
+		cursor = &before
+	}
+	rows, e := tx.Query(ctx, `SELECT id::text,period_id::text,amount,original_amount,occurred_at,accepted_at,backfilled FROM habit_logs WHERE owner_id=$1 AND habit_id=$2 AND ($3::uuid IS NULL OR (accepted_at,id)<(SELECT accepted_at,id FROM habit_logs WHERE owner_id=$1 AND habit_id=$2 AND id=$3)) ORDER BY accepted_at DESC,id DESC LIMIT 101`, id, h.ID, cursor)
 	if e != nil {
 		return nil, e
 	}
@@ -183,7 +203,7 @@ func (s *Service) mountLogs(r chi.Router) {
 	})
 	r.Get("/api/v1/habits/{id}/logs", func(w http.ResponseWriter, r *http.Request) {
 		id, e := owner(r.Context())
-		var out []Log
+		out := LogPage{Items: []Log{}}
 		if e == nil {
 			tx, err := s.pool.Begin(r.Context())
 			e = err
@@ -192,7 +212,16 @@ func (s *Service) mountLogs(r chi.Router) {
 				h, err := s.get(r.Context(), tx, id, chi.URLParam(r, "id"))
 				e = err
 				if e == nil {
-					out, e = s.logs(r.Context(), tx, id, h)
+					var logs []Log
+					logs, e = s.logs(r.Context(), tx, id, h, r.URL.Query().Get("before"))
+					if e == nil {
+						out.Items = logs
+						if len(logs) > 100 {
+							out.Items = logs[:100]
+							cursor := out.Items[99].ID
+							out.NextCursor = &cursor
+						}
+					}
 				}
 				if e == nil {
 					e = tx.Commit(r.Context())

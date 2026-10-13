@@ -37,6 +37,15 @@ export const habitPeriod = z.object({
 });
 export const habitSchema = habitInput.extend({
   as_of: z.string(),
+  archives: z.array(
+    z.object({
+      id: z.number().int(),
+      archived_at: z.string(),
+      restored_at: z.string().nullable(),
+      archive_reason: z.string(),
+      restore_reason: z.string().nullable(),
+    }),
+  ),
   id: z.uuid(),
   version: z.number().int(),
   timezone: z.string(),
@@ -186,7 +195,7 @@ export async function getHabitLogs(h: Habit, signal?: AbortSignal) {
     params: { path: { id: h.id } },
     signal,
   });
-  return z.array(habitLog).parse(r.data?.data);
+  return habitLogPage.parse(r.data?.data).items;
 }
 export async function correctHabitLog(
   h: Habit,
@@ -201,6 +210,79 @@ export async function correctHabitLog(
       params: { ...params(h, key), path: { id: h.id, log } },
       body: input,
     });
+    return habitSchema.parse(r.data?.data);
+  });
+}
+export const habitLogPage = z.object({
+  items: z.array(habitLog),
+  next_cursor: z.string().nullable(),
+});
+export const habitPeriodPage = z.object({
+  items: z.array(habitPeriod),
+  next_cursor: z.string().nullable(),
+});
+export const habitScheduleChange = z.object({
+  effective_from: z.iso.date(),
+  schedule: habitSchedule,
+  reason: z.string().trim().min(1, "Укажите причину").max(1000),
+});
+export const habitSchedulePreview = z.object({
+  habit_id: z.uuid(),
+  version: z.number().int(),
+  effective_from: z.string(),
+  current: habitSchedule,
+  proposed: habitSchedule,
+  first_start: z.string(),
+  first_end: z.string(),
+  reason: z.string(),
+});
+export type HabitScheduleChange = z.infer<typeof habitScheduleChange>;
+export type HabitSchedulePreview = z.infer<typeof habitSchedulePreview>;
+export async function getHabitLogPage(h: Habit, before?: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/habits/{id}/logs", {
+    params: { path: { id: h.id }, query: { before } },
+    signal,
+  });
+  return habitLogPage.parse(r.data?.data);
+}
+export async function getHabitPeriodPage(h: Habit, before?: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/habits/{id}/periods", {
+    params: { path: { id: h.id }, query: { before } },
+    signal,
+  });
+  return habitPeriodPage.parse(r.data?.data);
+}
+export async function previewHabitSchedule(h: Habit, input: HabitScheduleChange) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    const r = await api.POST("/api/v1/habits/{id}/schedules/preview", {
+      params: params(h, crypto.randomUUID()),
+      body: input,
+    });
+    return habitSchedulePreview.parse(r.data?.data);
+  });
+}
+export async function changeHabitSchedule(h: Habit, input: HabitScheduleChange, key: string) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    const r = await api.POST("/api/v1/habits/{id}/schedules", {
+      params: params(h, key),
+      body: input,
+    });
+    return habitSchema.parse(r.data?.data);
+  });
+}
+export async function archiveHabit(h: Habit, restore: boolean, reason: string, key: string) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    const r = restore
+      ? await api.POST("/api/v1/habits/{id}/restore", { params: params(h, key), body: { reason } })
+      : await api.POST("/api/v1/habits/{id}/archive", { params: params(h, key), body: { reason } });
     return habitSchema.parse(r.data?.data);
   });
 }
