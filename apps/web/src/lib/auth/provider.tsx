@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { clearPrivateDrafts } from "@/lib/private-drafts";
 import { ApiError } from "@/lib/api/client";
 import { authClient, authParams, loadSession, withAuthLock, type Session } from "./session";
 
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await loadSession();
       if (ticket === generation.current) {
+        if (!result) clearPrivateDrafts();
         setSession(result);
         setError(null);
       }
@@ -44,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
   const adopt = useCallback((result: Session | null) => {
     generation.current++;
+    clearPrivateDrafts();
     setSession(result);
     setError(null);
     channel.current?.postMessage(result ? "changed" : "signed-out");
@@ -73,10 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       broadcast.onmessage = (event: MessageEvent<unknown>) => {
         if (event.data === "signed-out") {
           generation.current++;
+          clearPrivateDrafts();
           setSession(null);
           setError(null);
         } else if (event.data === "changed") {
           generation.current++;
+          clearPrivateDrafts();
           setSession(undefined);
           void reload();
         }

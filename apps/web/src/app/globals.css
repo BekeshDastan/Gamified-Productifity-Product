@@ -1774,3 +1774,23 @@ html[data-motion="reduce"] *::after {
   gap: 1.25rem;
   min-width: 0;
 }
+
+.journal-layout {
+  display: grid;
+  gap: 1.25rem;
+}
+.journal-body {
+  min-height: 14rem;
+  resize: vertical;
+}
+.journal-markdown {
+  overflow-wrap: anywhere;
+  margin-top: 1rem;
+}
+.journal-markdown pre {
+  white-space: pre-wrap;
+}
+.journal-layout article {
+  border-top: 1px solid var(--line);
+  padding-block: 1rem;
+}
