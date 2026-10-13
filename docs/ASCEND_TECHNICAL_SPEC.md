@@ -1803,7 +1803,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** До покупки видно последствие; недостаточный баланс не выглядит успешной выдачей.
   - **КОММИТ СЕЙЧАС:** `feat(rewards-ui): add shop purchase confirmation and history`
 
-- [ ] **C101. Боссы по целям**
+- [x] **C101. Боссы по целям**
   - **Сделать:** Создать boss и обязательные этапы с HP из прогресса цели, pause/resume и визуальным статусом.
   - **Проверить:** Выполнение/отмена этапа меняет HP симметрично; самостоятельный двойной XP не выдаётся.
   - **КОММИТ СЕЙЧАС:** `feat(bosses): derive boss stages and health from goal progress`

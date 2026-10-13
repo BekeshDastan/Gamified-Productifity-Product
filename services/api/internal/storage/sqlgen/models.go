@@ -82,6 +82,28 @@ type AuthSession struct {
 	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
 }
 
+type Boss struct {
+	ID                 pgtype.UUID        `json:"id"`
+	OwnerID            pgtype.UUID        `json:"owner_id"`
+	GoalID             pgtype.UUID        `json:"goal_id"`
+	State              string             `json:"state"`
+	Version            int64              `json:"version"`
+	LastGoalVersion    int64              `json:"last_goal_version"`
+	VictoryGoalVersion pgtype.Int8        `json:"victory_goal_version"`
+	WonAt              pgtype.Timestamptz `json:"won_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+type BossEvent struct {
+	ID        int64              `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	BossID    pgtype.UUID        `json:"boss_id"`
+	Snapshot  []byte             `json:"snapshot"`
+	Reason    string             `json:"reason"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type CalendarEvent struct {
 	ID            pgtype.UUID        `json:"id"`
 	OwnerID       pgtype.UUID        `json:"owner_id"`

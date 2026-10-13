@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/rewards"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"sync"
@@ -194,5 +195,69 @@ func TestRewardCancelUsesOriginalCostOnceAndClaimCannotRefund(t *testing.T) {
 	claimed := readRedemption(t, f.privateRequest(t, a, "POST", "/rewards/redemptions/"+purchase.ID+"/claim", fmt.Sprintf(`"%d"`, purchase.Version), map[string]string{}))
 	if r := f.privateRequest(t, a, "POST", "/rewards/redemptions/"+purchase.ID+"/cancel", fmt.Sprintf(`"%d"`, claimed.Version), map[string]string{}); r.status != 409 {
 		t.Fatal("claimed refund", r.status)
+	}
+}
+
+func readBoss(t *testing.T, r authResponse) rewards.Boss {
+	t.Helper()
+	var result struct{ Data rewards.Boss }
+	if r.status != 200 || json.Unmarshal(r.body, &result) != nil {
+		t.Fatalf("boss %d %s", r.status, r.body)
+	}
+	return result.Data
+}
+func TestBossHPVictoryCorrectionAndNoDuplicateXP(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, owner := f.signedIn(t, "boss-source@example.test")
+	g := readGoal(t, f.privateRequest(t, a, "POST", "/goals", "", goals.Create{Input: goalInput("Большой результат"), State: "active"}))
+	if r := f.privateRequest(t, a, "POST", "/bosses", "", map[string]string{"goal_id": g.ID}); r.status != 422 {
+		t.Fatal("missing required stages", r.status)
+	}
+	qi := questInput("Обязательный шаг")
+	qi.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", qi))
+	g = readGoal(t, f.privateRequest(t, a, "PUT", "/goals/"+g.ID+"/links/"+q.ID, goalVersion(g), goals.LinkInput{Required: true, Weight: 1}))
+	b := readBoss(t, f.privateRequest(t, a, "POST", "/bosses", "", map[string]string{"goal_id": g.ID}))
+	if b.HP != 100 || len(b.Stages) != 1 {
+		t.Fatal(b)
+	}
+	get := func() rewards.Boss {
+		r := f.privateRequest(t, a, "GET", "/bosses", "", nil)
+		var out struct{ Data []rewards.Boss }
+		if r.status != 200 || json.Unmarshal(r.body, &out) != nil || len(out.Data) != 1 {
+			t.Fatal(string(r.body))
+		}
+		return out.Data[0]
+	}
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{}))
+	if b = get(); b.HP != 0 || b.Status != "awaiting_confirmation" {
+		t.Fatal("premature victory", b)
+	}
+	g = readGoal(t, f.privateRequest(t, a, "GET", "/goals/"+g.ID, "", nil))
+	readGoal(t, f.privateRequest(t, a, "POST", "/goals/"+g.ID+"/achieve", goalVersion(g), goals.Transition{Reason: "Проверил критерий", CriteriaConfirmed: true}))
+	if b = get(); b.Status != "victory" || b.WonAt == nil {
+		t.Fatal(b)
+	}
+	var xp int64
+	if e := f.pool.QueryRow(t.Context(), "SELECT total_xp FROM user_progress WHERE owner_id=$1", owner.ID).Scan(&xp); e != nil || xp != 25 {
+		t.Fatal("boss doubled XP", xp, e)
+	}
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]string{}))
+	if b = get(); b.HP != 100 || b.Status == "victory" {
+		t.Fatal("asymmetric HP", b)
+	}
+	p := readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	for _, title := range p.Titles {
+		if title.ID == "boss:victory" && title.Earned {
+			t.Fatal("corrected victory title remains")
+		}
+	}
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{}))
+	g = readGoal(t, f.privateRequest(t, a, "GET", "/goals/"+g.ID, "", nil))
+	readGoal(t, f.privateRequest(t, a, "POST", "/goals/"+g.ID+"/achieve", goalVersion(g), goals.Transition{Reason: "Восстановил подтверждение", CriteriaConfirmed: true}))
+	get()
+	var grants int
+	if e := f.pool.QueryRow(t.Context(), "SELECT count(*) FROM cosmetic_permanent_grants WHERE owner_id=$1 AND source_kind='boss' AND active", owner.ID).Scan(&grants); e != nil || grants != 1 {
+		t.Fatal("duplicate victory grant", grants, e)
 	}
 }

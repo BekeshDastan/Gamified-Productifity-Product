@@ -79,6 +79,9 @@ func (s *Service) EvaluateInTx(ctx context.Context, tx pgx.Tx, owner string) err
 	if _, e := s.progress.RebuildInTx(ctx, tx, owner); e != nil {
 		return e
 	}
+	if e := s.reconcileBossRewards(ctx, tx, owner); e != nil {
+		return e
+	}
 	achievementsChanged, e := s.evaluateAchievements(ctx, tx, owner)
 	if e != nil {
 		return e

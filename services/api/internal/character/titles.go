@@ -43,6 +43,11 @@ func (s *Service) titles(ctx context.Context, tx pgx.Tx, owner string, level int
 		}
 		out = append(out, Title{"achievement:" + special.id, special.name, special.requirement, active})
 	}
+	var victory bool
+	if e := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM cosmetic_permanent_grants WHERE owner_id=$1 AND source_kind='boss' AND active)", owner).Scan(&victory); e != nil {
+		return out, e
+	}
+	out = append(out, Title{"boss:victory", "Победитель босса", "Подтверждённая победа над боссом цели", victory})
 	return out, nil
 }
 func entitledTitle(id string, titles []Title) bool {
