@@ -1783,6 +1783,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/character/title": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["selectCharacterTitle"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2764,6 +2780,9 @@ export interface components {
             level: components["schemas"]["ProgressionLevel"];
             inventory: components["schemas"]["CosmeticItem"][];
             areas: components["schemas"]["CharacterArea"][];
+            title: string;
+            titles: components["schemas"]["CharacterTitle"][];
+            records: components["schemas"]["CharacterRecord"][];
         };
         EquipmentInput: {
             /** @enum {string} */
@@ -2805,6 +2824,27 @@ export interface components {
             revoked: boolean;
             /** Format: date-time */
             awarded_at: string | null;
+        };
+        CharacterTitle: {
+            id: string;
+            name: string;
+            requirement: string;
+            earned: boolean;
+        };
+        CharacterRecord: {
+            id: string;
+            name: string;
+            value: number | null;
+            unit: string;
+            available: boolean;
+            explanation: string;
+            sources: {
+                title: string;
+                url: string;
+            }[];
+        };
+        CharacterTitleInput: {
+            title_id: string;
         };
     };
     responses: {
@@ -6910,6 +6950,42 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["AchievementStatus"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    selectCharacterTitle: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "If-Match": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CharacterTitleInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CharacterProfile"];
                         meta: components["schemas"]["Meta"];
                     };
                 };

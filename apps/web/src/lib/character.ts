@@ -29,6 +29,21 @@ export const characterSchema = z.object({
     frame: z.string(),
   }),
   title_id: z.string(),
+  title: z.string(),
+  titles: z.array(
+    z.object({ id: z.string(), name: z.string(), requirement: z.string(), earned: z.boolean() }),
+  ),
+  records: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      value: integer.nullable(),
+      unit: z.string(),
+      available: z.boolean(),
+      explanation: z.string(),
+      sources: z.array(z.object({ title: z.string(), url: z.string().regex(/^\/app\//) })),
+    }),
+  ),
   level: progressionBalance.shape.level,
   inventory: z.array(
     z.object({
@@ -103,6 +118,25 @@ export async function equipCharacter(
         },
       },
       body: { slot, item_id: id },
+    });
+    return characterSchema.parse(r.data?.data);
+  });
+}
+
+export async function selectCharacterTitle(p: CharacterProfile, id: string, key: string) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    const r = await api.PATCH("/api/v1/character/title", {
+      params: {
+        ...authParams(),
+        header: {
+          ...authParams().header,
+          "If-Match": '"' + p.version + '"',
+          "Idempotency-Key": key,
+        },
+      },
+      body: { title_id: id },
     });
     return characterSchema.parse(r.data?.data);
   });

@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/api/client";
 import {
   useCharacter,
   equipCharacter,
+  selectCharacterTitle,
   slots,
   slotNames,
   type CharacterProfile,
@@ -39,6 +40,8 @@ export function Character() {
         Обновить персонажа
       </Button>
       <CharacterEquipment profile={query.data} />
+      <ProfileTitles profile={query.data} />
+      <ProfileRecords records={query.data.records} />
       <SkillTrees areas={query.data.areas} />
     </>
   );
@@ -76,6 +79,7 @@ function CharacterEquipment({ profile: p }: { profile: CharacterProfile }) {
     <div className="character-layout">
       <Card>
         <h2>Ваш образ · уровень {p.level.number}</h2>
+        <p>Титул: {p.title}</p>
         <div
           className="character-avatar"
           role="img"
@@ -243,6 +247,87 @@ export function SkillTrees({ areas }: { areas: CharacterProfile["areas"] }) {
           </section>
         ))
       )}
+    </Card>
+  );
+}
+
+function ProfileTitles({ profile: p }: { profile: CharacterProfile }) {
+  const auth = useAuth(),
+    cache = useQueryClient(),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    lockedRef = useRef(false),
+    keyRef = useRef({ body: "", key: "" });
+  async function choose(id: string) {
+    if (lockedRef.current) return;
+    lockedRef.current = true;
+    setBusy(true);
+    setError("");
+    const body = JSON.stringify({ id, version: p.version });
+    if (keyRef.current.body !== body) keyRef.current = { body, key: crypto.randomUUID() };
+    try {
+      const saved = await selectCharacterTitle(p, id, keyRef.current.key);
+      cache.setQueryData(["account", auth.session?.account.id, "character"], saved);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Не удалось выбрать титул. Попробуйте снова.");
+    } finally {
+      lockedRef.current = false;
+      setBusy(false);
+    }
+  }
+  return (
+    <Card>
+      <h2>Ваш титул</h2>
+      <p>Сейчас: {p.title}</p>
+      {error && <p role="alert">{error}</p>}
+      <ul className="character-titles">
+        {p.titles.map((t) => (
+          <li key={t.id}>
+            <strong>{t.name}</strong>
+            <p className="ui-hint">{t.requirement}</p>
+            {t.id === p.title_id ? (
+              <p>Выбран</p>
+            ) : t.earned ? (
+              <Button variant="secondary" disabled={busy} onClick={() => void choose(t.id)}>
+                Выбрать титул {t.name}
+              </Button>
+            ) : (
+              <p>Ещё не получен</p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+function ProfileRecords({ records }: { records: CharacterProfile["records"] }) {
+  return (
+    <Card>
+      <h2>Личные рекорды</h2>
+      <div className="record-grid">
+        {records.map((r) => (
+          <section key={r.id}>
+            <h3>{r.name}</h3>
+            <p>
+              <strong>
+                {r.available
+                  ? r.value === null
+                    ? "Ещё нет подтверждённого результата"
+                    : r.value + " " + r.unit
+                  : "Пока недоступно"}
+              </strong>
+            </p>
+            <p className="ui-hint">{r.explanation}</p>
+            <ul>
+              {r.sources.map((s) => (
+                <li key={s.url}>
+                  <SafeLink href={s.url}>{s.title}</SafeLink>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
     </Card>
   );
 }

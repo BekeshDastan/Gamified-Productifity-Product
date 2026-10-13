@@ -1703,3 +1703,21 @@ html[data-motion="reduce"] *::after {
   width: 100%;
   accent-color: var(--primary);
 }
+.character-titles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  list-style: none;
+  padding: 0;
+  gap: 20px;
+}
+.character-titles li,
+.record-grid section {
+  border: 1px solid var(--border);
+  padding: 16px;
+  border-radius: 16px;
+}
+.record-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 20px;
+}

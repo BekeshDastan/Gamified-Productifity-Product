@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/character"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
@@ -186,5 +187,71 @@ func TestCharacterAchievementEventsRepeatsCorrectionsAndMassRecompute(t *testing
 		if (d.Metric == character.FocusSessions || d.Metric == character.CompletedSeasons || d.Metric == character.CoopChallenges) && (d.Active || d.Available) {
 			t.Fatal("invented unavailable evidence", d)
 		}
+	}
+}
+
+func TestCharacterTitlesAndRecordsFollowCorrectedEvidence(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "record-a@example.test")
+	b, _ := f.signedIn(t, "record-b@example.test")
+	in := habitInput()
+	in.StartsOn = "2026-10-05"
+	in.Schedule.Weekdays = []int{1, 2, 3, 4, 5, 6, 7}
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", in))
+	periods := append([]habits.Period{}, h.Periods...)
+	for _, p := range periods {
+		if !p.End.After(f.clock.Now()) {
+			h = readHabit(t, f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs", habitVersion(h), habits.LogInput{PeriodID: p.ID, Amount: 20, OccurredAt: p.Start.Add(time.Hour)}))
+		}
+	}
+	p := readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	record := func(p character.Profile, id string) *int64 {
+		for _, r := range p.Records {
+			if r.ID == id {
+				if id != "longest-focus" && len(r.Sources) == 0 {
+					t.Fatal("record without evidence", r)
+				}
+				return r.Value
+			}
+		}
+		return nil
+	}
+	if v := record(p, "best-streak"); v == nil || *v != 7 {
+		t.Fatal("best", p.Records)
+	}
+	if v := record(p, "weekly-regularity"); v == nil || *v != 100 {
+		t.Fatal("weekly", p.Records)
+	}
+	if v := record(p, "longest-focus"); v != nil {
+		t.Fatal("invented focus")
+	}
+	if r := f.privateRequest(t, a, "PATCH", "/character/title", characterVersion(p), map[string]string{"title_id": "level:50"}); r.status != 409 {
+		t.Fatal("unearned level title", r.status)
+	}
+	p = readCharacter(t, f.privateRequest(t, a, "PATCH", "/character/title", characterVersion(p), map[string]string{"title_id": "achievement:streak-7"}))
+	other := readCharacter(t, f.privateRequest(t, b, "GET", "/character", "", nil))
+	if r := f.privateRequest(t, b, "PATCH", "/character/title", characterVersion(other), map[string]string{"title_id": p.TitleID}); r.status != 409 {
+		t.Fatal("foreign achievement title", r.status)
+	}
+	logs := readHabitLogs(t, f.privateRequest(t, a, "GET", "/habits/"+h.ID+"/logs", "", nil))
+	logID := ""
+	for _, log := range logs {
+		if log.OccurredAt.UTC().Format(time.DateOnly) == "2026-10-11" {
+			logID = log.ID
+		}
+	}
+	if logID == "" {
+		t.Fatal("missing source log")
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs/"+logID+"/correct", habitVersion(h), habits.CorrectionInput{Amount: 0, Reason: "Отметка была ошибочной"}))
+	p = readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	if p.TitleID != "level:auto" {
+		t.Fatal("unearned corrected title", p.TitleID)
+	}
+	if v := record(p, "best-streak"); v == nil || *v != 6 {
+		t.Fatal("stale best", p.Records)
+	}
+	if v := record(p, "weekly-regularity"); v == nil || *v != 85 {
+		t.Fatal("stale weekly", p.Records)
 	}
 }

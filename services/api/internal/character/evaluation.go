@@ -64,7 +64,7 @@ func (s *Service) evaluateAchievements(ctx context.Context, tx pgx.Tx, owner str
 	return changed, nil
 }
 func (s *Service) achievementStatuses(ctx context.Context, tx pgx.Tx, owner string) ([]AchievementStatus, error) {
-	f, _, _, e := s.facts(ctx, tx, owner)
+	f, _, _, e := s.facts(ctx, tx, owner, false)
 	out := []AchievementStatus{}
 	if e != nil {
 		return out, e

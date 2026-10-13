@@ -30,6 +30,9 @@ type InventoryItem struct {
 	Revoked bool   `json:"revoked"`
 }
 type Profile struct {
+	Title          string            `json:"title"`
+	Titles         []Title           `json:"titles"`
+	Records        []Record          `json:"records"`
 	Areas          []Area            `json:"areas"`
 	Version        int64             `json:"version"`
 	CatalogVersion string            `json:"catalog_version"`
@@ -84,14 +87,23 @@ func (s *Service) EvaluateInTx(ctx context.Context, tx pgx.Tx, owner string) err
 		return e
 	}
 	var equipment map[string]string
+	var titleID string
 	var b []byte
-	if e = tx.QueryRow(ctx, "SELECT equipment FROM character_profiles WHERE owner_id=$1 FOR UPDATE", owner).Scan(&b); e != nil {
+	if e = tx.QueryRow(ctx, "SELECT equipment,title_id FROM character_profiles WHERE owner_id=$1 FOR UPDATE", owner).Scan(&b, &titleID); e != nil {
 		return e
 	}
 	if e = json.Unmarshal(b, &equipment); e != nil {
 		return e
 	}
 	changed := achievementsChanged
+	titles, e := s.titles(ctx, tx, owner, balance.Level.Number)
+	if e != nil {
+		return e
+	}
+	if !entitledTitle(titleID, titles) {
+		titleID = "level:auto"
+		changed = true
+	}
 	for _, i := range Catalog() {
 		active := i.Starter || balance.Level.Number >= i.Level
 		source := "level"
@@ -133,7 +145,7 @@ func (s *Service) EvaluateInTx(ctx context.Context, tx pgx.Tx, owner string) err
 		if e != nil {
 			return e
 		}
-		_, e = tx.Exec(ctx, "UPDATE character_profiles SET equipment=$2,version=version+1,updated_at=$3 WHERE owner_id=$1", owner, b, s.clock.Now())
+		_, e = tx.Exec(ctx, "UPDATE character_profiles SET equipment=$2,title_id=$4,version=version+1,updated_at=$3 WHERE owner_id=$1", owner, b, s.clock.Now(), titleID)
 	}
 	return e
 }
@@ -153,6 +165,19 @@ func (s *Service) view(ctx context.Context, tx pgx.Tx, owner string) (Profile, e
 	}
 	var data []byte
 	e = tx.QueryRow(ctx, "SELECT version,equipment,title_id FROM character_profiles WHERE owner_id=$1", owner).Scan(&out.Version, &data, &out.TitleID)
+	if e != nil {
+		return out, e
+	}
+	out.Titles, e = s.titles(ctx, tx, owner, out.Level.Number)
+	if e != nil {
+		return out, e
+	}
+	for _, title := range out.Titles {
+		if title.ID == out.TitleID {
+			out.Title = title.Name
+		}
+	}
+	out.Records, e = s.records(ctx, tx, owner)
 	if e != nil {
 		return out, e
 	}
@@ -254,6 +279,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountAchievements(r)
+		s.mountTitles(r)
 		for _, path := range []string{"/api/v1/character", "/api/v1/character/inventory", "/api/v1/skill-tree"} {
 			r.Get(path, func(w http.ResponseWriter, r *http.Request) {
 				owner, e := currentOwner(r.Context())

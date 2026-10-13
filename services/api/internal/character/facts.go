@@ -6,11 +6,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *Service) facts(ctx context.Context, tx pgx.Tx, owner string) (Facts, []habits.Evidence, bool, error) {
+func (s *Service) facts(ctx context.Context, tx pgx.Tx, owner string, advance ...bool) (Facts, []habits.Evidence, bool, error) {
 	f := Facts{Values: map[Metric]int64{}, Available: map[Metric]bool{}}
 	queries := map[Metric]string{
 		Tasks:          "SELECT count(*) FROM quests q WHERE owner_id=$1 AND status='completed' AND NOT EXISTS(SELECT 1 FROM quests c WHERE c.owner_id=q.owner_id AND c.parent_id=q.id)",
-		ImportantTasks: "SELECT count(*) FROM quests q WHERE owner_id=$1 AND status='completed' AND payload->>'priority' IN('high','critical') AND NOT EXISTS(SELECT 1 FROM quests c WHERE c.owner_id=q.owner_id AND c.parent_id=q.id)",
+		ImportantTasks: "SELECT count(*) FROM quests q WHERE owner_id=$1 AND status='completed' AND payload->>'priority' ='high' AND NOT EXISTS(SELECT 1 FROM quests c WHERE c.owner_id=q.owner_id AND c.parent_id=q.id)",
 		GoalsCreated:   "SELECT count(*) FROM goals WHERE owner_id=$1", GoalsAchieved: "SELECT count(*) FROM goals WHERE owner_id=$1 AND state='achieved'", HabitsCreated: "SELECT count(*) FROM habits WHERE owner_id=$1", ConfirmedPlans: "SELECT count(*) FROM day_plans WHERE owner_id=$1 AND confirmed_at IS NOT NULL", AreasCreated: "SELECT count(*) FROM life_areas WHERE owner_id=$1"}
 	for m, q := range queries {
 		var n int64
@@ -26,7 +26,7 @@ func (s *Service) facts(ctx context.Context, tx pgx.Tx, owner string) (Facts, []
 	}
 	f.Values[PlayerLevel] = balance.Level.Number
 	f.Available[PlayerLevel] = true
-	evidence, ready, e := habits.NewService(s.pool, s.clock).EvidenceInTx(ctx, tx, owner)
+	evidence, ready, e := habits.NewService(s.pool, s.clock).EvidenceInTx(ctx, tx, owner, advance...)
 	if e != nil {
 		return f, nil, false, e
 	}

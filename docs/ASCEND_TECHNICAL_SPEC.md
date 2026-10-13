@@ -1764,7 +1764,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Повтор outbox не выдаёт два достижения; ошибочно полученное отмечается корректно.
   - **КОММИТ СЕЙЧАС:** `feat(achievements): evaluate events with idempotent grants and corrections`
 
-- [ ] **C095. Титулы и рекорды**
+- [x] **C095. Титулы и рекорды**
   - **Сделать:** Подключить уровневые/особые титулы, рекорды и их экран с источниками.
   - **Проверить:** Выбрать чужой/неполученный титул нельзя; рекорд пересчитывается при исправлении данных.
   - **КОММИТ СЕЙЧАС:** `feat(profile): add selectable titles and personal records`

@@ -4830,6 +4830,54 @@ paths:
           $ref: "#/components/responses/Error"
         "429":
           $ref: "#/components/responses/Error"
+  /api/v1/character/title:
+    patch:
+      operationId: selectCharacterTitle
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: If-Match
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CharacterProfile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CharacterTitleInput"
 components:
   requestBodies:
     Empty:
@@ -8475,6 +8523,9 @@ components:
         - level
         - inventory
         - areas
+        - title
+        - titles
+        - records
       properties:
         version:
           type: integer
@@ -8515,6 +8566,16 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CharacterArea"
+        title:
+          type: string
+        titles:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterTitle"
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterRecord"
     EquipmentInput:
       type: object
       additionalProperties: false
@@ -8640,3 +8701,67 @@ components:
             - string
             - "null"
           format: date-time
+    CharacterTitle:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - requirement
+        - earned
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        requirement:
+          type: string
+        earned:
+          type: boolean
+    CharacterRecord:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - value
+        - unit
+        - available
+        - explanation
+        - sources
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        value:
+          type:
+            - integer
+            - "null"
+        unit:
+          type: string
+        available:
+          type: boolean
+        explanation:
+          type: string
+        sources:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - title
+              - url
+            properties:
+              title:
+                type: string
+              url:
+                type: string
+    CharacterTitleInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title_id
+      properties:
+        title_id:
+          type: string
