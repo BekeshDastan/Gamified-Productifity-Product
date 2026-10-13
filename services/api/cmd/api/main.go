@@ -22,6 +22,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/rewards"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 )
 
@@ -83,6 +84,7 @@ func main() {
 	characterService := character.NewService(pool, platform.RealClock{}, rewardService)
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	characterService.Mount(router, sessions.Protect)
+	rewards.NewService(pool, platform.RealClock{}, rewardService, characterService).Mount(router, sessions.Protect)
 	questService := quests.NewService(pool, platform.RealClock{}).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, scanner)
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, platform.RealClock{}, questService)

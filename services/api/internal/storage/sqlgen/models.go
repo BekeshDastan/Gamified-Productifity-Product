@@ -143,6 +143,27 @@ type CosmeticItem struct {
 	Snapshot       []byte `json:"snapshot"`
 }
 
+type CustomReward struct {
+	ID          pgtype.UUID        `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	Cost        int64              `json:"cost"`
+	Available   bool               `json:"available"`
+	Archived    bool               `json:"archived"`
+	Version     int64              `json:"version"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type CustomRewardVersion struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	RewardID  pgtype.UUID        `json:"reward_id"`
+	Version   int64              `json:"version"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type DayPlan struct {
 	ID          pgtype.UUID        `json:"id"`
 	OwnerID     pgtype.UUID        `json:"owner_id"`

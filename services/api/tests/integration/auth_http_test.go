@@ -27,6 +27,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/rewards"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -70,6 +71,7 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	characterService := character.NewService(pool, clock, rewardService)
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	characterService.Mount(router, sessions.Protect)
+	rewards.NewService(pool, clock, rewardService, characterService).Mount(router, sessions.Protect)
 	questService := quests.NewService(pool, clock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, scanner)
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, clock, questService)
