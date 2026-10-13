@@ -1832,7 +1832,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
 
 **Условие выхода:** Таймер восстанавливается между вкладками и устройствами, считает активные интервалы и не закрывает задачу без подтверждения.
 
-- [ ] **C105. Модель фокус-сессии**
+- [x] **C105. Модель фокус-сессии**
   - **Сделать:** Создать sessions/segments, состояния running/paused/awaiting_confirmation/finished/cancelled и уникальность активной сессии.
   - **Проверить:** Два одновременных start дают одну сессию; время хранится серверными отметками.
   - **КОММИТ СЕЙЧАС:** `feat(focus): add single active session and timing segments`
