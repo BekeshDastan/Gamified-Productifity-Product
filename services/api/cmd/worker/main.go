@@ -54,6 +54,10 @@ func main() {
 	clock := platform.RealClock{}
 	rewardService := progression.NewService(pool, clock)
 	go calendar.NewService(pool, clock, quests.NewService(pool, clock).WithObserver(goals.NewService(pool, clock).QuestChanged).WithProgression(rewardService)).Run(ctx, logger)
-	jobs.Run(ctx, jobs.Store{Pool: pool, Clock: platform.RealClock{}}, sessions.MailHandlers(mailer), logger)
+	handlers := sessions.MailHandlers(mailer)
+	for kind, handler := range rewardService.Handlers() {
+		handlers[kind] = handler
+	}
+	jobs.Run(ctx, jobs.Store{Pool: pool, Clock: platform.RealClock{}}, handlers, logger)
 	logger.Info("worker stopped")
 }

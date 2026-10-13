@@ -109,6 +109,10 @@ const commands = {
     await npm("run", "build:web");
     await buildGo();
   },
+  "reconcile-progression": async () => {
+    requireLocalEnv();
+    await run("go", ["run", "./cmd/reconcile-progression", ...process.argv.slice(3)], api);
+  },
   migrate: async () => {
     requireLocalEnv();
     await run("go", ["run", "./cmd/migrate"], api);

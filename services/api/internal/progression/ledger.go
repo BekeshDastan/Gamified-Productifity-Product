@@ -17,8 +17,9 @@ import (
 var ErrInvalidSource = errors.New("invalid reward source")
 
 type Service struct {
-	pool  *pgxpool.Pool
-	clock platform.Clock
+	projectionObserver func(context.Context, pgx.Tx, string) error
+	pool               *pgxpool.Pool
+	clock              platform.Clock
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {

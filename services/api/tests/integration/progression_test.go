@@ -3,13 +3,16 @@
 package integration
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"github.com/jackc/pgx/v5"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -476,5 +479,80 @@ func TestProgressionAPIPrivacyAndStableHistory(t *testing.T) {
 	}
 	if r := f.privateRequest(t, a, "GET", "/progression/history?before=bad", "", nil); r.status != 422 {
 		t.Fatal("bad cursor", r.status)
+	}
+}
+
+func TestProgressionRebuildAndOutboxAreIdempotent(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "rebuild@example.test")
+	b, other := f.signedIn(t, "rebuild-other@example.test")
+	input := questInput("Источник сверки")
+	input.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", input))
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}))
+	svc := progression.NewService(f.pool, f.clock)
+	poison := func() {
+		if _, e := f.pool.Exec(t.Context(), `UPDATE user_progress SET total_xp=999,coins=777 WHERE owner_id=$1`, account.ID); e != nil {
+			t.Fatal(e)
+		}
+	}
+	poison()
+	check, e := svc.Check(t.Context(), account.ID)
+	if e != nil || !check.Changed || check.StoredXP != 999 || check.LedgerXP != 25 {
+		t.Fatal(check, e)
+	}
+	var stored int64
+	if e = f.pool.QueryRow(t.Context(), `SELECT total_xp FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&stored); e != nil || stored != 999 {
+		t.Fatal("dry check changed projection", stored, e)
+	}
+	fixed, e := svc.Rebuild(t.Context(), account.ID)
+	if e != nil || !fixed.Changed || fixed.LedgerXP != 25 || fixed.LedgerCoins != 5 || fixed.LedgerEntries != 1 {
+		t.Fatal(fixed, e)
+	}
+	again, e := svc.Rebuild(t.Context(), account.ID)
+	if e != nil || again.Changed {
+		t.Fatal("rebuild not stable", again, e)
+	}
+	poison()
+	live := readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if live.TotalXP != 25 || live.Coins != 5 {
+		t.Fatal("read served corrupt counter", live)
+	}
+	var calls atomic.Int32
+	svc.WithProjectionObserver(func(ctx context.Context, tx pgx.Tx, owner string) error { calls.Add(1); return nil })
+	payload, _ := json.Marshal(map[string]string{"ledger_id": q.Reward.LedgerID})
+	job := jobs.Job{ID: testkit.NewUser().ID, OwnerID: &account.ID, Kind: "progression.reward_changed", Payload: payload}
+	handler := svc.Handlers()[job.Kind]
+	consume := func(job jobs.Job, owner string) error {
+		return svc.WithinOwner(t.Context(), owner, func(tx pgx.Tx) error { return handler(t.Context(), tx, job) })
+	}
+	if e = consume(job, account.ID); e != nil {
+		t.Fatal(e)
+	}
+	poison()
+	job.ID = testkit.NewUser().ID
+	if e = consume(job, account.ID); e != nil {
+		t.Fatal(e)
+	}
+	if calls.Load() != 1 {
+		t.Fatal("duplicate projection consumer", calls.Load())
+	}
+	var receipts, ledger, quota int64
+	if e = f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM reward_projection_events WHERE owner_id=$1),(SELECT count(*) FROM reward_ledger WHERE owner_id=$1),(SELECT sum(xp) FROM reward_quota_usage WHERE owner_id=$1)`, account.ID).Scan(&receipts, &ledger, &quota); e != nil || receipts != 1 || ledger != 1 || quota != 25 {
+		t.Fatal("consumer minted reward", receipts, ledger, quota, e)
+	}
+	foreign := job
+	foreign.OwnerID = &other.ID
+	if e = consume(foreign, other.ID); !errors.Is(e, jobs.ErrPermanent) {
+		t.Fatal("foreign event accepted", e)
+	}
+	readProgression(t, f.privateRequest(t, b, "GET", "/progression", "", nil))
+	owners, e := svc.OwnerBatch(t.Context(), "")
+	if e != nil || len(owners) != 2 {
+		t.Fatal("owner batch", owners, e)
+	}
+	tail, e := svc.OwnerBatch(t.Context(), owners[0])
+	if e != nil || len(tail) != 1 || tail[0] == owners[0] {
+		t.Fatal("batch cursor", tail, e)
 	}
 }

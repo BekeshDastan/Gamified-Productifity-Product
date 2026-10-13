@@ -67,7 +67,7 @@ func (s Store) Process(ctx context.Context, job Job, handlers map[string]Handler
 }
 
 func Run(ctx context.Context, store Store, handlers map[string]Handler, logger *slog.Logger) {
-	ticker := time.NewTicker(15 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	for {
 		if _, err := store.Dispatch(ctx, 50); err != nil && ctx.Err() == nil {

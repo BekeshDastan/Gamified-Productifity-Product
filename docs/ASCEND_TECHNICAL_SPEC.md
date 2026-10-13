@@ -1715,7 +1715,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** UI показывает фактическую дельту сервера, а не рассчитывает награду сам.
   - **КОММИТ СЕЙЧАС:** `feat(progression-ui): display levels balances and reward explanations`
 
-- [ ] **C087. Сверка и проекции**
+- [x] **C087. Сверка и проекции**
   - **Сделать:** Добавить проверку ledger versus projection, безопасный rebuild и обработчики outbox.
   - **Проверить:** Повреждённый тестовый счётчик восстанавливается из источников без новых наград.
   - **КОММИТ СЕЙЧАС:** `feat(progression): rebuild balances and publish reward events`

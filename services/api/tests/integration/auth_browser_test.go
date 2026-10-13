@@ -109,7 +109,11 @@ func TestBrowserAuth(t *testing.T) {
 	worker.Add(1)
 	go func() {
 		defer worker.Done()
-		jobs.Run(workerCtx, jobs.Store{Pool: pool, Clock: clock}, sessions.MailHandlers(mailer), slog.New(slog.NewTextHandler(io.Discard, nil)))
+		handlers := sessions.MailHandlers(mailer)
+		for kind, handler := range rewardService.Handlers() {
+			handlers[kind] = handler
+		}
+		jobs.Run(workerCtx, jobs.Store{Pool: pool, Clock: clock}, handlers, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	}()
 	defer func() { cancel(); worker.Wait() }()
 	root, err := filepath.Abs("../../../..")

@@ -118,7 +118,14 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 			owner, e := currentOwner(r.Context())
 			var out Balance
 			if e == nil {
-				e = s.WithinOwner(r.Context(), owner, func(tx pgx.Tx) error { var err error; out, err = s.Balance(r.Context(), tx, owner); return err })
+				e = s.WithinOwner(r.Context(), owner, func(tx pgx.Tx) error {
+					var err error
+					if _, e := s.RebuildInTx(r.Context(), tx, owner); e != nil {
+						return e
+					}
+					out, err = s.Balance(r.Context(), tx, owner)
+					return err
+				})
 			}
 			s.reply(w, r, out, e)
 		})
