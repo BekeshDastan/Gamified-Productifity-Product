@@ -169,6 +169,10 @@ func (s *Service) rollup(ctx context.Context, tx pgx.Tx, id, key string) error {
 			if err := s.rollupDependents(ctx, tx, id, q.ID); err != nil {
 				return err
 			}
+		} else if s.progression != nil {
+			if e := s.reconcileRollupReward(ctx, tx, id, &q); e != nil {
+				return e
+			}
 		}
 		if q.ParentID == nil {
 			break

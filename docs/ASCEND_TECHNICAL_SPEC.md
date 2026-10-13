@@ -1705,7 +1705,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Частичная норма и повтор той же отметки не дают дополнительный XP.
   - **КОММИТ СЕЙЧАС:** `feat(habits): reward completed periods without duplicate credit`
 
-- [ ] **C085. Отмена и восстановление**
+- [x] **C085. Отмена и восстановление**
   - **Сделать:** Реализовать reversal/restoration исходных сумм, неизменность квоты и корректировку потраченных монет.
   - **Проверить:** Цикл complete/reopen/complete не увеличивает суммарный entitlement; монеты не создаются из воздуха.
   - **КОММИТ СЕЙЧАС:** `feat(progression): compensate reopened completions and restore entitlements`

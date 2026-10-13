@@ -33,8 +33,8 @@ type Event struct {
 }
 
 func (s *Service) event(ctx context.Context, tx pgx.Tx, id, kind, reason string, before *Quest, after *Quest) error {
-	if kind == "complete" && s.progression != nil {
-		if e := s.awardCompletion(ctx, tx, id, after); e != nil {
+	if s.progression != nil && after.Reward == nil {
+		if e := s.syncReward(ctx, tx, id, kind, after); e != nil {
 			return e
 		}
 	}
@@ -85,6 +85,16 @@ func (s *Service) transitionTx(r *http.Request, tx pgx.Tx, id, key, action strin
 	q, err := get(ctx, tx, id, key, true)
 	if err != nil {
 		return q, err
+	}
+	if action == "complete" && q.Status == "completed" && s.progression != nil {
+		reward, e := s.progression.ExistingReward(ctx, tx, id, "task", q.ID)
+		if e != nil {
+			return q, e
+		}
+		if reward != nil {
+			q.Reward = reward
+			return q, nil
+		}
 	}
 	if p := platform.MatchVersion(r, q.Version); p != nil {
 		return q, p

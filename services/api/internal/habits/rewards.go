@@ -19,15 +19,12 @@ func (s *Service) rewardedView(ctx context.Context, tx pgx.Tx, owner string, h H
 	if e != nil {
 		return out, e
 	}
-	if amount < target || excluded {
-		return out, nil
-	}
-	source := progression.Source{Kind: "habit", Key: key, AreaID: h.AreaID, Complete: true, Eligible: true, AllowFirst: !s.clock.Now().After(end.Add(24 * time.Hour))}
-	out.Reward, e = s.progression.Award(ctx, tx, owner, source)
+	source := progression.Source{Kind: "habit", Key: key, AreaID: h.AreaID, Complete: amount >= target, Eligible: !excluded, AllowFirst: !s.clock.Now().After(end.Add(24 * time.Hour))}
+	out.Reward, e = s.progression.Sync(ctx, tx, owner, source)
 	if e != nil {
 		return out, e
 	}
-	if out.Reward == nil && !source.AllowFirst {
+	if out.Reward == nil && source.Complete && source.Eligible && !source.AllowFirst {
 		out.Reward, e = s.progression.ExplainNoReward(ctx, tx, owner, source, "История сохранена. Новая награда недоступна после конца периода + 24 часа.")
 	}
 	return out, e

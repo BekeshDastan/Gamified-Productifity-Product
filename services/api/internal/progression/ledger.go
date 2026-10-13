@@ -164,7 +164,7 @@ func (s *Service) append(ctx context.Context, tx pgx.Tx, owner string, v Entitle
 }
 
 // Award must run in the domain transaction after Lock, before its history is committed.
-func (s *Service) Award(ctx context.Context, tx pgx.Tx, owner string, in Source) (*Reward, error) {
+func (s *Service) awardFirst(ctx context.Context, tx pgx.Tx, owner string, in Source) (*Reward, error) {
 	if !validSource(in) {
 		return nil, ErrInvalidSource
 	}

@@ -187,6 +187,7 @@ export function QuestHistory({ quest }: { quest: Quest }) {
                   attachment_added: "Добавлен файл",
                   attachment_removed: "Удалён файл",
                   rollup_completed: "Выполнены обязательные подзадачи",
+                  reward_reconciled: "Пересчитана исходная награда",
                   rollup_reopened: "Изменён прогресс подзадач",
                 } as Record<string, string>
               )[e.kind] ?? "Изменение"}

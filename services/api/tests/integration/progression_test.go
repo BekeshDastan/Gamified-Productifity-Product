@@ -298,3 +298,121 @@ func TestProgressionHabitLogAndRewardRollbackTogether(t *testing.T) {
 		t.Fatal("habit and reward split", logs, xp, fresh, e)
 	}
 }
+func TestProgressionTaskReversalRestoresOriginalAfterSpend(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "task-compensation@example.test")
+	input := questInput("Исходная работа")
+	input.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", input))
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}))
+	entitlement := q.Reward.EntitlementID
+	svc := progression.NewService(f.pool, f.clock)
+	purchase := testkit.NewUser().ID
+	spend := func(cost int64) (*progression.Reward, error) {
+		var result *progression.Reward
+		e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+			var err error
+			result, err = svc.SpendInTx(t.Context(), tx, account.ID, purchase, cost)
+			return err
+		})
+		return result, e
+	}
+	if r, e := spend(5); e != nil || r.CoinsDelta != -5 || r.AvailableCoins != 0 {
+		t.Fatal(r, e)
+	}
+	if r, e := spend(5); e != nil || r.CoinsDelta != 0 {
+		t.Fatal("repeat spend", r, e)
+	}
+	if _, e := spend(4); e == nil {
+		t.Fatal("changed operation cost accepted")
+	}
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]string{"reason": "Исправляю выполнение"}))
+	if q.Reward == nil || q.Reward.XPDelta != -25 || q.Reward.CoinsDelta != -5 || q.Reward.AvailableCoins != 0 || q.Reward.CoinCorrection != 5 {
+		t.Fatal("undo after spend", q.Reward)
+	}
+	if e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+		_, err := svc.SpendInTx(t.Context(), tx, account.ID, testkit.NewUser().ID, 1)
+		if err == nil {
+			t.Fatal("spent during correction")
+		}
+		return nil
+	}); e != nil {
+		t.Fatal(e)
+	}
+	input = q.Input
+	input.Difficulty = 5
+	q = readQuest(t, f.privateRequest(t, a, "PATCH", "/quests/"+q.ID, version(q), input))
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Подтверждаю исходный результат"}))
+	if q.Reward == nil || q.Reward.XPDelta != 25 || q.Reward.AwardedXP != 25 || q.Reward.EntitlementID != entitlement || q.Reward.CoinCorrection != 0 || q.Reward.AvailableCoins != 0 {
+		t.Fatal("inflated restoration", q.Reward)
+	}
+	for i := 0; i < 3; i++ {
+		q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]string{"reason": "Проверенный цикл"}))
+		q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Восстанавливаю"}))
+	}
+	var xp, coins, quota, entitlements int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT total_xp,coins,(SELECT sum(xp) FROM reward_quota_usage WHERE owner_id=$1),(SELECT count(*) FROM reward_entitlements WHERE owner_id=$1) FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&xp, &coins, &quota, &entitlements); e != nil || xp != 25 || coins != 0 || quota != 25 || entitlements != 1 {
+		t.Fatal("farming cycle", xp, coins, quota, entitlements, e)
+	}
+}
+func TestProgressionHabitCorrectionRestoresAfterDeadline(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "habit-compensation@example.test")
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", habitInput()))
+	path := "/habits/" + h.ID
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/logs", habitVersion(h), habits.LogInput{PeriodID: h.Periods[0].ID, Amount: 20, OccurredAt: f.clock.Now()}))
+	entitlement := h.Reward.EntitlementID
+	logs := readHabitLogs(t, f.privateRequest(t, a, "GET", path+"/logs", "", nil))
+	correctPath := path + "/logs/" + logs[0].ID + "/correct"
+	h = readHabit(t, f.privateRequest(t, a, "POST", correctPath, habitVersion(h), habits.CorrectionInput{Amount: 0, Reason: "Ошибочный факт"}))
+	if h.Reward == nil || h.Reward.XPDelta != -10 || h.Reward.CoinsDelta != -2 {
+		t.Fatal(h.Reward)
+	}
+	f.clock.Advance(3 * 24 * time.Hour)
+	if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+		t.Fatal(r.status)
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", correctPath, habitVersion(h), habits.CorrectionInput{Amount: 20, Reason: "Восстановлен исходный факт"}))
+	if h.Reward == nil || h.Reward.Kind != "restoration" || h.Reward.XPDelta != 10 || h.Reward.EntitlementID != entitlement {
+		t.Fatal("late restoration changed right", h.Reward)
+	}
+	svc := progression.NewService(f.pool, f.clock)
+	if e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+		b, e := svc.Balance(t.Context(), tx, account.ID)
+		if b.TotalXP != 10 || b.Quota.HabitUsed != 0 {
+			t.Fatal("restoration consumed fresh quota", b)
+		}
+		return e
+	}); e != nil {
+		t.Fatal(e)
+	}
+}
+func TestProgressionStructureRestoresOnlyExistingLeafRight(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "structure-reward@example.test")
+	in := questInput("Исходный лист")
+	in.Difficulty = 3
+	root := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in))
+	root = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+root.ID+"/complete", version(root), map[string]string{"reason": "Готово"}))
+	root = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+root.ID+"/reopen", version(root), map[string]string{"reason": "Делаю контейнер"}))
+	childIn := questInput("Необязательная часть")
+	childIn.ParentID = &root.ID
+	childIn.Required = false
+	child := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", childIn))
+	root = readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+root.ID, "", nil))
+	root = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+root.ID+"/complete", version(root), map[string]string{"reason": "Контейнер готов"}))
+	if root.Reward != nil && root.Reward.XPDelta != 0 {
+		t.Fatal("container restored reward")
+	}
+	childIn = child.Input
+	childIn.ParentID = nil
+	readQuest(t, f.privateRequest(t, a, "PATCH", "/quests/"+child.ID, version(child), childIn))
+	var xp, rights int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT total_xp,(SELECT count(*) FROM reward_entitlements WHERE owner_id=$1) FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&xp, &rights); e != nil || xp != 25 || rights != 1 {
+		t.Fatal("leaf structure lost or created right", xp, rights, e)
+	}
+	var kind string
+	if e := f.pool.QueryRow(t.Context(), `SELECT kind FROM task_events WHERE owner_id=$1 AND quest_id=$2 ORDER BY id DESC LIMIT 1`, account.ID, root.ID).Scan(&kind); e != nil || kind != "reward_reconciled" {
+		t.Fatal("structural correction missing history", kind, e)
+	}
+}
