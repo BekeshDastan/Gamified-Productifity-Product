@@ -185,6 +185,87 @@ type GoalVersion struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type Habit struct {
+	ID                  pgtype.UUID        `json:"id"`
+	OwnerID             pgtype.UUID        `json:"owner_id"`
+	Payload             []byte             `json:"payload"`
+	AreaID              pgtype.UUID        `json:"area_id"`
+	Timezone            string             `json:"timezone"`
+	Version             int64              `json:"version"`
+	ArchivedAt          pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+	MaterializedThrough pgtype.Date        `json:"materialized_through"`
+}
+
+type HabitArchive struct {
+	ID            int64              `json:"id"`
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	HabitID       pgtype.UUID        `json:"habit_id"`
+	ArchivedAt    pgtype.Timestamptz `json:"archived_at"`
+	RestoredAt    pgtype.Timestamptz `json:"restored_at"`
+	ArchiveReason string             `json:"archive_reason"`
+	RestoreReason pgtype.Text        `json:"restore_reason"`
+}
+
+type HabitLog struct {
+	ID             pgtype.UUID        `json:"id"`
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	HabitID        pgtype.UUID        `json:"habit_id"`
+	PeriodID       pgtype.UUID        `json:"period_id"`
+	Amount         pgtype.Numeric     `json:"amount"`
+	OriginalAmount pgtype.Numeric     `json:"original_amount"`
+	OccurredAt     pgtype.Timestamptz `json:"occurred_at"`
+	AcceptedAt     pgtype.Timestamptz `json:"accepted_at"`
+	Backfilled     bool               `json:"backfilled"`
+}
+
+type HabitLogCorrection struct {
+	ID           int64              `json:"id"`
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	LogID        pgtype.UUID        `json:"log_id"`
+	BeforeAmount pgtype.Numeric     `json:"before_amount"`
+	AfterAmount  pgtype.Numeric     `json:"after_amount"`
+	Reason       string             `json:"reason"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
+type HabitPause struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	HabitID   pgtype.UUID        `json:"habit_id"`
+	StartsOn  pgtype.Date        `json:"starts_on"`
+	EndsOn    pgtype.Date        `json:"ends_on"`
+	Reason    string             `json:"reason"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Version   int64              `json:"version"`
+}
+
+type HabitPeriod struct {
+	ID              pgtype.UUID        `json:"id"`
+	OwnerID         pgtype.UUID        `json:"owner_id"`
+	HabitID         pgtype.UUID        `json:"habit_id"`
+	PeriodKey       string             `json:"period_key"`
+	StartsAt        pgtype.Timestamptz `json:"starts_at"`
+	EndsAt          pgtype.Timestamptz `json:"ends_at"`
+	Timezone        string             `json:"timezone"`
+	ScheduleVersion int64              `json:"schedule_version"`
+	Target          pgtype.Numeric     `json:"target"`
+	Excluded        bool               `json:"excluded"`
+	EmergencyReason string             `json:"emergency_reason"`
+	RestReason      string             `json:"rest_reason"`
+	EmergencyAt     pgtype.Timestamptz `json:"emergency_at"`
+}
+
+type HabitSchedule struct {
+	OwnerID       pgtype.UUID `json:"owner_id"`
+	HabitID       pgtype.UUID `json:"habit_id"`
+	Version       int64       `json:"version"`
+	EffectiveFrom pgtype.Date `json:"effective_from"`
+	Schedule      []byte      `json:"schedule"`
+	Reason        string      `json:"reason"`
+}
+
 type IdempotencyRecord struct {
 	UserID         pgtype.UUID        `json:"user_id"`
 	Method         string             `json:"method"`

@@ -6,6 +6,722 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/habits/starter:
+    get:
+      operationId: getHabitStarter
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    anyOf:
+                      - $ref: "#/components/schemas/HabitStarter"
+                      - type: "null"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/habits/{id}/periods:
+    get:
+      operationId: getHabitPeriods
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitPeriodPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/habits/{id}/schedules/preview:
+    post:
+      operationId: previewHabitSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitSchedulePreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitScheduleChange"
+  /api/v1/habits/{id}/restore:
+    post:
+      operationId: restoreHabit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitReasonInput"
+  /api/v1/habits/{id}/archive:
+    post:
+      operationId: archiveHabit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitReasonInput"
+  /api/v1/habits/{id}/emergency:
+    post:
+      operationId: excuseHabitPeriod
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitEmergencyInput"
+  /api/v1/habits/{id}/pauses/{pause}/resume:
+    post:
+      operationId: resumeHabit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: pause
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitResumeInput"
+  /api/v1/habits/{id}/pauses:
+    post:
+      operationId: pauseHabit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitPauseInput"
+  /api/v1/habits/{id}/logs/{log}/correct:
+    post:
+      operationId: correctHabitLog
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: log
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitCorrectionInput"
+  /api/v1/habits/{id}/logs:
+    get:
+      operationId: getHabitLogs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitLogPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: logHabit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitLogInput"
+  /api/v1/habits/{id}/schedules:
+    post:
+      operationId: changeHabitSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: If-Match
+          in: header
+          required: true
+          description: Версия 0 для создания, текущая положительная версия для изменения
+          schema:
+            type: string
+            pattern: ^"(0|[1-9][0-9]*)"$
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitScheduleChange"
+  /api/v1/habits/{id}:
+    get:
+      operationId: getHabit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/habits:
+    get:
+      operationId: listHabits
+      parameters:
+        - name: archived
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createHabit
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitDTO"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitInput"
   /api/v1/dashboard:
     get:
       operationId: getDashboard
@@ -4392,6 +5108,500 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    HabitStarter:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+    HabitLogPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitLog"
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+    HabitPeriodPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitPeriod"
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+    HabitSchedulePreview:
+      type: object
+      additionalProperties: false
+      required:
+        - habit_id
+        - version
+        - effective_from
+        - current
+        - proposed
+        - first_start
+        - first_end
+        - reason
+      properties:
+        habit_id:
+          type: string
+        version:
+          type: integer
+        effective_from:
+          type: string
+        current:
+          $ref: "#/components/schemas/HabitSchedule"
+        proposed:
+          $ref: "#/components/schemas/HabitSchedule"
+        first_start:
+          type: string
+        first_end:
+          type: string
+        reason:
+          type: string
+    HabitReasonInput:
+      type: object
+      additionalProperties: false
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+    HabitArchive:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - archived_at
+        - restored_at
+        - archive_reason
+        - restore_reason
+      properties:
+        id:
+          type: integer
+        archived_at:
+          type: string
+        restored_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        archive_reason:
+          type: string
+        restore_reason:
+          anyOf:
+            - type: string
+            - type: "null"
+    HabitEmergencyInput:
+      type: object
+      additionalProperties: false
+      required:
+        - period_id
+        - reason
+      properties:
+        period_id:
+          type: string
+        reason:
+          type: string
+    HabitResumeInput:
+      type: object
+      additionalProperties: false
+      required:
+        - resumes_on
+        - reason
+      properties:
+        resumes_on:
+          type: string
+        reason:
+          type: string
+    HabitPause:
+      type: object
+      additionalProperties: false
+      required:
+        - starts_on
+        - ends_on
+        - reason
+        - id
+        - version
+        - created_at
+      properties:
+        starts_on:
+          type: string
+        ends_on:
+          anyOf:
+            - type: string
+            - type: "null"
+        reason:
+          type: string
+        id:
+          type: string
+        version:
+          type: integer
+        created_at:
+          type: string
+    HabitPauseInput:
+      type: object
+      additionalProperties: false
+      required:
+        - starts_on
+        - ends_on
+        - reason
+      properties:
+        starts_on:
+          type: string
+        ends_on:
+          anyOf:
+            - type: string
+            - type: "null"
+        reason:
+          type: string
+    HabitStats:
+      type: object
+      additionalProperties: false
+      required:
+        - current
+        - best
+        - successful
+        - missed
+        - rate
+        - recovering
+      properties:
+        current:
+          type: integer
+        best:
+          type: integer
+        successful:
+          type: integer
+        missed:
+          type: integer
+        rate:
+          type: integer
+        recovering:
+          type: boolean
+    HabitLog:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - period_id
+        - amount
+        - original_amount
+        - occurred_at
+        - accepted_at
+        - backfilled
+        - corrections
+      properties:
+        id:
+          type: string
+        period_id:
+          type: string
+        amount:
+          type: number
+        original_amount:
+          type: number
+        occurred_at:
+          type: string
+        accepted_at:
+          type: string
+        backfilled:
+          type: boolean
+        corrections:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitLogCorrection"
+    HabitLogCorrection:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - before
+        - after
+        - reason
+        - created_at
+      properties:
+        id:
+          type: integer
+        before:
+          type: number
+        after:
+          type: number
+        reason:
+          type: string
+        created_at:
+          type: string
+    HabitCorrectionInput:
+      type: object
+      additionalProperties: false
+      required:
+        - amount
+        - reason
+      properties:
+        amount:
+          type: number
+        reason:
+          type: string
+    HabitLogInput:
+      type: object
+      additionalProperties: false
+      required:
+        - period_id
+        - amount
+        - occurred_at
+      properties:
+        period_id:
+          type: string
+        amount:
+          type: number
+        occurred_at:
+          type: string
+    HabitPeriod:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - key
+        - start
+        - end
+        - timezone
+        - schedule_version
+        - target
+        - amount
+        - progress
+        - state
+        - excluded
+        - emergency_reason
+        - rest_reason
+        - emergency_at
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+        timezone:
+          type: string
+        schedule_version:
+          type: integer
+        target:
+          type: number
+        amount:
+          type: number
+        progress:
+          type: integer
+        state:
+          type: string
+          enum:
+            - open
+            - success
+            - missed
+            - rest
+        excluded:
+          type: boolean
+        emergency_reason:
+          type: string
+        rest_reason:
+          type: string
+        emergency_at:
+          anyOf:
+            - type: string
+            - type: "null"
+    HabitScheduleChange:
+      type: object
+      additionalProperties: false
+      required:
+        - effective_from
+        - schedule
+        - reason
+      properties:
+        effective_from:
+          type: string
+        schedule:
+          $ref: "#/components/schemas/HabitSchedule"
+        reason:
+          type: string
+    HabitDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - kind
+        - unit
+        - minimum
+        - area_id
+        - starts_on
+        - ends_on
+        - schedule
+        - id
+        - version
+        - timezone
+        - archived_at
+        - schedules
+        - periods
+        - has_more
+        - stats
+        - pauses
+        - as_of
+        - archives
+      properties:
+        title:
+          type: string
+        kind:
+          type: string
+          enum:
+            - binary
+            - count
+            - duration
+        unit:
+          type: string
+        minimum:
+          type: number
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        starts_on:
+          type: string
+        ends_on:
+          anyOf:
+            - type: string
+            - type: "null"
+        schedule:
+          $ref: "#/components/schemas/HabitSchedule"
+        id:
+          type: string
+        version:
+          type: integer
+        timezone:
+          type: string
+        archived_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        schedules:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitScheduleVersion"
+        periods:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitPeriod"
+        has_more:
+          type: boolean
+        stats:
+          $ref: "#/components/schemas/HabitStats"
+        pauses:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitPause"
+        as_of:
+          type: string
+        archives:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitArchive"
+        starter_id:
+          anyOf:
+            - type: string
+            - type: "null"
+    HabitScheduleVersion:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - effective_from
+        - schedule
+        - reason
+      properties:
+        version:
+          type: integer
+        effective_from:
+          type: string
+        schedule:
+          $ref: "#/components/schemas/HabitSchedule"
+        reason:
+          type: string
+    HabitInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - kind
+        - unit
+        - minimum
+        - area_id
+        - starts_on
+        - ends_on
+        - schedule
+      properties:
+        title:
+          type: string
+        kind:
+          type: string
+          enum:
+            - binary
+            - count
+            - duration
+        unit:
+          type: string
+        minimum:
+          type: number
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        starts_on:
+          type: string
+        ends_on:
+          anyOf:
+            - type: string
+            - type: "null"
+        schedule:
+          $ref: "#/components/schemas/HabitSchedule"
+        starter_id:
+          anyOf:
+            - type: string
+            - type: "null"
+    HabitSchedule:
+      type: object
+      additionalProperties: false
+      required:
+        - frequency
+        - weekdays
+        - target
+      properties:
+        frequency:
+          type: string
+          enum:
+            - daily
+            - weekly
+            - monthly
+        weekdays:
+          type: array
+          items:
+            type: integer
+        target:
+          type: number
     Dashboard:
       type: object
       additionalProperties: false

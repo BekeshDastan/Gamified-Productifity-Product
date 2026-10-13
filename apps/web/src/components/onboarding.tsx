@@ -140,7 +140,7 @@ function Setup({ initial, ownerId }: { initial: State; ownerId: string }) {
             </ul>
             <p className="ui-hint">
               Первую задачу и цель можно открыть и дополнить в соответствующих разделах. Идея
-              привычки пока сохраняется здесь.
+              привычки доступна в разделе привычек для выбора нормы и расписания.
             </p>
             {!state.completed_at && (
               <Button onClick={() => void change(6, state.starters, true).catch(() => {})}>

@@ -11,6 +11,7 @@ import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { DashboardHabits } from "./habits";
 import { Input } from "./ui/field";
 import { Form } from "./ui/form";
 const quick = z.object({ title: z.string().trim().min(1, "Укажите название").max(200) });
@@ -101,12 +102,7 @@ export function Dashboard() {
         <SafeLink href="/app/calendar">Открыть календарь</SafeLink>
       </>
     ),
-    habits: (
-      <>
-        <h2>Привычки</h2>
-        <p className="ui-hint">Отметки привычек появятся здесь, когда вы добавите привычку.</p>
-      </>
-    ),
+    habits: <DashboardHabits />,
     focus: (
       <>
         <h2>Фокус</h2>
