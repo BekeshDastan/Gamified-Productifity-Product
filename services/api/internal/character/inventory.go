@@ -79,8 +79,14 @@ func (s *Service) EvaluateInTx(ctx context.Context, tx pgx.Tx, owner string) err
 	if _, e := s.progress.RebuildInTx(ctx, tx, owner); e != nil {
 		return e
 	}
+	if e := s.reconcileBossRewards(ctx, tx, owner); e != nil {
+		return e
+	}
 	achievementsChanged, e := s.evaluateAchievements(ctx, tx, owner)
 	if e != nil {
+		return e
+	}
+	if e := s.ensureMysteryGrants(ctx, tx, owner); e != nil {
 		return e
 	}
 	balance, e := s.progress.Balance(ctx, tx, owner)
@@ -117,6 +123,14 @@ func (s *Service) EvaluateInTx(ctx context.Context, tx pgx.Tx, owner string) err
 			if e != nil {
 				return e
 			}
+		}
+		var permanent bool
+		if e = tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM cosmetic_permanent_grants WHERE owner_id=$1 AND item_id=$2 AND active)", owner, i.ID).Scan(&permanent); e != nil {
+			return e
+		}
+		if permanent {
+			active = true
+			source = "permanent"
 		}
 		var previous bool
 		e = tx.QueryRow(ctx, "SELECT active FROM character_inventory WHERE owner_id=$1 AND item_id=$2", owner, i.ID).Scan(&previous)

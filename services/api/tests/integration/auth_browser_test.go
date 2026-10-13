@@ -31,6 +31,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/rewards"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 )
 
@@ -52,7 +53,8 @@ func TestBrowserAuth(t *testing.T) {
 	if os.Getenv("RUN_BROWSER_AUTH") != "1" {
 		t.Skip("run npm run test:auth-e2e for the real browser suite")
 	}
-	pool, ctx := databaseWithTimeout(t, 6*time.Minute)
+	t.Setenv("FEATURE_MYSTERY_REWARDS", "true")
+	pool, ctx := databaseWithTimeout(t, 8*time.Minute)
 	key := make([]byte, 32)
 	if _, err := rand.Read(key); err != nil {
 		t.Fatal(err)
@@ -89,6 +91,7 @@ func TestBrowserAuth(t *testing.T) {
 	characterService := character.NewService(pool, domainClock, rewardService)
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	characterService.Mount(router, sessions.Protect)
+	rewards.NewService(pool, domainClock, rewardService, characterService).Mount(router, sessions.Protect)
 	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, domainClock, questService)

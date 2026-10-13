@@ -62,14 +62,14 @@ export const progressionBalance = z.object({
 export const progressionEntry = z.object({
   id: z.uuid(),
   sequence: integer.positive(),
-  source_kind: z.enum(["task", "habit", "challenge", "spend"]),
+  source_kind: z.enum(["task", "habit", "challenge", "spend", "refund", "bonus"]),
   source_key: z.string(),
   source_title: z.string(),
   source_url: z
     .string()
     .regex(/^\/app\//)
     .nullable(),
-  kind: z.enum(["grant", "reversal", "restoration", "spend"]),
+  kind: z.enum(["grant", "reversal", "restoration", "spend", "refund", "bonus"]),
   economy_version: z.string(),
   area_id: z.uuid().nullable(),
   area_name: z.string().nullable(),

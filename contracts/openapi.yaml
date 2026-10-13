@@ -4927,6 +4927,672 @@ paths:
             text/plain:
               schema:
                 type: string
+  /api/v1/rewards/custom:
+    get:
+      operationId: listCustomRewards
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardDefinitions"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createCustomReward
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardDefinition"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardDefinitionInput"
+  /api/v1/rewards/custom/{id}:
+    patch:
+      operationId: editCustomReward
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardDefinition"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardDefinitionInput"
+  /api/v1/rewards/purchase:
+    post:
+      operationId: purchaseReward
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardRedemption"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardPurchaseInput"
+  /api/v1/rewards/redemptions:
+    get:
+      operationId: listRedemptions
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardRedemptionPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/rewards/redemptions/{id}/claim:
+    post:
+      operationId: claimRedemption
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardRedemption"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardReason"
+  /api/v1/rewards/redemptions/{id}/cancel:
+    post:
+      operationId: cancelRedemption
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardRedemption"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardReason"
+  /api/v1/rewards/catalog:
+    get:
+      operationId: getRewardCatalog
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardCatalog"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/bosses:
+    get:
+      operationId: listBosses
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/BossList"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createBoss
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Boss"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BossCreate"
+  /api/v1/bosses/{id}:
+    patch:
+      operationId: changeBoss
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Boss"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BossAction"
+  /api/v1/bosses/monthly:
+    get:
+      operationId: getMonthlyBoss
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MonthlyBoss"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: selectMonthlyBoss
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MonthlyBoss"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonthlyChoice"
+  /api/v1/bosses/monthly/history:
+    get:
+      operationId: getMonthlyBossHistory
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MonthlyHistory"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/rewards/mystery:
+    get:
+      operationId: getMysteryRewards
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MysteryCatalog"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/rewards/mystery/{id}/open:
+    post:
+      operationId: openMysteryReward
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MysteryGrant"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MysteryOpen"
 components:
   requestBodies:
     Empty:
@@ -8817,3 +9483,512 @@ components:
       properties:
         title_id:
           type: string
+    RewardDefinition:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - version
+        - title
+        - description
+        - cost
+        - available
+        - archived
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        cost:
+          type: integer
+        available:
+          type: boolean
+        archived:
+          type: boolean
+    RewardDefinitionInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - description
+        - cost
+        - available
+        - archived
+        - price_confirmed
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        cost:
+          type: integer
+        available:
+          type: boolean
+        archived:
+          type: boolean
+        price_confirmed:
+          type: boolean
+    RewardPurchaseInput:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - kind
+        - target_id
+        - expected_cost
+        - expected_version
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+            - custom
+            - cosmetic
+        target_id:
+          type: string
+        expected_cost:
+          type: integer
+        expected_version:
+          type: integer
+    RewardRedemption:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - kind
+        - target_id
+        - title
+        - description
+        - cost
+        - definition_version
+        - status
+        - version
+        - created_at
+        - reason
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        target_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        cost:
+          type: integer
+        definition_version:
+          type: integer
+        status:
+          type: string
+          enum:
+            - pending
+            - claimed
+            - cancelled
+        version:
+          type: integer
+        created_at:
+          type: string
+        reason:
+          type: string
+    RewardRedemptionPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RewardRedemption"
+        next_cursor:
+          type:
+            - string
+            - "null"
+    RewardOffer:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - slot
+        - name
+        - rarity
+        - starter
+        - level
+        - achievement
+        - url
+        - owned
+        - source
+        - revoked
+        - cost
+      properties:
+        id:
+          type: string
+        slot:
+          type: string
+          enum:
+            - base
+            - clothes
+            - head
+            - accessory
+            - background
+            - frame
+        name:
+          type: string
+        rarity:
+          type: string
+          enum:
+            - common
+            - uncommon
+            - rare
+        starter:
+          type: boolean
+        level:
+          type: integer
+        achievement:
+          type: string
+        url:
+          type: string
+        owned:
+          type: boolean
+        source:
+          type: string
+        revoked:
+          type: boolean
+        cost:
+          type: integer
+    RewardCatalog:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - balance
+        - cosmetics
+        - custom
+        - redemptions
+      properties:
+        version:
+          type: string
+        balance:
+          $ref: "#/components/schemas/ProgressionBalance"
+        cosmetics:
+          type: array
+          items:
+            $ref: "#/components/schemas/RewardOffer"
+        custom:
+          type: array
+          items:
+            $ref: "#/components/schemas/RewardDefinition"
+        redemptions:
+          $ref: "#/components/schemas/RewardRedemptionPage"
+    RewardReason:
+      type: object
+      additionalProperties: false
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+    RewardDefinitions:
+      type: array
+      items:
+        $ref: "#/components/schemas/RewardDefinition"
+    BossStage:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - required
+        - progress
+        - source_url
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        required:
+          type: boolean
+        progress:
+          type: number
+        source_url:
+          type: string
+    Boss:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - goal_id
+        - title
+        - state
+        - status
+        - version
+        - goal_version
+        - hp
+        - progress
+        - stages
+        - won_at
+      properties:
+        id:
+          type: string
+        goal_id:
+          type: string
+        title:
+          type: string
+        state:
+          type: string
+        status:
+          type: string
+        version:
+          type: integer
+        goal_version:
+          type: integer
+        hp:
+          type: number
+        progress:
+          type: number
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/BossStage"
+        won_at:
+          type:
+            - string
+            - "null"
+    BossList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Boss"
+    BossCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - goal_id
+      properties:
+        goal_id:
+          type: string
+    BossAction:
+      type: object
+      additionalProperties: false
+      required:
+        - action
+        - reason
+      properties:
+        action:
+          type: string
+          enum:
+            - pause
+            - resume
+            - close
+        reason:
+          type: string
+    MonthlyBoss:
+      type: object
+      additionalProperties: false
+      required:
+        - month
+        - timezone
+        - version
+        - boss_id
+        - boss
+      properties:
+        month:
+          type: string
+        timezone:
+          type: string
+        version:
+          type: integer
+        boss_id:
+          type:
+            - string
+            - "null"
+        boss:
+          anyOf:
+            - $ref: "#/components/schemas/Boss"
+            - type: "null"
+    MonthlyChoice:
+      type: object
+      additionalProperties: false
+      required:
+        - month
+        - boss_id
+        - reason
+      properties:
+        month:
+          type: string
+          pattern: ^[0-9]{4}-[0-9]{2}$
+        boss_id:
+          type:
+            - string
+            - "null"
+        reason:
+          type: string
+    MonthlyChange:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - month
+        - timezone
+        - boss_id
+        - title
+        - reason
+        - created_at
+      properties:
+        id:
+          type: integer
+        month:
+          type: string
+        timezone:
+          type: string
+        boss_id:
+          type:
+            - string
+            - "null"
+        title:
+          type: string
+        reason:
+          type: string
+        created_at:
+          type: string
+    MonthlyHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthlyChange"
+        next_cursor:
+          type:
+            - string
+            - "null"
+    WeightedCosmetic:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - slot
+        - name
+        - rarity
+        - starter
+        - level
+        - achievement
+        - url
+        - owned
+        - source
+        - revoked
+        - weight
+      properties:
+        id:
+          type: string
+        slot:
+          type: string
+          enum:
+            - base
+            - clothes
+            - head
+            - accessory
+            - background
+            - frame
+        name:
+          type: string
+        rarity:
+          type: string
+          enum:
+            - common
+            - uncommon
+            - rare
+        starter:
+          type: boolean
+        level:
+          type: integer
+        achievement:
+          type: string
+        url:
+          type: string
+        owned:
+          type: boolean
+        source:
+          type: string
+        revoked:
+          type: boolean
+        weight:
+          type: integer
+    MysteryGrant:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - source
+        - catalog_version
+        - weights
+        - item_id
+        - compensation
+        - created_at
+        - opened_at
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        catalog_version:
+          type: string
+        weights:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeightedCosmetic"
+        item_id:
+          type:
+            - string
+            - "null"
+        compensation:
+          type:
+            - integer
+            - "null"
+        created_at:
+          type: string
+        opened_at:
+          type:
+            - string
+            - "null"
+    MysteryCatalog:
+      type: object
+      additionalProperties: false
+      required:
+        - enabled
+        - version
+        - compensation
+        - items
+        - grants
+      properties:
+        enabled:
+          type: boolean
+        version:
+          type: string
+        compensation:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeightedCosmetic"
+        grants:
+          type: array
+          items:
+            $ref: "#/components/schemas/MysteryGrant"
+    MysteryOpen:
+      type: object
+      additionalProperties: false
+      required: []
+      properties: {}
