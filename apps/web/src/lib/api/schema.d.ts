@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/progression/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getProgressionHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/progression": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getProgression"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/habits/starter": {
         parameters: {
             query?: never;
@@ -1675,6 +1707,66 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ProgressionHistory: {
+            items: components["schemas"]["ProgressionEntry"][];
+            next_cursor: string | null;
+        };
+        ProgressionEntry: {
+            id: string;
+            sequence: number;
+            source_kind: string;
+            source_key: string;
+            source_title: string;
+            source_url: string | null;
+            kind: string;
+            economy_version: string;
+            area_id: string | null;
+            area_name: string | null;
+            difficulty: number;
+            requested_xp: number;
+            awarded_xp: number;
+            xp_delta: number;
+            coins_delta: number;
+            reason: string;
+            occurred_at: string;
+        };
+        ProgressionBalance: {
+            total_xp: number;
+            coins: number;
+            available_coins: number;
+            coin_correction: number;
+            level: components["schemas"]["ProgressionLevel"];
+            version: number;
+            economy_version: string;
+            as_of: string;
+            quota: components["schemas"]["ProgressionQuota"];
+            rules: components["schemas"]["ProgressionRules"];
+        };
+        ProgressionQuota: {
+            task_used: number;
+            habit_used: number;
+            challenge_used: number;
+            total_used: number;
+            task_cap: number;
+            habit_cap: number;
+            challenge_cap: number;
+            total_cap: number;
+            window_start: string;
+            window_end: string;
+        };
+        ProgressionRules: {
+            task_xp: number[];
+            habit_xp: number;
+            challenge_xp: number;
+            coins_divisor: number;
+        };
+        ProgressionLevel: {
+            number: number;
+            threshold: number;
+            next_threshold: number;
+            inside: number;
+            to_next: number;
+        };
         RewardDTO: {
             entitlement_id: string;
             ledger_id: string;
@@ -2970,6 +3062,66 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getProgressionHistory: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ProgressionHistory"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getProgression: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ProgressionBalance"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     getHabitStarter: {
         parameters: {
             query?: never;

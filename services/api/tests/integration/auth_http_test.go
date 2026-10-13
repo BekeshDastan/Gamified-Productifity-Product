@@ -65,6 +65,7 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 		scanner = scanners[0]
 	}
 	rewardService := progression.NewService(pool, clock)
+	rewardService.Mount(router, sessions.Protect)
 	questService := quests.NewService(pool, clock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, scanner)
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, clock, questService)

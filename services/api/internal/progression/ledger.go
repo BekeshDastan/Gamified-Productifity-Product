@@ -56,6 +56,7 @@ type QuotaState struct {
 	WindowEnd     time.Time `json:"window_end"`
 }
 type Balance struct {
+	Rules          RulesView  `json:"rules"`
 	TotalXP        int64      `json:"total_xp"`
 	Coins          int64      `json:"coins"`
 	AvailableCoins int64      `json:"available_coins"`
@@ -116,7 +117,7 @@ func (s *Service) quota(ctx context.Context, tx pgx.Tx, owner string) (QuotaStat
 	return q, e
 }
 func (s *Service) Balance(ctx context.Context, tx pgx.Tx, owner string) (Balance, error) {
-	b := Balance{EconomyVersion: Version, AsOf: s.clock.Now().UTC()}
+	b := Balance{Rules: rulesView(), EconomyVersion: Version, AsOf: s.clock.Now().UTC()}
 	e := tx.QueryRow(ctx, `SELECT total_xp,coins,version FROM user_progress WHERE owner_id=$1`, owner).Scan(&b.TotalXP, &b.Coins, &b.Version)
 	if e != nil {
 		return b, e

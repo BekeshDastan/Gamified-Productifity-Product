@@ -84,6 +84,7 @@ func TestBrowserAuth(t *testing.T) {
 	}
 	defer files.Close()
 	rewardService := progression.NewService(pool, domainClock)
+	rewardService.Mount(router, sessions.Protect)
 	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, domainClock, questService)

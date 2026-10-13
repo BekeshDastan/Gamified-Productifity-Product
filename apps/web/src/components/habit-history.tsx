@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { useRewardNotice } from "./progression";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useWatch } from "react-hook-form";
 import { DateTime } from "luxon";
@@ -378,7 +379,8 @@ function CorrectionForm({
   amount: number;
   changed: () => void;
 }) {
-  const key = useKey();
+  const key = useKey(),
+    rewardNotice = useRewardNotice();
   const schema = why.extend({
     amount: z.number().min(0, "Количество не может быть отрицательным").max(1000000),
   });
@@ -387,7 +389,8 @@ function CorrectionForm({
     defaultValues: { amount, reason: "" },
     fields: ["amount", "reason"],
     save: async (v) => {
-      await correctHabitLog(h, log, v, key(v));
+      const saved = await correctHabitLog(h, log, v, key(v));
+      rewardNotice(saved.reward);
       changed();
     },
   });
@@ -420,7 +423,8 @@ function HistoricalLogForm({
   period: HabitPeriod;
   changed: () => void;
 }) {
-  const key = useKey();
+  const key = useKey(),
+    rewardNotice = useRewardNotice();
   const schema = z.object({
     amount: z.number().positive("Укажите положительное количество"),
     occurred_at: z.string().min(1),
@@ -438,7 +442,8 @@ function HistoricalLogForm({
         period_id: p.id,
         occurred_at: DateTime.fromISO(v.occurred_at, { zone: h.timezone }).toUTC().toISO()!,
       };
-      await logHabit(h, input, key(input));
+      const saved = await logHabit(h, input, key(input));
+      rewardNotice(saved.reward);
       changed();
     },
   });

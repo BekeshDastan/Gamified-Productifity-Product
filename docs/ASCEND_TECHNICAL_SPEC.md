@@ -1710,7 +1710,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Цикл complete/reopen/complete не увеличивает суммарный entitlement; монеты не создаются из воздуха.
   - **КОММИТ СЕЙЧАС:** `feat(progression): compensate reopened completions and restore entitlements`
 
-- [ ] **C086. Экран прогресса**
+- [x] **C086. Экран прогресса**
   - **Сделать:** Подключить XP bar, level-up, историю, доступные монеты и объяснение квоты на Dashboard.
   - **Проверить:** UI показывает фактическую дельту сервера, а не рассчитывает награду сам.
   - **КОММИТ СЕЙЧАС:** `feat(progression-ui): display levels balances and reward explanations`

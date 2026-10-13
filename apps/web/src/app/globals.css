@@ -1608,3 +1608,33 @@ html[data-motion="reduce"] *::after {
 .habit-card progress::-moz-progress-bar {
   background: var(--accent);
 }
+
+.progression-summary progress {
+  width: 100%;
+  height: 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  appearance: none;
+  overflow: hidden;
+  background: var(--muted);
+}
+.progression-summary progress::-webkit-progress-bar {
+  background: var(--muted);
+}
+.progression-summary progress::-webkit-progress-value {
+  background: var(--accent);
+}
+.progression-summary progress::-moz-progress-bar {
+  background: var(--accent);
+}
+.progression-history {
+  padding-left: 1.25rem;
+}
+.progression-history li {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.habit-card {
+  scroll-margin-top: 6rem;
+}

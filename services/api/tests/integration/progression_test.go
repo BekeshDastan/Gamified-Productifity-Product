@@ -416,3 +416,65 @@ func TestProgressionStructureRestoresOnlyExistingLeafRight(t *testing.T) {
 		t.Fatal("structural correction missing history", kind, e)
 	}
 }
+func readProgression(t *testing.T, r authResponse) progression.Balance {
+	t.Helper()
+	var out struct {
+		Data progression.Balance `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+		t.Fatalf("progression %d %s", r.status, r.body)
+	}
+	return out.Data
+}
+func readRewardHistory(t *testing.T, r authResponse) progression.LedgerPage {
+	t.Helper()
+	var out struct {
+		Data progression.LedgerPage `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+		t.Fatalf("reward history %d %s", r.status, r.body)
+	}
+	return out.Data
+}
+func TestProgressionAPIPrivacyAndStableHistory(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "progression-api@example.test")
+	b, _ := f.signedIn(t, "progression-api-other@example.test")
+	empty := readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if empty.TotalXP != 0 || empty.Coins != 0 || empty.Level.Number != 1 || len(empty.Rules.TaskXP) != 5 {
+		t.Fatal("invented empty progress", empty)
+	}
+	svc := progression.NewService(f.pool, f.clock)
+	for i := 0; i < 51; i++ {
+		if e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+			_, e := svc.Award(t.Context(), tx, account.ID, progression.Source{Kind: "task", Key: testkit.NewUser().ID, Difficulty: 1, Complete: true, Eligible: true, AllowFirst: true})
+			return e
+		}); e != nil {
+			t.Fatal(e)
+		}
+	}
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Настоящая задача")))
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}))
+	balance := readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if balance.TotalXP != 200 || balance.Coins != 40 || balance.AvailableCoins != 40 || balance.Level.Number != 2 || balance.Quota.TaskUsed != 200 {
+		t.Fatal(balance)
+	}
+	first := readRewardHistory(t, f.privateRequest(t, a, "GET", "/progression/history", "", nil))
+	if len(first.Items) != 50 || first.NextCursor == nil || first.Items[0].SourceTitle != "Настоящая задача" || first.Items[0].SourceURL == nil || *first.Items[0].SourceURL != "/app/quests/"+q.ID {
+		t.Fatal("missing source or page", first)
+	}
+	second := readRewardHistory(t, f.privateRequest(t, a, "GET", "/progression/history?before="+*first.NextCursor, "", nil))
+	if len(second.Items) != 2 || second.NextCursor != nil || second.Items[0].Sequence >= first.Items[49].Sequence {
+		t.Fatal("unstable history", second)
+	}
+	other := readProgression(t, f.privateRequest(t, b, "GET", "/progression", "", nil))
+	if other.TotalXP != 0 || len(readRewardHistory(t, f.privateRequest(t, b, "GET", "/progression/history", "", nil)).Items) != 0 {
+		t.Fatal("foreign projection leaked")
+	}
+	if r := f.privateRequest(t, b, "GET", "/progression/history?before="+first.Items[0].ID, "", nil); r.status != 404 {
+		t.Fatal("foreign cursor", r.status)
+	}
+	if r := f.privateRequest(t, a, "GET", "/progression/history?before=bad", "", nil); r.status != 422 {
+		t.Fatal("bad cursor", r.status)
+	}
+}

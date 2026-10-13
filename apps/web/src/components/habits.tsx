@@ -26,6 +26,7 @@ import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
 import { HabitHistory } from "./habit-history";
+import { useRewardNotice } from "./progression";
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const stateLabels = {
   open: "Период открыт",
@@ -311,7 +312,7 @@ export function HabitCard({
     (p) => Date.parse(p.start) <= Date.parse(h.as_of) && Date.parse(h.as_of) < Date.parse(p.end),
   );
   return (
-    <Card className="habit-card">
+    <Card className="habit-card" id={"habit-" + h.id}>
       <h2>{h.title}</h2>
       {h.has_more ? (
         <p role="status">Восстанавливаем периоды истории…</p>
@@ -418,7 +419,8 @@ function HabitLogForm({
   period: HabitPeriod;
   changed: () => void;
 }) {
-  const key = useRequestKey();
+  const key = useRequestKey(),
+    rewardNotice = useRewardNotice();
   const flow = useValidatedForm({
     schema: logForm,
     defaultValues: {
@@ -432,7 +434,8 @@ function HabitLogForm({
         amount: v.amount,
         occurred_at: DateTime.fromISO(v.occurred_at, { zone: h.timezone }).toUTC().toISO()!,
       };
-      await logHabit(h, input, key(input));
+      const saved = await logHabit(h, input, key(input));
+      rewardNotice(saved.reward);
       changed();
     },
   });
