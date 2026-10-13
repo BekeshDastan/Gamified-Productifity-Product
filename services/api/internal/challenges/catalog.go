@@ -143,6 +143,7 @@ func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountRuns(r)
 		r.Get("/api/v1/challenges/catalog", func(w http.ResponseWriter, r *http.Request) { out, e := ReadCatalog(); s.Reply(w, r, out, e) })
 	})
 }

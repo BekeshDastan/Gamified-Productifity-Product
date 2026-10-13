@@ -132,6 +132,23 @@ type CalendarEventHistory struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type ChallengeRun struct {
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	ID             pgtype.UUID        `json:"id"`
+	Request        []byte             `json:"request"`
+	Rules          []byte             `json:"rules"`
+	RulesHash      string             `json:"rules_hash"`
+	CatalogID      pgtype.Text        `json:"catalog_id"`
+	CatalogVersion string             `json:"catalog_version"`
+	State          string             `json:"state"`
+	Version        int64              `json:"version"`
+	StartsAt       pgtype.Timestamptz `json:"starts_at"`
+	EndsAt         pgtype.Timestamptz `json:"ends_at"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	FinalizedAt    pgtype.Timestamptz `json:"finalized_at"`
+	FinalSnapshot  []byte             `json:"final_snapshot"`
+}
+
 type CharacterInventory struct {
 	OwnerID   pgtype.UUID        `json:"owner_id"`
 	ItemID    string             `json:"item_id"`

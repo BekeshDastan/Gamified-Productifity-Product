@@ -6,6 +6,128 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/challenges/runs:
+    get:
+      operationId: listChallengeRuns
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeRunPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createChallengeRun
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeCreate"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeRun"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}:
+    get:
+      operationId: getChallengeRun
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeRun"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/rules:
+    put:
+      operationId: rejectChallengeRuleChanges
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      responses:
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
   /api/v1/challenges/catalog:
     get:
       operationId: getChallengeCatalog
@@ -7018,6 +7140,284 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ChallengeRuleInput:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - unit
+        - kind
+        - period
+        - target
+        - period_target
+        - days
+        - daily_cap
+        - allowed_misses
+        - name
+        - starts_on
+        - ends_on
+        - area_id
+        - goal_id
+        - habit_id
+        - rejoin
+      properties:
+        metric:
+          type: string
+          enum:
+            - tasks
+            - habits
+            - focus
+            - reviews
+            - manual
+        unit:
+          type: string
+          enum:
+            - tasks
+            - periods
+            - minutes
+            - reviews
+            - count
+            - pages
+        kind:
+          type: string
+          enum:
+            - cumulative
+            - periodic
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        period_target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        days:
+          type: integer
+          minimum: 1
+          maximum: 365
+        daily_cap:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        allowed_misses:
+          type: integer
+          minimum: 0
+          maximum: 365
+        name:
+          type: string
+          maxLength: 200
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+        area_id:
+          type:
+            - string
+            - "null"
+        goal_id:
+          type:
+            - string
+            - "null"
+        habit_id:
+          type:
+            - string
+            - "null"
+        rejoin:
+          type: boolean
+    ChallengeRules:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - unit
+        - kind
+        - period
+        - target
+        - period_target
+        - days
+        - daily_cap
+        - allowed_misses
+        - name
+        - starts_on
+        - ends_on
+        - area_id
+        - goal_id
+        - habit_id
+        - rejoin
+        - timezone
+        - visibility
+        - confirmation
+      properties:
+        metric:
+          type: string
+          enum:
+            - tasks
+            - habits
+            - focus
+            - reviews
+            - manual
+        unit:
+          type: string
+          enum:
+            - tasks
+            - periods
+            - minutes
+            - reviews
+            - count
+            - pages
+        kind:
+          type: string
+          enum:
+            - cumulative
+            - periodic
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        period_target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        days:
+          type: integer
+          minimum: 1
+          maximum: 365
+        daily_cap:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        allowed_misses:
+          type: integer
+          minimum: 0
+          maximum: 365
+        name:
+          type: string
+          maxLength: 200
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+        area_id:
+          type:
+            - string
+            - "null"
+        goal_id:
+          type:
+            - string
+            - "null"
+        habit_id:
+          type:
+            - string
+            - "null"
+        rejoin:
+          type: boolean
+        timezone:
+          type: string
+        visibility:
+          type: string
+          enum:
+            - private
+        confirmation:
+          type: string
+          enum:
+            - automatic
+            - self_report
+    ChallengeCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - template_id
+        - input
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        template_id:
+          type:
+            - string
+            - "null"
+        input:
+          $ref: "#/components/schemas/ChallengeRuleInput"
+    ChallengeRun:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - rules
+        - rules_hash
+        - catalog_id
+        - catalog_version
+        - state
+        - version
+        - starts_at
+        - ends_at
+        - created_at
+        - finalized_at
+        - final_snapshot
+      properties:
+        id:
+          type: string
+          format: uuid
+        rules:
+          $ref: "#/components/schemas/ChallengeRules"
+        rules_hash:
+          type: string
+        catalog_id:
+          type:
+            - string
+            - "null"
+        catalog_version:
+          type: string
+        state:
+          type: string
+          enum:
+            - open
+            - closed
+        version:
+          type: integer
+        starts_at:
+          type: string
+        ends_at:
+          type: string
+        created_at:
+          type: string
+        finalized_at:
+          type:
+            - string
+            - "null"
+        final_snapshot:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+    ChallengeRunPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengeRun"
+        next:
+          type: string
     ChallengeConfig:
       type: object
       additionalProperties: false
