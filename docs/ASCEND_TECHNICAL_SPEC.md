@@ -1793,7 +1793,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** При балансе на один предмет из двух конкурирующих покупок проходит одна.
   - **КОММИТ СЕЙЧАС:** `feat(rewards): purchase items with locked wallet transactions`
 
-- [ ] **C099. Получение и возврат**
+- [x] **C099. Получение и возврат**
   - **Сделать:** Добавить claim/cancel только для допустимых состояний и компенсирующий coin ledger.
   - **Проверить:** Полученная реальная награда не возвращается; повтор отмены не выдаёт новые монеты.
   - **КОММИТ СЕЙЧАС:** `feat(rewards): claim or cancel pending personal redemptions`

@@ -164,6 +164,8 @@ export function Progression() {
                         reversal: "Корректировка",
                         restoration: "Восстановление",
                         spend: "Расход монет",
+                        refund: "Возврат монет",
+                        bonus: "Компенсация набора",
                       }[e.kind]
                     }
                   </strong>{" "}
@@ -184,7 +186,7 @@ export function Progression() {
                     })}
                   {e.area_name && ` · ${e.area_name}`}
                 </p>
-                {e.source_kind !== "spend" && (
+                {!["spend", "refund", "bonus"].includes(e.source_kind) && (
                   <details>
                     <summary>Исходное право на награду</summary>
                     <p>

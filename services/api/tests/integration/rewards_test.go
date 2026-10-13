@@ -145,3 +145,54 @@ func TestRewardPurchasedCosmeticSurvivesSpentXPCorrection(t *testing.T) {
 		t.Fatal("paid ownership revoked by level correction")
 	}
 }
+
+func TestRewardCancelUsesOriginalCostOnceAndClaimCannotRefund(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, owner := f.signedIn(t, "reward-return@example.test")
+	in := rewards.DefinitionInput{Title: "Отдых", Cost: 5, Available: true}
+	d := readRewardDefinition(t, f.privateRequest(t, a, "POST", "/rewards/custom", "", in))
+	qi := questInput("Работа")
+	qi.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", qi))
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{}))
+	buy := func() rewards.Redemption {
+		return readRedemption(t, f.privateRequest(t, a, "POST", "/rewards/purchase", "", rewards.PurchaseInput{OperationID: testkit.NewUser().ID, Kind: "custom", TargetID: d.ID, ExpectedCost: d.Cost, ExpectedVersion: d.Version}))
+	}
+	purchase := buy()
+	in.Cost = 10
+	in.PriceConfirmed = true
+	d = readRewardDefinition(t, f.privateRequest(t, a, "PATCH", "/rewards/custom/"+d.ID, rewardVersion(d), in))
+	path := "/rewards/redemptions/" + purchase.ID
+	originalVersion := fmt.Sprintf(`"%d"`, purchase.Version)
+	if _, e := f.pool.Exec(t.Context(), "CREATE FUNCTION reject_refund() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.kind='refund' THEN RAISE EXCEPTION 'injected refund failure';END IF;RETURN NEW;END $$;CREATE TRIGGER reject_refund BEFORE INSERT ON reward_ledger FOR EACH ROW EXECUTE FUNCTION reject_refund()"); e != nil {
+		t.Fatal(e)
+	}
+	key := "cancel-after-rollback-001"
+	if r := f.privateRequest(t, a, "POST", path+"/cancel", originalVersion, map[string]string{}, key); r.status != 500 {
+		t.Fatal("injection", r.status)
+	}
+	var coins int64
+	var status string
+	if e := f.pool.QueryRow(t.Context(), "SELECT coins,(SELECT status FROM reward_redemptions WHERE owner_id=$1 AND id=$2) FROM user_progress WHERE owner_id=$1", owner.ID, purchase.ID).Scan(&coins, &status); e != nil || coins != 0 || status != "pending" {
+		t.Fatal("partial cancellation", coins, status, e)
+	}
+	if _, e := f.pool.Exec(t.Context(), "DROP TRIGGER reject_refund ON reward_ledger;DROP FUNCTION reject_refund()"); e != nil {
+		t.Fatal(e)
+	}
+	cancelled := readRedemption(t, f.privateRequest(t, a, "POST", path+"/cancel", originalVersion, map[string]string{}, key))
+	readRedemption(t, f.privateRequest(t, a, "POST", path+"/cancel", originalVersion, map[string]string{}))
+	var refunds int64
+	if e := f.pool.QueryRow(t.Context(), "SELECT coins,(SELECT count(*) FROM reward_ledger WHERE owner_id=$1 AND kind='refund') FROM user_progress WHERE owner_id=$1", owner.ID).Scan(&coins, &refunds); e != nil || coins != 5 || refunds != 1 || cancelled.Cost != 5 {
+		t.Fatal("duplicate or repriced refund", coins, refunds, cancelled, e)
+	}
+	if r := f.privateRequest(t, a, "POST", path+"/claim", fmt.Sprintf(`"%d"`, cancelled.Version), map[string]string{}); r.status != 409 {
+		t.Fatal("cancelled claim", r.status)
+	}
+	in.Cost = 5
+	d = readRewardDefinition(t, f.privateRequest(t, a, "PATCH", "/rewards/custom/"+d.ID, rewardVersion(d), in))
+	purchase = buy()
+	claimed := readRedemption(t, f.privateRequest(t, a, "POST", "/rewards/redemptions/"+purchase.ID+"/claim", fmt.Sprintf(`"%d"`, purchase.Version), map[string]string{}))
+	if r := f.privateRequest(t, a, "POST", "/rewards/redemptions/"+purchase.ID+"/cancel", fmt.Sprintf(`"%d"`, claimed.Version), map[string]string{}); r.status != 409 {
+		t.Fatal("claimed refund", r.status)
+	}
+}

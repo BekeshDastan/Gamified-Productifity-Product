@@ -195,6 +195,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountPurchases(r)
+		s.mountRedemptionActions(r)
 		r.Get("/api/v1/rewards/custom", func(w http.ResponseWriter, r *http.Request) {
 			id, e := owner(r.Context())
 			var out []Definition
