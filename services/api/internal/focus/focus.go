@@ -157,6 +157,9 @@ func validateStart(in StartInput) (StartInput, error) {
 	if in.Mode == "" {
 		in.Mode = "free"
 	}
+	if in.Mode == "quick" && in.WorkMinutes == 0 {
+		in.WorkMinutes = 5
+	}
 	if in.WorkMinutes == 0 {
 		in.WorkMinutes = 25
 	}
@@ -164,7 +167,7 @@ func validateStart(in StartInput) (StartInput, error) {
 		in.BreakMinutes = 5
 	}
 	in.Title = strings.TrimSpace(in.Title)
-	if !validID(in.OperationID) || in.Mode != "free" || in.WorkMinutes < 5 || in.WorkMinutes > 120 || in.BreakMinutes < 1 || in.BreakMinutes > 60 || utf8.RuneCountInString(in.Title) > 200 || strings.ContainsRune(in.Title, 0) {
+	if !validID(in.OperationID) || (in.Mode != "free" && in.Mode != "pomodoro" && in.Mode != "quick") || (in.Mode == "quick" && in.WorkMinutes != 5) || in.WorkMinutes < 5 || in.WorkMinutes > 120 || in.BreakMinutes < 1 || in.BreakMinutes > 60 || utf8.RuneCountInString(in.Title) > 200 || strings.ContainsRune(in.Title, 0) {
 		return in, problem(422, "VALIDATION_ERROR", "Проверьте режим и длительность сессии")
 	}
 	for _, id := range []*string{in.QuestID, in.GoalID, in.AreaID} {
@@ -248,10 +251,20 @@ func (s *Service) start(ctx context.Context, tx pgx.Tx, owner string, input Star
 	if e = tx.QueryRow(ctx, "SELECT preferences->>'timezone' FROM user_settings WHERE owner_id=$1", owner).Scan(&zone); e != nil {
 		return Session{}, e
 	}
+	var soundAllowed bool
+	if e = tx.QueryRow(ctx, "SELECT COALESCE((preferences#>>'{personalization,sound}')::boolean,false) FROM user_settings WHERE owner_id=$1", owner).Scan(&soundAllowed); e != nil {
+		return Session{}, e
+	}
 	now := s.now()
-	_, e = tx.Exec(ctx, `INSERT INTO focus_sessions(owner_id,id,request,state,mode,phase,title,quest_id,goal_id,area_id,timezone,work_minutes,break_minutes,sound_enabled,started_at,updated_at) VALUES($1,$2,$3,'running',$4,'work',$5,$6,$7,$8,$9,$10,$11,$12,$13,$13)`, owner, in.OperationID, request, in.Mode, title, in.QuestID, in.GoalID, area, zone, in.WorkMinutes, in.BreakMinutes, in.SoundEnabled, now)
+	_, e = tx.Exec(ctx, `INSERT INTO focus_sessions(owner_id,id,request,state,mode,phase,title,quest_id,goal_id,area_id,timezone,work_minutes,break_minutes,sound_enabled,started_at,updated_at) VALUES($1,$2,$3,'running',$4,'work',$5,$6,$7,$8,$9,$10,$11,$12,$13,$13)`, owner, in.OperationID, request, in.Mode, title, in.QuestID, in.GoalID, area, zone, in.WorkMinutes, in.BreakMinutes, in.SoundEnabled && soundAllowed, now)
 	if e != nil {
 		return Session{}, e
+	}
+	if in.Mode != "free" {
+		end := now.Add(time.Duration(in.WorkMinutes) * time.Minute)
+		if _, e = tx.Exec(ctx, "UPDATE focus_sessions SET phase_deadline=$3 WHERE owner_id=$1 AND id=$2", owner, in.OperationID, end); e != nil {
+			return Session{}, e
+		}
 	}
 	if _, e = tx.Exec(ctx, "INSERT INTO focus_segments(owner_id,session_id,kind,started_at) VALUES($1,$2,'work',$3)", owner, in.OperationID, now); e != nil {
 		return Session{}, e

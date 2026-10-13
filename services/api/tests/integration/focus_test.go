@@ -184,3 +184,77 @@ func TestFocusFourHourWorkAndEightHourWallLimits(t *testing.T) {
 		t.Fatal("wall limit", s)
 	}
 }
+func TestFocusPomodoroPauseBreakAndExplicitNext(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "focus-pomo@example.test")
+	in := focusInput()
+	in.Mode = "pomodoro"
+	in.WorkMinutes = 5
+	in.BreakMinutes = 1
+	in.SoundEnabled = true
+	s := readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", in))
+	if s.SoundEnabled || s.PhaseDeadline == nil {
+		t.Fatal("global sound off", s)
+	}
+	f.clock.Advance(2 * time.Minute)
+	s = focusAct(t, f, a, s, "pause")
+	if s.ActiveSeconds != 120 || s.PhaseRemainingSeconds == nil || *s.PhaseRemainingSeconds != 180 {
+		t.Fatal(s)
+	}
+	f.clock.Advance(10 * time.Minute)
+	s = focusAct(t, f, a, s, "resume")
+	f.clock.Advance(4 * time.Minute)
+	f.loginAs(t, a, "focus-pomo@example.test")
+	cur := readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil))
+	s = *cur.Session
+	if s.State != "paused" || s.Phase != "work_complete" || s.ActiveSeconds != 300 || s.Cycle != 1 {
+		t.Fatal("work boundary", s)
+	}
+	f.clock.Advance(2 * time.Minute)
+	cur = readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil))
+	if cur.Session.ActiveSeconds != 300 {
+		t.Fatal("auto next", cur)
+	}
+	s = focusAct(t, f, a, s, "break")
+	f.clock.Advance(2 * time.Minute)
+	cur = readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil))
+	s = *cur.Session
+	if s.State != "paused" || s.Phase != "break_complete" || s.ActiveSeconds != 300 || s.BreakSeconds != 60 {
+		t.Fatal("break counted as work", s)
+	}
+	s = focusAct(t, f, a, s, "next")
+	if s.Cycle != 2 || s.State != "running" || s.Phase != "work" {
+		t.Fatal(s)
+	}
+	f.clock.Advance(time.Minute)
+	s = focusAct(t, f, a, s, "finish")
+	if s.ActiveSeconds != 360 || s.BreakSeconds != 60 {
+		t.Fatal(s)
+	}
+}
+func TestFocusQuickIntervalContinuesOnlyByChoice(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "focus-quick@example.test")
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Маленький шаг")))
+	in := focusInput()
+	in.Mode = "quick"
+	in.WorkMinutes = 5
+	in.QuestID = &q.ID
+	s := readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", in))
+	f.clock.Advance(7 * time.Minute)
+	cur := readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil))
+	s = *cur.Session
+	if s.State != "paused" || s.Phase != "work_complete" || s.ActiveSeconds != 300 {
+		t.Fatal(s)
+	}
+	s = focusAct(t, f, a, s, "extend")
+	f.clock.Advance(2 * time.Minute)
+	s = focusAct(t, f, a, s, "finish")
+	if s.ActiveSeconds != 420 {
+		t.Fatal(s)
+	}
+	q = readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+q.ID, "", nil))
+	if q.Status != "todo" {
+		t.Fatal("auto complete", q.Status)
+	}
+}

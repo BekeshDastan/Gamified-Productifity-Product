@@ -112,6 +112,9 @@ func (s *Service) action(ctx context.Context, tx pgx.Tx, owner, id string, in Ac
 	if p := platform.MatchVersion(r, f.Version); p != nil {
 		return f, p
 	}
+	if in.Action == "break" || in.Action == "next" || in.Action == "extend" {
+		return s.nextInterval(ctx, tx, owner, f, in.Action)
+	}
 	now := s.now()
 	if now.Before(f.UpdatedAt) {
 		now = f.UpdatedAt
@@ -137,6 +140,9 @@ func (s *Service) action(ctx context.Context, tx pgx.Tx, owner, id string, in Ac
 	case "resume":
 		if f.State != "paused" || (phase != "work" && phase != "break") {
 			return f, problem(409, "INVALID_TRANSITION", "Выберите следующий интервал или завершите сессию")
+		}
+		if len(f.Segments) >= 1000 {
+			return f, problem(409, "SESSION_LIMIT", "Завершите сессию перед новым интервалом")
 		}
 		state = "running"
 		if remaining != nil {

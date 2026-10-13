@@ -1842,7 +1842,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Повтор pause не добавляет время; finish из недопустимого состояния даёт 409.
   - **КОММИТ СЕЙЧАС:** `feat(focus): implement start pause resume and finish transitions`
 
-- [ ] **C107. Pomodoro**
+- [x] **C107. Pomodoro**
   - **Сделать:** Добавить рабочий/перерывный цикл, безопасные пределы настроек и продолжение следующего интервала по выбору.
   - **Проверить:** Перерыв не попадает в active_seconds; отключение звука соблюдается.
   - **КОММИТ СЕЙЧАС:** `feat(focus): add configurable work and break cycles`
