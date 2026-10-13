@@ -1765,3 +1765,7 @@ html[data-motion="reduce"] *::after {
   min-height: 6rem;
   resize: vertical;
 }
+.focus-history article {
+  padding-block: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}

@@ -5814,6 +5814,100 @@ paths:
           $ref: "#/components/responses/Error"
         "429":
           $ref: "#/components/responses/Error"
+  /api/v1/focus/history:
+    get:
+      operationId: getFocusHistory
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+        - name: quest_id
+          in: query
+          schema:
+            type: string
+        - name: area_id
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FocusHistory"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/focus/sessions/{id}:
+    get:
+      operationId: getFocusSession
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FocusCurrent"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
 components:
   requestBodies:
     Empty:
@@ -10493,3 +10587,61 @@ components:
           minimum: 0
         overridden:
           type: boolean
+    FocusHistorySummary:
+      type: object
+      additionalProperties: false
+      required:
+        - sessions
+        - work_seconds
+        - confirmed_seconds
+        - pending_seconds
+        - cancelled_seconds
+        - rest_seconds
+      properties:
+        sessions:
+          type: integer
+          minimum: 0
+        work_seconds:
+          type: integer
+          minimum: 0
+        confirmed_seconds:
+          type: integer
+          minimum: 0
+        pending_seconds:
+          type: integer
+          minimum: 0
+        cancelled_seconds:
+          type: integer
+          minimum: 0
+        rest_seconds:
+          type: integer
+          minimum: 0
+    FocusHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next_cursor
+        - summary
+        - as_of
+        - from
+        - to
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/FocusSession"
+        next_cursor:
+          type:
+            - string
+            - "null"
+        summary:
+          $ref: "#/components/schemas/FocusHistorySummary"
+        as_of:
+          type: string
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date

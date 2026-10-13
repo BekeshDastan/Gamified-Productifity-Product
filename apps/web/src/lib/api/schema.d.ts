@@ -2103,6 +2103,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/focus/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getFocusHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/focus/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getFocusSession"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3389,6 +3421,24 @@ export interface components {
             effective_seconds: number;
             confirmed_sessions: number;
             overridden: boolean;
+        };
+        FocusHistorySummary: {
+            sessions: number;
+            work_seconds: number;
+            confirmed_seconds: number;
+            pending_seconds: number;
+            cancelled_seconds: number;
+            rest_seconds: number;
+        };
+        FocusHistory: {
+            items: components["schemas"]["FocusSession"][];
+            next_cursor: string | null;
+            summary: components["schemas"]["FocusHistorySummary"];
+            as_of: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
         };
     };
     responses: {
@@ -8270,6 +8320,73 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["QuestFocusTime"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getFocusHistory: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                quest_id?: string;
+                area_id?: string;
+                state?: string;
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FocusHistory"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getFocusSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FocusCurrent"];
                         meta: components["schemas"]["Meta"];
                     };
                 };

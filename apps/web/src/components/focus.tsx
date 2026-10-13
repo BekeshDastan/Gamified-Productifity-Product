@@ -23,6 +23,7 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
+import { FocusHistory } from "./focus-history";
 import { FocusReview } from "./focus-review";
 import { Dialog } from "./ui/dialog";
 
@@ -273,6 +274,7 @@ export function Focus() {
           <FocusStartForm changed={changed} />
         </Card>
       )}
+      <FocusHistory serverNow={q.data.server_now} />
       <Dialog
         title="Отмена фокус-сессии"
         description="Интервалы останутся в истории. Время не войдёт в подтверждённый итог задачи."

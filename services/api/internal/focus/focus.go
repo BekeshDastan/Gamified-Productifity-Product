@@ -94,7 +94,7 @@ type Current struct {
 
 const columns = "id::text,state,mode,phase,title,quest_id::text,goal_id::text,area_id::text,timezone,work_minutes,break_minutes,sound_enabled,cycle,version,started_at,updated_at,ended_at,phase_deadline,result,comment,phase_remaining_seconds"
 
-func (s *Service) load(ctx context.Context, tx pgx.Tx, owner, id string) (Session, error) {
+func (s *Service) load(ctx context.Context, tx pgx.Tx, owner, id string, at ...time.Time) (Session, error) {
 	var f Session
 	f.Segments = []Segment{}
 	if !validID(id) {
@@ -118,8 +118,19 @@ func (s *Service) load(ctx context.Context, tx pgx.Tx, owner, id string) (Sessio
 			return f, e
 		}
 		end := s.now()
+		if len(at) > 0 {
+			end = at[0]
+		}
 		if seg.EndedAt != nil {
 			end = *seg.EndedAt
+		} else {
+			end = minTime(end, f.StartedAt.Add(time.Duration(MaxElapsedSeconds)*time.Second))
+			if f.PhaseDeadline != nil {
+				end = minTime(end, *f.PhaseDeadline)
+			}
+			if seg.Kind == "work" {
+				end = minTime(end, seg.StartedAt.Add(time.Duration(max(0, MaxActiveSeconds-f.ActiveSeconds))*time.Second))
+			}
 		}
 		seg.Seconds = max(0, int64(end.Sub(seg.StartedAt)/time.Second))
 		if seg.Kind == "work" {
@@ -336,6 +347,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		r.Use(protect)
 		s.mountActions(r)
 		s.mountReview(r)
+		s.mountHistory(r)
 		r.Get("/api/v1/focus/current", func(w http.ResponseWriter, r *http.Request) {
 			id, e := owner(r.Context())
 			var out Current

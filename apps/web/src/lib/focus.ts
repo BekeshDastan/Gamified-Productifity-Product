@@ -187,3 +187,47 @@ export async function getQuestFocusTime(id: string, signal?: AbortSignal) {
   });
   return questFocusTime.parse(r.data?.data);
 }
+export const focusHistory = z.object({
+  items: z.array(focusSession),
+  next_cursor: z.string().nullable(),
+  summary: z.object({
+    sessions: integer,
+    work_seconds: integer,
+    confirmed_seconds: integer,
+    pending_seconds: integer,
+    cancelled_seconds: integer,
+    rest_seconds: integer,
+  }),
+  as_of: instant,
+  from: z.iso.date(),
+  to: z.iso.date(),
+});
+export type FocusHistoryFilters = {
+  from: string;
+  to: string;
+  quest_id?: string;
+  area_id?: string;
+  state?: string;
+};
+export async function getFocusHistory(
+  filters: FocusHistoryFilters,
+  before?: string,
+  signal?: AbortSignal,
+) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/focus/history", {
+    params: { query: { ...filters, before } },
+    signal,
+  });
+  return focusHistory.parse(r.data?.data);
+}
+export async function getFocusSession(id: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/focus/sessions/{id}", {
+    params: { path: { id } },
+    signal,
+  });
+  const data = current.parse(r.data?.data);
+  if (!data.session) throw Error("Missing session");
+  return data.session;
+}

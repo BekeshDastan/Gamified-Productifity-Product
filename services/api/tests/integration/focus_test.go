@@ -375,3 +375,122 @@ func TestFocusConfirmedEvidenceQualifiesWithoutXP(t *testing.T) {
 		t.Fatal("focus evidence", active, xp, e)
 	}
 }
+func readFocusHistory(t *testing.T, r authResponse) focus.History {
+	t.Helper()
+	var out struct{ Data focus.History }
+	if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+		t.Fatal(r.status, string(r.body))
+	}
+	return out.Data
+}
+func TestFocusHistoryFiltersSummarySegmentsAndPrivacy(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "focus-history@example.test")
+	other, _ := f.signedIn(t, "focus-history-other@example.test")
+	ar := f.privateRequest(t, a, "POST", "/areas", "", map[string]any{"name": "Учёба", "color": "#6478c8", "icon": "book", "archived": false})
+	var area struct{ Data struct{ ID string } }
+	if ar.status != 200 || json.Unmarshal(ar.body, &area) != nil {
+		t.Fatal(string(ar.body))
+	}
+	qi := questInput("Программа")
+	qi.AreaID = &area.Data.ID
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", qi))
+	in := focusInput()
+	in.Mode = "pomodoro"
+	in.WorkMinutes = 5
+	in.BreakMinutes = 1
+	in.QuestID = &q.ID
+	s := readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", in))
+	f.clock.Advance(2 * time.Minute)
+	s = focusAct(t, f, a, s, "pause")
+	f.clock.Advance(time.Minute)
+	s = focusAct(t, f, a, s, "resume")
+	f.clock.Advance(3 * time.Minute)
+	s = *readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil)).Session
+	s = focusAct(t, f, a, s, "break")
+	f.clock.Advance(time.Minute)
+	s = *readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil)).Session
+	s = focusAct(t, f, a, s, "next")
+	f.clock.Advance(30 * time.Second)
+	s = focusAct(t, f, a, s, "finish")
+	first := readFocus(t, f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), focus.ConfirmInput{Result: "progress"}))
+	for i, seconds := range []int{20, 30, 40} {
+		in = focusInput()
+		in.QuestID = &q.ID
+		s = readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", in))
+		f.clock.Advance(time.Duration(seconds) * time.Second)
+		if i == 0 {
+			focusAct(t, f, a, s, "cancel")
+		} else {
+			s = focusAct(t, f, a, s, "finish")
+			if i == 1 {
+				readFocus(t, f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), focus.ConfirmInput{Result: "rest"}))
+			}
+		}
+	}
+	h := readFocusHistory(t, f.privateRequest(t, a, "GET", "/focus/history?from=2026-10-12&to=2026-10-12", "", nil))
+	if len(h.Items) != 4 || h.Summary.Sessions != 4 || h.Summary.WorkSeconds != 420 || h.Summary.ConfirmedSeconds != 330 || h.Summary.PendingSeconds != 40 || h.Summary.CancelledSeconds != 20 || h.Summary.RestSeconds != 30 {
+		t.Fatal(h)
+	}
+	var sum int64
+	for _, row := range h.Items {
+		var work, rest int64
+		for _, seg := range row.Segments {
+			if seg.Kind == "work" {
+				work += seg.Seconds
+			} else {
+				rest += seg.Seconds
+			}
+		}
+		if row.ActiveSeconds != work || row.BreakSeconds != rest {
+			t.Fatal("segment disagreement", row)
+		}
+		sum += work
+	}
+	if sum != h.Summary.WorkSeconds {
+		t.Fatal(sum, h.Summary)
+	}
+	filtered := readFocusHistory(t, f.privateRequest(t, a, "GET", "/focus/history?from=2026-10-12&to=2026-10-12&quest_id="+q.ID+"&area_id="+area.Data.ID+"&state=finished", "", nil))
+	if len(filtered.Items) != 2 || filtered.Summary.WorkSeconds != 360 {
+		t.Fatal(filtered)
+	}
+	if empty := readFocusHistory(t, f.privateRequest(t, other, "GET", "/focus/history", "", nil)); len(empty.Items) != 0 || empty.Summary.WorkSeconds != 0 {
+		t.Fatal("private", empty)
+	}
+	detail := readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/sessions/"+first.ID, "", nil))
+	if detail.Session == nil || detail.Session.ActiveSeconds != 330 {
+		t.Fatal(detail)
+	}
+	for _, path := range []string{"/focus/sessions/" + first.ID, "/focus/history?before=" + first.ID} {
+		if r := f.privateRequest(t, other, "GET", path, "", nil); r.status != 404 {
+			t.Fatal("foreign", r.status)
+		}
+	}
+	for _, suffix := range []string{"?from=2026-10-13&to=2026-10-12", "?from=2020-01-01&to=2026-10-12", "?before=invalid", "?state=wrong", "?quest_id=invalid"} {
+		if r := f.privateRequest(t, a, "GET", "/focus/history"+suffix, "", nil); r.status != 422 {
+			t.Fatal(suffix, r.status, string(r.body))
+		}
+	}
+}
+func TestFocusHistoryCursorHasNoDuplicates(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "focus-pages@example.test")
+	for range 26 {
+		s := readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", focusInput()))
+		f.clock.Advance(time.Second)
+		focusAct(t, f, a, s, "cancel")
+	}
+	first := readFocusHistory(t, f.privateRequest(t, a, "GET", "/focus/history", "", nil))
+	if len(first.Items) != 25 || first.NextCursor == nil || first.Summary.Sessions != 26 || first.Summary.CancelledSeconds != 26 {
+		t.Fatal(first)
+	}
+	last := readFocusHistory(t, f.privateRequest(t, a, "GET", "/focus/history?before="+*first.NextCursor, "", nil))
+	if len(last.Items) != 1 || last.NextCursor != nil {
+		t.Fatal(last)
+	}
+	for _, s := range first.Items {
+		if s.ID == last.Items[0].ID {
+			t.Fatal("duplicate cursor")
+		}
+	}
+}
