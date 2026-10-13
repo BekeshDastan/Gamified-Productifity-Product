@@ -7,6 +7,7 @@ import { useSettings } from "@/lib/settings";
 import { accountQueryKey } from "@/lib/api/query-provider";
 import { useConfirmDiscard, SafeLink } from "@/lib/forms/unsaved-changes";
 import { getWeekReview, previewWeekReview, type WeekPreview } from "@/lib/journal";
+import { WeeklyResetApply } from "./weekly-reset-apply";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 export function WeeklyReset() {
@@ -38,7 +39,8 @@ function Weekly({
     ),
     [preview, setPreview] = useState<WeekPreview | null>(null),
     [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [notice, setNotice] = useState("");
   const key = useRef({ date: "", key: "" });
   const q = useQuery({
     queryKey: accountQueryKey(account, "weekly-review", date),
@@ -77,6 +79,7 @@ function Weekly({
           </p>
         )}
         {error && <p role="alert">{error}</p>}
+        {notice && <p role="status">{notice}</p>}
         <Button
           disabled={busy || !q.data}
           onClick={async () => {
@@ -100,6 +103,18 @@ function Weekly({
       {(preview?.snapshot ?? q.data?.snapshot) && (
         <WeekSources snapshot={(preview?.snapshot ?? q.data?.snapshot)!} />
       )}{" "}
+      {preview && (
+        <WeeklyResetApply
+          key={preview.id}
+          preview={preview}
+          account={account}
+          saved={() => {
+            setPreview(null);
+            setNotice("Weekly Reset применён. Выбранные изменения сохранены.");
+            void q.refetch();
+          }}
+        />
+      )}
       {preview && (
         <Card>
           <h2>Предпросмотр подготовлен</h2>

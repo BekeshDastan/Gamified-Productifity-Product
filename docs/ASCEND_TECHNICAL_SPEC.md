@@ -1906,7 +1906,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Просрочка не удаляется сама; исходные даты видны в обзоре.
   - **КОММИТ СЕЙЧАС:** `feat(reviews): build weekly reset from unfinished commitments`
 
-- [ ] **C118. Применение Weekly Reset**
+- [x] **C118. Применение Weekly Reset**
   - **Сделать:** Реализовать подтверждение переносов/архива/нового плана с проверкой версий и ключа.
   - **Проверить:** Повтор apply не дублирует задачи; конфликт изменения останавливает применение.
   - **КОММИТ СЕЙЧАС:** `feat(reviews): apply reviewed weekly changes idempotently`

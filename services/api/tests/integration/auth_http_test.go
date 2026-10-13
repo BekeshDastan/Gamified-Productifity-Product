@@ -82,7 +82,7 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	habits.NewService(pool, clock).WithProgression(rewardService).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, clock, questService, calendarService)
 	planService.Mount(router, sessions.Protect)
-	journal.NewService(pool, clock).WithPlanning(planService).Mount(router, sessions.Protect)
+	journal.NewService(pool, clock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)
 	return authFixture{pool: pool, ctx: ctx, clock: clock, sessions: sessions, service: service, server: server}

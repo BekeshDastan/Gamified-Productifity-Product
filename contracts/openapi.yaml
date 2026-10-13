@@ -6,6 +6,53 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/reviews/week/{date}/apply-plan:
+    post:
+      operationId: applyWeekReview
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeekApplyInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WeekResult"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/reviews/week/{date}:
     get:
       operationId: getWeekReview
@@ -6835,6 +6882,91 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    WeekApplyInput:
+      type: object
+      additionalProperties: false
+      required:
+        - preview_id
+        - changes
+        - plans
+        - reason
+      properties:
+        preview_id:
+          type: string
+        changes:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - version
+              - action
+              - planned_date
+              - reason
+            properties:
+              id:
+                type: string
+              version:
+                type: integer
+              action:
+                type: string
+                enum:
+                  - move
+                  - archive
+              planned_date:
+                type:
+                  - string
+                  - "null"
+              reason:
+                type: string
+        plans:
+          type: array
+          maxItems: 7
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - date
+              - version
+              - input
+            properties:
+              date:
+                type: string
+              version:
+                type: integer
+              input:
+                $ref: "#/components/schemas/PlanInput"
+        reason:
+          type: string
+    WeekResult:
+      type: object
+      additionalProperties: false
+      required:
+        - preview_id
+        - week
+        - version
+        - changed_ids
+        - plan_ids
+        - applied_at
+      properties:
+        preview_id:
+          type: string
+        week:
+          type: string
+        version:
+          type: integer
+        changed_ids:
+          type: array
+          items:
+            type: string
+        plan_ids:
+          type: array
+          items:
+            type: string
+        applied_at:
+          type: string
     WeeklyItem:
       type: object
       additionalProperties: false

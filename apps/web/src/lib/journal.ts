@@ -218,3 +218,38 @@ export async function previewWeekReview(date: string, key: string) {
     return weekPreview.parse(r.data?.data);
   });
 }
+
+import type { components } from "@/lib/api/schema";
+export type WeekApplyInput = components["schemas"]["WeekApplyInput"];
+export async function applyWeekReview(
+  date: string,
+  preview: WeekPreview,
+  input: WeekApplyInput,
+  key: string,
+) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient(),
+      r = await api.POST("/api/v1/reviews/week/{date}/apply-plan", {
+        params: {
+          path: { date },
+          header: {
+            ...authParams().header,
+            "Idempotency-Key": key,
+            "If-Match": '"' + preview.snapshot.review_version + '"',
+          },
+        },
+        body: input,
+      });
+    return z
+      .object({
+        preview_id: z.uuid(),
+        week: z.string(),
+        version: z.number(),
+        changed_ids: z.array(z.uuid()),
+        plan_ids: z.array(z.uuid()),
+        applied_at: z.string(),
+      })
+      .parse(r.data?.data);
+  });
+}

@@ -102,7 +102,7 @@ func TestBrowserAuth(t *testing.T) {
 	habits.NewService(pool, domainClock).WithProgression(rewardService).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, domainClock, questService, calendarService)
 	planService.Mount(router, sessions.Protect)
-	journal.NewService(pool, domainClock).WithPlanning(planService).Mount(router, sessions.Protect)
+	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
 		t.Fatal("stop dev before browser acceptance; API test port unavailable")

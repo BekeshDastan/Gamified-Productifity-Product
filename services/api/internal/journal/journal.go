@@ -6,6 +6,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,7 +19,8 @@ import (
 
 type Service struct {
 	*privateapi.Service
-	plans *planning.Service
+	plans  *planning.Service
+	quests *quests.Service
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
@@ -171,6 +173,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		s.mountMorning(r)
 		s.mountEvening(r)
 		s.mountWeek(r)
+		s.mountWeekApply(r)
 		r.Get("/api/v1/journal/entries", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) { return s.list(r, tx, owner) })
 			s.Reply(w, r, out, e)
