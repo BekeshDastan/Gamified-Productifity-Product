@@ -15,18 +15,26 @@ var markdownEmphasis = regexp.MustCompile(`\*([^*\n]+)\*`)
 // code and HTTP(S) links. Raw HTML, images and embedded content remain text.
 func RenderMarkdown(body string) string {
 	inline := func(text string) string {
-		escaped := html.EscapeString(text)
-		escaped = markdownLink.ReplaceAllStringFunc(escaped, func(match string) string {
-			parts := markdownLink.FindStringSubmatch(match)
-			target := html.UnescapeString(parts[2])
+		plain := func(value string) string {
+			escaped := html.EscapeString(value)
+			escaped = markdownStrong.ReplaceAllString(escaped, "<strong>$1</strong>")
+			return markdownEmphasis.ReplaceAllString(escaped, "<em>$1</em>")
+		}
+		var out strings.Builder
+		position := 0
+		for _, match := range markdownLink.FindAllStringSubmatchIndex(text, -1) {
+			out.WriteString(plain(text[position:match[0]]))
+			target := text[match[4]:match[5]]
 			u, e := url.Parse(target)
 			if e != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil {
-				return match
+				out.WriteString(plain(text[match[0]:match[1]]))
+			} else {
+				out.WriteString(`<a href="` + html.EscapeString(target) + `" rel="noopener noreferrer" target="_blank">` + plain(text[match[2]:match[3]]) + `</a>`)
 			}
-			return `<a href="` + html.EscapeString(target) + `" rel="noopener noreferrer" target="_blank">` + parts[1] + `</a>`
-		})
-		escaped = markdownStrong.ReplaceAllString(escaped, "<strong>$1</strong>")
-		return markdownEmphasis.ReplaceAllString(escaped, "<em>$1</em>")
+			position = match[1]
+		}
+		out.WriteString(plain(text[position:]))
+		return out.String()
 	}
 	var out strings.Builder
 	code := false

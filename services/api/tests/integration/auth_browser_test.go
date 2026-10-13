@@ -71,7 +71,7 @@ func TestBrowserAuth(t *testing.T) {
 	// Separate quotas for this isolated acceptance fixture, preserving production
 	// 5-failure account allowance; multiple test accounts share one browser host.
 	limits := auth.DefaultLimits()
-	limits.Registrations = 30
+	limits.Registrations = 40
 	limits.MailRequests = 20
 	// Acceptance compresses many lifecycle actions into seconds. Production's
 	// default 120/min quota is covered separately by HTTP integration tests.
@@ -170,7 +170,7 @@ func TestBrowserAuth(t *testing.T) {
 	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
 		t.Fatal("derived-profile outbox handler failure", dead, e)
 	}
-	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token="} {
+	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token=", "JOURNAL_PRIVATE_SENTINEL_C120"} {
 		if strings.Contains(logs.String(), secret) {
 			t.Fatal("sensitive authentication data in API logs")
 		}

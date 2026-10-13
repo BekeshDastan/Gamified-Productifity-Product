@@ -2,6 +2,7 @@ package journal
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -86,7 +87,7 @@ func (s *Service) dailyStats(ctx context.Context, tx pgx.Tx, owner, date, zone s
 	}
 	// Counts use the full source set, while details are bounded separately.
 	const source = ` FROM quests q WHERE q.owner_id=$1 AND (q.planned_date=$2::text::date OR q.id::text=ANY($3::text[]) OR (q.completed_at>=$4 AND q.completed_at<$5)) AND NOT EXISTS(SELECT 1 FROM quests c WHERE c.owner_id=q.owner_id AND c.parent_id=q.id)`
-	const planned = `(q.planned_date=$2::text::date OR q.id::text=ANY($3::text[]))`
+	const planned = `COALESCE((q.planned_date=$2::text::date OR q.id::text=ANY($3::text[])),false)`
 	const completed = `(q.status='completed' AND q.completed_at>=$4 AND q.completed_at<$5)`
 	var total int
 	e = tx.QueryRow(ctx, `SELECT count(*) FILTER(WHERE `+planned+`),count(*) FILTER(WHERE `+planned+` AND `+completed+`),count(*) FILTER(WHERE `+completed+`),count(*) FILTER(WHERE `+planned+` AND q.status='postponed'),count(*) FILTER(WHERE `+planned+` AND q.status='failed'),count(*) FILTER(WHERE `+planned+` AND q.status='skipped'),count(*)`+source, owner, date, ids, d, to).Scan(&out.Planned, &out.Completed, &out.CompletedToday, &out.Postponed, &out.Failed, &out.Skipped, &total)
@@ -116,9 +117,24 @@ func (s *Service) review(r *http.Request, tx pgx.Tx, owner, date string, in *Rev
 		return Review{}, privateapi.Problem(503, "UNAVAILABLE", "Планирование недоступно")
 	}
 	ctx := r.Context()
+	run, e := s.run(ctx, tx, owner, date, "evening")
+	if e != nil {
+		return Review{}, e
+	}
 	var zone string
 	if e := tx.QueryRow(ctx, "SELECT preferences->>'timezone' FROM user_settings WHERE owner_id=$1", owner).Scan(&zone); e != nil {
 		return Review{}, e
+	}
+	if run != nil {
+		var frozen struct {
+			Timezone string `json:"timezone"`
+		}
+		if e = json.Unmarshal(run.Payload, &frozen); e != nil {
+			return Review{}, e
+		}
+		if frozen.Timezone != "" {
+			zone = frozen.Timezone
+		}
 	}
 	loc, e := time.LoadLocation(zone)
 	if e != nil {
@@ -126,10 +142,6 @@ func (s *Service) review(r *http.Request, tx pgx.Tx, owner, date string, in *Rev
 	}
 	if date > s.Clock.Now().In(loc).Format("2006-01-02") {
 		return Review{}, privateapi.Invalid("Будущий день ещё нельзя подвести")
-	}
-	run, e := s.run(ctx, tx, owner, date, "evening")
-	if e != nil {
-		return Review{}, e
 	}
 	stats, e := s.dailyStats(ctx, tx, owner, date, zone)
 	if e != nil {

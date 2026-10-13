@@ -179,34 +179,36 @@ export function WeeklyResetApply({
             <div key={item.id}>
               <h3>{item.title}</h3>
               <p>Исходная дата: {item.planned_date ?? "не задана"}</p>
-              <label className="ui-field">
+              <label className="ui-field" htmlFor={"weekly-action-" + item.id}>
                 Действие для «{item.title}»
-                <select
-                  className="ui-input"
-                  value={c.action}
-                  onChange={(e) => update(item.id, { action: e.target.value as Choice["action"] })}
-                >
-                  <option value="keep">Оставить как есть</option>
-                  <option value="move">Перенести</option>
-                  <option value="archive">Архивировать</option>
-                </select>
               </label>
+              <select
+                id={"weekly-action-" + item.id}
+                className="ui-input"
+                value={c.action}
+                onChange={(e) => update(item.id, { action: e.target.value as Choice["action"] })}
+              >
+                <option value="keep">Оставить как есть</option>
+                <option value="move">Перенести</option>
+                <option value="archive">Архивировать</option>
+              </select>
               {c.action === "move" && (
                 <>
-                  <label className="ui-field">
+                  <label className="ui-field" htmlFor={"weekly-date-" + item.id}>
                     Новая дата для «{item.title}»
-                    <select
-                      className="ui-input"
-                      value={c.date}
-                      onChange={(e) => update(item.id, { date: e.target.value })}
-                    >
-                      {snap.plans.map((p) => (
-                        <option key={p.date} value={p.date}>
-                          {p.date}
-                        </option>
-                      ))}
-                    </select>
                   </label>
+                  <select
+                    id={"weekly-date-" + item.id}
+                    className="ui-input"
+                    value={c.date}
+                    onChange={(e) => update(item.id, { date: e.target.value })}
+                  >
+                    {snap.plans.map((p) => (
+                      <option key={p.date} value={p.date}>
+                        {p.date}
+                      </option>
+                    ))}
+                  </select>
                   <label>
                     <input
                       type="checkbox"
@@ -298,15 +300,16 @@ export function WeeklyResetApply({
           );
         })}
       </fieldset>
-      <label className="ui-field">
+      <label className="ui-field" htmlFor="weekly-reset-reason">
         Вывод и причина недельного решения
-        <textarea
-          className="ui-input"
-          maxLength={1000}
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-        />
       </label>
+      <textarea
+        id="weekly-reset-reason"
+        className="ui-input"
+        maxLength={1000}
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+      />
       <p>
         Выбрано изменений задач: {changes.length}; планов дней:{" "}
         {Object.values(days).filter((day) => day.selected).length}.

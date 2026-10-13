@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import type { z } from "zod";
+import { statuses } from "@/lib/quests";
 import { DateTime } from "luxon";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth/provider";
@@ -180,8 +181,9 @@ function ReviewEditor({
           <ul>
             {review.stats.items.map((item) => (
               <li key={item.id}>
-                <SafeLink href={"/app/quests/" + item.id}>{item.title}</SafeLink> · {item.status} ·
-                плановая дата: {item.planned_date ?? "не задана"}
+                <SafeLink href={"/app/quests/" + item.id}>{item.title}</SafeLink> ·{" "}
+                {statuses[item.status as keyof typeof statuses] ?? item.status} · плановая дата:{" "}
+                {item.planned_date ?? "не задана"}
               </li>
             ))}
           </ul>
@@ -202,14 +204,24 @@ function ReviewEditor({
             </option>
           ))}
         </Select>
-        <label className="ui-field">
+        <label className="ui-field" htmlFor="evening-obstacle-note">
           Заметка о препятствии
-          <textarea className="ui-input" maxLength={2000} {...form.register("obstacle_note")} />
         </label>
-        <label className="ui-field">
+        <textarea
+          id="evening-obstacle-note"
+          className="ui-input"
+          maxLength={2000}
+          {...form.register("obstacle_note")}
+        />
+        <label className="ui-field" htmlFor="evening-conclusion">
           Один вывод дня
-          <textarea className="ui-input" maxLength={5000} {...form.register("conclusion")} />
         </label>
+        <textarea
+          id="evening-conclusion"
+          className="ui-input"
+          maxLength={5000}
+          {...form.register("conclusion")}
+        />
         {form.formState.errors.conclusion && <p role="alert">Запишите хотя бы один вывод.</p>}
         {(["energy", "mood"] as const).map((field) => (
           <Select

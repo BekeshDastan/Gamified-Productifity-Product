@@ -1916,7 +1916,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Смена шаблона не переписывает уже сохранённый разбор.
   - **КОММИТ СЕЙЧАС:** `feat(routines-ui): add editable routine templates and history`
 
-- [ ] **C120. Приёмка дневника**
+- [x] **C120. Приёмка дневника**
   - **Сделать:** Добавить тесты доступа, XSS, повторов review/reset и восстановления формы.
   - **Проверить:** Частный текст не попадает в общую ленту, отчёты партнёра или логи.
   - **КОММИТ СЕЙЧАС:** `test(journal): cover privacy drafts and routine deduplication`

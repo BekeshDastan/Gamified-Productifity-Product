@@ -50,7 +50,7 @@ paths:
               - evening
         - $ref: "#/components/parameters/CSRF"
         - $ref: "#/components/parameters/Origin"
-        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IfMatchSingleton"
         - name: Idempotency-Key
           in: header
           required: true
@@ -124,7 +124,7 @@ paths:
             format: date
         - $ref: "#/components/parameters/CSRF"
         - $ref: "#/components/parameters/Origin"
-        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IfMatchSingleton"
         - name: Idempotency-Key
           in: header
           required: true
@@ -271,7 +271,7 @@ paths:
             format: date
         - $ref: "#/components/parameters/CSRF"
         - $ref: "#/components/parameters/Origin"
-        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IfMatchSingleton"
         - name: Idempotency-Key
           in: header
           required: true
@@ -346,7 +346,7 @@ paths:
             format: date
         - $ref: "#/components/parameters/CSRF"
         - $ref: "#/components/parameters/Origin"
-        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IfMatchSingleton"
         - name: Idempotency-Key
           in: header
           required: true
@@ -6944,6 +6944,14 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorEnvelope"
   parameters:
+    IfMatchSingleton:
+      in: header
+      name: If-Match
+      required: true
+      description: Версия записи; 0 только для первого создания записи на дату или вида шаблона.
+      schema:
+        type: string
+        pattern: ^"(0|[1-9][0-9]*)"$
     CSRF:
       in: header
       name: X-CSRF-Token

@@ -1355,7 +1355,8 @@ html[data-motion="reduce"] *::after {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 1rem;
 }
-.button-row {
+.button-row,
+.form-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;

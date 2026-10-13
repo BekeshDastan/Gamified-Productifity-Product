@@ -38,6 +38,7 @@ func TestJournalPrivacyValidationVersionsAndRendering(t *testing.T) {
 	if _, e := f.pool.Exec(f.ctx, "UPDATE users SET role='admin' WHERE id=$1", other.ID); e != nil {
 		t.Fatal(e)
 	}
+	f.loginAs(t, b, "journal-other@example.test")
 	if r := f.privateRequest(t, b, "GET", "/journal/entries/"+created.ID, "", nil); r.status != 404 {
 		t.Fatal("administrator private read", r.status)
 	}

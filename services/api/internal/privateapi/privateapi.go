@@ -72,7 +72,15 @@ func (s *Service) Read(r *http.Request, fn Operation) (any, error) {
 		return nil, e
 	}
 	var out any
-	e = storage.WithinTx(r.Context(), s.Pool, func(tx pgx.Tx) error { var e error; out, e = fn(r.Context(), tx, id); return e })
+	e = storage.WithinTx(r.Context(), s.Pool, func(tx pgx.Tx) error {
+		var locked string
+		if e := tx.QueryRow(r.Context(), "SELECT owner_id::text FROM profiles WHERE owner_id=$1 FOR UPDATE", id).Scan(&locked); e != nil {
+			return e
+		}
+		var e error
+		out, e = fn(r.Context(), tx, id)
+		return e
+	})
 	return out, e
 }
 func (s *Service) Mutate(r *http.Request, input any, fn Operation) (any, error) {

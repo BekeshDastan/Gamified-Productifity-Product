@@ -4141,6 +4141,8 @@ export interface components {
         };
     };
     parameters: {
+        /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+        IfMatchSingleton: string;
         CSRF: string;
         Origin: string;
         Limit: number;
@@ -4193,7 +4195,8 @@ export interface operations {
             header: {
                 "X-CSRF-Token": components["parameters"]["CSRF"];
                 Origin: components["parameters"]["Origin"];
-                "If-Match": components["parameters"]["IfMatch"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
                 "Idempotency-Key": string;
             };
             path: {
@@ -4258,7 +4261,8 @@ export interface operations {
             header: {
                 "X-CSRF-Token": components["parameters"]["CSRF"];
                 Origin: components["parameters"]["Origin"];
-                "If-Match": components["parameters"]["IfMatch"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
                 "Idempotency-Key": string;
             };
             path: {
@@ -4385,7 +4389,8 @@ export interface operations {
             header: {
                 "X-CSRF-Token": components["parameters"]["CSRF"];
                 Origin: components["parameters"]["Origin"];
-                "If-Match": components["parameters"]["IfMatch"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
                 "Idempotency-Key": string;
             };
             path: {
@@ -4450,7 +4455,8 @@ export interface operations {
             header: {
                 "X-CSRF-Token": components["parameters"]["CSRF"];
                 Origin: components["parameters"]["Origin"];
-                "If-Match": components["parameters"]["IfMatch"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
                 "Idempotency-Key": string;
             };
             path: {

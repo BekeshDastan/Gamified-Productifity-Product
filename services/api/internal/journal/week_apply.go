@@ -91,10 +91,16 @@ func (s *Service) applyWeek(r *http.Request, tx pgx.Tx, owner, date string, in W
 	}
 	var currentVersion int64
 	var zone string
-	if e = tx.QueryRow(ctx, "SELECT COALESCE((SELECT version FROM weekly_reviews WHERE owner_id=$1 AND local_date=$2::text::date),0),(SELECT preferences->>'timezone' FROM user_settings WHERE owner_id=$1)", owner, date).Scan(&currentVersion, &zone); e != nil {
+	var weekStart int
+	if e = tx.QueryRow(ctx, "SELECT COALESCE((SELECT version FROM weekly_reviews WHERE owner_id=$1 AND local_date=$2::text::date),0),(SELECT preferences->>'timezone' FROM user_settings WHERE owner_id=$1),(SELECT (preferences->>'week_start')::int FROM user_settings WHERE owner_id=$1)", owner, date).Scan(&currentVersion, &zone, &weekStart); e != nil {
 		return nil, e
 	}
-	if currentVersion != frozen.ReviewVersion || zone != frozen.Timezone {
+	weekDate, _ := time.Parse("2006-01-02", date)
+	weekday := int(weekDate.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+	if currentVersion != frozen.ReviewVersion || zone != frozen.Timezone || weekday != weekStart {
 		return nil, privateapi.Problem(409, "PREVIEW_STALE", "Обзор или часовой пояс изменился. Подготовьте новый")
 	}
 	byID := map[string]WeekItem{}

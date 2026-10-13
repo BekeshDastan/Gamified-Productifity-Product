@@ -61,7 +61,7 @@ func TestJournalWeeklyApplyPermanentReplayAndNoDuplicateTasks(t *testing.T) {
 }
 func TestJournalWeeklyStaleExpiryAndAtomicPlanFailure(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
-	a, _ := f.signedIn(t, "reset-stale@example.test")
+	a, who := f.signedIn(t, "reset-stale@example.test")
 	b, _ := f.signedIn(t, "reset-foreign@example.test")
 	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Мой шаг")))
 	foreign := readQuest(t, f.privateRequest(t, b, "POST", "/quests", "", questInput("Чужой шаг")))
@@ -87,6 +87,15 @@ func TestJournalWeeklyStaleExpiryAndAtomicPlanFailure(t *testing.T) {
 	fresh := readWeekPreview(t, f.privateRequest(t, a, "POST", path+"/preview", "", struct{}{}))
 	input.PreviewID = fresh.ID
 	input.Changes = nil
+	if _, e := f.pool.Exec(f.ctx, `UPDATE user_settings SET preferences=jsonb_set(preferences,'{week_start}','7') WHERE owner_id=$1`, who.ID); e != nil {
+		t.Fatal(e)
+	}
+	if r := f.privateRequest(t, a, "POST", path+"/apply-plan", `"0"`, input); r.status != 409 {
+		t.Fatal("changed week start", r.status)
+	}
+	if _, e := f.pool.Exec(f.ctx, `UPDATE user_settings SET preferences=jsonb_set(preferences,'{week_start}','1') WHERE owner_id=$1`, who.ID); e != nil {
+		t.Fatal(e)
+	}
 	f.clock.Advance(10 * time.Minute)
 	if r := f.privateRequest(t, a, "POST", path+"/apply-plan", `"0"`, input); r.status != 409 {
 		t.Fatal("expired", r.status)

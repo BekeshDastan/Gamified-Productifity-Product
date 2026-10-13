@@ -19,6 +19,8 @@ import {
 import { emptyGoalFilters, listGoals } from "@/lib/goals";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
+import { useSettings } from "@/lib/settings";
+import { DateTime } from "luxon";
 import { z } from "zod";
 
 const draftSchema = z.object({
@@ -26,18 +28,23 @@ const draftSchema = z.object({
   current: journalEntry.nullable(),
 });
 export function Journal() {
-  const auth = useAuth();
-  return auth.session ? (
-    <JournalOwner key={auth.session.account.id} account={auth.session.account.id} />
+  const auth = useAuth(),
+    settings = useSettings();
+  return auth.session && settings.data ? (
+    <JournalOwner
+      key={auth.session.account.id}
+      account={auth.session.account.id}
+      timezone={settings.data.timezone}
+    />
   ) : (
     <p>Проверяем вход…</p>
   );
 }
-function JournalOwner({ account }: { account: string }) {
+function JournalOwner({ account, timezone }: { account: string; timezone: string }) {
   const cache = useQueryClient(),
     discard = useConfirmDiscard();
   const [input, setInput] = useState<JournalInput>(() =>
-    emptyJournal(new Date().toISOString().slice(0, 10)),
+    emptyJournal(DateTime.now().setZone(timezone).toISODate()!),
   );
   const [current, setCurrent] = useState<JournalEntry | null>(null),
     [baseline, setBaseline] = useState(() => JSON.stringify(input));
@@ -205,133 +212,136 @@ function JournalOwner({ account }: { account: string }) {
             void save();
           }}
         >
-          <label className="ui-field">
-            Дата записи
-            <input
-              className="ui-input"
-              type="date"
-              value={input.date}
-              onChange={(e) => change("date", e.target.value)}
-              required
-            />
-          </label>
-          <label className="ui-field">
-            Заголовок записи
-            <input
-              className="ui-input"
-              value={input.title}
-              maxLength={200}
-              onChange={(e) => change("title", e.target.value)}
-              required
-            />
-          </label>
-          <label className="ui-field">
-            Текст записи
+          <fieldset disabled={busy} className="ui-form-fields">
+            <label className="ui-field">
+              Дата записи
+              <input
+                className="ui-input"
+                type="date"
+                value={input.date}
+                onChange={(e) => change("date", e.target.value)}
+                required
+              />
+            </label>
+            <label className="ui-field">
+              Заголовок записи
+              <input
+                className="ui-input"
+                value={input.title}
+                maxLength={200}
+                onChange={(e) => change("title", e.target.value)}
+                required
+              />
+            </label>
+            <label className="ui-field" htmlFor="journal-entry-body">
+              Текст записи
+            </label>
             <textarea
+              id="journal-entry-body"
               className="ui-input journal-body"
               value={input.body}
               maxLength={50000}
               onChange={(e) => change("body", e.target.value)}
             />
-          </label>
-          <p className="ui-hint">
-            Поддерживаются заголовки #, выделение **текст**, списки, блоки кода и ссылки https. HTML
-            и изображения не исполняются.
-          </p>
-          <label className="ui-field">
-            Теги записи через запятую
-            <input
-              className="ui-input"
-              value={input.tags.join(",")}
-              onChange={(e) => change("tags", e.target.value ? e.target.value.split(",") : [])}
-            />
-          </label>
-          <label className="ui-field">
-            Поиск цели для записи
-            <input
-              className="ui-input"
-              value={goalSearch}
-              onChange={(e) => {
-                setGoalSearch(e.target.value);
-                setGoalPage(1);
-              }}
-            />
-          </label>
-          <label className="ui-field">
-            Цель записи
-            <select
-              className="ui-input"
-              value={input.goal_id ?? ""}
-              onChange={(e) => change("goal_id", e.target.value || null)}
-            >
-              <option value="">Без цели</option>
-              {input.goal_id && !goals.data?.items.some((g) => g.id === input.goal_id) && (
-                <option value={input.goal_id}>Сохранённая цель</option>
-              )}
-              {goals.data?.items.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="form-actions">
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={goalPage === 1}
-              onClick={() => setGoalPage((n) => n - 1)}
-            >
-              Предыдущие цели
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={!goals.data || goalPage * 25 >= goals.data.total}
-              onClick={() => setGoalPage((n) => n + 1)}
-            >
-              Следующие цели
-            </Button>
-          </div>
-          <label>
-            <input
-              type="checkbox"
-              checked={input.archived}
-              onChange={(e) => change("archived", e.target.checked)}
-            />{" "}
-            В архиве
-          </label>
-          <br />
-          <label>
-            <input
-              type="checkbox"
-              checked={keepDraft}
-              onChange={(e) => setKeepDraft(e.target.checked)}
-            />{" "}
-            Сохранять черновик в этой вкладке
-          </label>
-          <div className="form-actions">
-            <Button type="submit" disabled={busy}>
-              Сохранить запись
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={busy}
-              onClick={() => {
-                if (!discard()) return;
-                const next = emptyJournal(input.date);
-                setCurrent(null);
-                setInput(next);
-                setBaseline(JSON.stringify(next));
-                clearDraft();
-                setError("");
-                setNotice("");
-              }}
-            >
-              Новая запись
-            </Button>
-          </div>
+            <p className="ui-hint">
+              Поддерживаются заголовки #, выделение **текст**, списки, блоки кода и ссылки https.
+              HTML и изображения не исполняются.
+            </p>
+            <label className="ui-field">
+              Теги записи через запятую
+              <input
+                className="ui-input"
+                value={input.tags.join(",")}
+                onChange={(e) => change("tags", e.target.value ? e.target.value.split(",") : [])}
+              />
+            </label>
+            <label className="ui-field">
+              Поиск цели для записи
+              <input
+                className="ui-input"
+                value={goalSearch}
+                onChange={(e) => {
+                  setGoalSearch(e.target.value);
+                  setGoalPage(1);
+                }}
+              />
+            </label>
+            <label className="ui-field">
+              Цель записи
+              <select
+                className="ui-input"
+                value={input.goal_id ?? ""}
+                onChange={(e) => change("goal_id", e.target.value || null)}
+              >
+                <option value="">Без цели</option>
+                {input.goal_id && !goals.data?.items.some((g) => g.id === input.goal_id) && (
+                  <option value={input.goal_id}>Сохранённая цель</option>
+                )}
+                {goals.data?.items.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="form-actions">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={goalPage === 1}
+                onClick={() => setGoalPage((n) => n - 1)}
+              >
+                Предыдущие цели
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={!goals.data || goalPage * 25 >= goals.data.total}
+                onClick={() => setGoalPage((n) => n + 1)}
+              >
+                Следующие цели
+              </Button>
+            </div>
+            <label>
+              <input
+                type="checkbox"
+                checked={input.archived}
+                onChange={(e) => change("archived", e.target.checked)}
+              />{" "}
+              В архиве
+            </label>
+            <br />
+            <label>
+              <input
+                type="checkbox"
+                checked={keepDraft}
+                onChange={(e) => setKeepDraft(e.target.checked)}
+              />{" "}
+              Сохранять черновик в этой вкладке
+            </label>
+            <div className="form-actions">
+              <Button type="submit" disabled={busy}>
+                Сохранить запись
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => {
+                  if (!discard()) return;
+                  const next = emptyJournal(input.date);
+                  setCurrent(null);
+                  setInput(next);
+                  setBaseline(JSON.stringify(next));
+                  clearDraft();
+                  setError("");
+                  setNotice("");
+                }}
+              >
+                Новая запись
+              </Button>
+            </div>
+          </fieldset>
         </form>
         {current && (
           <article

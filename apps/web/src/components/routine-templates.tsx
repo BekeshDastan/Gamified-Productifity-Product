@@ -81,11 +81,12 @@ function TemplateSection({ account, kind }: { account: string; kind: "morning" |
 function TemplateEditor({ account, template }: { account: string; template: RoutineTemplate }) {
   const cache = useQueryClient();
   const [steps, setSteps] = useState(template.steps),
+    [baseline, setBaseline] = useState(template.steps),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
   const operation = useRef({ body: "", key: "" });
-  useUnsavedChanges(JSON.stringify(steps) !== JSON.stringify(template.steps) || busy);
+  useUnsavedChanges(JSON.stringify(steps) !== JSON.stringify(baseline) || busy);
   function move(index: number, offset: number) {
     const copy = [...steps],
       a = copy[index],
@@ -155,7 +156,8 @@ function TemplateEditor({ account, template }: { account: string; template: Rout
             if (operation.current.body !== body)
               operation.current = { body, key: crypto.randomUUID() };
             try {
-              await saveRoutineTemplate(template, steps, operation.current.key);
+              const saved = await saveRoutineTemplate(template, steps, operation.current.key);
+              setBaseline(saved.steps);
               setNotice("Чек-лист сохранён.");
               void cache.invalidateQueries({
                 queryKey: accountQueryKey(account, "routine-template", template.kind),
@@ -193,6 +195,13 @@ function RoutineHistory({ account }: { account: string }) {
       {q.data?.items.length === 0 && <p>Запусков пока нет.</p>}
       {q.data?.items.map((event) => {
         const snapshot = event.snapshot;
+        const answers = z
+          .object({
+            checked: z.array(z.string()).nullable().optional(),
+            conclusion: z.string().optional(),
+          })
+          .safeParse(snapshot.payload.answers ?? snapshot.payload.input);
+        const checked = answers.success ? (answers.data.checked ?? []) : [];
         const t = z
           .object({ steps: z.array(z.object({ id: z.string(), label: z.string() })) })
           .safeParse(snapshot.payload.template);
@@ -203,10 +212,17 @@ function RoutineHistory({ account }: { account: string }) {
               {snapshot.version}
             </summary>
             <p>Сохранено: {new Date(snapshot.updated_at).toLocaleString("ru-RU")}</p>
+            {answers.success && answers.data.conclusion && <p>Вывод: {answers.data.conclusion}</p>}
+            {typeof snapshot.payload.timezone === "string" && (
+              <p>Часовой пояс: {snapshot.payload.timezone}</p>
+            )}
             {t.success ? (
               <ol>
                 {t.data.steps.map((step) => (
-                  <li key={step.id}>{step.label}</li>
+                  <li key={step.id}>
+                    {checked.includes(step.id) ? "Отмечено: " : "Без отметки: "}
+                    {step.label}
+                  </li>
                 ))}
               </ol>
             ) : (

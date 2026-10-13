@@ -1,4 +1,5 @@
 "use client";
+import { z } from "zod";
 import { useRef, useState } from "react";
 import { DateTime } from "luxon";
 import { useQuery } from "@tanstack/react-query";
@@ -10,6 +11,19 @@ import { getWeekReview, previewWeekReview, type WeekPreview } from "@/lib/journa
 import { WeeklyResetApply } from "./weekly-reset-apply";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
+const priorityLabels: Record<string, string> = {
+  low: "низкий",
+  normal: "обычный",
+  high: "высокий",
+};
+const reasonLabels: Record<string, string> = {
+  none: "Без препятствий",
+  insufficient_time: "Не хватило времени",
+  low_energy: "Мало энергии",
+  external: "Внешние обстоятельства",
+  unclear: "Неясный следующий шаг",
+  other: "Другое",
+};
 export function WeeklyReset() {
   const auth = useAuth(),
     settings = useSettings();
@@ -46,6 +60,15 @@ function Weekly({
     queryKey: accountQueryKey(account, "weekly-review", date),
     queryFn: ({ signal }) => getWeekReview(date, signal),
   });
+  const last = z
+    .object({
+      decision: z.object({
+        reason: z.string(),
+        changes: z.array(z.unknown()),
+        plans: z.array(z.unknown()),
+      }),
+    })
+    .safeParse(q.data?.last_result);
   return (
     <div className="journal-layout">
       <Card>
@@ -100,6 +123,16 @@ function Weekly({
           Подготовить Weekly Reset
         </Button>
       </Card>
+      {last.success && (
+        <Card>
+          <h2>Последний сохранённый обзор</h2>
+          <p>{last.data.decision.reason}</p>
+          <p>
+            Изменений задач: {last.data.decision.changes.length}; планов дней:{" "}
+            {last.data.decision.plans.length}.
+          </p>
+        </Card>
+      )}
       {(preview?.snapshot ?? q.data?.snapshot) && (
         <WeekSources snapshot={(preview?.snapshot ?? q.data?.snapshot)!} />
       )}{" "}
@@ -145,7 +178,8 @@ function WeekSources({ snapshot }: { snapshot: WeekPreview["snapshot"] }) {
               {item.deadline
                 ? new Date(item.deadline).toLocaleString("ru-RU", { timeZone: snapshot.timezone })
                 : "не задан"}{" "}
-              · Оценка: {item.estimated_minutes || "не задана"} мин. · Приоритет: {item.priority}
+              · Оценка: {item.estimated_minutes || "не задана"} мин. · Приоритет:{" "}
+              {priorityLabels[item.priority] ?? item.priority}
             </p>
             {item.reason && <p>Последняя причина: {item.reason}</p>}
           </li>
@@ -158,7 +192,7 @@ function WeekSources({ snapshot }: { snapshot: WeekPreview["snapshot"] }) {
         <ul>
           {snapshot.reasons.map((reason) => (
             <li key={reason.reason}>
-              {reason.reason}: {reason.count}
+              {reasonLabels[reason.reason] ?? reason.reason}: {reason.count}
             </li>
           ))}
         </ul>
