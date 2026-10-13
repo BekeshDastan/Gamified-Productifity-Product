@@ -489,3 +489,5 @@ C089: 20 original MIT SVG resources, six typed slots, rarity and level/achieveme
 C090: Owner-scoped inventory and equipment API with idempotency and If-Match; all six starter items are free. PostgreSQL acceptance passed (3.893s): wrong slot, unearned/foreign ownership, replay, re-login persistence, stale version and level correction fallback. API contract and SQL models generated.
 
 C091: Area XP and credited habit-period counts derive only from original reward-ledger/entitlement snapshots. PostgreSQL acceptance passed (6.089s), including area change after completion, reversal/restoration and equality of global XP to its original award without adding area XP again.
+
+C092: Four typed skill nodes per area with explicit XP/period thresholds and dependencies, SVG map plus always-visible accessible ordered list. Cycle/missing-dependency fixtures passed; character page uses server-owned equipment and typed API. ESLint/TypeScript passed; PostgreSQL character cases passed (6.406s). Stage 11 exact SHA 4935f068585a92226bc10688c9de42d57c05712d CI 38363283202 succeeded in all jobs before main merge.

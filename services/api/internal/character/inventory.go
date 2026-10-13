@@ -247,7 +247,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	MountAssets(router)
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
-		for _, path := range []string{"/api/v1/character", "/api/v1/character/inventory"} {
+		for _, path := range []string{"/api/v1/character", "/api/v1/character/inventory", "/api/v1/skill-tree"} {
 			r.Get(path, func(w http.ResponseWriter, r *http.Request) {
 				owner, e := currentOwner(r.Context())
 				var p Profile

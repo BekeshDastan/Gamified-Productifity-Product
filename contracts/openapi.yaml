@@ -4764,6 +4764,38 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/EquipmentInput"
+  /api/v1/skill-tree:
+    get:
+      operationId: getSkillTree
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CharacterProfile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
 components:
   requestBodies:
     Empty:
@@ -8477,6 +8509,7 @@ components:
         - level
         - successful_periods
         - archived
+        - skills
       properties:
         id:
           type: string
@@ -8491,3 +8524,41 @@ components:
           type: integer
         archived:
           type: boolean
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterSkill"
+    CharacterSkill:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - metric
+        - threshold
+        - depends_on
+        - current
+        - unlocked
+        - explanation
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        metric:
+          type: string
+          enum:
+            - xp
+            - periods
+        threshold:
+          type: integer
+        depends_on:
+          type: array
+          items:
+            type: string
+        current:
+          type: integer
+        unlocked:
+          type: boolean
+        explanation:
+          type: string

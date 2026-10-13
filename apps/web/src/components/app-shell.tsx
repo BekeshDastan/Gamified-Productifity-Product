@@ -33,7 +33,6 @@ const planned = [
   { label: "Фокус", icon: Timer },
   { label: "Испытания", icon: Trophy },
   { label: "Сезоны", icon: Sprout },
-  { label: "Персонаж", icon: UserRound },
   { label: "Достижения и награды", icon: Trophy },
   { label: "Аналитика", icon: ChartNoAxesCombined },
   { label: "Дневник", icon: NotebookPen },
@@ -41,6 +40,7 @@ const planned = [
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/character", label: "Персонаж и навыки", icon: UserRound },
   { href: "/app/progress", label: "Опыт и награды", icon: ChartNoAxesCombined },
   { href: "/app/habits", label: "Привычки", icon: Repeat2 },
   { href: "/app/planning", label: "План дня и недели", icon: ListTodo },

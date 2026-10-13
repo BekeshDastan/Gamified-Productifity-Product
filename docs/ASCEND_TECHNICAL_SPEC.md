@@ -1749,7 +1749,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Сумма area XP не добавляется к общему XP второй раз; отмена исправляет направление.
   - **КОММИТ СЕЙЧАС:** `feat(skills): derive area progress from qualified reward sources`
 
-- [ ] **C092. Дерево навыков**
+- [x] **C092. Дерево навыков**
   - **Сделать:** Создать узлы, зависимости, визуальную карту с доступной списочной альтернативой и условиями.
   - **Проверить:** Заблокированный узел объясняет требования; цикл узлов в каталоге запрещён.
   - **КОММИТ СЕЙЧАС:** `feat(skills-ui): add skill tree requirements and unlock states`

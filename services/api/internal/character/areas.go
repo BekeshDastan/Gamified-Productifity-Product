@@ -7,6 +7,7 @@ import (
 )
 
 type Area struct {
+	Skills            []Skill           `json:"skills"`
 	ID                string            `json:"id"`
 	Name              string            `json:"name"`
 	XP                int64             `json:"xp"`
@@ -28,6 +29,7 @@ func (s *Service) areas(ctx context.Context, tx pgx.Tx, owner string) ([]Area, e
 			return out, e
 		}
 		a.Level = progression.LevelFor(a.XP)
+		a.Skills = skillsFor(a)
 		out = append(out, a)
 	}
 	return out, rows.Err()
