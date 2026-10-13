@@ -168,3 +168,53 @@ export async function saveReview(
     return dailyReview.parse(r.data?.data);
   });
 }
+
+const weeklyItem = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  version: z.number().int(),
+  status: z.string(),
+  planned_date: z.string().nullable(),
+  deadline: z.string().nullable(),
+  estimated_minutes: z.number(),
+  priority: z.string(),
+  reason: z.string(),
+});
+export const weekSnapshot = z.object({
+  week: z.string(),
+  next_week: z.string(),
+  timezone: z.string(),
+  items: z.array(weeklyItem),
+  more: z.boolean(),
+  reasons: z.array(z.object({ reason: z.string(), count: z.number() })),
+  plans: z.array(dayPlan),
+  review_version: z.number().int(),
+});
+export const weekPreview = z.object({
+  id: z.uuid(),
+  snapshot: weekSnapshot,
+  expires_at: z.string(),
+  applied: z.boolean(),
+});
+export type WeekPreview = z.infer<typeof weekPreview>;
+export async function getWeekReview(date: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/reviews/week/{date}", {
+    params: { path: { date } },
+    signal,
+  });
+  return z
+    .object({ snapshot: weekSnapshot, last_result: z.record(z.string(), z.unknown()).nullable() })
+    .parse(r.data?.data);
+}
+export async function previewWeekReview(date: string, key: string) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient(),
+      r = await api.POST("/api/v1/reviews/week/{date}/preview", {
+        params: { path: { date }, header: { ...authParams().header, "Idempotency-Key": key } },
+        body: {},
+      });
+    return weekPreview.parse(r.data?.data);
+  });
+}

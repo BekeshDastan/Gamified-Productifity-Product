@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/reviews/week/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWeekReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reviews/week/{date}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewWeekReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reviews/day/{date}": {
         parameters: {
             query?: never;
@@ -2203,6 +2235,42 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        WeeklyItem: {
+            id: string;
+            title: string;
+            version: number;
+            status: string;
+            planned_date: string | null;
+            deadline: string | null;
+            estimated_minutes: number;
+            priority: string;
+            reason: string;
+        };
+        WeekSnapshot: {
+            week: string;
+            next_week: string;
+            timezone: string;
+            items: components["schemas"]["WeeklyItem"][];
+            more: boolean;
+            reasons: {
+                reason: string;
+                count: number;
+            }[];
+            plans: components["schemas"]["DayPlan"][];
+            review_version: number;
+        };
+        WeekReview: {
+            snapshot: components["schemas"]["WeekSnapshot"];
+            last_result: {
+                [key: string]: unknown;
+            } | null;
+        };
+        WeekPreview: {
+            id: string;
+            snapshot: components["schemas"]["WeekSnapshot"];
+            expires_at: string;
+            applied: boolean;
+        };
         ReviewInput: {
             /** @enum {string} */
             obstacle: "none" | "insufficient_time" | "low_energy" | "external" | "unclear" | "other";
@@ -3993,6 +4061,68 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getWeekReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WeekReview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    previewWeekReview: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WeekPreview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
     getDailyReview: {
         parameters: {
             query?: never;

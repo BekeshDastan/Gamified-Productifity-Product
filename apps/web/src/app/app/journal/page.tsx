@@ -1,3 +1,4 @@
+import { WeeklyReset } from "@/components/weekly-reset";
 import { EveningReview } from "@/components/evening-review";
 import { MorningRoutine } from "@/components/morning-routine";
 import { Journal } from "@/components/journal";
@@ -10,6 +11,7 @@ export default function JournalPage() {
       <Journal />
       <MorningRoutine />
       <EveningReview />
+      <WeeklyReset />
     </>
   );
 }

@@ -6,6 +6,78 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/reviews/week/{date}:
+    get:
+      operationId: getWeekReview
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WeekReview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/reviews/week/{date}/preview:
+    post:
+      operationId: previewWeekReview
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WeekPreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/reviews/day/{date}:
     get:
       operationId: getDailyReview
@@ -6763,6 +6835,117 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    WeeklyItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - version
+        - status
+        - planned_date
+        - deadline
+        - estimated_minutes
+        - priority
+        - reason
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        version:
+          type: integer
+        status:
+          type: string
+        planned_date:
+          type:
+            - string
+            - "null"
+        deadline:
+          type:
+            - string
+            - "null"
+        estimated_minutes:
+          type: integer
+        priority:
+          type: string
+        reason:
+          type: string
+    WeekSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - week
+        - next_week
+        - timezone
+        - items
+        - more
+        - reasons
+        - plans
+        - review_version
+      properties:
+        week:
+          type: string
+        next_week:
+          type: string
+        timezone:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeeklyItem"
+        more:
+          type: boolean
+        reasons:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - reason
+              - count
+            properties:
+              reason:
+                type: string
+              count:
+                type: integer
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/DayPlan"
+        review_version:
+          type: integer
+    WeekReview:
+      type: object
+      additionalProperties: false
+      required:
+        - snapshot
+        - last_result
+      properties:
+        snapshot:
+          $ref: "#/components/schemas/WeekSnapshot"
+        last_result:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+    WeekPreview:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - snapshot
+        - expires_at
+        - applied
+      properties:
+        id:
+          type: string
+        snapshot:
+          $ref: "#/components/schemas/WeekSnapshot"
+        expires_at:
+          type: string
+        applied:
+          type: boolean
     ReviewInput:
       type: object
       additionalProperties: false

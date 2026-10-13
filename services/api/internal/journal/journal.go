@@ -170,6 +170,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		r.Use(protect)
 		s.mountMorning(r)
 		s.mountEvening(r)
+		s.mountWeek(r)
 		r.Get("/api/v1/journal/entries", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) { return s.list(r, tx, owner) })
 			s.Reply(w, r, out, e)

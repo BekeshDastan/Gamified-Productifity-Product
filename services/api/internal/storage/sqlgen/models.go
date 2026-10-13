@@ -195,6 +195,16 @@ type CustomRewardVersion struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type DailyReview struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Payload   []byte             `json:"payload"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type DayPlan struct {
 	ID          pgtype.UUID        `json:"id"`
 	OwnerID     pgtype.UUID        `json:"owner_id"`
@@ -801,4 +811,24 @@ type UserSetting struct {
 	Version     int64              `json:"version"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WeeklyReview struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Version   int64              `json:"version"`
+	Payload   []byte             `json:"payload"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WeeklyReviewPreview struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	Decision  []byte             `json:"decision"`
+	Result    []byte             `json:"result"`
 }

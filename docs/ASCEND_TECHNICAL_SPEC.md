@@ -1901,7 +1901,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** При пустом настроении разбор сохраняется; статистика берётся из реальных задач.
   - **КОММИТ СЕЙЧАС:** `feat(reviews): add daily outcomes reasons and reflection`
 
-- [ ] **C117. Еженедельный обзор**
+- [x] **C117. Еженедельный обзор**
   - **Сделать:** Собрать незавершённое, причины, приоритеты и будущие задачи в preview обзора.
   - **Проверить:** Просрочка не удаляется сама; исходные даты видны в обзоре.
   - **КОММИТ СЕЙЧАС:** `feat(reviews): build weekly reset from unfinished commitments`
