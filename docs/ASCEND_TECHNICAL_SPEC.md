@@ -1847,7 +1847,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Перерыв не попадает в active_seconds; отключение звука соблюдается.
   - **КОММИТ СЕЙЧАС:** `feat(focus): add configurable work and break cycles`
 
-- [ ] **C108. Восстановление таймера**
+- [x] **C108. Восстановление таймера**
   - **Сделать:** Подключить GET current, синхронизацию после возврата вкладки и отображение расхождения времени.
   - **Проверить:** Reload не обнуляет сессию; закрытая вкладка не оставляет бесконечное локальное накопление.
   - **КОММИТ СЕЙЧАС:** `feat(focus-ui): restore timer from server across reloads`
