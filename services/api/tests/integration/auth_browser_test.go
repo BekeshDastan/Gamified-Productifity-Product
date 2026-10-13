@@ -28,6 +28,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/mail"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 )
@@ -82,7 +83,8 @@ func TestBrowserAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer files.Close()
-	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithFiles(files, blob.UnavailableScanner{})
+	rewardService := progression.NewService(pool, domainClock)
+	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, domainClock, questService)
 	calendarService.Mount(router, sessions.Protect)

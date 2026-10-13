@@ -1675,6 +1675,25 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        RewardDTO: {
+            entitlement_id: string;
+            ledger_id: string;
+            source_kind: string;
+            source_key: string;
+            economy_version: string;
+            kind: string;
+            requested_xp: number;
+            awarded_xp: number;
+            awarded_coins: number;
+            xp_delta: number;
+            coins_delta: number;
+            total_xp: number;
+            available_coins: number;
+            coin_correction: number;
+            level_before: number;
+            level_after: number;
+            reason: string;
+        };
         HabitStarter: {
             id: string;
             title: string;
@@ -2350,6 +2369,7 @@ export interface components {
             updated_at: string;
             parent_id: string | null;
             required: boolean;
+            reward?: components["schemas"]["RewardDTO"];
         };
         QuestPageDTO: {
             items: components["schemas"]["QuestDTO"][];

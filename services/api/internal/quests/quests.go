@@ -13,6 +13,7 @@ import (
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -21,11 +22,12 @@ import (
 )
 
 type Service struct {
-	observer func(context.Context, pgx.Tx, string, string, *Quest, Quest) error
-	pool     *pgxpool.Pool
-	clock    platform.Clock
-	files    blob.BlobStore
-	scanner  blob.Scanner
+	progression *progression.Service
+	observer    func(context.Context, pgx.Tx, string, string, *Quest, Quest) error
+	pool        *pgxpool.Pool
+	clock       platform.Clock
+	files       blob.BlobStore
+	scanner     blob.Scanner
 }
 
 // WithObserver runs dependent projections in the same transaction as quest history.
@@ -76,6 +78,7 @@ type Input struct {
 	Required         bool       `json:"required"`
 }
 type Quest struct {
+	Reward *progression.Reward `json:"reward,omitempty"`
 	Input
 	ID          string     `json:"id"`
 	Version     int64      `json:"version"`
@@ -176,7 +179,13 @@ func scan(row pgx.Row) (Quest, error) {
 }
 func (s *Service) lockOwner(ctx context.Context, tx pgx.Tx, id string) error {
 	var ignored string
-	return tx.QueryRow(ctx, `SELECT owner_id::text FROM profiles WHERE owner_id=$1 FOR UPDATE`, id).Scan(&ignored)
+	if e := tx.QueryRow(ctx, `SELECT owner_id::text FROM profiles WHERE owner_id=$1 FOR UPDATE`, id).Scan(&ignored); e != nil {
+		return e
+	}
+	if s.progression != nil {
+		return s.progression.Lock(ctx, tx, id)
+	}
+	return nil
 }
 func get(ctx context.Context, tx interface {
 	QueryRow(context.Context, string, ...any) pgx.Row
@@ -240,7 +249,7 @@ func (s *Service) insert(ctx context.Context, tx pgx.Tx, id string, in Input) (Q
 		err = syncTags(ctx, tx, id, q.ID, in.Tags)
 	}
 	if err == nil {
-		err = s.event(ctx, tx, id, "created", "", nil, q)
+		err = s.event(ctx, tx, id, "created", "", nil, &q)
 	}
 	if err == nil && q.ParentID != nil {
 		err = s.rollup(ctx, tx, id, *q.ParentID)
@@ -312,7 +321,7 @@ func (s *Service) Update(r *http.Request, key string, in Input) (Quest, error) {
 			err = syncTags(r.Context(), tx, id, key, in.Tags)
 		}
 		if err == nil {
-			err = s.event(r.Context(), tx, id, "edited", "", &current, q)
+			err = s.event(r.Context(), tx, id, "edited", "", &current, &q)
 		}
 		if err == nil && current.ParentID != nil {
 			err = s.rollup(r.Context(), tx, id, *current.ParentID)
@@ -446,3 +455,5 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		})
 	})
 }
+
+func (s *Service) WithProgression(v *progression.Service) *Service { s.progression = v; return s }

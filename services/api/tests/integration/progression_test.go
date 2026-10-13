@@ -150,3 +150,65 @@ func TestProgressionRollbackAndNonRewardSources(t *testing.T) {
 		}
 	}
 }
+func TestProgressionTaskRewardsAreAtomicAndLeafOnly(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "task-reward@example.test")
+	input := questInput("Листовая работа")
+	input.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", input))
+	key := "task-reward-replay-00001"
+	oldVersion := version(q)
+	done := readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", oldVersion, map[string]string{"reason": "Готово"}, key))
+	if done.Reward == nil || done.Reward.XPDelta != 25 || done.Reward.CoinsDelta != 5 || done.Reward.TotalXP != 25 {
+		t.Fatal("completion reward", done.Reward)
+	}
+	repeat := readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", oldVersion, map[string]string{"reason": "Готово"}, key))
+	if repeat.Reward == nil || repeat.Reward.EntitlementID != done.Reward.EntitlementID {
+		t.Fatal("replay lost entitlement")
+	}
+	root := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Контейнер")))
+	childInput := questInput("Обязательный лист")
+	childInput.ParentID = &root.ID
+	child := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", childInput))
+	child = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+child.ID+"/complete", version(child), map[string]string{"reason": "Готово"}))
+	root = readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+root.ID, "", nil))
+	if root.Status != "completed" || root.Reward != nil {
+		t.Fatal("container result", root)
+	}
+	var count int
+	var xp int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM reward_entitlements WHERE owner_id=$1),(SELECT total_xp FROM user_progress WHERE owner_id=$1)`, account.ID).Scan(&count, &xp); e != nil || count != 2 || xp != 35 {
+		t.Fatal("container or duplicate reward", count, xp, e)
+	}
+	var recorded int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT (after_state->'reward'->>'xp_delta')::bigint FROM task_events WHERE owner_id=$1 AND quest_id=$2 AND kind='complete'`, account.ID, q.ID).Scan(&recorded); e != nil || recorded != 25 {
+		t.Fatal("history reward missing", recorded, e)
+	}
+}
+func TestProgressionTaskAndLedgerRollbackTogether(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "task-ledger-rollback@example.test")
+	input := questInput("Атомарная работа")
+	input.Difficulty = 5
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", input))
+	if _, e := f.pool.Exec(t.Context(), `CREATE FUNCTION reject_reward_ledger() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected economic failure'; END $$;CREATE TRIGGER reject_reward_ledger BEFORE INSERT ON reward_ledger FOR EACH ROW EXECUTE FUNCTION reject_reward_ledger()`); e != nil {
+		t.Fatal(e)
+	}
+	key := "task-atomic-retry-00001"
+	r := f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}, key)
+	if r.status != 500 {
+		t.Fatal(r.status, string(r.body))
+	}
+	fresh := readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+q.ID, "", nil))
+	var xp, count int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT total_xp,(SELECT count(*) FROM reward_entitlements WHERE owner_id=$1)+(SELECT count(*) FROM reward_quota_usage WHERE owner_id=$1)+(SELECT count(*) FROM reward_ledger WHERE owner_id=$1)+(SELECT count(*) FROM outbox_events WHERE owner_id=$1 AND kind='progression.reward_changed') FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&xp, &count); e != nil || xp != 0 || count != 0 || fresh.Status != "todo" || fresh.Version != q.Version {
+		t.Fatal("status and reward split", fresh, xp, count, e)
+	}
+	if _, e := f.pool.Exec(t.Context(), `DROP TRIGGER reject_reward_ledger ON reward_ledger;DROP FUNCTION reject_reward_ledger()`); e != nil {
+		t.Fatal(e)
+	}
+	done := readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}, key))
+	if done.Reward == nil || done.Reward.XPDelta != 100 {
+		t.Fatal("retry after rollback", done.Reward)
+	}
+}

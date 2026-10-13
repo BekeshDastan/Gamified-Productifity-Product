@@ -24,6 +24,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -63,7 +64,8 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	if len(scanners) > 0 {
 		scanner = scanners[0]
 	}
-	questService := quests.NewService(pool, clock).WithObserver(goalService.QuestChanged).WithFiles(files, scanner)
+	rewardService := progression.NewService(pool, clock)
+	questService := quests.NewService(pool, clock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, scanner)
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, clock, questService)
 	calendarService.Mount(router, sessions.Protect)

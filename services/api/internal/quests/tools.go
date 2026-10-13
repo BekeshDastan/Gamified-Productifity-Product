@@ -43,7 +43,7 @@ func (s *Service) archiveTx(r *http.Request, tx pgx.Tx, id, key string, restore 
 	}
 	q, e = scan(tx.QueryRow(r.Context(), `UPDATE quests SET archived_at=$3,version=version+1,updated_at=$4 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, q.ArchivedAt, s.clock.Now().UTC()))
 	if e == nil {
-		e = s.event(r.Context(), tx, id, kind, "", &old, q)
+		e = s.event(r.Context(), tx, id, kind, "", &old, &q)
 	}
 	return q, e
 }

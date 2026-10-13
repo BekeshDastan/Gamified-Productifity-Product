@@ -32,7 +32,12 @@ type Event struct {
 	CreatedAt time.Time           `json:"created_at"`
 }
 
-func (s *Service) event(ctx context.Context, tx pgx.Tx, id, kind, reason string, before *Quest, after Quest) error {
+func (s *Service) event(ctx context.Context, tx pgx.Tx, id, kind, reason string, before *Quest, after *Quest) error {
+	if kind == "complete" && s.progression != nil {
+		if e := s.awardCompletion(ctx, tx, id, after); e != nil {
+			return e
+		}
+	}
 	old, err := json.Marshal(before)
 	if err != nil {
 		return err
@@ -43,7 +48,7 @@ func (s *Service) event(ctx context.Context, tx pgx.Tx, id, kind, reason string,
 	}
 	_, err = tx.Exec(ctx, `INSERT INTO task_events(owner_id,quest_id,kind,reason,before_state,after_state,quest_version,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, id, after.ID, kind, reason, old, fresh, after.Version, s.clock.Now().UTC())
 	if err == nil && s.observer != nil {
-		err = s.observer(ctx, tx, id, kind, before, after)
+		err = s.observer(ctx, tx, id, kind, before, *after)
 	}
 	return err
 }
@@ -150,7 +155,7 @@ func (s *Service) transitionTx(r *http.Request, tx pgx.Tx, id, key, action strin
 	}
 	q, err = scan(tx.QueryRow(ctx, `UPDATE quests SET payload=$3,status=$4,completed_at=$5,planned_date=$7::text::date,deadline=$8,version=version+1,updated_at=$6 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, next, q.CompletedAt, s.clock.Now().UTC(), q.PlannedDate, q.Deadline))
 	if err == nil {
-		err = s.event(ctx, tx, id, action, in.Reason, &before, q)
+		err = s.event(ctx, tx, id, action, in.Reason, &before, &q)
 	}
 	if err == nil && q.ParentID != nil {
 		err = s.rollup(ctx, tx, id, *q.ParentID)

@@ -163,7 +163,7 @@ func (s *Service) rollup(ctx context.Context, tx pgx.Tx, id, key string) error {
 			if err != nil {
 				return err
 			}
-			if err := s.event(ctx, tx, id, kind, "Прогресс обязательных подзадач", &before, q); err != nil {
+			if err := s.event(ctx, tx, id, kind, "Прогресс обязательных подзадач", &before, &q); err != nil {
 				return err
 			}
 			if err := s.rollupDependents(ctx, tx, id, q.ID); err != nil {
@@ -346,7 +346,7 @@ func (s *Service) mountStructure(r chi.Router) {
 				}
 				q, e = scan(tx.QueryRow(r.Context(), `UPDATE quests SET version=version+1,updated_at=$3 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, s.clock.Now().UTC()))
 				if e == nil {
-					e = s.event(r.Context(), tx, id, "dependencies", in.Reason, &current, q)
+					e = s.event(r.Context(), tx, id, "dependencies", in.Reason, &current, &q)
 				}
 				if e == nil {
 					details, err := json.Marshal(map[string][]string{"previous_ids": previousIDs, "ids": in.IDs, "previous_titles": previousTitles, "titles": titles})

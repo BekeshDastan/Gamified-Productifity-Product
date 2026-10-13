@@ -1695,7 +1695,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Частичная квота даёт правильную сумму; смена зоны не обнуляет окно.
   - **КОММИТ СЕЙЧАС:** `feat(progression): add reward ledger entitlements and rolling quotas`
 
-- [ ] **C083. Награда задачи**
+- [x] **C083. Награда задачи**
   - **Сделать:** Встроить task completion с блокировкой user_progress, source entitlement и outbox.
   - **Проверить:** Ошибка между статусом и ledger откатывает оба; контейнер не получает награду листьев.
   - **КОММИТ СЕЙЧАС:** `feat(quests): award completion rewards in one transaction`

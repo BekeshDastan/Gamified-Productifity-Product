@@ -5108,6 +5108,62 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    RewardDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - entitlement_id
+        - ledger_id
+        - source_kind
+        - source_key
+        - economy_version
+        - kind
+        - requested_xp
+        - awarded_xp
+        - awarded_coins
+        - xp_delta
+        - coins_delta
+        - total_xp
+        - available_coins
+        - coin_correction
+        - level_before
+        - level_after
+        - reason
+      properties:
+        entitlement_id:
+          type: string
+        ledger_id:
+          type: string
+        source_kind:
+          type: string
+        source_key:
+          type: string
+        economy_version:
+          type: string
+        kind:
+          type: string
+        requested_xp:
+          type: integer
+        awarded_xp:
+          type: integer
+        awarded_coins:
+          type: integer
+        xp_delta:
+          type: integer
+        coins_delta:
+          type: integer
+        total_xp:
+          type: integer
+        available_coins:
+          type: integer
+        coin_correction:
+          type: integer
+        level_before:
+          type: integer
+        level_after:
+          type: integer
+        reason:
+          type: string
     HabitStarter:
       type: object
       additionalProperties: false
@@ -7350,6 +7406,8 @@ components:
             - type: "null"
         required:
           type: boolean
+        reward:
+          $ref: "#/components/schemas/RewardDTO"
     QuestPageDTO:
       type: object
       required:
