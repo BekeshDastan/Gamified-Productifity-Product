@@ -131,6 +131,9 @@ func (s *Service) calculate(ctx context.Context, tx pgx.Tx, id string, g Goal) (
 	return progress, e
 }
 func (s *Service) touch(ctx context.Context, tx pgx.Tx, id string, g Goal, kind, reason string) (Goal, error) {
+	if e := s.observeStages(ctx, tx, id, g.ID); e != nil {
+		return g, e
+	}
 	progress, e := s.calculate(ctx, tx, id, g)
 	if e != nil {
 		return g, e

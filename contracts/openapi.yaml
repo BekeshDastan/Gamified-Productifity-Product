@@ -6,6 +6,84 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/challenges/runs/{id}/progress:
+    get:
+      operationId: getChallengeProgress
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeMember"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/sources:
+    get:
+      operationId: getChallengeSources
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeSourcePage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
   /api/v1/challenges/runs/{id}/membership:
     get:
       operationId: getChallengeMembership
@@ -7309,6 +7387,125 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ChallengeProgress:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - current
+        - target
+        - unit
+        - percent
+        - target_met
+        - source_count
+        - periods
+      properties:
+        version:
+          type: string
+        current:
+          type: number
+        target:
+          type: number
+        unit:
+          type: string
+        percent:
+          type: number
+        target_met:
+          type: boolean
+        source_count:
+          type: integer
+        periods:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengePeriod"
+    ChallengePeriod:
+      type: object
+      additionalProperties: false
+      required:
+        - start
+        - end
+        - current
+        - target
+        - state
+      properties:
+        start:
+          type: string
+        end:
+          type: string
+        current:
+          type: number
+        target:
+          type: number
+        state:
+          type: string
+          enum:
+            - open
+            - met
+            - future
+            - missed
+    ChallengeSource:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - key
+        - title
+        - url
+        - amount
+        - at
+        - version
+        - confidence
+      properties:
+        kind:
+          type: string
+          enum:
+            - task
+            - habit
+            - focus
+            - review
+            - stage
+            - manual
+        key:
+          type: string
+          format: uuid
+        title:
+          type: string
+        url:
+          type: string
+        amount:
+          type: number
+        at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        confidence:
+          type: string
+          enum:
+            - recorded
+            - self_report
+    ChallengeSourcePage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+        - total
+        - unit
+        - timezone
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengeSource"
+        next:
+          type: string
+        total:
+          type: integer
+        unit:
+          type: string
+        timezone:
+          type: string
     ChallengeMember:
       type: object
       additionalProperties: false
@@ -7355,10 +7552,9 @@ components:
         updated_at:
           type: string
         progress:
-          type:
-            - object
-            - "null"
-          additionalProperties: true
+          anyOf:
+            - $ref: "#/components/schemas/ChallengeProgress"
+            - type: "null"
         computed_at:
           type:
             - string
@@ -7444,6 +7640,7 @@ components:
             - focus
             - reviews
             - manual
+            - stages
         unit:
           type: string
           enum:
@@ -7453,6 +7650,7 @@ components:
             - reviews
             - count
             - pages
+            - stages
         kind:
           type: string
           enum:
@@ -7529,6 +7727,10 @@ components:
         - timezone
         - visibility
         - confirmation
+        - scoring_version
+        - source_policy
+        - economy_version
+        - reward_xp
       properties:
         metric:
           type: string
@@ -7538,6 +7740,7 @@ components:
             - focus
             - reviews
             - manual
+            - stages
         unit:
           type: string
           enum:
@@ -7547,6 +7750,7 @@ components:
             - reviews
             - count
             - pages
+            - stages
         kind:
           type: string
           enum:
@@ -7611,6 +7815,14 @@ components:
           enum:
             - automatic
             - self_report
+        scoring_version:
+          type: string
+        source_policy:
+          type: string
+        economy_version:
+          type: string
+        reward_xp:
+          type: integer
     ChallengeCreate:
       type: object
       additionalProperties: false
@@ -7715,6 +7927,7 @@ components:
             - focus
             - reviews
             - manual
+            - stages
         unit:
           type: string
           enum:
@@ -7724,6 +7937,7 @@ components:
             - reviews
             - count
             - pages
+            - stages
         kind:
           type: string
           enum:
@@ -7783,6 +7997,7 @@ components:
             - focus
             - reviews
             - manual
+            - stages
         unit:
           type: string
           enum:
@@ -7792,6 +8007,7 @@ components:
             - reviews
             - count
             - pages
+            - stages
         kind:
           type: string
           enum:
@@ -7879,10 +8095,12 @@ components:
           type: string
           enum:
             - tasks
+            - stages
         unit:
           type: string
           enum:
             - tasks
+            - stages
         target:
           type: integer
           const: 1

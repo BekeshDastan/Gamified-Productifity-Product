@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"net/http"
@@ -27,6 +28,10 @@ type RuleInput struct {
 	Rejoin   bool    `json:"rejoin"`
 }
 type Rules struct {
+	ScoringVersion string `json:"scoring_version"`
+	SourcePolicy   string `json:"source_policy"`
+	EconomyVersion string `json:"economy_version"`
+	RewardXP       int64  `json:"reward_xp"`
 	RuleInput
 	Timezone     string `json:"timezone"`
 	Visibility   string `json:"visibility"`
@@ -74,7 +79,7 @@ func (s *Service) getRun(ctx context.Context, tx pgx.Tx, owner, id string) (Run,
 	return scanRun(tx.QueryRow(ctx, "SELECT "+runColumns+" FROM challenge_runs WHERE owner_id=$1 AND id=$2", owner, id))
 }
 func validateRules(in RuleInput, zone string, now time.Time) (Rules, time.Time, time.Time, error) {
-	out := Rules{RuleInput: in, Timezone: zone, Visibility: "private", Confirmation: "automatic"}
+	out := Rules{RuleInput: in, Timezone: zone, Visibility: "private", Confirmation: "automatic", ScoringVersion: ScoringVersion, SourcePolicy: sourcePolicy(in.Metric), EconomyVersion: progression.Version, RewardXP: progression.BaseXP("challenge", 0)}
 	if in.Metric == "manual" {
 		out.Confirmation = "self_report"
 	}
@@ -102,7 +107,7 @@ func validateRules(in RuleInput, zone string, now time.Time) (Rules, time.Time, 
 			return out, time.Time{}, time.Time{}, privateapi.Invalid("Проверьте источники прогресса")
 		}
 	}
-	if (in.Metric == "habits" && in.HabitID == nil) || (in.Metric != "habits" && in.HabitID != nil) || (in.GoalID != nil && in.Metric != "tasks" && in.Metric != "focus") || (in.Metric == "reviews" && in.AreaID != nil) {
+	if (in.Metric == "habits" && in.HabitID == nil) || (in.Metric != "habits" && in.HabitID != nil) || (in.GoalID != nil && in.Metric != "tasks" && in.Metric != "focus" && in.Metric != "stages") || (in.Metric == "reviews" && in.AreaID != nil) || (in.Metric == "stages" && in.GoalID == nil) {
 		return out, time.Time{}, time.Time{}, privateapi.Invalid("Выбранные источники не подходят к метрике")
 	}
 	starts, e := time.ParseInLocation("2006-01-02", in.StartsOn, loc)

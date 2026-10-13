@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 //go:embed catalog.json
 var catalogData []byte
 
-const CatalogVersion = "challenges-v1"
+const CatalogVersion = "challenges-v2"
 
 type Config struct {
 	Metric        string `json:"metric"`
@@ -64,6 +65,8 @@ func UnitAllowed(metric, unit string) bool {
 		return unit == "tasks"
 	case "habits":
 		return unit == "periods"
+	case "stages":
+		return unit == "stages"
 	case "focus":
 		return unit == "minutes"
 	case "reviews":
@@ -135,16 +138,20 @@ func ReadCatalog() (Catalog, error) {
 	return out, nil
 }
 
-type Service struct{ *privateapi.Service }
+type Service struct {
+	*privateapi.Service
+	progress *progression.Service
+}
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
-	return &Service{privateapi.New(pool, clock)}
+	return &Service{Service: privateapi.New(pool, clock)}
 }
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountRuns(r)
 		s.mountMembers(r)
+		s.mountProgress(r)
 		r.Get("/api/v1/challenges/catalog", func(w http.ResponseWriter, r *http.Request) { out, e := ReadCatalog(); s.Reply(w, r, out, e) })
 	})
 }

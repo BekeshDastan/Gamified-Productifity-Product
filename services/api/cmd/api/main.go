@@ -94,7 +94,7 @@ func main() {
 	calendarService := calendar.NewService(pool, platform.RealClock{}, questService)
 	calendarService.Mount(router, sessions.Protect)
 	habits.NewService(pool, platform.RealClock{}).WithProgression(rewardService).Mount(router, sessions.Protect)
-	challenges.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
+	challenges.NewService(pool, platform.RealClock{}).WithProgression(rewardService).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, platform.RealClock{}, questService, calendarService)
 	planService.Mount(router, sessions.Protect)
 	journal.NewService(pool, platform.RealClock{}).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)

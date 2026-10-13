@@ -1,5 +1,5 @@
 {
-  "version": "challenges-v1",
+  "version": "challenges-v2",
   "challenges": [
     {
       "id": "focus-first-30",
@@ -200,19 +200,19 @@
       "allowed_misses": 0
     },
     {
-      "id": "project-results",
-      "name": "Пять шагов личного проекта",
+      "id": "goal-stages",
+      "name": "Три этапа цели",
       "description": "Завершить пять разных листовых задач; можно ограничить источник своей целью.",
       "audience": "Для выбранного проекта или цели",
-      "metric": "tasks",
-      "unit": "tasks",
+      "metric": "stages",
+      "unit": "stages",
       "kind": "cumulative",
-      "target": 5,
+      "target": 3,
       "period_target": 1,
       "days": 14,
       "daily_cap": 10,
       "area_hint": "Программирование",
-      "conditions": "Завершить пять разных листовых задач; можно ограничить источник своей целью.",
+      "conditions": "Выберите цель. Засчитывается первое полное выполнение трёх её этапов после вступления; повторное завершение не создаёт нового результата.",
       "safe_norm": "Норму и срок можно уменьшить до старта. Пропуск не отнимает XP; продолжение остаётся вашим выбором.",
       "period": "day",
       "allowed_misses": 0

@@ -1945,7 +1945,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Пользователь видит условия до join; повтор join не создаёт второго участника.
   - **КОММИТ СЕЙЧАС:** `feat(challenges): add join leave and personal run lifecycle`
 
-- [ ] **C124. Автоматический прогресс**
+- [x] **C124. Автоматический прогресс**
   - **Сделать:** Подключить qualified events, source dedupe, ограничения периода и корректировки исходных событий.
   - **Проверить:** Одно действие считается один раз внутри метрики; reopen корректирует прогресс.
   - **КОММИТ СЕЙЧАС:** `feat(challenges): track unique task habit and focus source events`

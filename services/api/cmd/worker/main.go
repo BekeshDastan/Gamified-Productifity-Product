@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/challenges"
 	"log/slog"
 	"net"
 	"os"
@@ -58,6 +59,9 @@ func main() {
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	go calendar.NewService(pool, clock, quests.NewService(pool, clock).WithObserver(goals.NewService(pool, clock).QuestChanged).WithProgression(rewardService)).Run(ctx, logger)
 	handlers := sessions.MailHandlers(mailer)
+	for kind, handler := range challenges.NewService(pool, clock).WithProgression(rewardService).Handlers() {
+		handlers[kind] = handler
+	}
 	for kind, handler := range characterService.Handlers() {
 		handlers[kind] = handler
 	}

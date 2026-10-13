@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/challenges/runs/{id}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeProgress"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeSources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/challenges/runs/{id}/membership": {
         parameters: {
             query?: never;
@@ -2411,6 +2443,45 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ChallengeProgress: {
+            version: string;
+            current: number;
+            target: number;
+            unit: string;
+            percent: number;
+            target_met: boolean;
+            source_count: number;
+            periods: components["schemas"]["ChallengePeriod"][];
+        };
+        ChallengePeriod: {
+            start: string;
+            end: string;
+            current: number;
+            target: number;
+            /** @enum {string} */
+            state: "open" | "met" | "future" | "missed";
+        };
+        ChallengeSource: {
+            /** @enum {string} */
+            kind: "task" | "habit" | "focus" | "review" | "stage" | "manual";
+            /** Format: uuid */
+            key: string;
+            title: string;
+            url: string;
+            amount: number;
+            /** Format: date-time */
+            at: string;
+            version: number;
+            /** @enum {string} */
+            confidence: "recorded" | "self_report";
+        };
+        ChallengeSourcePage: {
+            items: components["schemas"]["ChallengeSource"][];
+            next: string;
+            total: number;
+            unit: string;
+            timezone: string;
+        };
         ChallengeMember: {
             /** Format: uuid */
             id: string;
@@ -2424,9 +2495,7 @@ export interface components {
             left_at: string | null;
             leave_reason: string;
             updated_at: string;
-            progress: {
-                [key: string]: unknown;
-            } | null;
+            progress: components["schemas"]["ChallengeProgress"] | null;
             computed_at: string | null;
             /** @enum {string|null} */
             result: "achieved" | "not_achieved" | "left" | null;
@@ -2448,9 +2517,9 @@ export interface components {
         };
         ChallengeRuleInput: {
             /** @enum {string} */
-            metric: "tasks" | "habits" | "focus" | "reviews" | "manual";
+            metric: "tasks" | "habits" | "focus" | "reviews" | "manual" | "stages";
             /** @enum {string} */
-            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages";
+            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages" | "stages";
             /** @enum {string} */
             kind: "cumulative" | "periodic";
             /** @enum {string} */
@@ -2472,9 +2541,9 @@ export interface components {
         };
         ChallengeRules: {
             /** @enum {string} */
-            metric: "tasks" | "habits" | "focus" | "reviews" | "manual";
+            metric: "tasks" | "habits" | "focus" | "reviews" | "manual" | "stages";
             /** @enum {string} */
-            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages";
+            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages" | "stages";
             /** @enum {string} */
             kind: "cumulative" | "periodic";
             /** @enum {string} */
@@ -2498,6 +2567,10 @@ export interface components {
             visibility: "private";
             /** @enum {string} */
             confirmation: "automatic" | "self_report";
+            scoring_version: string;
+            source_policy: string;
+            economy_version: string;
+            reward_xp: number;
         };
         ChallengeCreate: {
             /** Format: uuid */
@@ -2529,9 +2602,9 @@ export interface components {
         };
         ChallengeConfig: {
             /** @enum {string} */
-            metric: "tasks" | "habits" | "focus" | "reviews" | "manual";
+            metric: "tasks" | "habits" | "focus" | "reviews" | "manual" | "stages";
             /** @enum {string} */
-            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages";
+            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages" | "stages";
             /** @enum {string} */
             kind: "cumulative" | "periodic";
             /** @enum {string} */
@@ -2544,9 +2617,9 @@ export interface components {
         };
         ChallengeTemplate: {
             /** @enum {string} */
-            metric: "tasks" | "habits" | "focus" | "reviews" | "manual";
+            metric: "tasks" | "habits" | "focus" | "reviews" | "manual" | "stages";
             /** @enum {string} */
-            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages";
+            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages" | "stages";
             /** @enum {string} */
             kind: "cumulative" | "periodic";
             /** @enum {string} */
@@ -2575,9 +2648,9 @@ export interface components {
             estimated_minutes: number;
             difficulty: number;
             /** @enum {string} */
-            metric: "tasks";
+            metric: "tasks" | "stages";
             /** @enum {string} */
-            unit: "tasks";
+            unit: "tasks" | "stages";
             /** @constant */
             target: 1;
         };
@@ -4465,6 +4538,68 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getChallengeProgress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeMember"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            503: components["responses"]["Error"];
+        };
+    };
+    getChallengeSources: {
+        parameters: {
+            query?: {
+                before?: string;
+                date?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeSourcePage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            503: components["responses"]["Error"];
+        };
+    };
     getChallengeMembership: {
         parameters: {
             query?: never;

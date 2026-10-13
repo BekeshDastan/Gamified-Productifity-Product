@@ -185,6 +185,21 @@ type ChallengeRun struct {
 	FinalSnapshot  []byte             `json:"final_snapshot"`
 }
 
+type ChallengeSourceCredit struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ParticipantID pgtype.UUID        `json:"participant_id"`
+	SourceKind    string             `json:"source_kind"`
+	SourceKey     pgtype.UUID        `json:"source_key"`
+	Title         string             `json:"title"`
+	SourceUrl     string             `json:"source_url"`
+	Amount        int64              `json:"amount"`
+	SourceTime    pgtype.Timestamptz `json:"source_time"`
+	SourceStart   pgtype.Timestamptz `json:"source_start"`
+	SourceVersion int64              `json:"source_version"`
+	Active        bool               `json:"active"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
 type CharacterInventory struct {
 	OwnerID   pgtype.UUID        `json:"owner_id"`
 	ItemID    string             `json:"item_id"`
@@ -543,15 +558,18 @@ type LifeArea struct {
 }
 
 type Milestone struct {
-	ID        pgtype.UUID        `json:"id"`
-	OwnerID   pgtype.UUID        `json:"owner_id"`
-	GoalID    pgtype.UUID        `json:"goal_id"`
-	Title     string             `json:"title"`
-	Required  bool               `json:"required"`
-	Weight    pgtype.Numeric     `json:"weight"`
-	Completed bool               `json:"completed"`
-	Version   int64              `json:"version"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID                        pgtype.UUID        `json:"id"`
+	OwnerID                   pgtype.UUID        `json:"owner_id"`
+	GoalID                    pgtype.UUID        `json:"goal_id"`
+	Title                     string             `json:"title"`
+	Required                  bool               `json:"required"`
+	Weight                    pgtype.Numeric     `json:"weight"`
+	Completed                 bool               `json:"completed"`
+	Version                   int64              `json:"version"`
+	CreatedAt                 pgtype.Timestamptz `json:"created_at"`
+	ChallengeFirstQualifiedAt pgtype.Timestamptz `json:"challenge_first_qualified_at"`
+	ChallengeCompleted        bool               `json:"challenge_completed"`
+	ChallengeLegacyCompleted  bool               `json:"challenge_legacy_completed"`
 }
 
 type MonthlyBoss struct {
