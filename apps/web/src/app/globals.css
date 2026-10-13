@@ -1761,3 +1761,16 @@ html[data-motion="reduce"] *::after {
   margin: 4px 4px 4px 0;
   max-width: 100%;
 }
+.focus-comment {
+  min-height: 6rem;
+  resize: vertical;
+}
+.focus-history article {
+  padding-block: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.focus-layout {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}

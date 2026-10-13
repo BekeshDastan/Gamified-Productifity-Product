@@ -5593,6 +5593,321 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/MysteryOpen"
+  /api/v1/focus/current:
+    get:
+      operationId: getCurrentFocus
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FocusCurrent"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/focus/start:
+    post:
+      operationId: startFocus
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FocusSession"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FocusStart"
+  /api/v1/focus/sessions/{id}/actions:
+    post:
+      operationId: actOnFocus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FocusSession"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FocusAction"
+  /api/v1/focus/sessions/{id}/confirm:
+    post:
+      operationId: confirmFocus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FocusSession"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FocusConfirm"
+  /api/v1/focus/quests/{id}/time:
+    get:
+      operationId: getQuestFocusTime
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/QuestFocusTime"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/focus/history:
+    get:
+      operationId: getFocusHistory
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+        - name: quest_id
+          in: query
+          schema:
+            type: string
+        - name: area_id
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FocusHistory"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/focus/sessions/{id}:
+    get:
+      operationId: getFocusSession
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FocusCurrent"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
 components:
   requestBodies:
     Empty:
@@ -8493,6 +8808,11 @@ components:
             - type: "null"
         required:
           type: boolean
+        actual_time_mode:
+          type: string
+          enum:
+            - from_focus
+            - manual_override
     QuestDTO:
       type: object
       additionalProperties: false
@@ -8605,6 +8925,11 @@ components:
           type: boolean
         reward:
           $ref: "#/components/schemas/RewardDTO"
+        actual_time_mode:
+          type: string
+          enum:
+            - from_focus
+            - manual_override
     QuestPageDTO:
       type: object
       required:
@@ -9992,3 +10317,334 @@ components:
       additionalProperties: false
       required: []
       properties: {}
+    FocusStart:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - mode
+        - title
+        - quest_id
+        - goal_id
+        - area_id
+        - work_minutes
+        - break_minutes
+        - sound_enabled
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum:
+            - free
+            - pomodoro
+            - quick
+        title:
+          type: string
+        quest_id:
+          type:
+            - string
+            - "null"
+        goal_id:
+          type:
+            - string
+            - "null"
+        area_id:
+          type:
+            - string
+            - "null"
+        work_minutes:
+          type: integer
+          minimum: 5
+          maximum: 120
+        break_minutes:
+          type: integer
+          minimum: 1
+          maximum: 60
+        sound_enabled:
+          type: boolean
+    FocusSegment:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - kind
+        - started_at
+        - ended_at
+        - seconds
+      properties:
+        id:
+          type: integer
+          minimum: 0
+        kind:
+          type: string
+          enum:
+            - work
+            - break
+        started_at:
+          type: string
+        ended_at:
+          type:
+            - string
+            - "null"
+        seconds:
+          type: integer
+          minimum: 0
+    FocusSession:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - state
+        - mode
+        - phase
+        - title
+        - quest_id
+        - goal_id
+        - area_id
+        - timezone
+        - work_minutes
+        - break_minutes
+        - sound_enabled
+        - cycle
+        - version
+        - started_at
+        - updated_at
+        - ended_at
+        - phase_deadline
+        - phase_remaining_seconds
+        - result
+        - comment
+        - active_seconds
+        - break_seconds
+        - segments
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum:
+            - running
+            - paused
+            - awaiting_confirmation
+            - finished
+            - cancelled
+        mode:
+          type: string
+          enum:
+            - free
+            - pomodoro
+            - quick
+        phase:
+          type: string
+          enum:
+            - work
+            - break
+            - work_complete
+            - break_complete
+            - review
+        title:
+          type: string
+        quest_id:
+          type:
+            - string
+            - "null"
+        goal_id:
+          type:
+            - string
+            - "null"
+        area_id:
+          type:
+            - string
+            - "null"
+        timezone:
+          type: string
+        work_minutes:
+          type: integer
+          minimum: 0
+        break_minutes:
+          type: integer
+          minimum: 0
+        sound_enabled:
+          type: boolean
+        cycle:
+          type: integer
+          minimum: 0
+        version:
+          type: integer
+          minimum: 0
+        started_at:
+          type: string
+        updated_at:
+          type: string
+        ended_at:
+          type:
+            - string
+            - "null"
+        phase_deadline:
+          type:
+            - string
+            - "null"
+        phase_remaining_seconds:
+          type:
+            - integer
+            - "null"
+        result:
+          type: string
+        comment:
+          type: string
+        active_seconds:
+          type: integer
+          minimum: 0
+        break_seconds:
+          type: integer
+          minimum: 0
+        segments:
+          type: array
+          items:
+            $ref: "#/components/schemas/FocusSegment"
+    FocusCurrent:
+      type: object
+      additionalProperties: false
+      required:
+        - server_now
+        - session
+        - sound_allowed
+      properties:
+        server_now:
+          type: string
+        session:
+          anyOf:
+            - $ref: "#/components/schemas/FocusSession"
+            - type: "null"
+        sound_allowed:
+          type: boolean
+    FocusAction:
+      type: object
+      additionalProperties: false
+      required:
+        - action
+        - comment
+      properties:
+        action:
+          type: string
+          enum:
+            - pause
+            - resume
+            - finish
+            - cancel
+            - break
+            - next
+            - extend
+        comment:
+          type: string
+    FocusConfirm:
+      type: object
+      additionalProperties: false
+      required:
+        - result
+        - comment
+      properties:
+        result:
+          type: string
+          enum:
+            - progress
+            - no_progress
+            - rest
+        comment:
+          type: string
+          maxLength: 2000
+    QuestFocusTime:
+      type: object
+      additionalProperties: false
+      required:
+        - quest_id
+        - mode
+        - manual_minutes
+        - focus_seconds
+        - effective_seconds
+        - confirmed_sessions
+        - overridden
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum:
+            - from_focus
+            - manual_override
+        manual_minutes:
+          type: integer
+          minimum: 0
+        focus_seconds:
+          type: integer
+          minimum: 0
+        effective_seconds:
+          type: integer
+          minimum: 0
+        confirmed_sessions:
+          type: integer
+          minimum: 0
+        overridden:
+          type: boolean
+    FocusHistorySummary:
+      type: object
+      additionalProperties: false
+      required:
+        - sessions
+        - work_seconds
+        - confirmed_seconds
+        - pending_seconds
+        - cancelled_seconds
+        - rest_seconds
+      properties:
+        sessions:
+          type: integer
+          minimum: 0
+        work_seconds:
+          type: integer
+          minimum: 0
+        confirmed_seconds:
+          type: integer
+          minimum: 0
+        pending_seconds:
+          type: integer
+          minimum: 0
+        cancelled_seconds:
+          type: integer
+          minimum: 0
+        rest_seconds:
+          type: integer
+          minimum: 0
+    FocusHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next_cursor
+        - summary
+        - as_of
+        - from
+        - to
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/FocusSession"
+        next_cursor:
+          type:
+            - string
+            - "null"
+        summary:
+          $ref: "#/components/schemas/FocusHistorySummary"
+        as_of:
+          type: string
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date

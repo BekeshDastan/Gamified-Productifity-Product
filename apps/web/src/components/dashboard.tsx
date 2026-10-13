@@ -11,6 +11,7 @@ import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { FocusSummary } from "./focus";
 import { DashboardHabits } from "./habits";
 import { MonthlyBossSummary } from "./bosses";
 import { ProgressionSummary, useRewardNotice } from "./progression";
@@ -105,13 +106,7 @@ export function Dashboard() {
       </>
     ),
     habits: <DashboardHabits />,
-    focus: (
-      <>
-        <h2>Фокус</h2>
-        <p className="ui-hint">Выберите одну главную задачу и выделите ей время в плане дня.</p>
-        <SafeLink href="/app/planning">Выделить время</SafeLink>
-      </>
-    ),
+    focus: <FocusSummary />,
     progress: (
       <>
         <ProgressionSummary compact />

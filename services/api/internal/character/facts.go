@@ -24,6 +24,12 @@ func (s *Service) facts(ctx context.Context, tx pgx.Tx, owner string, advance ..
 	if e != nil {
 		return f, nil, false, e
 	}
+	var validSessions int64
+	if e = tx.QueryRow(ctx, `SELECT count(*) FROM focus_sessions f WHERE f.owner_id=$1 AND f.state='finished' AND f.result='progress' AND (SELECT COALESCE(sum(floor(extract(epoch FROM(ended_at-started_at)))),0) FROM focus_segments WHERE owner_id=f.owner_id AND session_id=f.id AND kind='work' AND ended_at IS NOT NULL)>=300`, owner).Scan(&validSessions); e != nil {
+		return f, nil, false, e
+	}
+	f.Values[FocusSessions] = validSessions
+	f.Available[FocusSessions] = true
 	f.Values[PlayerLevel] = balance.Level.Number
 	f.Available[PlayerLevel] = true
 	evidence, ready, e := habits.NewService(s.pool, s.clock).EvidenceInTx(ctx, tx, owner, advance...)

@@ -188,7 +188,7 @@ func TestCharacterAchievementEventsRepeatsCorrectionsAndMassRecompute(t *testing
 		t.Fatal("catalog response", string(r.body))
 	}
 	for _, d := range result.Data {
-		if (d.Metric == character.FocusSessions || d.Metric == character.CompletedSeasons || d.Metric == character.CoopChallenges) && (d.Active || d.Available) {
+		if (d.Metric == character.CompletedSeasons || d.Metric == character.CoopChallenges) && (d.Active || d.Available) {
 			t.Fatal("invented unavailable evidence", d)
 		}
 	}
@@ -226,7 +226,7 @@ func TestCharacterTitlesAndRecordsFollowCorrectedEvidence(t *testing.T) {
 	if v := record(p, "weekly-regularity"); v == nil || *v != 100 {
 		t.Fatal("weekly", p.Records)
 	}
-	if v := record(p, "longest-focus"); v != nil {
+	if v := record(p, "longest-focus"); v == nil || *v != 0 {
 		t.Fatal("invented focus")
 	}
 	if r := f.privateRequest(t, a, "PATCH", "/character/title", characterVersion(p), map[string]string{"title_id": "level:50"}); r.status != 409 {

@@ -30,7 +30,6 @@ import { useAuth } from "@/lib/auth/provider";
 import { AccountQueryProvider } from "@/lib/api/query-provider";
 
 const planned = [
-  { label: "Фокус", icon: Timer },
   { label: "Испытания", icon: Trophy },
   { label: "Сезоны", icon: Sprout },
   { label: "Аналитика", icon: ChartNoAxesCombined },
@@ -39,6 +38,7 @@ const planned = [
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/focus", label: "Фокус", icon: Timer },
   { href: "/app/bosses", label: "Боссы по целям", icon: Flag },
   { href: "/app/rewards", label: "Магазин и награды", icon: Trophy },
   { href: "/app/achievements", label: "Достижения", icon: Trophy },

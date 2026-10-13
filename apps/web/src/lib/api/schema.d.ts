@@ -2023,6 +2023,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/focus/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCurrentFocus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/focus/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["startFocus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/focus/sessions/{id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["actOnFocus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/focus/sessions/{id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirmFocus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/focus/quests/{id}/time": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getQuestFocusTime"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/focus/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getFocusHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/focus/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getFocusSession"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2756,6 +2868,8 @@ export interface components {
             status: "backlog" | "todo" | "in_progress" | "postponed" | "completed" | "failed" | "skipped";
             parent_id: string | null;
             required: boolean;
+            /** @enum {string} */
+            actual_time_mode?: "from_focus" | "manual_override";
         };
         QuestDTO: {
             title: string;
@@ -2783,6 +2897,8 @@ export interface components {
             parent_id: string | null;
             required: boolean;
             reward?: components["schemas"]["RewardDTO"];
+            /** @enum {string} */
+            actual_time_mode?: "from_focus" | "manual_override";
         };
         QuestPageDTO: {
             items: components["schemas"]["QuestDTO"][];
@@ -3230,6 +3346,101 @@ export interface components {
             grants: components["schemas"]["MysteryGrant"][];
         };
         MysteryOpen: Record<string, never>;
+        FocusStart: {
+            /** Format: uuid */
+            operation_id: string;
+            /** @enum {string} */
+            mode: "free" | "pomodoro" | "quick";
+            title: string;
+            quest_id: string | null;
+            goal_id: string | null;
+            area_id: string | null;
+            work_minutes: number;
+            break_minutes: number;
+            sound_enabled: boolean;
+        };
+        FocusSegment: {
+            id: number;
+            /** @enum {string} */
+            kind: "work" | "break";
+            started_at: string;
+            ended_at: string | null;
+            seconds: number;
+        };
+        FocusSession: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            state: "running" | "paused" | "awaiting_confirmation" | "finished" | "cancelled";
+            /** @enum {string} */
+            mode: "free" | "pomodoro" | "quick";
+            /** @enum {string} */
+            phase: "work" | "break" | "work_complete" | "break_complete" | "review";
+            title: string;
+            quest_id: string | null;
+            goal_id: string | null;
+            area_id: string | null;
+            timezone: string;
+            work_minutes: number;
+            break_minutes: number;
+            sound_enabled: boolean;
+            cycle: number;
+            version: number;
+            started_at: string;
+            updated_at: string;
+            ended_at: string | null;
+            phase_deadline: string | null;
+            phase_remaining_seconds: number | null;
+            result: string;
+            comment: string;
+            active_seconds: number;
+            break_seconds: number;
+            segments: components["schemas"]["FocusSegment"][];
+        };
+        FocusCurrent: {
+            server_now: string;
+            session: components["schemas"]["FocusSession"] | null;
+            sound_allowed: boolean;
+        };
+        FocusAction: {
+            /** @enum {string} */
+            action: "pause" | "resume" | "finish" | "cancel" | "break" | "next" | "extend";
+            comment: string;
+        };
+        FocusConfirm: {
+            /** @enum {string} */
+            result: "progress" | "no_progress" | "rest";
+            comment: string;
+        };
+        QuestFocusTime: {
+            /** Format: uuid */
+            quest_id: string;
+            /** @enum {string} */
+            mode: "from_focus" | "manual_override";
+            manual_minutes: number;
+            focus_seconds: number;
+            effective_seconds: number;
+            confirmed_sessions: number;
+            overridden: boolean;
+        };
+        FocusHistorySummary: {
+            sessions: number;
+            work_seconds: number;
+            confirmed_seconds: number;
+            pending_seconds: number;
+            cancelled_seconds: number;
+            rest_seconds: number;
+        };
+        FocusHistory: {
+            items: components["schemas"]["FocusSession"][];
+            next_cursor: string | null;
+            summary: components["schemas"]["FocusHistorySummary"];
+            as_of: string;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+        };
     };
     responses: {
         /** @description Личные данные владельца */
@@ -7939,6 +8150,244 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["MysteryGrant"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getCurrentFocus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FocusCurrent"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    startFocus: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FocusStart"];
+            };
+        };
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FocusSession"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    actOnFocus: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FocusAction"];
+            };
+        };
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FocusSession"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    confirmFocus: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FocusConfirm"];
+            };
+        };
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FocusSession"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getQuestFocusTime: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestFocusTime"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getFocusHistory: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                quest_id?: string;
+                area_id?: string;
+                state?: string;
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FocusHistory"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getFocusSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FocusCurrent"];
                         meta: components["schemas"]["Meta"];
                     };
                 };

@@ -220,6 +220,50 @@ type EconomyVersion struct {
 	Rules []byte `json:"rules"`
 }
 
+type FocusEvent struct {
+	ID        int64              `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	SessionID pgtype.UUID        `json:"session_id"`
+	Kind      string             `json:"kind"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type FocusSegment struct {
+	ID        int64              `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	SessionID pgtype.UUID        `json:"session_id"`
+	Kind      string             `json:"kind"`
+	StartedAt pgtype.Timestamptz `json:"started_at"`
+	EndedAt   pgtype.Timestamptz `json:"ended_at"`
+}
+
+type FocusSession struct {
+	ID                    pgtype.UUID        `json:"id"`
+	OwnerID               pgtype.UUID        `json:"owner_id"`
+	Request               []byte             `json:"request"`
+	State                 string             `json:"state"`
+	Mode                  string             `json:"mode"`
+	Phase                 string             `json:"phase"`
+	Title                 string             `json:"title"`
+	QuestID               pgtype.UUID        `json:"quest_id"`
+	GoalID                pgtype.UUID        `json:"goal_id"`
+	AreaID                pgtype.UUID        `json:"area_id"`
+	Timezone              string             `json:"timezone"`
+	WorkMinutes           int32              `json:"work_minutes"`
+	BreakMinutes          int32              `json:"break_minutes"`
+	SoundEnabled          bool               `json:"sound_enabled"`
+	Cycle                 int32              `json:"cycle"`
+	Version               int64              `json:"version"`
+	StartedAt             pgtype.Timestamptz `json:"started_at"`
+	UpdatedAt             pgtype.Timestamptz `json:"updated_at"`
+	EndedAt               pgtype.Timestamptz `json:"ended_at"`
+	PhaseDeadline         pgtype.Timestamptz `json:"phase_deadline"`
+	Result                string             `json:"result"`
+	Comment               string             `json:"comment"`
+	PhaseRemainingSeconds pgtype.Int8        `json:"phase_remaining_seconds"`
+}
+
 type Goal struct {
 	ID         pgtype.UUID        `json:"id"`
 	OwnerID    pgtype.UUID        `json:"owner_id"`
