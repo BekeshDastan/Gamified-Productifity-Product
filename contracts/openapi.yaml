@@ -8408,6 +8408,7 @@ components:
         - title_id
         - level
         - inventory
+        - areas
       properties:
         version:
           type: integer
@@ -8444,6 +8445,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CosmeticItem"
+        areas:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterArea"
     EquipmentInput:
       type: object
       additionalProperties: false
@@ -8462,3 +8467,27 @@ components:
             - frame
         item_id:
           type: string
+    CharacterArea:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - xp
+        - level
+        - successful_periods
+        - archived
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        xp:
+          type: integer
+        level:
+          $ref: "#/components/schemas/ProgressionLevel"
+        successful_periods:
+          type: integer
+        archived:
+          type: boolean

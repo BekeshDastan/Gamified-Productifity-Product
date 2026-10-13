@@ -30,6 +30,7 @@ type InventoryItem struct {
 	Revoked bool   `json:"revoked"`
 }
 type Profile struct {
+	Areas          []Area            `json:"areas"`
 	Version        int64             `json:"version"`
 	CatalogVersion string            `json:"catalog_version"`
 	Equipment      map[string]string `json:"equipment"`
@@ -140,6 +141,10 @@ func (s *Service) view(ctx context.Context, tx pgx.Tx, owner string) (Profile, e
 		return out, e
 	}
 	out.Level = b.Level
+	out.Areas, e = s.areas(ctx, tx, owner)
+	if e != nil {
+		return out, e
+	}
 	var data []byte
 	e = tx.QueryRow(ctx, "SELECT version,equipment,title_id FROM character_profiles WHERE owner_id=$1", owner).Scan(&out.Version, &data, &out.TitleID)
 	if e != nil {

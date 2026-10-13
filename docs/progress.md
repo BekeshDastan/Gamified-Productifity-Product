@@ -487,3 +487,5 @@ C088: 20 concurrent completion requests, TTL replay and rollback of spent-balanc
 C089: 20 original MIT SVG resources, six typed slots, rarity and level/achievement metadata. Unit checks confirm unique IDs, valid SVG, local-only assets and one free starter per slot. Provenance and MIT license included.
 
 C090: Owner-scoped inventory and equipment API with idempotency and If-Match; all six starter items are free. PostgreSQL acceptance passed (3.893s): wrong slot, unearned/foreign ownership, replay, re-login persistence, stale version and level correction fallback. API contract and SQL models generated.
+
+C091: Area XP and credited habit-period counts derive only from original reward-ledger/entitlement snapshots. PostgreSQL acceptance passed (6.089s), including area change after completion, reversal/restoration and equality of global XP to its original award without adding area XP again.

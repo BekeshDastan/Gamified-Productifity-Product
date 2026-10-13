@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/character"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"testing"
 )
 
@@ -74,4 +75,43 @@ func TestCharacterInventoryOwnershipSlotsAndPersistence(t *testing.T) {
 	if r := f.privateRequest(t, a, "PATCH", "/character/equipment", characterVersion(p), input); r.status != 409 {
 		t.Fatal("stale version", r.status)
 	}
+}
+
+func TestCharacterAreaXPUsesOriginalQualifiedLedgerOnly(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, owner := f.signedIn(t, "area-ledger@example.test")
+	areaA, areaB := testkit.NewUser().ID, testkit.NewUser().ID
+	for _, id := range []string{areaA, areaB} {
+		if _, e := f.pool.Exec(t.Context(), "INSERT INTO life_areas(id,owner_id,name,color,icon,created_at,updated_at) VALUES($1,$2,$4,'#23575b','book',$3,$3)", id, owner.ID, f.clock.Now(), id); e != nil {
+			t.Fatal(e)
+		}
+	}
+	in := questInput("Работа в направлении")
+	in.AreaID = &areaA
+	in.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in))
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}))
+	assert := func(xp int64) {
+		p := readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+		var sum int64
+		for _, area := range p.Areas {
+			sum += area.XP
+			if area.ID == areaB && area.XP != 0 {
+				t.Fatal("changed reward snapshot")
+			}
+		}
+		var total int64
+		if e := f.pool.QueryRow(t.Context(), "SELECT total_xp FROM user_progress WHERE owner_id=$1", owner.ID).Scan(&total); e != nil || total != xp || sum != xp {
+			t.Fatal("global XP double counted", total, sum, e)
+		}
+	}
+	assert(25)
+	in = q.Input
+	in.AreaID = &areaB
+	q = readQuest(t, f.privateRequest(t, a, "PATCH", "/quests/"+q.ID, version(q), in))
+	assert(25)
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]string{"reason": "Исправление"}))
+	assert(0)
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Восстановление"}))
+	assert(25)
 }

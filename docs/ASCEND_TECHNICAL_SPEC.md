@@ -1744,7 +1744,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Нельзя надеть отсутствующий предмет; экипировка сохраняется между сессиями.
   - **КОММИТ СЕЙЧАС:** `feat(character): persist inventory ownership and equipped items`
 
-- [ ] **C091. Опыт направлений**
+- [x] **C091. Опыт направлений**
   - **Сделать:** Связать задачи/привычки с одним направлением, ledger-проекцией и компенсациями.
   - **Проверить:** Сумма area XP не добавляется к общему XP второй раз; отмена исправляет направление.
   - **КОММИТ СЕЙЧАС:** `feat(skills): derive area progress from qualified reward sources`

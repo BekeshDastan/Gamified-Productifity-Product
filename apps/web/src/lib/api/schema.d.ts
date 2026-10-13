@@ -2731,11 +2731,21 @@ export interface components {
             title_id: string;
             level: components["schemas"]["ProgressionLevel"];
             inventory: components["schemas"]["CosmeticItem"][];
+            areas: components["schemas"]["CharacterArea"][];
         };
         EquipmentInput: {
             /** @enum {string} */
             slot: "base" | "clothes" | "head" | "accessory" | "background" | "frame";
             item_id: string;
+        };
+        CharacterArea: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            xp: number;
+            level: components["schemas"]["ProgressionLevel"];
+            successful_periods: number;
+            archived: boolean;
         };
     };
     responses: {
