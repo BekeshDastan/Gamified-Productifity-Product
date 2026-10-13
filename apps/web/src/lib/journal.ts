@@ -106,3 +106,65 @@ export async function saveMorning(
     return morning.parse(r.data?.data);
   });
 }
+
+export const reviewInput = z.object({
+  obstacle: z.enum(["none", "insufficient_time", "low_energy", "external", "unclear", "other"]),
+  obstacle_note: z.string().max(2000),
+  conclusion: z.string().trim().min(1).max(5000),
+  energy: z.number().int().min(1).max(5).nullable(),
+  mood: z.number().int().min(1).max(5).nullable(),
+});
+const dailyItem = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  status: z.string(),
+  planned_date: z.string().nullable(),
+  planned: z.boolean(),
+  completed_today: z.boolean(),
+});
+export const dailyReview = z.object({
+  run: routineRun.nullable(),
+  timezone: z.string(),
+  stats: z.object({
+    planned: z.number(),
+    completed: z.number(),
+    completed_today: z.number(),
+    postponed: z.number(),
+    failed: z.number(),
+    skipped: z.number(),
+    more: z.boolean(),
+    items: z.array(dailyItem),
+  }),
+});
+export type Review = z.infer<typeof dailyReview>;
+export async function getReview(date: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/reviews/day/{date}", {
+    params: { path: { date } },
+    signal,
+  });
+  return dailyReview.parse(r.data?.data);
+}
+export async function saveReview(
+  date: string,
+  current: Review,
+  input: z.infer<typeof reviewInput>,
+  key: string,
+) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient(),
+      r = await api.PUT("/api/v1/reviews/day/{date}", {
+        params: {
+          path: { date },
+          header: {
+            ...authParams().header,
+            "Idempotency-Key": key,
+            "If-Match": '"' + (current.run?.version ?? 0) + '"',
+          },
+        },
+        body: input,
+      });
+    return dailyReview.parse(r.data?.data);
+  });
+}

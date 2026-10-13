@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/reviews/day/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDailyReview"];
+        put: operations["saveDailyReview"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/routine-runs/morning/{date}": {
         parameters: {
             query?: never;
@@ -2187,6 +2203,37 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ReviewInput: {
+            /** @enum {string} */
+            obstacle: "none" | "insufficient_time" | "low_energy" | "external" | "unclear" | "other";
+            obstacle_note: string;
+            conclusion: string;
+            energy: number | null;
+            mood: number | null;
+        };
+        DailyItem: {
+            id: string;
+            title: string;
+            status: string;
+            planned_date: string | null;
+            planned: boolean;
+            completed_today: boolean;
+        };
+        DailyStats: {
+            planned: number;
+            completed: number;
+            completed_today: number;
+            postponed: number;
+            failed: number;
+            skipped: number;
+            more: boolean;
+            items: components["schemas"]["DailyItem"][];
+        };
+        DailyReview: {
+            run: components["schemas"]["RoutineRun"] | null;
+            timezone: string;
+            stats: components["schemas"]["DailyStats"];
+        };
         RoutineRun: {
             /** Format: uuid */
             id: string;
@@ -3946,6 +3993,70 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getDailyReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DailyReview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    saveDailyReview: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DailyReview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
     getMorning: {
         parameters: {
             query?: never;

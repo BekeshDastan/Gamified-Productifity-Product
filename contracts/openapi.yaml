@@ -6,6 +6,79 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/reviews/day/{date}:
+    get:
+      operationId: getDailyReview
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DailyReview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: saveDailyReview
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DailyReview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/routine-runs/morning/{date}:
     get:
       operationId: getMorning
@@ -6690,6 +6763,116 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ReviewInput:
+      type: object
+      additionalProperties: false
+      required:
+        - obstacle
+        - obstacle_note
+        - conclusion
+        - energy
+        - mood
+      properties:
+        obstacle:
+          type: string
+          enum:
+            - none
+            - insufficient_time
+            - low_energy
+            - external
+            - unclear
+            - other
+        obstacle_note:
+          type: string
+          maxLength: 2000
+        conclusion:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        energy:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+          maximum: 5
+        mood:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+          maximum: 5
+    DailyItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - status
+        - planned_date
+        - planned
+        - completed_today
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+        planned_date:
+          type:
+            - string
+            - "null"
+        planned:
+          type: boolean
+        completed_today:
+          type: boolean
+    DailyStats:
+      type: object
+      additionalProperties: false
+      required:
+        - planned
+        - completed
+        - completed_today
+        - postponed
+        - failed
+        - skipped
+        - more
+        - items
+      properties:
+        planned:
+          type: integer
+        completed:
+          type: integer
+        completed_today:
+          type: integer
+        postponed:
+          type: integer
+        failed:
+          type: integer
+        skipped:
+          type: integer
+        more:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyItem"
+    DailyReview:
+      type: object
+      additionalProperties: false
+      required:
+        - run
+        - timezone
+        - stats
+      properties:
+        run:
+          anyOf:
+            - $ref: "#/components/schemas/RoutineRun"
+            - type: "null"
+        timezone:
+          type: string
+        stats:
+          $ref: "#/components/schemas/DailyStats"
     RoutineRun:
       type: object
       additionalProperties: false

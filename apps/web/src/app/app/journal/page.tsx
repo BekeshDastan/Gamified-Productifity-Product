@@ -1,3 +1,4 @@
+import { EveningReview } from "@/components/evening-review";
 import { MorningRoutine } from "@/components/morning-routine";
 import { Journal } from "@/components/journal";
 export default function JournalPage() {
@@ -8,6 +9,7 @@ export default function JournalPage() {
       <p className="page-intro">Замечать важное, разбирать день и выбирать следующий шаг.</p>
       <Journal />
       <MorningRoutine />
+      <EveningReview />
     </>
   );
 }
