@@ -1769,3 +1769,8 @@ html[data-motion="reduce"] *::after {
   padding-block: 1.25rem;
   border-bottom: 1px solid var(--border);
 }
+.focus-layout {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}

@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -88,8 +89,9 @@ type Session struct {
 	Segments              []Segment  `json:"segments"`
 }
 type Current struct {
-	ServerNow time.Time `json:"server_now"`
-	Session   *Session  `json:"session"`
+	SoundAllowed bool      `json:"sound_allowed"`
+	ServerNow    time.Time `json:"server_now"`
+	Session      *Session  `json:"session"`
 }
 
 const columns = "id::text,state,mode,phase,title,quest_id::text,goal_id::text,area_id::text,timezone,work_minutes,break_minutes,sound_enabled,cycle,version,started_at,updated_at,ended_at,phase_deadline,result,comment,phase_remaining_seconds"
@@ -152,6 +154,9 @@ func (s *Service) event(ctx context.Context, tx pgx.Tx, owner, kind string, f Se
 }
 func (s *Service) current(ctx context.Context, tx pgx.Tx, owner string) (Current, error) {
 	out := Current{ServerNow: s.now()}
+	if e := tx.QueryRow(ctx, "SELECT COALESCE((preferences#>>'{personalization,sound}')::boolean,false) FROM user_settings WHERE owner_id=$1", owner).Scan(&out.SoundAllowed); e != nil {
+		return out, e
+	}
 	var id string
 	e := tx.QueryRow(ctx, "SELECT id::text FROM focus_sessions WHERE owner_id=$1 AND state IN('running','paused','awaiting_confirmation')", owner).Scan(&id)
 	if errors.Is(e, pgx.ErrNoRows) {
@@ -162,6 +167,7 @@ func (s *Service) current(ctx context.Context, tx pgx.Tx, owner string) (Current
 	}
 	f, e := s.get(ctx, tx, owner, id)
 	out.Session = &f
+	out.ServerNow = s.now()
 	return out, e
 }
 func validateStart(in StartInput) (StartInput, error) {
@@ -178,7 +184,7 @@ func validateStart(in StartInput) (StartInput, error) {
 		in.BreakMinutes = 5
 	}
 	in.Title = strings.TrimSpace(in.Title)
-	if !validID(in.OperationID) || (in.Mode != "free" && in.Mode != "pomodoro" && in.Mode != "quick") || (in.Mode == "quick" && in.WorkMinutes != 5) || in.WorkMinutes < 5 || in.WorkMinutes > 120 || in.BreakMinutes < 1 || in.BreakMinutes > 60 || utf8.RuneCountInString(in.Title) > 200 || strings.ContainsRune(in.Title, 0) {
+	if !validID(in.OperationID) || (in.Mode != "free" && in.Mode != "pomodoro" && in.Mode != "quick") || (in.Mode == "quick" && in.WorkMinutes != 5) || in.WorkMinutes < 5 || in.WorkMinutes > 120 || in.BreakMinutes < 1 || in.BreakMinutes > 60 || utf8.RuneCountInString(in.Title) > 200 || strings.IndexFunc(in.Title, unicode.IsControl) >= 0 {
 		return in, problem(422, "VALIDATION_ERROR", "Проверьте режим и длительность сессии")
 	}
 	for _, id := range []*string{in.QuestID, in.GoalID, in.AreaID} {

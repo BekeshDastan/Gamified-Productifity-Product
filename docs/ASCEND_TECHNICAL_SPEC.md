@@ -1867,7 +1867,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Сумма в таблице совпадает с длительностями сегментов, паузы исключены.
   - **КОММИТ СЕЙЧАС:** `feat(focus-ui): add session history filters and summaries`
 
-- [ ] **C112. Приёмка концентрации**
+- [x] **C112. Приёмка концентрации**
   - **Сделать:** Проверить перезагрузку, параллельный start, sleep/resume, длинную сессию и повтор confirm.
   - **Проверить:** Минуты и состояния согласованы на двух клиентах; фиктивного начисления нет.
   - **КОММИТ СЕЙЧАС:** `test(focus): cover multi-tab recovery pauses and server timing`

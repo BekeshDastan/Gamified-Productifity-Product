@@ -84,7 +84,7 @@ export function Focus() {
   const [notice, setNotice] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [cancel, setCancel] = useState(false);
+    [cancel, setCancel] = useState<string | null>(null);
   const lock = useRef(false),
     key = useRef({ body: "", value: "" }),
     mono = useMonotonicTick(),
@@ -99,7 +99,7 @@ export function Focus() {
     void cache.invalidateQueries({ queryKey: ["account", auth.session?.account.id] });
     if (auth.session) broadcastFocus(auth.session.account.id);
   };
-  useIntervalBell(s, !!settings.data?.personalization.sound);
+  useIntervalBell(s, !!q.data?.sound_allowed && !!settings.data?.personalization.sound);
   useEffect(() => {
     if (!clock?.boundaryPassed || !s) return;
     const version = s.id + ":" + s.version;
@@ -116,7 +116,7 @@ export function Focus() {
     if (key.current.body !== body) key.current = { body, value: crypto.randomUUID() };
     try {
       await actOnFocus(s, a, "", key.current.value);
-      setCancel(false);
+      setCancel(null);
       changed();
     } catch (e) {
       setError(
@@ -145,7 +145,7 @@ export function Focus() {
       </Card>
     );
   return (
-    <>
+    <div className="focus-layout">
       <Card>
         <h2>Один шаг за раз</h2>
         <p>
@@ -160,7 +160,7 @@ export function Focus() {
           пределом сессии.
         </p>
       )}
-      {Math.abs(q.data.sync.skewMs) > 5000 ? (
+      {Math.abs(q.data.sync.skewMs) > 5000 + q.data.sync.uncertaintyMs ? (
         <p role="status">
           Часы устройства отличаются от сервера примерно на{" "}
           {Math.round(Math.abs(q.data.sync.skewMs) / 1000)} сек. Таймер использует серверное время.
@@ -250,7 +250,7 @@ export function Focus() {
                 Завершить и подвести итог
               </Button>
             )}
-            <Button disabled={busy} variant="secondary" onClick={() => setCancel(true)}>
+            <Button disabled={busy} variant="secondary" onClick={() => setCancel(s.id)}>
               Отменить сессию
             </Button>
             <Button disabled={busy} variant="secondary" onClick={() => void refetch()}>
@@ -263,6 +263,7 @@ export function Focus() {
               session={s}
               saved={() => {
                 setNotice("Итог сохранён. Статус задачи остался под вашим управлением.");
+                setError("");
                 changed();
               }}
             />
@@ -278,16 +279,16 @@ export function Focus() {
       <Dialog
         title="Отмена фокус-сессии"
         description="Интервалы останутся в истории. Время не войдёт в подтверждённый итог задачи."
-        open={cancel}
+        open={!!s && cancel === s.id}
         onOpenChange={(open) => {
-          if (!busy) setCancel(open);
+          if (!busy) setCancel(open && s ? s.id : null);
         }}
       >
         <Button disabled={busy} variant="danger" onClick={() => void action("cancel")}>
           Подтвердить отмену сессии
         </Button>
       </Dialog>
-    </>
+    </div>
   );
 }
 const source = z

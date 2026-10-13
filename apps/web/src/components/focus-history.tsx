@@ -36,6 +36,7 @@ export function FocusHistory({ serverNow }: { serverNow: string }) {
       from: today.startOf("month").toISODate()!,
       to: today.toISODate()!,
     }),
+    [archivedTasks, setArchivedTasks] = useState(false),
     [search, setSearch] = useState(""),
     [page, setPage] = useState(1),
     term = useDeferredValue(search);
@@ -58,9 +59,17 @@ export function FocusHistory({ serverNow }: { serverNow: string }) {
       queryFn: ({ signal }) => getFocusSession(selected!, signal),
     });
   const tasks = useQuery({
-      queryKey: ["account", auth.session?.account.id, "focus-history-tasks", term, page],
+      queryKey: [
+        "account",
+        auth.session?.account.id,
+        "focus-history-tasks",
+        term,
+        page,
+        archivedTasks,
+      ],
       enabled: !!auth.session,
-      queryFn: ({ signal }) => listQuests(page, signal, { ...emptyFilters, search: term }),
+      queryFn: ({ signal }) =>
+        listQuests(page, signal, { ...emptyFilters, search: term, archived: archivedTasks }),
     }),
     labels = useQuery({
       queryKey: ["account", auth.session?.account.id, "quest-labels"],
@@ -118,6 +127,17 @@ export function FocusHistory({ serverNow }: { serverNow: string }) {
             setPage(1);
           }}
         />
+        <label>
+          <input
+            type="checkbox"
+            checked={archivedTasks}
+            onChange={(e) => {
+              setArchivedTasks(e.target.checked);
+              setPage(1);
+            }}
+          />{" "}
+          Искать архивные задачи в истории
+        </label>
         <Select
           label="Задача в истории фокуса"
           value={filters.quest_id ?? ""}

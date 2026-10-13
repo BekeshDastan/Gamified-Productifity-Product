@@ -55,7 +55,11 @@ export const focusSession = z.object({
   ),
 });
 export type FocusSession = z.infer<typeof focusSession>;
-const current = z.object({ server_now: instant, session: focusSession.nullable() });
+const current = z.object({
+  server_now: instant,
+  sound_allowed: z.boolean(),
+  session: focusSession.nullable(),
+});
 export async function getFocus(signal?: AbortSignal) {
   await requireAccount();
   const before = performance.now(),
@@ -70,7 +74,7 @@ export async function getFocus(signal?: AbortSignal) {
     sync: {
       serverMs,
       receivedMono: received,
-      uncertaintyMs: (received - before) / 2,
+      uncertaintyMs: received - before,
       skewMs: serverMs - (deviceBefore + deviceAfter) / 2,
     },
   };

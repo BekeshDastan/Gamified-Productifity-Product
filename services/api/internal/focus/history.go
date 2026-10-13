@@ -145,6 +145,9 @@ func (s *Service) mountHistory(r chi.Router) {
 			e = s.progress.WithinOwner(r.Context(), owner, func(tx pgx.Tx) error {
 				f, e := s.get(r.Context(), tx, owner, chi.URLParam(r, "id"))
 				out = Current{ServerNow: s.now(), Session: &f}
+				if e == nil {
+					e = tx.QueryRow(r.Context(), "SELECT COALESCE((preferences#>>'{personalization,sound}')::boolean,false) FROM user_settings WHERE owner_id=$1", owner).Scan(&out.SoundAllowed)
+				}
 				return e
 			})
 		}

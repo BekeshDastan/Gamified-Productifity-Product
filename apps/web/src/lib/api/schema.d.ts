@@ -3400,6 +3400,7 @@ export interface components {
         FocusCurrent: {
             server_now: string;
             session: components["schemas"]["FocusSession"] | null;
+            sound_allowed: boolean;
         };
         FocusAction: {
             /** @enum {string} */

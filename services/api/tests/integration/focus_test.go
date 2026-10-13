@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/focus"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"net/http"
 	"sync"
@@ -492,5 +493,154 @@ func TestFocusHistoryCursorHasNoDuplicates(t *testing.T) {
 		if s.ID == last.Items[0].ID {
 			t.Fatal("duplicate cursor")
 		}
+	}
+}
+func TestFocusIndependentClientsStayConsistent(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "focus-devices@example.test")
+	b := authClient(t)
+	f.loginAs(t, b, "focus-devices@example.test")
+	s := readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", focusInput()))
+	seen := readCurrentFocus(t, f.privateRequest(t, b, "GET", "/focus/current", "", nil))
+	if seen.Session == nil || seen.Session.ID != s.ID {
+		t.Fatal(seen)
+	}
+	f.clock.Advance(time.Minute)
+	paused := focusAct(t, f, b, s, "pause")
+	if r := f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/actions", focusVersion(s), focus.ActionInput{Action: "resume"}); r.status != 409 {
+		t.Fatal("stale device", r.status)
+	}
+	seen = readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil))
+	if seen.Session.ActiveSeconds != 60 || seen.Session.Version != paused.Version {
+		t.Fatal(seen)
+	}
+	s = focusAct(t, f, a, *seen.Session, "resume")
+	f.clock.Advance(30 * time.Second)
+	s = focusAct(t, f, b, s, "finish")
+	s = readFocus(t, f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), focus.ConfirmInput{Result: "progress"}))
+	if s.ActiveSeconds != 90 {
+		t.Fatal(s)
+	}
+	for _, client := range []*http.Client{a, b} {
+		if cur := readCurrentFocus(t, f.privateRequest(t, client, "GET", "/focus/current", "", nil)); cur.Session != nil {
+			t.Fatal("closed device", cur)
+		}
+	}
+}
+func TestFocusInvalidSourcesSettingsAndClientTimeAreRejected(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "focus-input@example.test")
+	b, _ := f.signedIn(t, "focus-input-other@example.test")
+	foreignGoal := readGoal(t, f.privateRequest(t, b, "POST", "/goals", "", goals.Create{Input: goalInput("Чужая цель"), State: "active"}))
+	in := focusInput()
+	in.GoalID = &foreignGoal.ID
+	if r := f.privateRequest(t, a, "POST", "/focus/start", "", in); r.status != 404 {
+		t.Fatal("foreign goal", r.status)
+	}
+	in = focusInput()
+	missing := testkit.NewUser().ID
+	in.AreaID = &missing
+	if r := f.privateRequest(t, a, "POST", "/focus/start", "", in); r.status != 404 {
+		t.Fatal("foreign area", r.status)
+	}
+	for _, patch := range []func(*focus.StartInput){func(i *focus.StartInput) { i.Mode = "unknown" }, func(i *focus.StartInput) { i.Mode = "pomodoro"; i.WorkMinutes = 4 }, func(i *focus.StartInput) { i.Title = "bad\u0001title" }, func(i *focus.StartInput) { i.OperationID = "invalid" }} {
+		in = focusInput()
+		patch(&in)
+		if r := f.privateRequest(t, a, "POST", "/focus/start", "", in); r.status != 422 {
+			t.Fatal("bad start", r.status)
+		}
+	}
+	if r := f.privateRequest(t, a, "POST", "/focus/start", "", map[string]any{"operation_id": testkit.NewUser().ID, "started_at": "2020-01-01T00:00:00Z"}); r.status != 422 {
+		t.Fatal("client clock accepted", r.status)
+	}
+	ownGoal := readGoal(t, f.privateRequest(t, a, "POST", "/goals", "", goals.Create{Input: goalInput("Своя цель"), State: "active"}))
+	if _, e := f.pool.Exec(t.Context(), "UPDATE user_settings SET preferences=jsonb_set(preferences,'{personalization,sound}','true') WHERE owner_id=$1", who.ID); e != nil {
+		t.Fatal(e)
+	}
+	in = focusInput()
+	in.GoalID = &ownGoal.ID
+	in.SoundEnabled = true
+	s := readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", in))
+	if s.Title != "Своя цель" || !s.SoundEnabled {
+		t.Fatal(s)
+	}
+	changed := in
+	changed.Title = "Другой запрос"
+	if r := f.privateRequest(t, a, "POST", "/focus/start", "", changed); r.status != 409 {
+		t.Fatal("permanent request changed", r.status)
+	}
+	for _, action := range []string{"wrong", "next", "break", "extend", "resume"} {
+		r := f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/actions", focusVersion(s), focus.ActionInput{Action: action})
+		want := 409
+		if action == "wrong" {
+			want = 422
+		}
+		if r.status != want {
+			t.Fatal(action, r.status, string(r.body))
+		}
+	}
+	if r := f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/actions", "", focus.ActionInput{Action: "pause"}); r.status != 422 {
+		t.Fatal("missing version", r.status)
+	}
+	s = focusAct(t, f, a, s, "finish")
+	if r := f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), focus.ConfirmInput{Result: "progress"}); r.status != 422 {
+		t.Fatal("invented work", r.status)
+	}
+	if r := f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), focus.ConfirmInput{Result: "wrong"}); r.status != 422 {
+		t.Fatal("invalid result", r.status)
+	}
+}
+func TestFocusConfirmationFailureRollsBackTimeProjection(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "focus-rollback@example.test")
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Проверить итог")))
+	in := focusInput()
+	in.QuestID = &q.ID
+	s := readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", in))
+	f.clock.Advance(time.Minute)
+	s = focusAct(t, f, a, s, "finish")
+	if _, e := f.pool.Exec(t.Context(), `CREATE FUNCTION fail_focus_confirmation() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.kind='confirmed' THEN RAISE EXCEPTION 'injected failure';END IF;RETURN NEW;END $$;CREATE TRIGGER injected_confirm BEFORE INSERT ON focus_events FOR EACH ROW EXECUTE FUNCTION fail_focus_confirmation()`); e != nil {
+		t.Fatal(e)
+	}
+	input := focus.ConfirmInput{Result: "progress", Comment: "Сохранить один раз"}
+	key := "focus-confirm-rollback-001"
+	r := f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), input, key)
+	if r.status != 500 {
+		t.Fatal(r.status)
+	}
+	cur := readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil))
+	if cur.Session == nil || cur.Session.State != "awaiting_confirmation" || cur.Session.Version != s.Version {
+		t.Fatal("partial confirm", cur)
+	}
+	if timing := readQuestFocusTime(t, f.privateRequest(t, a, "GET", "/focus/quests/"+q.ID+"/time", "", nil)); timing.FocusSeconds != 0 {
+		t.Fatal(timing)
+	}
+	if _, e := f.pool.Exec(t.Context(), "DROP TRIGGER injected_confirm ON focus_events;DROP FUNCTION fail_focus_confirmation()"); e != nil {
+		t.Fatal(e)
+	}
+	confirmed := readFocus(t, f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), input, key))
+	if confirmed.State != "finished" || confirmed.ActiveSeconds != 60 {
+		t.Fatal(confirmed)
+	}
+}
+func TestFocusCurrentRefreshesSoundPermission(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "focus-sound@example.test")
+	if _, e := f.pool.Exec(t.Context(), "UPDATE user_settings SET preferences=jsonb_set(preferences,'{personalization,sound}','true') WHERE owner_id=$1", who.ID); e != nil {
+		t.Fatal(e)
+	}
+	in := focusInput()
+	in.SoundEnabled = true
+	s := readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", in))
+	cur := readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil))
+	if !s.SoundEnabled || !cur.SoundAllowed {
+		t.Fatal("enabled", cur)
+	}
+	if _, e := f.pool.Exec(t.Context(), "UPDATE user_settings SET preferences=jsonb_set(preferences,'{personalization,sound}','false') WHERE owner_id=$1", who.ID); e != nil {
+		t.Fatal(e)
+	}
+	cur = readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil))
+	if cur.SoundAllowed || cur.Session == nil || !cur.Session.SoundEnabled {
+		t.Fatal("sound permission was stale or rewrote snapshot", cur)
 	}
 }

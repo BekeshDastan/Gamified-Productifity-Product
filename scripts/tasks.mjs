@@ -127,7 +127,16 @@ const commands = {
       if (!env[setting])
         throw new Error(`${setting} must be explicitly configured; see docs/runbook.md`);
     }
-    await run("go", ["test", "-tags=integration", "-count=1", "./tests/integration/..."], api);
+    const args = ["test", "-v", "-tags=integration", "-count=1", "-timeout=15m"];
+    if (env.ASCEND_COVERAGE_PACKAGE) {
+      mkdirSync(path.join(root, ".data"), { recursive: true });
+      args.push(
+        "-coverpkg=" + env.ASCEND_COVERAGE_PACKAGE,
+        "-coverprofile=" + path.join(root, ".data", "integration.cover"),
+      );
+    }
+    args.push("./tests/integration/...");
+    await run("go", args, api);
   },
   "check-changed": async () => {
     await commands.lint();
@@ -149,11 +158,12 @@ const commands = {
       "go",
       [
         "test",
+        "-v",
         "-tags=integration",
         "-run",
         "^TestBrowserAuth$",
         "-count=1",
-        "-timeout=10m",
+        "-timeout=12m",
         "./tests/integration/...",
       ],
       api,

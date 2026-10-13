@@ -119,7 +119,8 @@ func (s *Service) action(ctx context.Context, tx pgx.Tx, owner, id string, in Ac
 	if now.Before(f.UpdatedAt) {
 		now = f.UpdatedAt
 	}
-	state, phase := f.State, f.Phase
+	var state string
+	phase := f.Phase
 	deadline, remaining := f.PhaseDeadline, f.PhaseRemainingSeconds
 	ended := f.EndedAt
 	comment := f.Comment
