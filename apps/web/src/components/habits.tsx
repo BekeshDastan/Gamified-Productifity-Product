@@ -26,6 +26,7 @@ import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
 import { HabitHistory } from "./habit-history";
+import { HabitVersion } from "./habit-version";
 import { useRewardNotice } from "./progression";
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const stateLabels = {
@@ -81,6 +82,9 @@ export function Habits() {
     );
   return (
     <>
+      <Button variant="secondary" onClick={() => void data.refetch()}>
+        Обновить привычки
+      </Button>
       <Button
         variant="secondary"
         onClick={() => {
@@ -341,12 +345,7 @@ export function HabitCard({
                 ({h.timezone}). {current.emergency_reason || current.rest_reason}
               </p>
               {!current.excluded && !h.archived_at && (
-                <HabitLogForm
-                  key={h.version + ":" + current.id}
-                  habit={h}
-                  period={current}
-                  changed={changed}
-                />
+                <HabitLogForm key={current.id} habit={h} period={current} changed={changed} />
               )}
             </>
           ) : (
@@ -373,13 +372,13 @@ export function HabitCard({
               </details>
               <details hidden={!!h.archived_at}>
                 <summary>Пауза и экстренный пропуск</summary>
-                <HabitPauseForm key={"pause:" + h.version} habit={h} changed={changed} />
+                <HabitPauseForm key={"pause:" + h.id} habit={h} changed={changed} />
                 {current &&
                   !current.excluded &&
                   current.state === "open" &&
                   !current.emergency_reason && (
                     <HabitEmergencyForm
-                      key={"emergency:" + h.version}
+                      key={"emergency:" + current.id}
                       habit={h}
                       period={current}
                       changed={changed}
@@ -389,12 +388,7 @@ export function HabitCard({
                   {h.pauses.map((p) => (
                     <li key={p.id}>
                       {p.starts_on} — {p.ends_on ?? "до возобновления"}: {p.reason}
-                      <HabitResumeForm
-                        key={h.version + ":" + p.id}
-                        habit={h}
-                        pause={p.id}
-                        changed={changed}
-                      />
+                      <HabitResumeForm key={p.id} habit={h} pause={p.id} changed={changed} />
                     </li>
                   ))}
                 </ul>
@@ -419,6 +413,7 @@ function HabitLogForm({
   period: HabitPeriod;
   changed: () => void;
 }) {
+  const record = useRef(h);
   const key = useRequestKey(),
     rewardNotice = useRewardNotice();
   const flow = useValidatedForm({
@@ -434,13 +429,19 @@ function HabitLogForm({
         amount: v.amount,
         occurred_at: DateTime.fromISO(v.occurred_at, { zone: h.timezone }).toUTC().toISO()!,
       };
-      const saved = await logHabit(h, input, key(input));
+      const saved = await logHabit(
+        record.current,
+        input,
+        key({ input: input, version: record.current.version }),
+      );
+      record.current = saved;
       rewardNotice(saved.reward);
       changed();
     },
   });
   return (
     <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
+      <HabitVersion recordRef={record} habit={h} flow={flow} />
       <div className="form-grid">
         <Input
           label={`Количество (${h.unit})`}
@@ -467,6 +468,7 @@ const pauseForm = z.object({
   reason: z.string().trim().min(1, "Укажите причину").max(1000),
 });
 function HabitPauseForm({ habit: h, changed }: { habit: Habit; changed: () => void }) {
+  const record = useRef(h);
   const key = useRequestKey();
   const flow = useValidatedForm({
     schema: pauseForm,
@@ -474,12 +476,17 @@ function HabitPauseForm({ habit: h, changed }: { habit: Habit; changed: () => vo
     fields: ["starts_on", "ends_on", "reason"],
     save: async (v) => {
       const input = { ...v, ends_on: v.ends_on || null };
-      await pauseHabit(h, input, key(input));
+      record.current = await pauseHabit(
+        record.current,
+        input,
+        key({ input: input, version: record.current.version }),
+      );
       changed();
     },
   });
   return (
     <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
+      <HabitVersion recordRef={record} habit={h} flow={flow} />
       <p>Плановая пауза начинается в будущем на границе периода. Прошлые пропуски сохраняются.</p>
       <Input label="Начало паузы" type="date" {...flow.form.register("starts_on")} />
       <Input
@@ -507,6 +514,7 @@ function HabitEmergencyForm({
   period: HabitPeriod;
   changed: () => void;
 }) {
+  const record = useRef(h);
   const key = useRequestKey();
   const schema = z.object({ reason: z.string().trim().min(1, "Укажите причину").max(1000) });
   const flow = useValidatedForm({
@@ -514,12 +522,17 @@ function HabitEmergencyForm({
     defaultValues: { reason: "" },
     fields: ["reason"],
     save: async (v) => {
-      await emergencyHabit(h, { period_id: p.id, reason: v.reason }, key(v));
+      record.current = await emergencyHabit(
+        record.current,
+        { period_id: p.id, reason: v.reason },
+        key({ input: v, version: record.current.version }),
+      );
       changed();
     },
   });
   return (
     <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
+      <HabitVersion recordRef={record} habit={h} flow={flow} />
       <Input
         label="Причина экстренного пропуска"
         {...flow.form.register("reason")}
@@ -544,6 +557,7 @@ function HabitResumeForm({
   pause: string;
   changed: () => void;
 }) {
+  const record = useRef(h);
   const key = useRequestKey();
   const schema = z.object({
     resumes_on: z.iso.date(),
@@ -554,7 +568,12 @@ function HabitResumeForm({
     defaultValues: { resumes_on: "", reason: "" },
     fields: ["resumes_on", "reason"],
     save: async (v) => {
-      await resumeHabit(h, pause, v, key(v));
+      record.current = await resumeHabit(
+        record.current,
+        pause,
+        v,
+        key({ input: v, version: record.current.version }),
+      );
       changed();
     },
   });
@@ -562,6 +581,7 @@ function HabitResumeForm({
     <details>
       <summary>Возобновить раньше</summary>
       <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
+        <HabitVersion recordRef={record} habit={h} flow={flow} />
         <Input label="Дата возобновления" type="date" {...flow.form.register("resumes_on")} />
         <Input
           label="Причина возобновления"

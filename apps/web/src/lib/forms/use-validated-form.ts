@@ -53,7 +53,7 @@ export function useValidatedForm<T extends FieldValues>({
               }
             }
           form.setError("root.server", {
-            type: "server",
+            type: error instanceof ApiError ? error.code : "server",
             message:
               error instanceof ApiError
                 ? error.message

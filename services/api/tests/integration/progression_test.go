@@ -6,10 +6,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"github.com/jackc/pgx/v5"
 	"sync/atomic"
@@ -554,5 +556,126 @@ func TestProgressionRebuildAndOutboxAreIdempotent(t *testing.T) {
 	tail, e := svc.OwnerBatch(t.Context(), owners[0])
 	if e != nil || len(tail) != 1 || tail[0] == owners[0] {
 		t.Fatal("batch cursor", tail, e)
+	}
+}
+
+func TestProgressionTwentyConcurrentCompletionsRespectCaps(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "twenty-tasks@example.test")
+	tasks := make([]quests.Quest, 0, 20)
+	for i := 0; i < 20; i++ {
+		in := questInput(fmt.Sprintf("Параллельная работа %d", i+1))
+		in.Difficulty = 5
+		tasks = append(tasks, readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in)))
+	}
+	results := make(chan authResponse, 20)
+	for _, q := range tasks {
+		go func(q quests.Quest) {
+			results <- f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Параллельное подтверждение"}, "race-complete-"+q.ID)
+		}(q)
+	}
+	var delta, coins int64
+	positive := 0
+	for i := 0; i < 20; i++ {
+		q := readQuest(t, <-results)
+		if q.Status != "completed" || q.Reward == nil {
+			t.Fatal("lost completion", q)
+		}
+		delta += q.Reward.XPDelta
+		coins += q.Reward.CoinsDelta
+		if q.Reward.XPDelta > 0 {
+			positive++
+		}
+	}
+	if delta != 200 || coins != 40 || positive != 2 {
+		t.Fatal("parallel quota overflow", delta, coins, positive)
+	}
+	b := readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if b.TotalXP != 200 || b.Coins != 40 || b.Quota.TaskUsed != 200 {
+		t.Fatal(b)
+	}
+	var completed, rights, ledger int
+	if e := f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM quests WHERE owner_id=$1 AND status='completed'),(SELECT count(*) FROM reward_entitlements WHERE owner_id=$1),(SELECT count(*) FROM reward_ledger WHERE owner_id=$1)`, account.ID).Scan(&completed, &rights, &ledger); e != nil || completed != 20 || rights != 20 || ledger != 20 {
+		t.Fatal(completed, rights, ledger, e)
+	}
+}
+func TestProgressionTwentySameSourceAndReplayAfterCacheTTL(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "same-task-race@example.test")
+	in := questInput("Один источник")
+	in.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in))
+	old := version(q)
+	key := "same-completion-twenty-0001"
+	results := make(chan authResponse, 20)
+	for i := 0; i < 20; i++ {
+		go func() {
+			results <- f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", old, map[string]string{"reason": "Готово"}, key)
+		}()
+	}
+	var entitlement string
+	for i := 0; i < 20; i++ {
+		done := readQuest(t, <-results)
+		if done.Reward == nil {
+			t.Fatal("missing cached logical result")
+		}
+		if entitlement == "" {
+			entitlement = done.Reward.EntitlementID
+		}
+		if done.Reward.EntitlementID != entitlement || done.Reward.TotalXP != 25 {
+			t.Fatal("duplicate source right", done.Reward)
+		}
+	}
+	f.clock.Advance(25 * time.Hour)
+	if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+		t.Fatal(r.status)
+	}
+	tag, e := f.pool.Exec(t.Context(), `DELETE FROM idempotency_records WHERE user_id=$1 AND route_key=$2 AND idempotency_key=$3 AND expires_at<=$4`, account.ID, "/api/v1/quests/"+q.ID+"/complete", key, f.clock.Now())
+	if e != nil || tag.RowsAffected() != 1 {
+		t.Fatal("cache TTL fixture", tag, e)
+	}
+	again := readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", old, map[string]string{"reason": "Готово"}, key))
+	if again.Reward == nil || again.Reward.XPDelta != 0 || again.Reward.EntitlementID != entitlement || again.Version != q.Version+1 {
+		t.Fatal("re-award after TTL", again)
+	}
+	var rights, ledger int
+	var xp int64
+	if e = f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM reward_entitlements WHERE owner_id=$1),(SELECT count(*) FROM reward_ledger WHERE owner_id=$1),total_xp FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&rights, &ledger, &xp); e != nil || rights != 1 || ledger != 1 || xp != 25 {
+		t.Fatal(rights, ledger, xp, e)
+	}
+}
+func TestProgressionFailedReversalDoesNotSplitSpentBalance(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "reversal-rollback@example.test")
+	in := questInput("Проверенный исходный результат")
+	in.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in))
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}))
+	svc := progression.NewService(f.pool, f.clock)
+	if e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+		_, e := svc.SpendInTx(t.Context(), tx, account.ID, testkit.NewUser().ID, 5)
+		return e
+	}); e != nil {
+		t.Fatal(e)
+	}
+	if _, e := f.pool.Exec(t.Context(), `CREATE FUNCTION reject_reversal() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.kind='reversal' THEN RAISE EXCEPTION 'injected reversal failure';END IF;RETURN NEW;END $$;CREATE TRIGGER reject_reversal BEFORE INSERT ON reward_ledger FOR EACH ROW EXECUTE FUNCTION reject_reversal()`); e != nil {
+		t.Fatal(e)
+	}
+	key := "reversal-atomic-retry-0001"
+	if r := f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]string{"reason": "Исправление"}, key); r.status != 500 {
+		t.Fatal(r.status)
+	}
+	fresh := readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+q.ID, "", nil))
+	b := readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if fresh.Status != "completed" || fresh.Version != q.Version || b.TotalXP != 25 || b.Coins != 0 || b.CoinCorrection != 0 {
+		t.Fatal("split reversal", fresh, b)
+	}
+	if _, e := f.pool.Exec(t.Context(), `DROP TRIGGER reject_reversal ON reward_ledger;DROP FUNCTION reject_reversal()`); e != nil {
+		t.Fatal(e)
+	}
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]string{"reason": "Исправление"}, key))
+	b = readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if b.TotalXP != 0 || b.Coins != -5 || b.AvailableCoins != 0 || b.CoinCorrection != 5 || b.Quota.TaskUsed != 25 {
+		t.Fatal("wrong correction", b)
 	}
 }

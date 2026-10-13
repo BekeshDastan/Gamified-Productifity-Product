@@ -18,5 +18,5 @@ export function Providers({ children }: { children: ReactNode }) {
 
 function AccountToasts({ children }: { children: ReactNode }) {
   const auth = useAuth();
-  return <ToastProvider key={auth.session?.account.id ?? "public"}>{children}</ToastProvider>;
+  return <ToastProvider owner={auth.session?.account.id ?? "public"}>{children}</ToastProvider>;
 }

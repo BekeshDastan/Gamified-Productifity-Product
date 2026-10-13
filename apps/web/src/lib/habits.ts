@@ -297,3 +297,9 @@ export async function getHabitStarter(signal?: AbortSignal) {
   const r = await createApiClient().GET("/api/v1/habits/starter", { signal });
   return habitStarter.nullable().parse(r.data?.data);
 }
+
+export async function getHabit(id: string) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/habits/{id}", { params: { path: { id } } });
+  return habitSchema.parse(r.data?.data);
+}

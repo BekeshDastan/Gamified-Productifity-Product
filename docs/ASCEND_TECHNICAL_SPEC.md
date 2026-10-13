@@ -1720,7 +1720,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Повреждённый тестовый счётчик восстанавливается из источников без новых наград.
   - **КОММИТ СЕЙЧАС:** `feat(progression): rebuild balances and publish reward events`
 
-- [ ] **C088. Конкурентная приёмка**
+- [x] **C088. Конкурентная приёмка**
   - **Сделать:** Проверить 20 одновременных завершений, частичную квоту, повтор после TTL и отмену после расхода.
   - **Проверить:** Инварианты XP/coins соблюдены; повтор выдаёт тот же логический результат.
   - **КОММИТ СЕЙЧАС:** `test(progression): cover concurrent completion caps and reversals`

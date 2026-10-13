@@ -114,6 +114,11 @@ type DayPlanItem struct {
 	Position int32       `json:"position"`
 }
 
+type EconomyVersion struct {
+	ID    string `json:"id"`
+	Rules []byte `json:"rules"`
+}
+
 type Goal struct {
 	ID         pgtype.UUID        `json:"id"`
 	OwnerID    pgtype.UUID        `json:"owner_id"`
@@ -442,6 +447,53 @@ type RecurrenceSeriesHistory struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type RewardEntitlement struct {
+	ID             pgtype.UUID        `json:"id"`
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	SourceKind     string             `json:"source_kind"`
+	SourceKey      string             `json:"source_key"`
+	EconomyVersion string             `json:"economy_version"`
+	Difficulty     int32              `json:"difficulty"`
+	AreaID         pgtype.UUID        `json:"area_id"`
+	RequestedXp    int64              `json:"requested_xp"`
+	AwardedXp      int64              `json:"awarded_xp"`
+	AwardedCoins   int64              `json:"awarded_coins"`
+	FirstAwardedAt pgtype.Timestamptz `json:"first_awarded_at"`
+	Active         bool               `json:"active"`
+	Generation     int64              `json:"generation"`
+}
+
+type RewardLedger struct {
+	ID             pgtype.UUID        `json:"id"`
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	EntitlementID  pgtype.UUID        `json:"entitlement_id"`
+	OperationKey   string             `json:"operation_key"`
+	SourceKind     string             `json:"source_kind"`
+	SourceKey      string             `json:"source_key"`
+	Kind           string             `json:"kind"`
+	EconomyVersion string             `json:"economy_version"`
+	AreaID         pgtype.UUID        `json:"area_id"`
+	XpDelta        int64              `json:"xp_delta"`
+	CoinsDelta     int64              `json:"coins_delta"`
+	Reason         string             `json:"reason"`
+	OccurredAt     pgtype.Timestamptz `json:"occurred_at"`
+	Sequence       pgtype.Int8        `json:"sequence"`
+}
+
+type RewardProjectionEvent struct {
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	LedgerID    pgtype.UUID        `json:"ledger_id"`
+	ProcessedAt pgtype.Timestamptz `json:"processed_at"`
+}
+
+type RewardQuotaUsage struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	EntitlementID pgtype.UUID        `json:"entitlement_id"`
+	SourceKind    string             `json:"source_kind"`
+	Xp            int64              `json:"xp"`
+	AwardedAt     pgtype.Timestamptz `json:"awarded_at"`
+}
+
 type RoutineApplication struct {
 	OwnerID         pgtype.UUID        `json:"owner_id"`
 	TemplateID      string             `json:"template_id"`
@@ -492,6 +544,14 @@ type User struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
 	DisabledAt      pgtype.Timestamptz `json:"disabled_at"`
+}
+
+type UserProgress struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	TotalXp   int64              `json:"total_xp"`
+	Coins     int64              `json:"coins"`
+	Version   int64              `json:"version"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type UserSetting struct {
