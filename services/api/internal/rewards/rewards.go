@@ -194,6 +194,7 @@ func (s *Service) definitions(ctx context.Context, tx pgx.Tx, id string) ([]Defi
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountCatalog(r)
 		s.mountPurchases(r)
 		s.mountRedemptionActions(r)
 		r.Get("/api/v1/rewards/custom", func(w http.ResponseWriter, r *http.Request) {

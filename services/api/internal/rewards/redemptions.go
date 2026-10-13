@@ -57,9 +57,11 @@ func (s *Service) mountRedemptionActions(r chi.Router) {
 		r.Post("/api/v1/rewards/redemptions/{id}/"+action, func(w http.ResponseWriter, r *http.Request) {
 			decode(s, w, r, func(in struct {
 				Reason string `json:"reason"`
-			}) (any, error) { return s.mutate(r, in, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
-				return s.redemptionAction(ctx, tx, owner, chi.URLParam(r, "id"), action, in.Reason, r)
-			}) })
+			}) (any, error) {
+				return s.mutate(r, in, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
+					return s.redemptionAction(ctx, tx, owner, chi.URLParam(r, "id"), action, in.Reason, r)
+				})
+			})
 		})
 	}
 }

@@ -4927,6 +4927,350 @@ paths:
             text/plain:
               schema:
                 type: string
+  /api/v1/rewards/custom:
+    get:
+      operationId: listCustomRewards
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardDefinitions"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createCustomReward
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardDefinition"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardDefinitionInput"
+  /api/v1/rewards/custom/{id}:
+    patch:
+      operationId: editCustomReward
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardDefinition"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardDefinitionInput"
+  /api/v1/rewards/purchase:
+    post:
+      operationId: purchaseReward
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardRedemption"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardPurchaseInput"
+  /api/v1/rewards/redemptions:
+    get:
+      operationId: listRedemptions
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardRedemptionPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/rewards/redemptions/{id}/claim:
+    post:
+      operationId: claimRedemption
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardRedemption"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardReason"
+  /api/v1/rewards/redemptions/{id}/cancel:
+    post:
+      operationId: cancelRedemption
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardRedemption"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardReason"
+  /api/v1/rewards/catalog:
+    get:
+      operationId: getRewardCatalog
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RewardCatalog"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
 components:
   requestBodies:
     Empty:
@@ -8817,3 +9161,221 @@ components:
       properties:
         title_id:
           type: string
+    RewardDefinition:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - version
+        - title
+        - description
+        - cost
+        - available
+        - archived
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        cost:
+          type: integer
+        available:
+          type: boolean
+        archived:
+          type: boolean
+    RewardDefinitionInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - description
+        - cost
+        - available
+        - archived
+        - price_confirmed
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        cost:
+          type: integer
+        available:
+          type: boolean
+        archived:
+          type: boolean
+        price_confirmed:
+          type: boolean
+    RewardPurchaseInput:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - kind
+        - target_id
+        - expected_cost
+        - expected_version
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+            - custom
+            - cosmetic
+        target_id:
+          type: string
+        expected_cost:
+          type: integer
+        expected_version:
+          type: integer
+    RewardRedemption:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - kind
+        - target_id
+        - title
+        - description
+        - cost
+        - definition_version
+        - status
+        - version
+        - created_at
+        - reason
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        target_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        cost:
+          type: integer
+        definition_version:
+          type: integer
+        status:
+          type: string
+          enum:
+            - pending
+            - claimed
+            - cancelled
+        version:
+          type: integer
+        created_at:
+          type: string
+        reason:
+          type: string
+    RewardRedemptionPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RewardRedemption"
+        next_cursor:
+          type:
+            - string
+            - "null"
+    RewardOffer:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - slot
+        - name
+        - rarity
+        - starter
+        - level
+        - achievement
+        - url
+        - owned
+        - source
+        - revoked
+        - cost
+      properties:
+        id:
+          type: string
+        slot:
+          type: string
+          enum:
+            - base
+            - clothes
+            - head
+            - accessory
+            - background
+            - frame
+        name:
+          type: string
+        rarity:
+          type: string
+          enum:
+            - common
+            - uncommon
+            - rare
+        starter:
+          type: boolean
+        level:
+          type: integer
+        achievement:
+          type: string
+        url:
+          type: string
+        owned:
+          type: boolean
+        source:
+          type: string
+        revoked:
+          type: boolean
+        cost:
+          type: integer
+    RewardCatalog:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - balance
+        - cosmetics
+        - custom
+        - redemptions
+      properties:
+        version:
+          type: string
+        balance:
+          $ref: "#/components/schemas/ProgressionBalance"
+        cosmetics:
+          type: array
+          items:
+            $ref: "#/components/schemas/RewardOffer"
+        custom:
+          type: array
+          items:
+            $ref: "#/components/schemas/RewardDefinition"
+        redemptions:
+          $ref: "#/components/schemas/RewardRedemptionPage"
+    RewardReason:
+      type: object
+      additionalProperties: false
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+    RewardDefinitions:
+      type: array
+      items:
+        $ref: "#/components/schemas/RewardDefinition"

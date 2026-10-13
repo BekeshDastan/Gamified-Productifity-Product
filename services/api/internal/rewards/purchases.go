@@ -131,9 +131,13 @@ func (s *Service) mountPurchases(r chi.Router) {
 	})
 	r.Get("/api/v1/rewards/redemptions", func(w http.ResponseWriter, r *http.Request) {
 		id, e := owner(r.Context())
-		out := []Redemption{}
+		out := RedemptionPage{Items: []Redemption{}}
 		if e == nil {
-			e = s.progress.WithinOwner(r.Context(), id, func(tx pgx.Tx) error { var err error; out, err = s.redemptions(r.Context(), tx, id); return err })
+			e = s.progress.WithinOwner(r.Context(), id, func(tx pgx.Tx) error {
+				var err error
+				out, err = s.redemptionPage(r.Context(), tx, id, r.URL.Query().Get("before"))
+				return err
+			})
 		}
 		s.reply(w, r, out, e)
 	})

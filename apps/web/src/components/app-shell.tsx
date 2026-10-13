@@ -39,6 +39,7 @@ const planned = [
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/rewards", label: "Магазин и награды", icon: Trophy },
   { href: "/app/achievements", label: "Достижения", icon: Trophy },
   { href: "/app/character", label: "Персонаж и навыки", icon: UserRound },
   { href: "/app/progress", label: "Опыт и награды", icon: ChartNoAxesCombined },
