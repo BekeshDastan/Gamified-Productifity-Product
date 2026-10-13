@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { MysteryRewards } from "./mystery";
 import { useRef, useState } from "react";
 import { useWatch } from "react-hook-form";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -101,6 +102,7 @@ export function Rewards() {
         </Button>
       </Card>
       {message && <p role="status">{message}</p>}
+      <MysteryRewards />
       <Card>
         <h2>Личные награды</h2>
         <Button onClick={() => setEditing(null)}>Создать личную награду</Button>

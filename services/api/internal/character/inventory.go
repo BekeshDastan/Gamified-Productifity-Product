@@ -86,6 +86,9 @@ func (s *Service) EvaluateInTx(ctx context.Context, tx pgx.Tx, owner string) err
 	if e != nil {
 		return e
 	}
+	if e := s.ensureMysteryGrants(ctx, tx, owner); e != nil {
+		return e
+	}
 	balance, e := s.progress.Balance(ctx, tx, owner)
 	if e != nil {
 		return e

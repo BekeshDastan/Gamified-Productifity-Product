@@ -5513,6 +5513,86 @@ paths:
           $ref: "#/components/responses/Error"
         "429":
           $ref: "#/components/responses/Error"
+  /api/v1/rewards/mystery:
+    get:
+      operationId: getMysteryRewards
+      parameters: []
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MysteryCatalog"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/rewards/mystery/{id}/open:
+    post:
+      operationId: openMysteryReward
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MysteryGrant"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MysteryOpen"
 components:
   requestBodies:
     Empty:
@@ -9744,7 +9824,7 @@ components:
       properties:
         month:
           type: string
-          pattern: "^[0-9]{4}-[0-9]{2}$"
+          pattern: ^[0-9]{4}-[0-9]{2}$
         boss_id:
           type:
             - string
@@ -9794,3 +9874,121 @@ components:
           type:
             - string
             - "null"
+    WeightedCosmetic:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - slot
+        - name
+        - rarity
+        - starter
+        - level
+        - achievement
+        - url
+        - owned
+        - source
+        - revoked
+        - weight
+      properties:
+        id:
+          type: string
+        slot:
+          type: string
+          enum:
+            - base
+            - clothes
+            - head
+            - accessory
+            - background
+            - frame
+        name:
+          type: string
+        rarity:
+          type: string
+          enum:
+            - common
+            - uncommon
+            - rare
+        starter:
+          type: boolean
+        level:
+          type: integer
+        achievement:
+          type: string
+        url:
+          type: string
+        owned:
+          type: boolean
+        source:
+          type: string
+        revoked:
+          type: boolean
+        weight:
+          type: integer
+    MysteryGrant:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - source
+        - catalog_version
+        - weights
+        - item_id
+        - compensation
+        - created_at
+        - opened_at
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        catalog_version:
+          type: string
+        weights:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeightedCosmetic"
+        item_id:
+          type:
+            - string
+            - "null"
+        compensation:
+          type:
+            - integer
+            - "null"
+        created_at:
+          type: string
+        opened_at:
+          type:
+            - string
+            - "null"
+    MysteryCatalog:
+      type: object
+      additionalProperties: false
+      required:
+        - enabled
+        - version
+        - compensation
+        - items
+        - grants
+      properties:
+        enabled:
+          type: boolean
+        version:
+          type: string
+        compensation:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeightedCosmetic"
+        grants:
+          type: array
+          items:
+            $ref: "#/components/schemas/MysteryGrant"
+    MysteryOpen:
+      type: object
+      additionalProperties: false
+      required: []
+      properties: {}

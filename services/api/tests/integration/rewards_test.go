@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/character"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/rewards"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
@@ -324,5 +325,122 @@ func TestBossMonthlyConcurrentSelectionHistoryAndRollover(t *testing.T) {
 	var h struct{ Data rewards.MonthlyHistory }
 	if r.status != 200 || json.Unmarshal(r.body, &h) != nil || len(h.Data.Items) != 1 || h.Data.Items[0].Month != initial.Month {
 		t.Fatal(string(r.body))
+	}
+}
+func TestMysteryConcurrentOpenPermanentChoiceAndDisabledEarnedGift(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "mystery@example.test")
+	other, _ := f.signedIn(t, "mystery-other@example.test")
+	for i := 0; i < 3; i++ {
+		readGoal(t, f.privateRequest(t, a, "POST", "/goals", "", goals.Create{Input: goalInput(fmt.Sprintf("Намерение %d", i)), State: "active"}))
+	}
+	get := func() rewards.MysteryCatalog {
+		r := f.privateRequest(t, a, "GET", "/rewards/mystery", "", nil)
+		var out struct{ Data rewards.MysteryCatalog }
+		if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+			t.Fatal(r.status, string(r.body))
+		}
+		return out.Data
+	}
+	catalog := get()
+	if len(catalog.Grants) != 1 || catalog.Grants[0].OpenedAt != nil {
+		t.Fatal(catalog)
+	}
+	id := catalog.Grants[0].ID
+	t.Setenv("MYSTERY_REWARDS_ENABLED", "false")
+	if get().Enabled {
+		t.Fatal("disabled")
+	}
+	r := f.privateRequest(t, other, "POST", "/rewards/mystery/"+id+"/open", "", map[string]any{})
+	if r.status != 404 {
+		t.Fatal("foreign", r.status)
+	}
+	results := make([]authResponse, 12)
+	var wg sync.WaitGroup
+	for i := range results {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			results[i] = f.privateRequest(t, a, "POST", "/rewards/mystery/"+id+"/open", "", map[string]any{})
+		}(i)
+	}
+	wg.Wait()
+	var chosen string
+	for _, r := range results {
+		var out struct{ Data rewards.MysteryGrant }
+		if r.status != 200 || json.Unmarshal(r.body, &out) != nil || out.Data.ItemID == nil {
+			t.Fatal(r.status, string(r.body))
+		}
+		if chosen != "" && chosen != *out.Data.ItemID {
+			t.Fatal("reroll")
+		}
+		chosen = *out.Data.ItemID
+	}
+	var n int
+	if e := f.pool.QueryRow(t.Context(), "SELECT count(*) FROM cosmetic_permanent_grants WHERE owner_id=$1 AND source_kind='mystery'", who.ID).Scan(&n); e != nil || n != 1 {
+		t.Fatal(n, e)
+	}
+	f.clock.Advance(25 * time.Hour)
+	f.loginAs(t, a, "mystery@example.test")
+	r = f.privateRequest(t, a, "POST", "/rewards/mystery/"+id+"/open", "", map[string]any{})
+	var replay struct{ Data rewards.MysteryGrant }
+	if r.status != 200 || json.Unmarshal(r.body, &replay) != nil || *replay.Data.ItemID != chosen {
+		t.Fatal("expired replay", string(r.body))
+	}
+	if _, e := f.pool.Exec(t.Context(), "UPDATE mystery_grants SET item_id='base-3' WHERE owner_id=$1 AND id=$2", who.ID, id); e == nil {
+		t.Fatal("result mutable")
+	}
+}
+func TestMysteryUnownedPreferenceAndFullSetCompensationOnce(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "mystery-full@example.test")
+	for i := 0; i < 3; i++ {
+		readGoal(t, f.privateRequest(t, a, "POST", "/goals", "", goals.Create{Input: goalInput(fmt.Sprintf("Цель %d", i)), State: "active"}))
+	}
+	readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	// Fixture owns every nonstarter except base-3; the weighted pool must choose it.
+	for _, item := range character.Catalog() {
+		if item.Starter || item.ID == "base-3" {
+			continue
+		}
+		if _, e := f.pool.Exec(t.Context(), "INSERT INTO cosmetic_permanent_grants(owner_id,item_id,source_kind,source_key,granted_at) VALUES($1,$2,'purchase',$2,$3)", who.ID, item.ID, f.clock.Now()); e != nil {
+			t.Fatal(e)
+		}
+	}
+	var id string
+	if e := f.pool.QueryRow(t.Context(), "SELECT id::text FROM mystery_grants WHERE owner_id=$1", who.ID).Scan(&id); e != nil {
+		t.Fatal(e)
+	}
+	r := f.privateRequest(t, a, "POST", "/rewards/mystery/"+id+"/open", "", map[string]any{})
+	var one struct{ Data rewards.MysteryGrant }
+	if r.status != 200 || json.Unmarshal(r.body, &one) != nil || one.Data.ItemID == nil || *one.Data.ItemID != "base-3" {
+		t.Fatal(string(r.body))
+	}
+	// A second legitimately earned source, with a complete set, gets a fixed credit.
+	for i := 0; i < 3; i++ {
+		in := habitInput()
+		in.Title = fmt.Sprintf("Ритм %d", i)
+		readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", in))
+	}
+	r = f.privateRequest(t, a, "GET", "/rewards/mystery", "", nil)
+	var catalog struct{ Data rewards.MysteryCatalog }
+	if r.status != 200 || json.Unmarshal(r.body, &catalog) != nil || len(catalog.Data.Grants) != 2 {
+		t.Fatal(string(r.body))
+	}
+	for _, g := range catalog.Data.Grants {
+		if g.OpenedAt == nil {
+			id = g.ID
+		}
+	}
+	for range 3 {
+		r = f.privateRequest(t, a, "POST", "/rewards/mystery/"+id+"/open", "", map[string]any{})
+		var out struct{ Data rewards.MysteryGrant }
+		if r.status != 200 || json.Unmarshal(r.body, &out) != nil || out.Data.Compensation == nil || *out.Data.Compensation != 5 || out.Data.ItemID != nil {
+			t.Fatal(string(r.body))
+		}
+	}
+	var coins, xp, n int64
+	if e := f.pool.QueryRow(t.Context(), "SELECT coins,total_xp,(SELECT count(*) FROM reward_ledger WHERE owner_id=$1 AND kind='bonus') FROM user_progress WHERE owner_id=$1", who.ID).Scan(&coins, &xp, &n); e != nil || coins != 5 || xp != 0 || n != 1 {
+		t.Fatal(coins, xp, n, e)
 	}
 }

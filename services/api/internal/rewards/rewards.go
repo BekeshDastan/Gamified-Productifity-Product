@@ -195,6 +195,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountMonthly(r)
+		s.mountMystery(r)
 		s.mountBosses(r)
 		s.mountCatalog(r)
 		s.mountPurchases(r)

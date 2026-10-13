@@ -1991,6 +1991,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/rewards/mystery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMysteryRewards"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rewards/mystery/{id}/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["openMysteryReward"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3164,6 +3196,40 @@ export interface components {
             items: components["schemas"]["MonthlyChange"][];
             next_cursor: string | null;
         };
+        WeightedCosmetic: {
+            id: string;
+            /** @enum {string} */
+            slot: "base" | "clothes" | "head" | "accessory" | "background" | "frame";
+            name: string;
+            /** @enum {string} */
+            rarity: "common" | "uncommon" | "rare";
+            starter: boolean;
+            level: number;
+            achievement: string;
+            url: string;
+            owned: boolean;
+            source: string;
+            revoked: boolean;
+            weight: number;
+        };
+        MysteryGrant: {
+            id: string;
+            source: string;
+            catalog_version: string;
+            weights: components["schemas"]["WeightedCosmetic"][];
+            item_id: string | null;
+            compensation: number | null;
+            created_at: string;
+            opened_at: string | null;
+        };
+        MysteryCatalog: {
+            enabled: boolean;
+            version: string;
+            compensation: number;
+            items: components["schemas"]["WeightedCosmetic"][];
+            grants: components["schemas"]["MysteryGrant"][];
+        };
+        MysteryOpen: Record<string, never>;
     };
     responses: {
         /** @description Личные данные владельца */
@@ -7807,6 +7873,72 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["MonthlyHistory"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getMysteryRewards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["MysteryCatalog"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    openMysteryReward: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MysteryOpen"];
+            };
+        };
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["MysteryGrant"];
                         meta: components["schemas"]["Meta"];
                     };
                 };
