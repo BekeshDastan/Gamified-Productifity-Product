@@ -32,7 +32,8 @@
     "test:integration": "node scripts/tasks.mjs test-integration",
     "test:e2e": "node scripts/tasks.mjs test-e2e",
     "test:auth-e2e": "node scripts/tasks.mjs test-auth-e2e",
-    "reconcile:progression": "node scripts/tasks.mjs reconcile-progression"
+    "reconcile:progression": "node scripts/tasks.mjs reconcile-progression",
+    "reconcile:character": "node scripts/tasks.mjs reconcile-character"
   },
   "devDependencies": {
     "openapi-typescript": "7.13.0",

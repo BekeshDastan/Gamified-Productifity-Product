@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -163,7 +164,10 @@ func (s *Service) SaveLabel(r *http.Request, kind, labelID string, input LabelIn
 			}
 			return err
 		}
-		return audit(r.Context(), tx, id, kind+".saved", table, result.ID)
+		if err := audit(r.Context(), tx, id, kind+".saved", table, result.ID); err != nil {
+			return err
+		}
+		return jobs.OwnerChanged(r.Context(), tx, id, s.clock)
 	})
 	return result, err
 }

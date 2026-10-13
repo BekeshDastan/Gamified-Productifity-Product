@@ -4652,6 +4652,281 @@ paths:
           $ref: "#/components/responses/Health"
         "503":
           $ref: "#/components/responses/Health"
+  /api/v1/character:
+    get:
+      operationId: getCharacter
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CharacterProfile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/character/inventory:
+    get:
+      operationId: getCharacterInventory
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CharacterProfile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/character/equipment:
+    patch:
+      operationId: equipCharacter
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: If-Match
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CharacterProfile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EquipmentInput"
+  /api/v1/skill-tree:
+    get:
+      operationId: getSkillTree
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CharacterProfile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/achievements:
+    get:
+      operationId: getAchievements
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AchievementStatus"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/character/title:
+    patch:
+      operationId: selectCharacterTitle
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: If-Match
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CharacterProfile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CharacterTitleInput"
+  /api/v1/cosmetics/v1/{file}:
+    get:
+      operationId: getCosmeticAsset
+      security: []
+      parameters:
+        - in: path
+          name: file
+          required: true
+          schema:
+            type: string
+            enum:
+              - accessory-0.svg
+              - accessory-1.svg
+              - accessory-2.svg
+              - background-0.svg
+              - background-1.svg
+              - background-2.svg
+              - base-0.svg
+              - base-1.svg
+              - base-2.svg
+              - base-3.svg
+              - clothes-0.svg
+              - clothes-1.svg
+              - clothes-2.svg
+              - clothes-3.svg
+              - frame-0.svg
+              - frame-1.svg
+              - frame-2.svg
+              - head-0.svg
+              - head-1.svg
+              - head-2.svg
+      responses:
+        "200":
+          description: Оригинальный локальный SVG из неизменяемого каталога v1
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Файл вне каталога
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
   requestBodies:
     Empty:
@@ -8237,3 +8512,308 @@ components:
             current_version:
               type: integer
               minimum: 1
+    CosmeticItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - slot
+        - name
+        - rarity
+        - starter
+        - level
+        - achievement
+        - url
+        - owned
+        - source
+        - revoked
+      properties:
+        id:
+          type: string
+        slot:
+          type: string
+          enum:
+            - base
+            - clothes
+            - head
+            - accessory
+            - background
+            - frame
+        name:
+          type: string
+        rarity:
+          type: string
+          enum:
+            - common
+            - uncommon
+            - rare
+        starter:
+          type: boolean
+        level:
+          type: integer
+        achievement:
+          type: string
+        url:
+          type: string
+        owned:
+          type: boolean
+        source:
+          type: string
+        revoked:
+          type: boolean
+    CharacterProfile:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - catalog_version
+        - equipment
+        - title_id
+        - level
+        - inventory
+        - areas
+        - title
+        - titles
+        - records
+        - recalculating
+      properties:
+        version:
+          type: integer
+        catalog_version:
+          type: string
+        equipment:
+          type: object
+          additionalProperties: false
+          required:
+            - base
+            - clothes
+            - head
+            - accessory
+            - background
+            - frame
+          properties:
+            base:
+              type: string
+            clothes:
+              type: string
+            head:
+              type: string
+            accessory:
+              type: string
+            background:
+              type: string
+            frame:
+              type: string
+        title_id:
+          type: string
+        level:
+          $ref: "#/components/schemas/ProgressionLevel"
+        inventory:
+          type: array
+          items:
+            $ref: "#/components/schemas/CosmeticItem"
+        areas:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterArea"
+        title:
+          type: string
+        titles:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterTitle"
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterRecord"
+        recalculating:
+          type: boolean
+    EquipmentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - slot
+        - item_id
+      properties:
+        slot:
+          type: string
+          enum:
+            - base
+            - clothes
+            - head
+            - accessory
+            - background
+            - frame
+        item_id:
+          type: string
+    CharacterArea:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - xp
+        - level
+        - successful_periods
+        - archived
+        - skills
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        xp:
+          type: integer
+        level:
+          $ref: "#/components/schemas/ProgressionLevel"
+        successful_periods:
+          type: integer
+        archived:
+          type: boolean
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterSkill"
+    CharacterSkill:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - metric
+        - threshold
+        - depends_on
+        - current
+        - unlocked
+        - explanation
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        metric:
+          type: string
+          enum:
+            - xp
+            - periods
+        threshold:
+          type: integer
+        depends_on:
+          type: array
+          items:
+            type: string
+        current:
+          type: integer
+        unlocked:
+          type: boolean
+        explanation:
+          type: string
+    AchievementStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - version
+        - name
+        - description
+        - metric
+        - threshold
+        - source_url
+        - current
+        - available
+        - active
+        - revoked
+        - awarded_at
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        metric:
+          type: string
+        source_url:
+          type: string
+        threshold:
+          type: integer
+        current:
+          type: integer
+        available:
+          type: boolean
+        active:
+          type: boolean
+        revoked:
+          type: boolean
+        awarded_at:
+          type:
+            - string
+            - "null"
+          format: date-time
+    CharacterTitle:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - requirement
+        - earned
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        requirement:
+          type: string
+        earned:
+          type: boolean
+    CharacterRecord:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - value
+        - unit
+        - available
+        - explanation
+        - sources
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        value:
+          type:
+            - integer
+            - "null"
+        unit:
+          type: string
+        available:
+          type: boolean
+        explanation:
+          type: string
+        sources:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - title
+              - url
+            properties:
+              title:
+                type: string
+              url:
+                type: string
+    CharacterTitleInput:
+      type: object
+      additionalProperties: false
+      required:
+        - title_id
+      properties:
+        title_id:
+          type: string

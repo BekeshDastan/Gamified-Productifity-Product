@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -50,7 +51,10 @@ func (s *Service) event(ctx context.Context, tx pgx.Tx, id, kind, reason string,
 	if err == nil && s.observer != nil {
 		err = s.observer(ctx, tx, id, kind, before, *after)
 	}
-	return err
+	if err != nil {
+		return err
+	}
+	return jobs.OwnerChanged(ctx, tx, id, s.clock)
 }
 func nextStatus(current, action string) (string, error) {
 	switch action {

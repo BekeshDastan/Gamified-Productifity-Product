@@ -20,6 +20,7 @@ import (
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/character"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
@@ -85,6 +86,9 @@ func TestBrowserAuth(t *testing.T) {
 	defer files.Close()
 	rewardService := progression.NewService(pool, domainClock)
 	rewardService.Mount(router, sessions.Protect)
+	characterService := character.NewService(pool, domainClock, rewardService)
+	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
+	characterService.Mount(router, sessions.Protect)
 	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, domainClock, questService)
@@ -110,6 +114,9 @@ func TestBrowserAuth(t *testing.T) {
 	go func() {
 		defer worker.Done()
 		handlers := sessions.MailHandlers(mailer)
+		for kind, handler := range characterService.Handlers() {
+			handlers[kind] = handler
+		}
 		for kind, handler := range rewardService.Handlers() {
 			handlers[kind] = handler
 		}
@@ -132,7 +139,30 @@ func TestBrowserAuth(t *testing.T) {
 	if err := command.Run(); err != nil {
 		t.Fatal("real authentication browser suite failed", err)
 	}
-	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token="} {
+	deadline := time.Now().Add(30 * time.Second)
+	for {
+		var pending int
+		e := pool.QueryRow(ctx, "SELECT (SELECT count(*) FROM outbox_events WHERE kind IN('character.changed','progression.reward_changed') AND dispatched_at IS NULL)+(SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed') AND state IN('pending','running','retry_wait'))").Scan(&pending)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if pending == 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("derived-profile events did not finish", pending)
+		}
+		select {
+		case <-ctx.Done():
+			t.Fatal("browser fixture cancelled")
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+	var dead int
+	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
+		t.Fatal("derived-profile outbox handler failure", dead, e)
+	}
+	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token="} {
 		if strings.Contains(logs.String(), secret) {
 			t.Fatal("sensitive authentication data in API logs")
 		}
