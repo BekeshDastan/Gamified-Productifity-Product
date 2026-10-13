@@ -209,3 +209,10 @@ func (s *Service) Award(ctx context.Context, tx pgx.Tx, owner string, in Source)
 	}
 	return s.result(ctx, tx, owner, *v, "grant", ledger, reason, xp, v.AwardedCoins)
 }
+func (s *Service) ExplainNoReward(ctx context.Context, tx pgx.Tx, owner string, source Source, reason string) (*Reward, error) {
+	b, e := s.Balance(ctx, tx, owner)
+	if e != nil {
+		return nil, e
+	}
+	return &Reward{SourceKind: source.Kind, SourceKey: source.Key, EconomyVersion: Version, Kind: "not_awarded", RequestedXP: BaseXP(source.Kind, source.Difficulty), TotalXP: b.TotalXP, AvailableCoins: b.AvailableCoins, CoinCorrection: b.CoinCorrection, LevelBefore: b.Level.Number, LevelAfter: b.Level.Number, Reason: reason}, nil
+}

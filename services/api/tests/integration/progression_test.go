@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"github.com/jackc/pgx/v5"
 	"testing"
+	"time"
 )
 
 func TestEconomyVersionImmutable(t *testing.T) {
@@ -210,5 +212,89 @@ func TestProgressionTaskAndLedgerRollbackTogether(t *testing.T) {
 	done := readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}, key))
 	if done.Reward == nil || done.Reward.XPDelta != 100 {
 		t.Fatal("retry after rollback", done.Reward)
+	}
+}
+
+func TestProgressionHabitFullNormHasOneCanonicalReward(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "habit-reward@example.test")
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", habitInput()))
+	path := "/habits/" + h.ID + "/logs"
+	input := habits.LogInput{PeriodID: h.Periods[0].ID, Amount: 10, OccurredAt: f.clock.Now()}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path, habitVersion(h), input))
+	if h.Reward != nil {
+		t.Fatal("partial norm received XP", h.Reward)
+	}
+	key := "habit-complete-replay-00001"
+	v := habitVersion(h)
+	h = readHabit(t, f.privateRequest(t, a, "POST", path, v, input, key))
+	if h.Reward == nil || h.Reward.XPDelta != 10 || h.Reward.CoinsDelta != 2 || h.Reward.SourceKey != input.PeriodID {
+		t.Fatal("full period reward", h.Reward)
+	}
+	same := readHabit(t, f.privateRequest(t, a, "POST", path, v, input, key))
+	if same.Reward == nil || same.Reward.EntitlementID != h.Reward.EntitlementID {
+		t.Fatal("replay source changed")
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path, habitVersion(h), input))
+	if h.Reward == nil || h.Reward.XPDelta != 0 || h.Periods[0].Amount != 30 {
+		t.Fatal("extra norm reward", h.Reward)
+	}
+	var count, xp int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM reward_ledger WHERE owner_id=$1),total_xp FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&count, &xp); e != nil || count != 1 || xp != 10 {
+		t.Fatal(count, xp, e)
+	}
+}
+func TestProgressionHabitLateWindowBoundary(t *testing.T) {
+	for _, offset := range []time.Duration{0, time.Second} {
+		t.Run(offset.String(), func(t *testing.T) {
+			f := newAuthFixture(t, auth.DefaultLimits())
+			a, account := f.signedIn(t, "habit-late@example.test")
+			in := habitInput()
+			in.StartsOn = "2026-10-11"
+			in.Schedule.Weekdays = []int{1, 2, 3, 4, 5, 6, 7}
+			h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", in))
+			p := h.Periods[0]
+			deadline := p.End.Add(24 * time.Hour)
+			f.clock.Advance(deadline.Add(offset).Sub(f.clock.Now()))
+			if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+				t.Fatal(r.status)
+			}
+			h = readHabit(t, f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs", habitVersion(h), habits.LogInput{PeriodID: p.ID, Amount: 20, OccurredAt: p.Start.Add(time.Hour)}))
+			if h.Reward == nil {
+				t.Fatal("missing reward explanation")
+			}
+			var xp int64
+			if e := f.pool.QueryRow(t.Context(), `SELECT total_xp FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&xp); e != nil {
+				t.Fatal(e)
+			}
+			want := int64(10)
+			if offset > 0 {
+				want = 0
+				if h.Reward.Kind != "not_awarded" {
+					t.Fatal(h.Reward)
+				}
+			}
+			if xp != want || h.Reward.XPDelta != want || h.Periods[0].Amount != 20 {
+				t.Fatal("late history or reward", h.Reward, h.Periods[0])
+			}
+		})
+	}
+}
+func TestProgressionHabitLogAndRewardRollbackTogether(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "habit-reward-rollback@example.test")
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", habitInput()))
+	if _, e := f.pool.Exec(t.Context(), `CREATE FUNCTION reject_habit_reward() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected habit reward failure'; END $$;CREATE TRIGGER reject_habit_reward BEFORE INSERT ON reward_ledger FOR EACH ROW EXECUTE FUNCTION reject_habit_reward()`); e != nil {
+		t.Fatal(e)
+	}
+	input := habits.LogInput{PeriodID: h.Periods[0].ID, Amount: 20, OccurredAt: f.clock.Now()}
+	r := f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs", habitVersion(h), input)
+	if r.status != 500 {
+		t.Fatal(r.status)
+	}
+	fresh := readHabit(t, f.privateRequest(t, a, "GET", "/habits/"+h.ID, "", nil))
+	var logs, xp int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM habit_logs WHERE owner_id=$1),total_xp FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&logs, &xp); e != nil || logs != 0 || xp != 0 || fresh.Version != h.Version || fresh.Periods[0].Amount != 0 {
+		t.Fatal("habit and reward split", logs, xp, fresh, e)
 	}
 }

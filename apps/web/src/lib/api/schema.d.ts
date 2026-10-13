@@ -1825,6 +1825,7 @@ export interface components {
             as_of: string;
             archives: components["schemas"]["HabitArchive"][];
             starter_id?: string | null;
+            reward?: components["schemas"]["RewardDTO"];
         };
         HabitScheduleVersion: {
             version: number;

@@ -82,7 +82,7 @@ func main() {
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, platform.RealClock{}, questService)
 	calendarService.Mount(router, sessions.Protect)
-	habits.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
+	habits.NewService(pool, platform.RealClock{}).WithProgression(rewardService).Mount(router, sessions.Protect)
 	planning.NewService(pool, platform.RealClock{}, questService, calendarService).Mount(router, sessions.Protect)
 	server := &http.Server{
 		Addr:              cfg.Address,

@@ -5580,6 +5580,8 @@ components:
           anyOf:
             - type: string
             - type: "null"
+        reward:
+          $ref: "#/components/schemas/RewardDTO"
     HabitScheduleVersion:
       type: object
       additionalProperties: false

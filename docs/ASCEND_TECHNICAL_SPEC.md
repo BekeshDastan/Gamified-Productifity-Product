@@ -1700,7 +1700,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Ошибка между статусом и ledger откатывает оба; контейнер не получает награду листьев.
   - **КОММИТ СЕЙЧАС:** `feat(quests): award completion rewards in one transaction`
 
-- [ ] **C084. Награда привычки**
+- [x] **C084. Награда привычки**
   - **Сделать:** Подключить один reward на полную норму периода, правило поздней отметки и общий canonical source.
   - **Проверить:** Частичная норма и повтор той же отметки не дают дополнительный XP.
   - **КОММИТ СЕЙЧАС:** `feat(habits): reward completed periods without duplicate credit`

@@ -88,7 +88,7 @@ func TestBrowserAuth(t *testing.T) {
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, domainClock, questService)
 	calendarService.Mount(router, sessions.Protect)
-	habits.NewService(pool, domainClock).Mount(router, sessions.Protect)
+	habits.NewService(pool, domainClock).WithProgression(rewardService).Mount(router, sessions.Protect)
 	planning.NewService(pool, domainClock, questService, calendarService).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
