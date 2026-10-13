@@ -94,6 +94,39 @@ type CalendarEventHistory struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type CharacterInventory struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ItemID    string             `json:"item_id"`
+	Active    bool               `json:"active"`
+	Source    string             `json:"source"`
+	GrantedAt pgtype.Timestamptz `json:"granted_at"`
+	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
+}
+
+type CharacterInventoryEvent struct {
+	ID        int64              `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ItemID    string             `json:"item_id"`
+	Active    bool               `json:"active"`
+	Reason    string             `json:"reason"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type CharacterProfile struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Version   int64              `json:"version"`
+	Equipment []byte             `json:"equipment"`
+	TitleID   string             `json:"title_id"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type CosmeticItem struct {
+	ID             string `json:"id"`
+	Slot           string `json:"slot"`
+	CatalogVersion string `json:"catalog_version"`
+	Snapshot       []byte `json:"snapshot"`
+}
+
 type DayPlan struct {
 	ID          pgtype.UUID        `json:"id"`
 	OwnerID     pgtype.UUID        `json:"owner_id"`

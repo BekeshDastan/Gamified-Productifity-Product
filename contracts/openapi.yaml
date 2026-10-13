@@ -4652,6 +4652,118 @@ paths:
           $ref: "#/components/responses/Health"
         "503":
           $ref: "#/components/responses/Health"
+  /api/v1/character:
+    get:
+      operationId: getCharacter
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CharacterProfile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/character/inventory:
+    get:
+      operationId: getCharacterInventory
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CharacterProfile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/character/equipment:
+    patch:
+      operationId: equipCharacter
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: If-Match
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CharacterProfile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EquipmentInput"
 components:
   requestBodies:
     Empty:
@@ -8237,3 +8349,116 @@ components:
             current_version:
               type: integer
               minimum: 1
+    CosmeticItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - slot
+        - name
+        - rarity
+        - starter
+        - level
+        - achievement
+        - url
+        - owned
+        - source
+        - revoked
+      properties:
+        id:
+          type: string
+        slot:
+          type: string
+          enum:
+            - base
+            - clothes
+            - head
+            - accessory
+            - background
+            - frame
+        name:
+          type: string
+        rarity:
+          type: string
+          enum:
+            - common
+            - uncommon
+            - rare
+        starter:
+          type: boolean
+        level:
+          type: integer
+        achievement:
+          type: string
+        url:
+          type: string
+        owned:
+          type: boolean
+        source:
+          type: string
+        revoked:
+          type: boolean
+    CharacterProfile:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - catalog_version
+        - equipment
+        - title_id
+        - level
+        - inventory
+      properties:
+        version:
+          type: integer
+        catalog_version:
+          type: string
+        equipment:
+          type: object
+          additionalProperties: false
+          required:
+            - base
+            - clothes
+            - head
+            - accessory
+            - background
+            - frame
+          properties:
+            base:
+              type: string
+            clothes:
+              type: string
+            head:
+              type: string
+            accessory:
+              type: string
+            background:
+              type: string
+            frame:
+              type: string
+        title_id:
+          type: string
+        level:
+          $ref: "#/components/schemas/ProgressionLevel"
+        inventory:
+          type: array
+          items:
+            $ref: "#/components/schemas/CosmeticItem"
+    EquipmentInput:
+      type: object
+      additionalProperties: false
+      required:
+        - slot
+        - item_id
+      properties:
+        slot:
+          type: string
+          enum:
+            - base
+            - clothes
+            - head
+            - accessory
+            - background
+            - frame
+        item_id:
+          type: string

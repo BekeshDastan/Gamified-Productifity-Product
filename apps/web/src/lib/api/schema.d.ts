@@ -1703,6 +1703,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/character": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCharacter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/character/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCharacterInventory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/character/equipment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["equipCharacter"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2653,6 +2701,41 @@ export interface components {
                 };
                 current_version?: number;
             };
+        };
+        CosmeticItem: {
+            id: string;
+            /** @enum {string} */
+            slot: "base" | "clothes" | "head" | "accessory" | "background" | "frame";
+            name: string;
+            /** @enum {string} */
+            rarity: "common" | "uncommon" | "rare";
+            starter: boolean;
+            level: number;
+            achievement: string;
+            url: string;
+            owned: boolean;
+            source: string;
+            revoked: boolean;
+        };
+        CharacterProfile: {
+            version: number;
+            catalog_version: string;
+            equipment: {
+                base: string;
+                clothes: string;
+                head: string;
+                accessory: string;
+                background: string;
+                frame: string;
+            };
+            title_id: string;
+            level: components["schemas"]["ProgressionLevel"];
+            inventory: components["schemas"]["CosmeticItem"][];
+        };
+        EquipmentInput: {
+            /** @enum {string} */
+            slot: "base" | "clothes" | "head" | "accessory" | "background" | "frame";
+            item_id: string;
         };
     };
     responses: {
@@ -6616,6 +6699,100 @@ export interface operations {
         responses: {
             200: components["responses"]["Health"];
             503: components["responses"]["Health"];
+        };
+    };
+    getCharacter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CharacterProfile"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getCharacterInventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CharacterProfile"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    equipCharacter: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "If-Match": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EquipmentInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CharacterProfile"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
         };
     };
 }
