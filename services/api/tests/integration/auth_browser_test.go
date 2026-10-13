@@ -24,6 +24,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/focus"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/journal"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -70,7 +71,7 @@ func TestBrowserAuth(t *testing.T) {
 	// Separate quotas for this isolated acceptance fixture, preserving production
 	// 5-failure account allowance; multiple test accounts share one browser host.
 	limits := auth.DefaultLimits()
-	limits.Registrations = 30
+	limits.Registrations = 40
 	limits.MailRequests = 20
 	// Acceptance compresses many lifecycle actions into seconds. Production's
 	// default 120/min quota is covered separately by HTTP integration tests.
@@ -99,7 +100,9 @@ func TestBrowserAuth(t *testing.T) {
 	calendarService := calendar.NewService(pool, domainClock, questService)
 	calendarService.Mount(router, sessions.Protect)
 	habits.NewService(pool, domainClock).WithProgression(rewardService).Mount(router, sessions.Protect)
-	planning.NewService(pool, domainClock, questService, calendarService).Mount(router, sessions.Protect)
+	planService := planning.NewService(pool, domainClock, questService, calendarService)
+	planService.Mount(router, sessions.Protect)
+	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
 		t.Fatal("stop dev before browser acceptance; API test port unavailable")
@@ -167,7 +170,7 @@ func TestBrowserAuth(t *testing.T) {
 	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
 		t.Fatal("derived-profile outbox handler failure", dead, e)
 	}
-	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token="} {
+	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token=", "JOURNAL_PRIVATE_SENTINEL_C120"} {
 		if strings.Contains(logs.String(), secret) {
 			t.Fatal("sensitive authentication data in API logs")
 		}

@@ -1,0 +1,11 @@
+import { JournalWorkspace } from "@/components/journal-workspace";
+export default function JournalPage() {
+  return (
+    <>
+      <p className="eyebrow">СВОИ МЫСЛИ</p>
+      <h1 className="page-title">Дневник и ритуалы</h1>
+      <p className="page-intro">Замечать важное, разбирать день и выбирать следующий шаг.</p>
+      <JournalWorkspace />
+    </>
+  );
+}

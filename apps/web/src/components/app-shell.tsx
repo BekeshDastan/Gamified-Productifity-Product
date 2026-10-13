@@ -33,11 +33,11 @@ const planned = [
   { label: "Испытания", icon: Trophy },
   { label: "Сезоны", icon: Sprout },
   { label: "Аналитика", icon: ChartNoAxesCombined },
-  { label: "Дневник", icon: NotebookPen },
   { label: "Друзья", icon: Users },
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/journal", label: "Дневник и ритуалы", icon: NotebookPen },
   { href: "/app/focus", label: "Фокус", icon: Timer },
   { href: "/app/bosses", label: "Боссы по целям", icon: Flag },
   { href: "/app/rewards", label: "Магазин и награды", icon: Trophy },

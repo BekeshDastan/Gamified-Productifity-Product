@@ -4,6 +4,150 @@
  */
 
 export interface paths {
+    "/api/v1/routine-runs/templates/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getJournalTemplate"];
+        put: operations["saveJournalTemplate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routine-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getRoutineHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reviews/week/{date}/apply-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["applyWeekReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reviews/week/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWeekReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reviews/week/{date}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewWeekReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reviews/day/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDailyReview"];
+        put: operations["saveDailyReview"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routine-runs/morning/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMorning"];
+        put: operations["saveMorning"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/journal/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listJournal"];
+        put?: never;
+        post: operations["createJournalEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/journal/entries/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getJournalEntry"];
+        put: operations["updateJournalEntry"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/progression/history": {
         parameters: {
             query?: never;
@@ -2139,6 +2283,173 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        JournalTemplate: {
+            /** @enum {string} */
+            kind: "morning" | "evening";
+            version: number;
+            steps: {
+                id: string;
+                label: string;
+            }[];
+        };
+        JournalTemplateInput: {
+            steps: {
+                id: string;
+                label: string;
+            }[];
+        };
+        RoutineHistory: {
+            items: {
+                id: string;
+                snapshot: components["schemas"]["RoutineRun"];
+            }[];
+            next: string;
+        };
+        WeekApplyInput: {
+            preview_id: string;
+            changes: {
+                id: string;
+                version: number;
+                /** @enum {string} */
+                action: "move" | "archive";
+                planned_date: string | null;
+                reason: string;
+            }[];
+            plans: {
+                date: string;
+                version: number;
+                input: components["schemas"]["PlanInput"];
+            }[];
+            reason: string;
+        };
+        WeekResult: {
+            preview_id: string;
+            week: string;
+            version: number;
+            changed_ids: string[];
+            plan_ids: string[];
+            applied_at: string;
+        };
+        WeeklyItem: {
+            id: string;
+            title: string;
+            version: number;
+            status: string;
+            planned_date: string | null;
+            deadline: string | null;
+            estimated_minutes: number;
+            priority: string;
+            reason: string;
+        };
+        WeekSnapshot: {
+            week: string;
+            next_week: string;
+            timezone: string;
+            items: components["schemas"]["WeeklyItem"][];
+            more: boolean;
+            reasons: {
+                reason: string;
+                count: number;
+            }[];
+            plans: components["schemas"]["DayPlan"][];
+            review_version: number;
+        };
+        WeekReview: {
+            snapshot: components["schemas"]["WeekSnapshot"];
+            last_result: {
+                [key: string]: unknown;
+            } | null;
+        };
+        WeekPreview: {
+            id: string;
+            snapshot: components["schemas"]["WeekSnapshot"];
+            expires_at: string;
+            applied: boolean;
+        };
+        ReviewInput: {
+            /** @enum {string} */
+            obstacle: "none" | "insufficient_time" | "low_energy" | "external" | "unclear" | "other";
+            obstacle_note: string;
+            conclusion: string;
+            energy: number | null;
+            mood: number | null;
+            template_version: number;
+            checked: string[];
+        };
+        DailyItem: {
+            id: string;
+            title: string;
+            status: string;
+            planned_date: string | null;
+            planned: boolean;
+            completed_today: boolean;
+        };
+        DailyStats: {
+            planned: number;
+            completed: number;
+            completed_today: number;
+            postponed: number;
+            failed: number;
+            skipped: number;
+            more: boolean;
+            items: components["schemas"]["DailyItem"][];
+        };
+        DailyReview: {
+            run: components["schemas"]["RoutineRun"] | null;
+            timezone: string;
+            stats: components["schemas"]["DailyStats"];
+        };
+        RoutineRun: {
+            /** Format: uuid */
+            id: string;
+            date: string;
+            kind: string;
+            version: number;
+            payload: {
+                [key: string]: unknown;
+            };
+            created_at: string;
+            updated_at: string;
+        };
+        Morning: {
+            run: components["schemas"]["RoutineRun"] | null;
+            plan: components["schemas"]["DayPlan"];
+        };
+        MorningInput: {
+            input: components["schemas"]["PlanInput"];
+            plan_version: number;
+            reason: string;
+            template_version: number;
+            checked: string[];
+        };
+        JournalInput: {
+            /** Format: date */
+            date: string;
+            title: string;
+            body: string;
+            tags: string[];
+            goal_id: string | null;
+            archived: boolean;
+        };
+        JournalEntry: {
+            /** Format: date */
+            date: string;
+            title: string;
+            body: string;
+            tags: string[];
+            goal_id: string | null;
+            archived: boolean;
+            /** Format: uuid */
+            id: string;
+            version: number;
+            html: string;
+            created_at: string;
+            updated_at: string;
+        };
+        JournalPage: {
+            items: components["schemas"]["JournalEntry"][];
+            next: string;
+        };
         ProgressionHistory: {
             items: components["schemas"]["ProgressionEntry"][];
             next_cursor: string | null;
@@ -3830,6 +4141,8 @@ export interface components {
         };
     };
     parameters: {
+        /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+        IfMatchSingleton: string;
         CSRF: string;
         Origin: string;
         Limit: number;
@@ -3849,6 +4162,475 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getJournalTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "morning" | "evening";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JournalTemplate"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
+    saveJournalTemplate: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                kind: "morning" | "evening";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JournalTemplateInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JournalTemplate"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getRoutineHistory: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RoutineHistory"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    applyWeekReview: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WeekApplyInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WeekResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getWeekReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WeekReview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    previewWeekReview: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, never>;
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["WeekPreview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getDailyReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DailyReview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    saveDailyReview: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["DailyReview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getMorning: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Morning"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    saveMorning: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MorningInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Morning"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    listJournal: {
+        parameters: {
+            query?: {
+                after?: string;
+                from?: string;
+                to?: string;
+                tag?: string;
+                archived?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JournalPage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    createJournalEntry: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JournalInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JournalEntry"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getJournalEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JournalEntry"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    updateJournalEntry: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JournalInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JournalEntry"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     getProgressionHistory: {
         parameters: {
             query?: {

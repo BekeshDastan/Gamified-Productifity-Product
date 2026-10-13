@@ -22,6 +22,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/focus"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/journal"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -79,7 +80,9 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	calendarService := calendar.NewService(pool, clock, questService)
 	calendarService.Mount(router, sessions.Protect)
 	habits.NewService(pool, clock).WithProgression(rewardService).Mount(router, sessions.Protect)
-	planning.NewService(pool, clock, questService, calendarService).Mount(router, sessions.Protect)
+	planService := planning.NewService(pool, clock, questService, calendarService)
+	planService.Mount(router, sessions.Protect)
+	journal.NewService(pool, clock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)
 	return authFixture{pool: pool, ctx: ctx, clock: clock, sessions: sessions, service: service, server: server}

@@ -195,6 +195,16 @@ type CustomRewardVersion struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type DailyReview struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Payload   []byte             `json:"payload"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type DayPlan struct {
 	ID          pgtype.UUID        `json:"id"`
 	OwnerID     pgtype.UUID        `json:"owner_id"`
@@ -443,6 +453,28 @@ type Job struct {
 	LastErrorCode pgtype.Text        `json:"last_error_code"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	CompletedAt   pgtype.Timestamptz `json:"completed_at"`
+}
+
+type JournalEntry struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Title     string             `json:"title"`
+	Body      string             `json:"body"`
+	Tags      []string           `json:"tags"`
+	GoalID    pgtype.UUID        `json:"goal_id"`
+	Archived  bool               `json:"archived"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type JournalRoutineTemplate struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Kind      string             `json:"kind"`
+	Steps     []byte             `json:"steps"`
+	Version   int64              `json:"version"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type LifeArea struct {
@@ -701,6 +733,26 @@ type RoutineApplication struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 }
 
+type RoutineRun struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Kind      string             `json:"kind"`
+	Payload   []byte             `json:"payload"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type RoutineRunEvent struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	RunID     pgtype.UUID        `json:"run_id"`
+	Version   int64              `json:"version"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID        pgtype.Int8        `json:"id"`
+}
+
 type RoutineTemplate struct {
 	OwnerID pgtype.UUID `json:"owner_id"`
 	ID      string      `json:"id"`
@@ -768,4 +820,24 @@ type UserSetting struct {
 	Version     int64              `json:"version"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WeeklyReview struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Version   int64              `json:"version"`
+	Payload   []byte             `json:"payload"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WeeklyReviewPreview struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	Decision  []byte             `json:"decision"`
+	Result    []byte             `json:"result"`
 }

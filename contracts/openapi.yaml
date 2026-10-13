@@ -6,6 +6,562 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/routine-runs/templates/{kind}:
+    get:
+      operationId: getJournalTemplate
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - morning
+              - evening
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/JournalTemplate"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: saveJournalTemplate
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - morning
+              - evening
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatchSingleton"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JournalTemplateInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/JournalTemplate"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/routine-runs:
+    get:
+      operationId: getRoutineHistory
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RoutineHistory"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/reviews/week/{date}/apply-plan:
+    post:
+      operationId: applyWeekReview
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatchSingleton"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WeekApplyInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WeekResult"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/reviews/week/{date}:
+    get:
+      operationId: getWeekReview
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WeekReview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/reviews/week/{date}/preview:
+    post:
+      operationId: previewWeekReview
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WeekPreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/reviews/day/{date}:
+    get:
+      operationId: getDailyReview
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DailyReview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: saveDailyReview
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatchSingleton"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DailyReview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/routine-runs/morning/{date}:
+    get:
+      operationId: getMorning
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Morning"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: saveMorning
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatchSingleton"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MorningInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Morning"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/journal/entries:
+    get:
+      operationId: listJournal
+      parameters:
+        - name: after
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: archived
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/JournalPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createJournalEntry
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JournalInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/JournalEntry"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/journal/entries/{id}:
+    get:
+      operationId: getJournalEntry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/JournalEntry"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: updateJournalEntry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JournalInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/JournalEntry"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/progression/history:
     get:
       operationId: getProgressionHistory
@@ -6388,6 +6944,14 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorEnvelope"
   parameters:
+    IfMatchSingleton:
+      in: header
+      name: If-Match
+      required: true
+      description: Версия записи; 0 только для первого создания записи на дату или вида шаблона.
+      schema:
+        type: string
+        pattern: ^"(0|[1-9][0-9]*)"$
     CSRF:
       in: header
       name: X-CSRF-Token
@@ -6432,6 +6996,551 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    JournalTemplate:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - version
+        - steps
+      properties:
+        kind:
+          type: string
+          enum:
+            - morning
+            - evening
+        version:
+          type: integer
+        steps:
+          type: array
+          maxItems: 20
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - label
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+                maxLength: 200
+    JournalTemplateInput:
+      type: object
+      additionalProperties: false
+      required:
+        - steps
+      properties:
+        steps:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - label
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+    RoutineHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - snapshot
+            properties:
+              id:
+                type: string
+              snapshot:
+                $ref: "#/components/schemas/RoutineRun"
+        next:
+          type: string
+    WeekApplyInput:
+      type: object
+      additionalProperties: false
+      required:
+        - preview_id
+        - changes
+        - plans
+        - reason
+      properties:
+        preview_id:
+          type: string
+        changes:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - version
+              - action
+              - planned_date
+              - reason
+            properties:
+              id:
+                type: string
+              version:
+                type: integer
+              action:
+                type: string
+                enum:
+                  - move
+                  - archive
+              planned_date:
+                type:
+                  - string
+                  - "null"
+              reason:
+                type: string
+        plans:
+          type: array
+          maxItems: 7
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - date
+              - version
+              - input
+            properties:
+              date:
+                type: string
+              version:
+                type: integer
+              input:
+                $ref: "#/components/schemas/PlanInput"
+        reason:
+          type: string
+    WeekResult:
+      type: object
+      additionalProperties: false
+      required:
+        - preview_id
+        - week
+        - version
+        - changed_ids
+        - plan_ids
+        - applied_at
+      properties:
+        preview_id:
+          type: string
+        week:
+          type: string
+        version:
+          type: integer
+        changed_ids:
+          type: array
+          items:
+            type: string
+        plan_ids:
+          type: array
+          items:
+            type: string
+        applied_at:
+          type: string
+    WeeklyItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - version
+        - status
+        - planned_date
+        - deadline
+        - estimated_minutes
+        - priority
+        - reason
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        version:
+          type: integer
+        status:
+          type: string
+        planned_date:
+          type:
+            - string
+            - "null"
+        deadline:
+          type:
+            - string
+            - "null"
+        estimated_minutes:
+          type: integer
+        priority:
+          type: string
+        reason:
+          type: string
+    WeekSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - week
+        - next_week
+        - timezone
+        - items
+        - more
+        - reasons
+        - plans
+        - review_version
+      properties:
+        week:
+          type: string
+        next_week:
+          type: string
+        timezone:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeeklyItem"
+        more:
+          type: boolean
+        reasons:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - reason
+              - count
+            properties:
+              reason:
+                type: string
+              count:
+                type: integer
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/DayPlan"
+        review_version:
+          type: integer
+    WeekReview:
+      type: object
+      additionalProperties: false
+      required:
+        - snapshot
+        - last_result
+      properties:
+        snapshot:
+          $ref: "#/components/schemas/WeekSnapshot"
+        last_result:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+    WeekPreview:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - snapshot
+        - expires_at
+        - applied
+      properties:
+        id:
+          type: string
+        snapshot:
+          $ref: "#/components/schemas/WeekSnapshot"
+        expires_at:
+          type: string
+        applied:
+          type: boolean
+    ReviewInput:
+      type: object
+      additionalProperties: false
+      required:
+        - obstacle
+        - obstacle_note
+        - conclusion
+        - energy
+        - mood
+        - template_version
+        - checked
+      properties:
+        obstacle:
+          type: string
+          enum:
+            - none
+            - insufficient_time
+            - low_energy
+            - external
+            - unclear
+            - other
+        obstacle_note:
+          type: string
+          maxLength: 2000
+        conclusion:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        energy:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+          maximum: 5
+        mood:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+          maximum: 5
+        template_version:
+          type: integer
+        checked:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+    DailyItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - status
+        - planned_date
+        - planned
+        - completed_today
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+        planned_date:
+          type:
+            - string
+            - "null"
+        planned:
+          type: boolean
+        completed_today:
+          type: boolean
+    DailyStats:
+      type: object
+      additionalProperties: false
+      required:
+        - planned
+        - completed
+        - completed_today
+        - postponed
+        - failed
+        - skipped
+        - more
+        - items
+      properties:
+        planned:
+          type: integer
+        completed:
+          type: integer
+        completed_today:
+          type: integer
+        postponed:
+          type: integer
+        failed:
+          type: integer
+        skipped:
+          type: integer
+        more:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyItem"
+    DailyReview:
+      type: object
+      additionalProperties: false
+      required:
+        - run
+        - timezone
+        - stats
+      properties:
+        run:
+          anyOf:
+            - $ref: "#/components/schemas/RoutineRun"
+            - type: "null"
+        timezone:
+          type: string
+        stats:
+          $ref: "#/components/schemas/DailyStats"
+    RoutineRun:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - date
+        - kind
+        - version
+        - payload
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+        kind:
+          type: string
+        version:
+          type: integer
+        payload:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    Morning:
+      type: object
+      additionalProperties: false
+      required:
+        - run
+        - plan
+      properties:
+        run:
+          anyOf:
+            - $ref: "#/components/schemas/RoutineRun"
+            - type: "null"
+        plan:
+          $ref: "#/components/schemas/DayPlan"
+    MorningInput:
+      type: object
+      additionalProperties: false
+      required:
+        - input
+        - plan_version
+        - reason
+        - template_version
+        - checked
+      properties:
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        plan_version:
+          type: integer
+        reason:
+          type: string
+        template_version:
+          type: integer
+        checked:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+    JournalInput:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - title
+        - body
+        - tags
+        - goal_id
+        - archived
+      properties:
+        date:
+          type: string
+          format: date
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 50000
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 50
+        goal_id:
+          type:
+            - string
+            - "null"
+        archived:
+          type: boolean
+    JournalEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - title
+        - body
+        - tags
+        - goal_id
+        - archived
+        - id
+        - version
+        - html
+        - created_at
+        - updated_at
+      properties:
+        date:
+          type: string
+          format: date
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 50000
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+            maxLength: 50
+        goal_id:
+          type:
+            - string
+            - "null"
+        archived:
+          type: boolean
+        id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+        html:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    JournalPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/JournalEntry"
+        next:
+          type: string
     ProgressionHistory:
       type: object
       additionalProperties: false

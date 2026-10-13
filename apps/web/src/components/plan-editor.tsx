@@ -8,6 +8,7 @@ import {
   blockInput,
   movePlanQuest,
   type DayPlan,
+  type PlanInput,
 } from "@/lib/planning";
 import { getQuest } from "@/lib/quests";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
@@ -17,20 +18,65 @@ import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
 import { Card } from "./ui/card";
-const editorSchema = planInput.extend({ reason: z.string().max(1000) });
-export function PlanEditor({ plan, onChanged }: { plan: DayPlan; onChanged: () => void }) {
-  const key = useRef(crypto.randomUUID());
+import { useTabDraft, TabDraftRecovery } from "@/lib/forms/tab-draft";
+import type { RoutineTemplate } from "@/lib/journal";
+import { RoutineChecklist } from "./routine-templates";
+const editorSchema = planInput.extend({
+  reason: z.string().max(1000),
+  checked: z.array(z.string()).max(20),
+});
+export function PlanEditor({
+  plan,
+  onChanged,
+  saveOverride,
+  title,
+  submitLabel,
+  draftStorageKey,
+  checklist,
+  initialChecked = [],
+}: {
+  plan: DayPlan;
+  onChanged: () => void;
+  saveOverride?: (
+    input: PlanInput,
+    reason: string,
+    key: string,
+    checked: string[],
+  ) => Promise<void>;
+  title?: string;
+  submitLabel?: string;
+  draftStorageKey?: string;
+  checklist?: RoutineTemplate;
+  initialChecked?: string[];
+}) {
+  const operation = useRef({ body: "", key: "" });
   const [selected, setSelected] = useState("");
   const [titles, setTitles] = useState<Record<string, string>>({});
   const { form, onSubmit, saving, error } = useValidatedForm({
     schema: editorSchema,
-    defaultValues: { ...planInput.parse(plan), reason: "" },
+    defaultValues: { ...planInput.parse(plan), reason: "", checked: initialChecked },
     fields: ["available_minutes", "windows", "quest_ids", "top_ids", "rest", "reason"],
     save: async (values) => {
-      await savePlan(plan, planInput.parse(values), values.reason, key.current);
-      key.current = crypto.randomUUID();
+      const body = JSON.stringify(values);
+      if (operation.current.body !== body) operation.current = { body, key: crypto.randomUUID() };
+      if (saveOverride)
+        await saveOverride(
+          planInput.parse(values),
+          values.reason,
+          operation.current.key,
+          values.checked,
+        );
+      else await savePlan(plan, planInput.parse(values), values.reason, operation.current.key);
+      draft.clear();
       onChanged();
     },
+  });
+  const draft = useTabDraft({
+    storageKey: draftStorageKey,
+    schema: editorSchema,
+    value: form.watch(),
+    dirty: form.formState.isDirty,
+    restore: (values) => form.reset(values, { keepDefaultValues: true }),
   });
   const ids = form.watch("quest_ids"),
     top = form.watch("top_ids"),
@@ -52,12 +98,20 @@ export function PlanEditor({ plan, onChanged }: { plan: DayPlan; onChanged: () =
   }
   return (
     <Card>
-      <h2>{plan.confirmed_at ? "Изменить текущий план" : "Черновик плана"}</h2>
+      <h2>{title ?? (plan.confirmed_at ? "Изменить текущий план" : "Черновик плана")}</h2>
       <p className="ui-hint">
         Выбор задач не переносит их плановую дату автоматически. Для переноса используйте отдельное
         действие ниже. Подтверждение сохраняет исходный план.
       </p>
       <Form saving={saving} error={error} onSubmit={onSubmit}>
+        {draftStorageKey && <TabDraftRecovery draft={draft} />}
+        {checklist && (
+          <RoutineChecklist
+            template={checklist}
+            checked={form.watch("checked")}
+            onChange={(value) => form.setValue("checked", value, { shouldDirty: true })}
+          />
+        )}
         <Input
           label="Доступно минут"
           type="number"
@@ -179,7 +233,7 @@ export function PlanEditor({ plan, onChanged }: { plan: DayPlan; onChanged: () =
           <Input label="Причина изменения плана" {...form.register("reason")} />
         )}
         <Button type="submit">
-          {plan.confirmed_at ? "Сохранить дополнение" : "Сохранить черновик"}
+          {submitLabel ?? (plan.confirmed_at ? "Сохранить дополнение" : "Сохранить черновик")}
         </Button>
       </Form>
     </Card>
