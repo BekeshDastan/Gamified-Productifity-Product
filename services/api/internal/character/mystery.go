@@ -16,7 +16,7 @@ type WeightedItem struct {
 }
 
 // The switch stops new gifts, while already earned gifts remain usable.
-func MysteryEnabled() bool { return os.Getenv("MYSTERY_REWARDS_ENABLED") != "false" }
+func MysteryEnabled() bool { return os.Getenv("FEATURE_MYSTERY_REWARDS") != "false" }
 func MysteryItems() []WeightedItem {
 	out := []WeightedItem{}
 	for _, item := range Catalog() {

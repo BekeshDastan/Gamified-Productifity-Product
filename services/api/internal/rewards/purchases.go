@@ -142,19 +142,3 @@ func (s *Service) mountPurchases(r chi.Router) {
 		s.reply(w, r, out, e)
 	})
 }
-func (s *Service) redemptions(ctx context.Context, tx pgx.Tx, owner string) ([]Redemption, error) {
-	out := []Redemption{}
-	rows, e := tx.Query(ctx, "SELECT "+redemptionColumns+" FROM reward_redemptions WHERE owner_id=$1 ORDER BY created_at DESC,id DESC LIMIT 200", owner)
-	if e != nil {
-		return out, e
-	}
-	defer rows.Close()
-	for rows.Next() {
-		r, e := scanRedemption(rows)
-		if e != nil {
-			return out, e
-		}
-		out = append(out, r)
-	}
-	return out, rows.Err()
-}

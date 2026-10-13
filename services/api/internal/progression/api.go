@@ -62,7 +62,7 @@ func (s *Service) history(ctx context.Context, tx pgx.Tx, owner, cursor string) 
 			return out, e
 		}
 	}
-	rows, e := tx.Query(ctx, `SELECT l.id::text,l.sequence,l.source_kind,l.source_key,l.kind,l.economy_version,l.area_id::text,a.name,COALESCE(e.difficulty,0),COALESCE(e.requested_xp,0),COALESCE(e.awarded_xp,0),l.xp_delta,l.coins_delta,l.reason,l.occurred_at,COALESCE(q.payload->>'title',h.payload->>'title',CASE l.source_kind WHEN 'task' THEN 'Задача' WHEN 'habit' THEN 'Привычка' WHEN 'spend' THEN 'Расход монет' ELSE 'Испытание' END),q.id::text,h.id::text FROM reward_ledger l LEFT JOIN reward_entitlements e ON e.owner_id=l.owner_id AND e.id=l.entitlement_id LEFT JOIN life_areas a ON a.owner_id=l.owner_id AND a.id=l.area_id LEFT JOIN quests q ON l.source_kind='task' AND q.owner_id=l.owner_id AND q.id::text=l.source_key LEFT JOIN habit_periods hp ON l.source_kind='habit' AND hp.owner_id=l.owner_id AND hp.id::text=l.source_key LEFT JOIN habits h ON h.owner_id=hp.owner_id AND h.id=hp.habit_id WHERE l.owner_id=$1 AND l.sequence<$2 ORDER BY l.sequence DESC LIMIT 51`, owner, before)
+	rows, e := tx.Query(ctx, `SELECT l.id::text,l.sequence,l.source_kind,l.source_key,l.kind,l.economy_version,l.area_id::text,a.name,COALESCE(e.difficulty,0),COALESCE(e.requested_xp,0),COALESCE(e.awarded_xp,0),l.xp_delta,l.coins_delta,l.reason,l.occurred_at,COALESCE(q.payload->>'title',h.payload->>'title',CASE l.source_kind WHEN 'task' THEN 'Задача' WHEN 'habit' THEN 'Привычка' WHEN 'spend' THEN 'Расход монет' WHEN 'refund' THEN 'Возврат монет' WHEN 'bonus' THEN 'Косметическая компенсация' ELSE 'Испытание' END),q.id::text,h.id::text FROM reward_ledger l LEFT JOIN reward_entitlements e ON e.owner_id=l.owner_id AND e.id=l.entitlement_id LEFT JOIN life_areas a ON a.owner_id=l.owner_id AND a.id=l.area_id LEFT JOIN quests q ON l.source_kind='task' AND q.owner_id=l.owner_id AND q.id::text=l.source_key LEFT JOIN habit_periods hp ON l.source_kind='habit' AND hp.owner_id=l.owner_id AND hp.id::text=l.source_key LEFT JOIN habits h ON h.owner_id=hp.owner_id AND h.id=hp.habit_id WHERE l.owner_id=$1 AND l.sequence<$2 ORDER BY l.sequence DESC LIMIT 51`, owner, before)
 	if e != nil {
 		return out, e
 	}
@@ -79,6 +79,10 @@ func (s *Service) history(ctx context.Context, tx pgx.Tx, owner, cursor string) 
 		}
 		if habit != nil {
 			url := "/app/habits#habit-" + *habit
+			entry.SourceURL = &url
+		}
+		if entry.SourceKind == "spend" || entry.SourceKind == "refund" || entry.SourceKind == "bonus" {
+			url := "/app/rewards"
 			entry.SourceURL = &url
 		}
 		out.Items = append(out.Items, entry)

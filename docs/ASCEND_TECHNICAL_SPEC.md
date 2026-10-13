@@ -1818,7 +1818,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Повтор open возвращает один предмет; никаких платных случайных покупок.
   - **КОММИТ СЕЙЧАС:** `feat(rewards): persist weighted mystery grants without rerolls`
 
-- [ ] **C104. Приёмка магазина и босса**
+- [x] **C104. Приёмка магазина и босса**
   - **Сделать:** Проверить все операции ledger, повтор выдачи, победу/отмену и UI при нехватке монет.
   - **Проверить:** F09–F13/F16 проходят; после merge можно поставить v0.3-rpg.
   - **КОММИТ СЕЙЧАС:** `test(rewards): cover wallet races boss progress and mystery idempotency`

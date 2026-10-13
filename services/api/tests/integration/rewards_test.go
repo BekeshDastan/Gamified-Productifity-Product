@@ -10,6 +10,8 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/rewards"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
+	"net/http"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -347,7 +349,7 @@ func TestMysteryConcurrentOpenPermanentChoiceAndDisabledEarnedGift(t *testing.T)
 		t.Fatal(catalog)
 	}
 	id := catalog.Grants[0].ID
-	t.Setenv("MYSTERY_REWARDS_ENABLED", "false")
+	t.Setenv("FEATURE_MYSTERY_REWARDS", "false")
 	if get().Enabled {
 		t.Fatal("disabled")
 	}
@@ -442,5 +444,128 @@ func TestMysteryUnownedPreferenceAndFullSetCompensationOnce(t *testing.T) {
 	var coins, xp, n int64
 	if e := f.pool.QueryRow(t.Context(), "SELECT coins,total_xp,(SELECT count(*) FROM reward_ledger WHERE owner_id=$1 AND kind='bonus') FROM user_progress WHERE owner_id=$1", who.ID).Scan(&coins, &xp, &n); e != nil || coins != 5 || xp != 0 || n != 1 {
 		t.Fatal(coins, xp, n, e)
+	}
+}
+func TestRewardPermanentSnapshotsAndCoinHistory(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "snapshot-guard@example.test")
+	d := readRewardDefinition(t, f.privateRequest(t, a, "POST", "/rewards/custom", "", rewards.DefinitionInput{Title: "Пауза", Cost: 0, Available: true}))
+	p := readRedemption(t, f.privateRequest(t, a, "POST", "/rewards/purchase", "", rewards.PurchaseInput{OperationID: testkit.NewUser().ID, Kind: "custom", TargetID: d.ID, ExpectedCost: 0, ExpectedVersion: 1}))
+	for _, sql := range []string{"UPDATE reward_redemptions SET cost=99 WHERE owner_id=$1", "DELETE FROM reward_redemptions WHERE owner_id=$1"} {
+		if _, e := f.pool.Exec(t.Context(), sql, who.ID); e == nil {
+			t.Fatal("mutable snapshot", sql)
+		}
+	}
+	readRedemption(t, f.privateRequest(t, a, "POST", "/rewards/redemptions/"+p.ID+"/cancel", fmt.Sprintf(`"%d"`, p.Version), map[string]string{"reason": "Вернуть"}))
+	if _, e := f.pool.Exec(t.Context(), "UPDATE reward_redemptions SET status='pending' WHERE owner_id=$1", who.ID); e == nil {
+		t.Fatal("terminal transition")
+	}
+	r := f.privateRequest(t, a, "GET", "/progression/history", "", nil)
+	var history struct {
+		Data struct {
+			Items []struct {
+				SourceKind  string  `json:"source_kind"`
+				SourceTitle string  `json:"source_title"`
+				SourceURL   *string `json:"source_url"`
+				XP          int64   `json:"xp_delta"`
+			}
+		}
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &history) != nil || len(history.Data.Items) != 2 {
+		t.Fatal(string(r.body))
+	}
+	for _, entry := range history.Data.Items {
+		if entry.SourceURL == nil || *entry.SourceURL != "/app/rewards" || entry.SourceTitle == "Испытание" || entry.XP != 0 {
+			t.Fatal(entry)
+		}
+	}
+}
+func TestRewardCatalogPaginationPrivacyAndStalePrice(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "catalog-pages@example.test")
+	other, _ := f.signedIn(t, "catalog-private@example.test")
+	in := rewards.DefinitionInput{Title: "Перерыв", Cost: 0, Available: true}
+	d := readRewardDefinition(t, f.privateRequest(t, a, "POST", "/rewards/custom", "", in))
+	for range 52 {
+		readRedemption(t, f.privateRequest(t, a, "POST", "/rewards/purchase", "", rewards.PurchaseInput{OperationID: testkit.NewUser().ID, Kind: "custom", TargetID: d.ID, ExpectedVersion: 1}))
+	}
+	r := f.privateRequest(t, a, "GET", "/rewards/catalog", "", nil)
+	var catalog struct{ Data rewards.Catalog }
+	if r.status != 200 || json.Unmarshal(r.body, &catalog) != nil || len(catalog.Data.Custom) != 1 || len(catalog.Data.Cosmetics) != 14 || len(catalog.Data.Redemptions.Items) != 50 || catalog.Data.Redemptions.NextCursor == nil {
+		t.Fatal(string(r.body))
+	}
+	cursor := *catalog.Data.Redemptions.NextCursor
+	r = f.privateRequest(t, a, "GET", "/rewards/redemptions?before="+cursor, "", nil)
+	var page struct{ Data rewards.RedemptionPage }
+	if r.status != 200 || json.Unmarshal(r.body, &page) != nil || len(page.Data.Items) != 2 || page.Data.NextCursor != nil {
+		t.Fatal(string(r.body))
+	}
+	for _, path := range []string{"/rewards/catalog", "/rewards/custom", "/rewards/redemptions"} {
+		r = f.privateRequest(t, other, "GET", path, "", nil)
+		if r.status != 200 || strings.Contains(string(r.body), d.ID) {
+			t.Fatal("private", string(r.body))
+		}
+	}
+	for _, pair := range []struct {
+		client *http.Client
+		cursor string
+		status int
+	}{{a, "invalid", 422}, {a, testkit.NewUser().ID, 404}, {other, cursor, 404}} {
+		r = f.privateRequest(t, pair.client, "GET", "/rewards/redemptions?before="+pair.cursor, "", nil)
+		if r.status != pair.status {
+			t.Fatal(r.status, string(r.body))
+		}
+	}
+	bad := rewards.PurchaseInput{OperationID: testkit.NewUser().ID, Kind: "custom", TargetID: d.ID, ExpectedCost: 99, ExpectedVersion: 1}
+	if r = f.privateRequest(t, a, "POST", "/rewards/purchase", "", bad); r.status != 409 {
+		t.Fatal("stale price", r.status)
+	}
+	bad.Kind = "mystery"
+	if r = f.privateRequest(t, a, "POST", "/rewards/purchase", "", bad); r.status != 422 {
+		t.Fatal("paid random", r.status)
+	}
+	in.Available = false
+	d = readRewardDefinition(t, f.privateRequest(t, a, "PATCH", "/rewards/custom/"+d.ID, rewardVersion(d), in))
+	bad.Kind = "custom"
+	bad.ExpectedCost = 0
+	bad.ExpectedVersion = d.Version
+	if r = f.privateRequest(t, a, "POST", "/rewards/purchase", "", bad); r.status != 409 {
+		t.Fatal("unavailable", r.status)
+	}
+}
+func TestBossDecisionsOwnershipAndMonthCursor(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "boss-decision@example.test")
+	other, _ := f.signedIn(t, "boss-foreign@example.test")
+	in := goalInput("Бой с метрикой")
+	in.ProgressType = "metric"
+	in.Target = 1
+	in.Unit = "результат"
+	g := readGoal(t, f.privateRequest(t, a, "POST", "/goals", "", goals.Create{Input: in, State: "active"}))
+	b := readBoss(t, f.privateRequest(t, a, "POST", "/bosses", "", map[string]string{"goal_id": g.ID}))
+	if r := f.privateRequest(t, a, "POST", "/bosses", "", map[string]string{"goal_id": g.ID}); r.status != 409 {
+		t.Fatal("duplicate", r.status)
+	}
+	if r := f.privateRequest(t, other, "PATCH", "/bosses/"+b.ID, `"1"`, map[string]string{"action": "pause", "reason": "Чужой"}); r.status != 404 {
+		t.Fatal("foreign", r.status)
+	}
+	for _, action := range []string{"pause", "resume", "close", "resume"} {
+		old := b.Version
+		b = readBoss(t, f.privateRequest(t, a, "PATCH", "/bosses/"+b.ID, fmt.Sprintf(`"%d"`, old), map[string]string{"action": action, "reason": "Изменил приоритет"}))
+		if b.Version != old+1 || b.HP != 100 {
+			t.Fatal(b)
+		}
+	}
+	if r := f.privateRequest(t, a, "PATCH", "/bosses/"+b.ID, `"1"`, map[string]string{"action": "pause", "reason": "Устарело"}); r.status != 409 {
+		t.Fatal("stale", r.status)
+	}
+	if r := f.privateRequest(t, a, "PATCH", "/bosses/"+b.ID, fmt.Sprintf(`"%d"`, b.Version), map[string]string{"action": "wrong", "reason": "Неверно"}); r.status != 422 {
+		t.Fatal("action", r.status)
+	}
+	if r := f.privateRequest(t, a, "GET", "/bosses/monthly/history?before=wrong", "", nil); r.status != 422 {
+		t.Fatal("cursor", r.status)
+	}
+	if r := f.privateRequest(t, a, "GET", "/bosses/monthly/history?before=999", "", nil); r.status != 404 {
+		t.Fatal("absent cursor", r.status)
 	}
 }

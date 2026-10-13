@@ -184,6 +184,9 @@ func (s *Service) mountBosses(r chi.Router) {
 				if p := platform.MatchVersion(r, b.Version); p != nil {
 					return nil, p
 				}
+				if in.Action != "pause" && in.Action != "resume" && in.Action != "close" {
+					return nil, problem(422, "VALIDATION_ERROR", "Выберите действие с боссом")
+				}
 				state := ""
 				switch in.Action {
 				case "pause":

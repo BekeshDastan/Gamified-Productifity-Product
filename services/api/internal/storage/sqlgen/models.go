@@ -425,6 +425,40 @@ type Milestone struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type MonthlyBoss struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Month     string             `json:"month"`
+	Timezone  string             `json:"timezone"`
+	BossID    pgtype.UUID        `json:"boss_id"`
+	Title     string             `json:"title"`
+	Version   int64              `json:"version"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type MonthlyBossChange struct {
+	ID        int64              `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Month     string             `json:"month"`
+	Timezone  string             `json:"timezone"`
+	BossID    pgtype.UUID        `json:"boss_id"`
+	Title     string             `json:"title"`
+	Reason    string             `json:"reason"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type MysteryGrant struct {
+	ID             pgtype.UUID        `json:"id"`
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	Source         string             `json:"source"`
+	SourceVersion  string             `json:"source_version"`
+	CatalogVersion string             `json:"catalog_version"`
+	Weights        []byte             `json:"weights"`
+	ItemID         pgtype.Text        `json:"item_id"`
+	Compensation   pgtype.Int8        `json:"compensation"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	OpenedAt       pgtype.Timestamptz `json:"opened_at"`
+}
+
 type Onboarding struct {
 	OwnerID     pgtype.UUID        `json:"owner_id"`
 	Step        int32              `json:"step"`
