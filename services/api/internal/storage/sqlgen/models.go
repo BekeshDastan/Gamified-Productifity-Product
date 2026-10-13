@@ -143,6 +143,15 @@ type CosmeticItem struct {
 	Snapshot       []byte `json:"snapshot"`
 }
 
+type CosmeticPermanentGrant struct {
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	ItemID     string             `json:"item_id"`
+	SourceKind string             `json:"source_kind"`
+	SourceKey  string             `json:"source_key"`
+	Active     bool               `json:"active"`
+	GrantedAt  pgtype.Timestamptz `json:"granted_at"`
+}
+
 type CustomReward struct {
 	ID          pgtype.UUID        `json:"id"`
 	OwnerID     pgtype.UUID        `json:"owner_id"`
@@ -562,6 +571,25 @@ type RewardQuotaUsage struct {
 	SourceKind    string             `json:"source_kind"`
 	Xp            int64              `json:"xp"`
 	AwardedAt     pgtype.Timestamptz `json:"awarded_at"`
+}
+
+type RewardRedemption struct {
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	ID                pgtype.UUID        `json:"id"`
+	Kind              string             `json:"kind"`
+	TargetID          string             `json:"target_id"`
+	Title             string             `json:"title"`
+	Description       string             `json:"description"`
+	Cost              int64              `json:"cost"`
+	DefinitionVersion int64              `json:"definition_version"`
+	Request           []byte             `json:"request"`
+	Status            string             `json:"status"`
+	Version           int64              `json:"version"`
+	SpendLedgerID     pgtype.UUID        `json:"spend_ledger_id"`
+	RefundLedgerID    pgtype.UUID        `json:"refund_ledger_id"`
+	Reason            string             `json:"reason"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
 type RoutineApplication struct {

@@ -118,6 +118,14 @@ func (s *Service) EvaluateInTx(ctx context.Context, tx pgx.Tx, owner string) err
 				return e
 			}
 		}
+		var permanent bool
+		if e = tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM cosmetic_permanent_grants WHERE owner_id=$1 AND item_id=$2 AND active)", owner, i.ID).Scan(&permanent); e != nil {
+			return e
+		}
+		if permanent {
+			active = true
+			source = "permanent"
+		}
 		var previous bool
 		e = tx.QueryRow(ctx, "SELECT active FROM character_inventory WHERE owner_id=$1 AND item_id=$2", owner, i.ID).Scan(&previous)
 		if e != nil && !errors.Is(e, pgx.ErrNoRows) {

@@ -1788,7 +1788,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Отрицательная цена и чужое редактирование запрещены; старая покупка сохраняет исходную цену.
   - **КОММИТ СЕЙЧАС:** `feat(rewards): add custom real-life reward definitions`
 
-- [ ] **C098. Атомарная покупка**
+- [x] **C098. Атомарная покупка**
   - **Сделать:** Реализовать проверку баланса, списание, выдачу inventory/redemption и постоянный operation key.
   - **Проверить:** При балансе на один предмет из двух конкурирующих покупок проходит одна.
   - **КОММИТ СЕЙЧАС:** `feat(rewards): purchase items with locked wallet transactions`
