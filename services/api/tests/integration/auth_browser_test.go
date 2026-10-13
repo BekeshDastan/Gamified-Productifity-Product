@@ -28,6 +28,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/mail"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 )
@@ -82,11 +83,13 @@ func TestBrowserAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer files.Close()
-	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithFiles(files, blob.UnavailableScanner{})
+	rewardService := progression.NewService(pool, domainClock)
+	rewardService.Mount(router, sessions.Protect)
+	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, domainClock, questService)
 	calendarService.Mount(router, sessions.Protect)
-	habits.NewService(pool, domainClock).Mount(router, sessions.Protect)
+	habits.NewService(pool, domainClock).WithProgression(rewardService).Mount(router, sessions.Protect)
 	planning.NewService(pool, domainClock, questService, calendarService).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
@@ -106,7 +109,11 @@ func TestBrowserAuth(t *testing.T) {
 	worker.Add(1)
 	go func() {
 		defer worker.Done()
-		jobs.Run(workerCtx, jobs.Store{Pool: pool, Clock: clock}, sessions.MailHandlers(mailer), slog.New(slog.NewTextHandler(io.Discard, nil)))
+		handlers := sessions.MailHandlers(mailer)
+		for kind, handler := range rewardService.Handlers() {
+			handlers[kind] = handler
+		}
+		jobs.Run(workerCtx, jobs.Store{Pool: pool, Clock: clock}, handlers, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	}()
 	defer func() { cancel(); worker.Wait() }()
 	root, err := filepath.Abs("../../../..")

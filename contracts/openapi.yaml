@@ -6,6 +6,74 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/progression/history:
+    get:
+      operationId: getProgressionHistory
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ProgressionHistory"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/progression:
+    get:
+      operationId: getProgression
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ProgressionBalance"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/habits/starter:
     get:
       operationId: getHabitStarter
@@ -5108,6 +5176,248 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ProgressionHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProgressionEntry"
+        next_cursor:
+          anyOf:
+            - type: string
+            - type: "null"
+    ProgressionEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - sequence
+        - source_kind
+        - source_key
+        - source_title
+        - source_url
+        - kind
+        - economy_version
+        - area_id
+        - area_name
+        - difficulty
+        - requested_xp
+        - awarded_xp
+        - xp_delta
+        - coins_delta
+        - reason
+        - occurred_at
+      properties:
+        id:
+          type: string
+        sequence:
+          type: integer
+        source_kind:
+          type: string
+        source_key:
+          type: string
+        source_title:
+          type: string
+        source_url:
+          anyOf:
+            - type: string
+            - type: "null"
+        kind:
+          type: string
+        economy_version:
+          type: string
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        area_name:
+          anyOf:
+            - type: string
+            - type: "null"
+        difficulty:
+          type: integer
+        requested_xp:
+          type: integer
+        awarded_xp:
+          type: integer
+        xp_delta:
+          type: integer
+        coins_delta:
+          type: integer
+        reason:
+          type: string
+        occurred_at:
+          type: string
+    ProgressionBalance:
+      type: object
+      additionalProperties: false
+      required:
+        - total_xp
+        - coins
+        - available_coins
+        - coin_correction
+        - level
+        - version
+        - economy_version
+        - as_of
+        - quota
+        - rules
+      properties:
+        total_xp:
+          type: integer
+        coins:
+          type: integer
+        available_coins:
+          type: integer
+        coin_correction:
+          type: integer
+        level:
+          $ref: "#/components/schemas/ProgressionLevel"
+        version:
+          type: integer
+        economy_version:
+          type: string
+        as_of:
+          type: string
+        quota:
+          $ref: "#/components/schemas/ProgressionQuota"
+        rules:
+          $ref: "#/components/schemas/ProgressionRules"
+    ProgressionQuota:
+      type: object
+      additionalProperties: false
+      required:
+        - task_used
+        - habit_used
+        - challenge_used
+        - total_used
+        - task_cap
+        - habit_cap
+        - challenge_cap
+        - total_cap
+        - window_start
+        - window_end
+      properties:
+        task_used:
+          type: integer
+        habit_used:
+          type: integer
+        challenge_used:
+          type: integer
+        total_used:
+          type: integer
+        task_cap:
+          type: integer
+        habit_cap:
+          type: integer
+        challenge_cap:
+          type: integer
+        total_cap:
+          type: integer
+        window_start:
+          type: string
+        window_end:
+          type: string
+    ProgressionRules:
+      type: object
+      additionalProperties: false
+      required:
+        - task_xp
+        - habit_xp
+        - challenge_xp
+        - coins_divisor
+      properties:
+        task_xp:
+          type: array
+          items:
+            type: integer
+        habit_xp:
+          type: integer
+        challenge_xp:
+          type: integer
+        coins_divisor:
+          type: integer
+    ProgressionLevel:
+      type: object
+      additionalProperties: false
+      required:
+        - number
+        - threshold
+        - next_threshold
+        - inside
+        - to_next
+      properties:
+        number:
+          type: integer
+        threshold:
+          type: integer
+        next_threshold:
+          type: integer
+        inside:
+          type: integer
+        to_next:
+          type: integer
+    RewardDTO:
+      type: object
+      additionalProperties: false
+      required:
+        - entitlement_id
+        - ledger_id
+        - source_kind
+        - source_key
+        - economy_version
+        - kind
+        - requested_xp
+        - awarded_xp
+        - awarded_coins
+        - xp_delta
+        - coins_delta
+        - total_xp
+        - available_coins
+        - coin_correction
+        - level_before
+        - level_after
+        - reason
+      properties:
+        entitlement_id:
+          type: string
+        ledger_id:
+          type: string
+        source_kind:
+          type: string
+        source_key:
+          type: string
+        economy_version:
+          type: string
+        kind:
+          type: string
+        requested_xp:
+          type: integer
+        awarded_xp:
+          type: integer
+        awarded_coins:
+          type: integer
+        xp_delta:
+          type: integer
+        coins_delta:
+          type: integer
+        total_xp:
+          type: integer
+        available_coins:
+          type: integer
+        coin_correction:
+          type: integer
+        level_before:
+          type: integer
+        level_after:
+          type: integer
+        reason:
+          type: string
     HabitStarter:
       type: object
       additionalProperties: false
@@ -5524,6 +5834,8 @@ components:
           anyOf:
             - type: string
             - type: "null"
+        reward:
+          $ref: "#/components/schemas/RewardDTO"
     HabitScheduleVersion:
       type: object
       additionalProperties: false
@@ -7350,6 +7662,8 @@ components:
             - type: "null"
         required:
           type: boolean
+        reward:
+          $ref: "#/components/schemas/RewardDTO"
     QuestPageDTO:
       type: object
       required:

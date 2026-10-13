@@ -78,7 +78,7 @@ func (s *Service) addLog(ctx context.Context, tx pgx.Tx, id string, h Habit, in 
 	if e = s.bump(ctx, tx, id, h.ID); e != nil {
 		return h, e
 	}
-	return s.view(ctx, tx, id, h.ID)
+	return s.rewardedView(ctx, tx, id, h, in.PeriodID)
 }
 func (s *Service) correct(ctx context.Context, tx pgx.Tx, id string, h Habit, key string, in CorrectionInput) (Habit, error) {
 	if !uuid(key) {
@@ -94,7 +94,8 @@ func (s *Service) correct(ctx context.Context, tx pgx.Tx, id string, h Habit, ke
 		return h, e
 	}
 	var before float64
-	e := tx.QueryRow(ctx, `SELECT amount FROM habit_logs WHERE owner_id=$1 AND habit_id=$2 AND id=$3 FOR UPDATE`, id, h.ID, key).Scan(&before)
+	var periodKey string
+	e := tx.QueryRow(ctx, `SELECT amount,period_id::text FROM habit_logs WHERE owner_id=$1 AND habit_id=$2 AND id=$3 FOR UPDATE`, id, h.ID, key).Scan(&before, &periodKey)
 	if e == pgx.ErrNoRows {
 		return h, problem(404, "NOT_FOUND", "Отметка не найдена")
 	}
@@ -110,7 +111,7 @@ func (s *Service) correct(ctx context.Context, tx pgx.Tx, id string, h Habit, ke
 	if e = s.bump(ctx, tx, id, h.ID); e != nil {
 		return h, e
 	}
-	return s.view(ctx, tx, id, h.ID)
+	return s.rewardedView(ctx, tx, id, h, periodKey)
 }
 
 type LogPage struct {

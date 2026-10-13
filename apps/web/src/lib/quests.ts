@@ -1,5 +1,6 @@
 "use client";
 import { z } from "zod";
+import { rewardSchema } from "./progression";
 import { createApiClient } from "@/lib/api/client";
 import { authClient, authParams, withAuthLock } from "@/lib/auth/session";
 import { requireAccount } from "@/lib/profile";
@@ -28,6 +29,7 @@ export const questInput = z.object({
   required: z.boolean(),
 });
 export const questSchema = questInput.extend({
+  reward: rewardSchema.optional(),
   id: z.uuid(),
   version: z.number().int().positive(),
   completed_at: z.iso.datetime({ offset: true }).nullable(),

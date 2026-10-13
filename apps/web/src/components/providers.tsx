@@ -1,6 +1,6 @@
 "use client";
 import type { ReactNode } from "react";
-import { AuthProvider } from "@/lib/auth/provider";
+import { AuthProvider, useAuth } from "@/lib/auth/provider";
 import { ThemeProvider } from "./theme-provider";
 import { ToastProvider } from "./ui/toast";
 import { UnsavedChangesProvider } from "@/lib/forms/unsaved-changes";
@@ -9,9 +9,14 @@ export function Providers({ children }: { children: ReactNode }) {
     <ThemeProvider>
       <AuthProvider>
         <UnsavedChangesProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <AccountToasts>{children}</AccountToasts>
         </UnsavedChangesProvider>
       </AuthProvider>
     </ThemeProvider>
   );
+}
+
+function AccountToasts({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+  return <ToastProvider owner={auth.session?.account.id ?? "public"}>{children}</ToastProvider>;
 }

@@ -1,5 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
+import { HabitVersion } from "./habit-version";
+import { useRewardNotice } from "./progression";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useWatch } from "react-hook-form";
 import { DateTime } from "luxon";
@@ -53,7 +55,9 @@ export function HabitHistory({ habit: h, changed }: { habit: Habit; changed: () 
             </li>
           ))}
         </ol>
-        {!h.archived_at && <ScheduleForm key={h.version} habit={h} changed={changed} />}
+        {!h.archived_at && (
+          <ScheduleForm key={h.id + String(!!h.archived_at)} habit={h} changed={changed} />
+        )}
       </details>
       <details>
         <summary>История периодов и исправлений</summary>
@@ -61,7 +65,7 @@ export function HabitHistory({ habit: h, changed }: { habit: Habit; changed: () 
       </details>
       <details>
         <summary>{h.archived_at ? "Вернуть привычку" : "Убрать в архив"}</summary>
-        <ArchiveForm key={h.version} habit={h} changed={changed} />
+        <ArchiveForm key={h.id + String(!!h.archived_at)} habit={h} changed={changed} />
         <ul>
           {h.archives.map((a) => (
             <li key={a.id}>
@@ -75,18 +79,25 @@ export function HabitHistory({ habit: h, changed }: { habit: Habit; changed: () 
   );
 }
 function ArchiveForm({ habit: h, changed }: { habit: Habit; changed: () => void }) {
+  const record = useRef(h);
   const key = useKey();
   const flow = useValidatedForm({
     schema: why,
     defaultValues: { reason: "" },
     fields: ["reason"],
     save: async (v) => {
-      await archiveHabit(h, !!h.archived_at, v.reason, key(v));
+      record.current = await archiveHabit(
+        record.current,
+        !!h.archived_at,
+        v.reason,
+        key({ input: v, version: record.current.version }),
+      );
       changed();
     },
   });
   return (
     <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
+      <HabitVersion recordRef={record} habit={h} flow={flow} />
       <p>
         {h.archived_at
           ? "История сохранится. Новые обязательства начнутся со следующего периода; период, начатый до архива, сохранится."
@@ -111,6 +122,7 @@ function ScheduleForm({ habit: h, changed }: { habit: Habit; changed: () => void
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [accepted, setAccepted] = useState(false);
+  const record = useRef(h);
   const key = useKey();
   useUnsavedChanges(!!preview);
   const current = h.schedules.at(-1)?.schedule ?? h.schedule;
@@ -125,7 +137,7 @@ function ScheduleForm({ habit: h, changed }: { habit: Habit; changed: () => void
       "reason",
     ],
     save: async (v) => {
-      const data = await previewHabitSchedule(h, v);
+      const data = await previewHabitSchedule(record.current, v);
       setPreview({ data, input: v });
       setAccepted(false);
     },
@@ -138,11 +150,20 @@ function ScheduleForm({ habit: h, changed }: { habit: Habit; changed: () => void
     setBusy(true);
     setError("");
     try {
-      await changeHabitSchedule(h, preview.input, key(preview.input));
+      record.current = await changeHabitSchedule(
+        { ...record.current, version: preview.data.version },
+        preview.input,
+        key({ input: preview.input, version: preview.data.version }),
+      );
       setPreview(undefined);
       changed();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Не удалось применить расписание");
+      if (e instanceof ApiError && e.code === "VERSION_CONFLICT") {
+        flow.form.setError("root.server", { type: e.code, message: e.message });
+        setPreview(undefined);
+        setAccepted(false);
+      }
     } finally {
       setBusy(false);
     }
@@ -150,6 +171,7 @@ function ScheduleForm({ habit: h, changed }: { habit: Habit; changed: () => void
   return (
     <>
       <Form saving={flow.saving || busy} error={flow.error} onSubmit={flow.onSubmit}>
+        <HabitVersion recordRef={record} habit={h} flow={flow} frozen={!!preview} />
         <Input
           label="Дата новой нормы"
           type="date"
@@ -315,12 +337,7 @@ function HistoryPages({ habit: h, changed }: { habit: Habit; changed: () => void
               ))}
           </Select>
           {period && (
-            <HistoricalLogForm
-              key={h.version + ":" + period.id}
-              habit={h}
-              period={period}
-              changed={changed}
-            />
+            <HistoricalLogForm key={period.id} habit={h} period={period} changed={changed} />
           )}
         </>
       )}
@@ -345,7 +362,7 @@ function HistoryPages({ habit: h, changed }: { habit: Habit; changed: () => void
               <details>
                 <summary>Исправить отметку</summary>
                 <CorrectionForm
-                  key={h.version + ":" + l.id}
+                  key={l.id}
                   habit={h}
                   log={l.id}
                   amount={l.amount}
@@ -378,7 +395,9 @@ function CorrectionForm({
   amount: number;
   changed: () => void;
 }) {
-  const key = useKey();
+  const record = useRef(h);
+  const key = useKey(),
+    rewardNotice = useRewardNotice();
   const schema = why.extend({
     amount: z.number().min(0, "Количество не может быть отрицательным").max(1000000),
   });
@@ -387,12 +406,20 @@ function CorrectionForm({
     defaultValues: { amount, reason: "" },
     fields: ["amount", "reason"],
     save: async (v) => {
-      await correctHabitLog(h, log, v, key(v));
+      const saved = await correctHabitLog(
+        record.current,
+        log,
+        v,
+        key({ input: v, version: record.current.version }),
+      );
+      record.current = saved;
+      rewardNotice(saved.reward);
       changed();
     },
   });
   return (
     <Form onSubmit={flow.onSubmit} saving={flow.saving} error={flow.error}>
+      <HabitVersion recordRef={record} habit={h} flow={flow} frozen />
       <Input
         label="Исправленное количество"
         type="number"
@@ -420,7 +447,9 @@ function HistoricalLogForm({
   period: HabitPeriod;
   changed: () => void;
 }) {
-  const key = useKey();
+  const record = useRef(h);
+  const key = useKey(),
+    rewardNotice = useRewardNotice();
   const schema = z.object({
     amount: z.number().positive("Укажите положительное количество"),
     occurred_at: z.string().min(1),
@@ -438,12 +467,19 @@ function HistoricalLogForm({
         period_id: p.id,
         occurred_at: DateTime.fromISO(v.occurred_at, { zone: h.timezone }).toUTC().toISO()!,
       };
-      await logHabit(h, input, key(input));
+      const saved = await logHabit(
+        record.current,
+        input,
+        key({ input: input, version: record.current.version }),
+      );
+      record.current = saved;
+      rewardNotice(saved.reward);
       changed();
     },
   });
   return (
     <Form onSubmit={flow.onSubmit} saving={flow.saving} error={flow.error}>
+      <HabitVersion recordRef={record} habit={h} flow={flow} />
       <p className="ui-hint">
         Сохраняйте фактическое время. Позднее внесение отмечается в истории.
       </p>

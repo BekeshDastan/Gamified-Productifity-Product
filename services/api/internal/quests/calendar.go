@@ -9,6 +9,9 @@ import (
 // ScheduleInTx changes the same task used by lists and goal projections.
 // Calendar service holds the owner lock before updating events and tasks.
 func (s *Service) ScheduleInTx(ctx context.Context, tx pgx.Tx, id, key string, version int64, planned, reason string) (Quest, error) {
+	if e := s.lockOwner(ctx, tx, id); e != nil {
+		return Quest{}, e
+	}
 	q, e := get(ctx, tx, id, key, true)
 	if e != nil {
 		return q, e
@@ -42,11 +45,14 @@ func (s *Service) ScheduleInTx(ctx context.Context, tx pgx.Tx, id, key string, v
 	}
 	q, e = scan(tx.QueryRow(ctx, `UPDATE quests SET payload=$3,planned_date=$4::text::date,status=$5,version=version+1,updated_at=$6 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, planned, q.Status, s.clock.Now().UTC()))
 	if e == nil {
-		e = s.event(ctx, tx, id, "postponed", reason, &before, q)
+		e = s.event(ctx, tx, id, "postponed", reason, &before, &q)
 	}
 	return q, e
 }
 func (s *Service) CancelOccurrenceInTx(ctx context.Context, tx pgx.Tx, id, key string, version int64, reason string) (Quest, error) {
+	if e := s.lockOwner(ctx, tx, id); e != nil {
+		return Quest{}, e
+	}
 	q, e := get(ctx, tx, id, key, true)
 	if e != nil {
 		return q, e
@@ -67,7 +73,7 @@ func (s *Service) CancelOccurrenceInTx(ctx context.Context, tx pgx.Tx, id, key s
 	}
 	q, e = scan(tx.QueryRow(ctx, `UPDATE quests SET payload=$3,status='skipped',version=version+1,updated_at=$4 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, data, s.clock.Now().UTC()))
 	if e == nil {
-		e = s.event(ctx, tx, id, "skipped", reason, &before, q)
+		e = s.event(ctx, tx, id, "skipped", reason, &before, &q)
 	}
 	if e == nil && q.ParentID != nil {
 		e = s.rollup(ctx, tx, id, *q.ParentID)

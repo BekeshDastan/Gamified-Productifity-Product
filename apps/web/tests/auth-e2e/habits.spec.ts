@@ -73,6 +73,24 @@ test("habits quantitative progress corrections future norm archive and dashboard
   await h.getByRole("button", { name: "Предпросмотр нормы", exact: true }).click();
   await expect(h.getByLabel("Предпросмотр нормы", { exact: true })).toContainText("20 → 30");
   await expect(h.getByRole("progressbar")).toHaveAttribute("value", "50");
+  // A different form updates the record after the user has reviewed a schedule.
+  await h.getByLabel("Количество (страниц)", { exact: true }).fill("1");
+  await h.getByRole("button", { name: "Добавить отметку", exact: true }).click();
+  await expect(h.getByRole("progressbar")).toHaveAttribute("value", "55");
+  await expect(h.getByLabel("Новая норма", { exact: true })).toHaveValue("30");
+  await expect(h.getByLabel("Причина смены нормы")).toHaveValue("Пробую новую норму завтра");
+  await h.getByLabel("Я подтверждаю новую норму с указанной даты").check();
+  await h.getByRole("button", { name: "Применить новую норму", exact: true }).click();
+  await expect(
+    h.getByRole("button", { name: "Загрузить свежую версию, сохранив ввод" }),
+  ).toBeVisible();
+  await expect(h.getByText(/С 2026-10-13: 30/)).toHaveCount(0);
+  await h.getByRole("button", { name: "Загрузить свежую версию, сохранив ввод" }).click();
+  await expect(
+    h.getByRole("button", { name: "Загрузить свежую версию, сохранив ввод" }),
+  ).toHaveCount(0);
+  await h.getByRole("button", { name: "Предпросмотр нормы", exact: true }).click();
+  await expect(h.getByLabel("Предпросмотр нормы", { exact: true })).toContainText("20 → 30");
   await h.getByLabel("Я подтверждаю новую норму с указанной даты").check();
   await h.getByRole("button", { name: "Применить новую норму", exact: true }).click();
   await expect(h.getByText(/С 2026-10-13: 30/)).toBeVisible();
@@ -90,7 +108,7 @@ test("habits quantitative progress corrections future norm archive and dashboard
   await h.getByRole("button", { name: "Вернуть привычку", exact: true }).click();
   await expect(h).toHaveCount(0);
   await page.getByRole("button", { name: "Показать активные", exact: true }).click();
-  await expect(h.getByRole("progressbar")).toHaveAttribute("value", "50");
+  await expect(h.getByRole("progressbar")).toHaveAttribute("value", "55");
   await page.goto("/app");
   const quick = habit(page, "Читать двадцать страниц");
   await quick.getByLabel("Количество (страниц)", { exact: true }).fill("10");

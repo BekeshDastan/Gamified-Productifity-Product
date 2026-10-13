@@ -1,5 +1,6 @@
 "use client";
 import { z } from "zod";
+import { rewardSchema } from "./progression";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth/provider";
 import { createApiClient } from "@/lib/api/client";
@@ -38,6 +39,7 @@ export const habitPeriod = z.object({
   rest_reason: z.string(),
 });
 export const habitSchema = habitInput.extend({
+  reward: rewardSchema.optional(),
   as_of: z.string(),
   archives: z.array(
     z.object({
@@ -294,4 +296,10 @@ export async function getHabitStarter(signal?: AbortSignal) {
   await requireAccount();
   const r = await createApiClient().GET("/api/v1/habits/starter", { signal });
   return habitStarter.nullable().parse(r.data?.data);
+}
+
+export async function getHabit(id: string) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/habits/{id}", { params: { path: { id } } });
+  return habitSchema.parse(r.data?.data);
 }

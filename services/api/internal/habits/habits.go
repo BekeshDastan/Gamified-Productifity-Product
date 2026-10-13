@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -40,12 +41,13 @@ type ScheduleVersion struct {
 	Reason        string   `json:"reason"`
 }
 type Habit struct {
-	Archives []ArchiveSpan `json:"archives"`
-	AsOf     time.Time     `json:"as_of"`
-	Pauses   []Pause       `json:"pauses"`
-	Stats    Stats         `json:"stats"`
-	Periods  []Period      `json:"periods"`
-	HasMore  bool          `json:"has_more"`
+	Reward   *progression.Reward `json:"reward,omitempty"`
+	Archives []ArchiveSpan       `json:"archives"`
+	AsOf     time.Time           `json:"as_of"`
+	Pauses   []Pause             `json:"pauses"`
+	Stats    Stats               `json:"stats"`
+	Periods  []Period            `json:"periods"`
+	HasMore  bool                `json:"has_more"`
 	Input
 	ID         string            `json:"id"`
 	Version    int64             `json:"version"`
@@ -54,8 +56,9 @@ type Habit struct {
 	Schedules  []ScheduleVersion `json:"schedules"`
 }
 type Service struct {
-	pool  *pgxpool.Pool
-	clock platform.Clock
+	progression *progression.Service
+	pool        *pgxpool.Pool
+	clock       platform.Clock
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
@@ -161,7 +164,13 @@ func Validate(in Input) (Input, error) {
 }
 func (s *Service) lock(ctx context.Context, tx pgx.Tx, id string) error {
 	var v string
-	return tx.QueryRow(ctx, `SELECT owner_id::text FROM profiles WHERE owner_id=$1 FOR UPDATE`, id).Scan(&v)
+	if e := tx.QueryRow(ctx, `SELECT owner_id::text FROM profiles WHERE owner_id=$1 FOR UPDATE`, id).Scan(&v); e != nil {
+		return e
+	}
+	if s.progression != nil {
+		return s.progression.Lock(ctx, tx, id)
+	}
+	return nil
 }
 func (s *Service) area(ctx context.Context, tx pgx.Tx, id string, key *string) error {
 	if key == nil {
@@ -408,3 +417,5 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		})
 	})
 }
+
+func (s *Service) WithProgression(v *progression.Service) *Service { s.progression = v; return s }

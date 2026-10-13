@@ -12,6 +12,7 @@ import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { DashboardHabits } from "./habits";
+import { ProgressionSummary, useRewardNotice } from "./progression";
 import { Input } from "./ui/field";
 import { Form } from "./ui/form";
 const quick = z.object({ title: z.string().trim().min(1, "Укажите название").max(200) });
@@ -112,6 +113,7 @@ export function Dashboard() {
     ),
     progress: (
       <>
+        <ProgressionSummary compact />
         <h2>Прогресс дня</h2>
         {d.plan.confirmed_at ? (
           <p>
@@ -220,6 +222,7 @@ function CompleteTask({
   changed: () => void;
   notify: (v: string) => void;
 }) {
+  const rewardNotice = useRewardNotice();
   const [busy, setBusy] = useState(false),
     key = useRef(crypto.randomUUID());
   return (
@@ -229,7 +232,7 @@ function CompleteTask({
       onClick={async () => {
         setBusy(true);
         try {
-          await actOnQuest(
+          const saved = await actOnQuest(
             q,
             "complete",
             {
@@ -241,6 +244,7 @@ function CompleteTask({
             },
             key.current,
           );
+          rewardNotice(saved.reward);
           key.current = crypto.randomUUID();
           notify(`Выполнено: ${q.title}`);
           changed();

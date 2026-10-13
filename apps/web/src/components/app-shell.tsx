@@ -41,6 +41,7 @@ const planned = [
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/progress", label: "Опыт и награды", icon: ChartNoAxesCombined },
   { href: "/app/habits", label: "Привычки", icon: Repeat2 },
   { href: "/app/planning", label: "План дня и недели", icon: ListTodo },
   { href: "/app/calendar", label: "Календарь", icon: CalendarDays },
@@ -173,10 +174,13 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Plus size={23} aria-hidden="true" />
               Добавить<span className="sr-only"> — скоро</span>
             </span>
-            <span aria-disabled="true">
+            <Link
+              href="/app/progress"
+              aria-current={pathname === "/app/progress" ? "page" : undefined}
+            >
               <ChartNoAxesCombined size={21} aria-hidden="true" />
-              Прогресс<span className="sr-only"> — скоро</span>
-            </span>
+              Прогресс
+            </Link>
             <Button
               variant="ghost"
               aria-label="Ещё — открыть меню"

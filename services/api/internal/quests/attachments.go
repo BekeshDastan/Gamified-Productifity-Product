@@ -198,7 +198,7 @@ func (s *Service) upload(r *http.Request) (Attachment, error) {
 		}
 		updated, e := scan(tx.QueryRow(r.Context(), `UPDATE quests SET version=version+1,updated_at=$3 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, key, s.clock.Now().UTC()))
 		if e == nil {
-			e = s.event(r.Context(), tx, id, "attachment_added", name, &q, updated)
+			e = s.event(r.Context(), tx, id, "attachment_added", name, &q, &updated)
 		}
 		return e
 	})
@@ -342,7 +342,7 @@ func (s *Service) mountAttachments(r chi.Router) {
 				}
 				updated, e := scan(tx.QueryRow(r.Context(), `UPDATE quests SET version=version+1,updated_at=$3 WHERE owner_id=$1 AND id=$2 RETURNING `+columns, id, q.ID, s.clock.Now().UTC()))
 				if e == nil {
-					e = s.event(r.Context(), tx, id, "attachment_removed", a.Name, &q, updated)
+					e = s.event(r.Context(), tx, id, "attachment_removed", a.Name, &q, &updated)
 				}
 				return e
 			})

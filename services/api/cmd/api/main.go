@@ -19,6 +19,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/config"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 )
@@ -76,11 +77,13 @@ func main() {
 		logger.Error("invalid scanner configuration")
 		os.Exit(1)
 	}
-	questService := quests.NewService(pool, platform.RealClock{}).WithObserver(goalService.QuestChanged).WithFiles(files, scanner)
+	rewardService := progression.NewService(pool, platform.RealClock{})
+	rewardService.Mount(router, sessions.Protect)
+	questService := quests.NewService(pool, platform.RealClock{}).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, scanner)
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, platform.RealClock{}, questService)
 	calendarService.Mount(router, sessions.Protect)
-	habits.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
+	habits.NewService(pool, platform.RealClock{}).WithProgression(rewardService).Mount(router, sessions.Protect)
 	planning.NewService(pool, platform.RealClock{}, questService, calendarService).Mount(router, sessions.Protect)
 	server := &http.Server{
 		Addr:              cfg.Address,

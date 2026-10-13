@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { useRewardNotice } from "./progression";
 import { useQuery } from "@tanstack/react-query";
 import {
   actOnQuest,
@@ -79,6 +80,7 @@ function ActionForm({
   action: QuestAction;
   done: () => void;
 }) {
+  const rewardNotice = useRewardNotice();
   const retry = useRef<{ body: string; key: string }>(undefined);
   const flow = useValidatedForm<TransitionFields>({
     schema: transitionSchema,
@@ -93,7 +95,8 @@ function ActionForm({
     save: async (values) => {
       const body = JSON.stringify(values);
       if (retry.current?.body !== body) retry.current = { body, key: crypto.randomUUID() };
-      await actOnQuest(quest, action, values, retry.current.key);
+      const saved = await actOnQuest(quest, action, values, retry.current.key);
+      rewardNotice(saved.reward);
       done();
     },
   });
@@ -187,6 +190,7 @@ export function QuestHistory({ quest }: { quest: Quest }) {
                   attachment_added: "Добавлен файл",
                   attachment_removed: "Удалён файл",
                   rollup_completed: "Выполнены обязательные подзадачи",
+                  reward_reconciled: "Пересчитана исходная награда",
                   rollup_reopened: "Изменён прогресс подзадач",
                 } as Record<string, string>
               )[e.kind] ?? "Изменение"}
@@ -197,6 +201,13 @@ export function QuestHistory({ quest }: { quest: Quest }) {
               {statuses[e.after.status]}
             </p>
             {e.reason && <p>{e.reason}</p>}
+            {e.after.reward && (
+              <p>
+                Награда: {e.after.reward.xp_delta >= 0 ? "+" : ""}
+                {e.after.reward.xp_delta} XP · {e.after.reward.coins_delta >= 0 ? "+" : ""}
+                {e.after.reward.coins_delta} монет. {e.after.reward.reason}
+              </p>
+            )}
             {e.kind === "dependencies" && (
               <p>
                 Блокировки: {e.details.previous_titles?.join(", ") || "нет"} →{" "}

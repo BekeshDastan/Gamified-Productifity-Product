@@ -1,0 +1,681 @@
+//go:build integration
+
+package integration
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
+	"github.com/jackc/pgx/v5"
+	"sync/atomic"
+	"testing"
+	"time"
+)
+
+func TestEconomyVersionImmutable(t *testing.T) {
+	pool, ctx := database(t)
+	var data []byte
+	if e := pool.QueryRow(ctx, `SELECT rules FROM economy_versions WHERE id=$1`, progression.Version).Scan(&data); e != nil {
+		t.Fatal(e)
+	}
+	var rules struct {
+		TaskXP       []int64 `json:"task_xp"`
+		HabitXP      int64   `json:"habit_xp"`
+		CoinsDivisor int64   `json:"coins_divisor"`
+	}
+	if e := json.Unmarshal(data, &rules); e != nil || len(rules.TaskXP) != 5 || rules.HabitXP != 10 || rules.CoinsDivisor != 5 {
+		t.Fatal("catalog mismatch", string(data), e)
+	}
+	for i, xp := range rules.TaskXP {
+		if xp != progression.TaskXP(i+1) {
+			t.Fatal("Go and stored rules diverge")
+		}
+	}
+	for _, query := range []string{`UPDATE economy_versions SET rules='{}' WHERE id='economy-v1'`, `DELETE FROM economy_versions WHERE id='economy-v1'`} {
+		if _, e := pool.Exec(ctx, query); e == nil {
+			t.Fatal("mutable economy version")
+		}
+	}
+}
+
+func TestProgressionLedgerQuotaSnapshotAndWindow(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	_, account := f.signedIn(t, "ledger@example.test")
+	svc := progression.NewService(f.pool, f.clock)
+	award := func(source progression.Source) *progression.Reward {
+		var out *progression.Reward
+		e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+			var err error
+			out, err = svc.Award(t.Context(), tx, account.ID, source)
+			return err
+		})
+		if e != nil {
+			t.Fatal(e)
+		}
+		return out
+	}
+	var last progression.Source
+	for _, difficulty := range []int{5, 4, 3, 2, 2, 5} {
+		last = progression.Source{Kind: "task", Key: testkit.NewUser().ID, Difficulty: difficulty, Complete: true, Eligible: true, AllowFirst: true}
+		r := award(last)
+		if r == nil {
+			t.Fatal("missing award")
+		}
+	}
+	r := award(last)
+	if r.Kind != "unchanged" || r.XPDelta != 0 || r.TotalXP != 200 || r.AwardedXP != 5 || r.AwardedCoins != 1 {
+		t.Fatal("cap or duplicate", r)
+	}
+	last.Difficulty = 1
+	r = award(last)
+	if r.RequestedXP != 100 || r.AwardedXP != 5 {
+		t.Fatal("mutable source snapshot", r)
+	}
+	if _, e := f.pool.Exec(t.Context(), `UPDATE user_settings SET preferences=jsonb_set(preferences,'{timezone}',to_jsonb('Pacific/Kiritimati'::text)) WHERE owner_id=$1`, account.ID); e != nil {
+		t.Fatal(e)
+	}
+	zero := award(progression.Source{Kind: "task", Key: testkit.NewUser().ID, Difficulty: 5, Complete: true, Eligible: true, AllowFirst: true})
+	if zero.AwardedXP != 0 || zero.TotalXP != 200 {
+		t.Fatal("timezone reset quota", zero)
+	}
+	for i := 0; i < 5; i++ {
+		award(progression.Source{Kind: "habit", Key: testkit.NewUser().ID, Complete: true, Eligible: true, AllowFirst: true})
+	}
+	for i := 0; i < 2; i++ {
+		award(progression.Source{Kind: "challenge", Key: testkit.NewUser().ID, Complete: true, Eligible: true, AllowFirst: true})
+	}
+	var before progression.Balance
+	if e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+		var err error
+		before, err = svc.Balance(t.Context(), tx, account.ID)
+		return err
+	}); e != nil {
+		t.Fatal(e)
+	}
+	if before.TotalXP != 300 || before.Coins != 60 || before.Quota.TotalUsed != 300 {
+		t.Fatal(before)
+	}
+	f.clock.Advance(24 * 60 * 60 * 1e9)
+	r = award(last)
+	if r.AwardedXP != 5 || r.XPDelta != 0 {
+		t.Fatal("residual carried tomorrow", r)
+	}
+	r = award(progression.Source{Kind: "task", Key: testkit.NewUser().ID, Difficulty: 5, Complete: true, Eligible: true, AllowFirst: true})
+	if r.XPDelta != 100 || r.TotalXP != 400 {
+		t.Fatal("window not released", r)
+	}
+	for _, query := range []string{`UPDATE reward_ledger SET xp_delta=1 WHERE owner_id=$1`, `DELETE FROM reward_ledger WHERE owner_id=$1`, `UPDATE reward_entitlements SET awarded_xp=0 WHERE owner_id=$1`, `UPDATE reward_quota_usage SET xp=0 WHERE owner_id=$1`} {
+		if _, e := f.pool.Exec(t.Context(), query, account.ID); e == nil {
+			t.Fatal("mutable economic history", query)
+		}
+	}
+	var xp, coins int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT sum(xp_delta),sum(coins_delta) FROM reward_ledger WHERE owner_id=$1`, account.ID).Scan(&xp, &coins); e != nil || xp != 400 || coins != 80 {
+		t.Fatal("ledger versus projection", xp, coins, e)
+	}
+}
+func TestProgressionRollbackAndNonRewardSources(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	_, account := f.signedIn(t, "ledger-rollback@example.test")
+	svc := progression.NewService(f.pool, f.clock)
+	source := progression.Source{Kind: "task", Key: testkit.NewUser().ID, Difficulty: 3, Complete: true, Eligible: true, AllowFirst: true}
+	sentinel := errors.New("rollback after ledger")
+	e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+		if _, err := svc.Award(t.Context(), tx, account.ID, source); err != nil {
+			return err
+		}
+		return sentinel
+	})
+	if !errors.Is(e, sentinel) {
+		t.Fatal(e)
+	}
+	var n int
+	if e = f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM reward_entitlements)+(SELECT count(*) FROM reward_ledger)+(SELECT count(*) FROM reward_quota_usage)+(SELECT count(*) FROM outbox_events WHERE kind='progression.reward_changed')`).Scan(&n); e != nil || n != 0 {
+		t.Fatal("partial economic commit", n, e)
+	}
+	for _, flags := range [][3]bool{{false, true, true}, {true, false, true}, {true, true, false}} {
+		in := source
+		in.Complete = flags[0]
+		in.Eligible = flags[1]
+		in.AllowFirst = flags[2]
+		e = svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+			r, err := svc.Award(t.Context(), tx, account.ID, in)
+			if r != nil {
+				t.Fatal("container/partial/late got reward")
+			}
+			return err
+		})
+		if e != nil {
+			t.Fatal(e)
+		}
+	}
+}
+func TestProgressionTaskRewardsAreAtomicAndLeafOnly(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "task-reward@example.test")
+	input := questInput("Листовая работа")
+	input.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", input))
+	key := "task-reward-replay-00001"
+	oldVersion := version(q)
+	done := readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", oldVersion, map[string]string{"reason": "Готово"}, key))
+	if done.Reward == nil || done.Reward.XPDelta != 25 || done.Reward.CoinsDelta != 5 || done.Reward.TotalXP != 25 {
+		t.Fatal("completion reward", done.Reward)
+	}
+	repeat := readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", oldVersion, map[string]string{"reason": "Готово"}, key))
+	if repeat.Reward == nil || repeat.Reward.EntitlementID != done.Reward.EntitlementID {
+		t.Fatal("replay lost entitlement")
+	}
+	root := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Контейнер")))
+	childInput := questInput("Обязательный лист")
+	childInput.ParentID = &root.ID
+	child := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", childInput))
+	child = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+child.ID+"/complete", version(child), map[string]string{"reason": "Готово"}))
+	root = readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+root.ID, "", nil))
+	if root.Status != "completed" || root.Reward != nil {
+		t.Fatal("container result", root)
+	}
+	var count int
+	var xp int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM reward_entitlements WHERE owner_id=$1),(SELECT total_xp FROM user_progress WHERE owner_id=$1)`, account.ID).Scan(&count, &xp); e != nil || count != 2 || xp != 35 {
+		t.Fatal("container or duplicate reward", count, xp, e)
+	}
+	var recorded int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT (after_state->'reward'->>'xp_delta')::bigint FROM task_events WHERE owner_id=$1 AND quest_id=$2 AND kind='complete'`, account.ID, q.ID).Scan(&recorded); e != nil || recorded != 25 {
+		t.Fatal("history reward missing", recorded, e)
+	}
+}
+func TestProgressionTaskAndLedgerRollbackTogether(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "task-ledger-rollback@example.test")
+	input := questInput("Атомарная работа")
+	input.Difficulty = 5
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", input))
+	if _, e := f.pool.Exec(t.Context(), `CREATE FUNCTION reject_reward_ledger() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected economic failure'; END $$;CREATE TRIGGER reject_reward_ledger BEFORE INSERT ON reward_ledger FOR EACH ROW EXECUTE FUNCTION reject_reward_ledger()`); e != nil {
+		t.Fatal(e)
+	}
+	key := "task-atomic-retry-00001"
+	r := f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}, key)
+	if r.status != 500 {
+		t.Fatal(r.status, string(r.body))
+	}
+	fresh := readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+q.ID, "", nil))
+	var xp, count int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT total_xp,(SELECT count(*) FROM reward_entitlements WHERE owner_id=$1)+(SELECT count(*) FROM reward_quota_usage WHERE owner_id=$1)+(SELECT count(*) FROM reward_ledger WHERE owner_id=$1)+(SELECT count(*) FROM outbox_events WHERE owner_id=$1 AND kind='progression.reward_changed') FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&xp, &count); e != nil || xp != 0 || count != 0 || fresh.Status != "todo" || fresh.Version != q.Version {
+		t.Fatal("status and reward split", fresh, xp, count, e)
+	}
+	if _, e := f.pool.Exec(t.Context(), `DROP TRIGGER reject_reward_ledger ON reward_ledger;DROP FUNCTION reject_reward_ledger()`); e != nil {
+		t.Fatal(e)
+	}
+	done := readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}, key))
+	if done.Reward == nil || done.Reward.XPDelta != 100 {
+		t.Fatal("retry after rollback", done.Reward)
+	}
+}
+
+func TestProgressionHabitFullNormHasOneCanonicalReward(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "habit-reward@example.test")
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", habitInput()))
+	path := "/habits/" + h.ID + "/logs"
+	input := habits.LogInput{PeriodID: h.Periods[0].ID, Amount: 10, OccurredAt: f.clock.Now()}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path, habitVersion(h), input))
+	if h.Reward != nil {
+		t.Fatal("partial norm received XP", h.Reward)
+	}
+	key := "habit-complete-replay-00001"
+	v := habitVersion(h)
+	h = readHabit(t, f.privateRequest(t, a, "POST", path, v, input, key))
+	if h.Reward == nil || h.Reward.XPDelta != 10 || h.Reward.CoinsDelta != 2 || h.Reward.SourceKey != input.PeriodID {
+		t.Fatal("full period reward", h.Reward)
+	}
+	same := readHabit(t, f.privateRequest(t, a, "POST", path, v, input, key))
+	if same.Reward == nil || same.Reward.EntitlementID != h.Reward.EntitlementID {
+		t.Fatal("replay source changed")
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", path, habitVersion(h), input))
+	if h.Reward == nil || h.Reward.XPDelta != 0 || h.Periods[0].Amount != 30 {
+		t.Fatal("extra norm reward", h.Reward)
+	}
+	var count, xp int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM reward_ledger WHERE owner_id=$1),total_xp FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&count, &xp); e != nil || count != 1 || xp != 10 {
+		t.Fatal(count, xp, e)
+	}
+}
+func TestProgressionHabitLateWindowBoundary(t *testing.T) {
+	for _, offset := range []time.Duration{0, time.Second} {
+		t.Run(offset.String(), func(t *testing.T) {
+			f := newAuthFixture(t, auth.DefaultLimits())
+			a, account := f.signedIn(t, "habit-late@example.test")
+			in := habitInput()
+			in.StartsOn = "2026-10-11"
+			in.Schedule.Weekdays = []int{1, 2, 3, 4, 5, 6, 7}
+			h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", in))
+			p := h.Periods[0]
+			deadline := p.End.Add(24 * time.Hour)
+			f.clock.Advance(deadline.Add(offset).Sub(f.clock.Now()))
+			if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+				t.Fatal(r.status)
+			}
+			h = readHabit(t, f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs", habitVersion(h), habits.LogInput{PeriodID: p.ID, Amount: 20, OccurredAt: p.Start.Add(time.Hour)}))
+			if h.Reward == nil {
+				t.Fatal("missing reward explanation")
+			}
+			var xp int64
+			if e := f.pool.QueryRow(t.Context(), `SELECT total_xp FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&xp); e != nil {
+				t.Fatal(e)
+			}
+			want := int64(10)
+			if offset > 0 {
+				want = 0
+				if h.Reward.Kind != "not_awarded" {
+					t.Fatal(h.Reward)
+				}
+			}
+			if xp != want || h.Reward.XPDelta != want || h.Periods[0].Amount != 20 {
+				t.Fatal("late history or reward", h.Reward, h.Periods[0])
+			}
+		})
+	}
+}
+func TestProgressionHabitLogAndRewardRollbackTogether(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "habit-reward-rollback@example.test")
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", habitInput()))
+	if _, e := f.pool.Exec(t.Context(), `CREATE FUNCTION reject_habit_reward() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected habit reward failure'; END $$;CREATE TRIGGER reject_habit_reward BEFORE INSERT ON reward_ledger FOR EACH ROW EXECUTE FUNCTION reject_habit_reward()`); e != nil {
+		t.Fatal(e)
+	}
+	input := habits.LogInput{PeriodID: h.Periods[0].ID, Amount: 20, OccurredAt: f.clock.Now()}
+	r := f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs", habitVersion(h), input)
+	if r.status != 500 {
+		t.Fatal(r.status)
+	}
+	fresh := readHabit(t, f.privateRequest(t, a, "GET", "/habits/"+h.ID, "", nil))
+	var logs, xp int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM habit_logs WHERE owner_id=$1),total_xp FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&logs, &xp); e != nil || logs != 0 || xp != 0 || fresh.Version != h.Version || fresh.Periods[0].Amount != 0 {
+		t.Fatal("habit and reward split", logs, xp, fresh, e)
+	}
+}
+func TestProgressionTaskReversalRestoresOriginalAfterSpend(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "task-compensation@example.test")
+	input := questInput("Исходная работа")
+	input.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", input))
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}))
+	entitlement := q.Reward.EntitlementID
+	svc := progression.NewService(f.pool, f.clock)
+	purchase := testkit.NewUser().ID
+	spend := func(cost int64) (*progression.Reward, error) {
+		var result *progression.Reward
+		e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+			var err error
+			result, err = svc.SpendInTx(t.Context(), tx, account.ID, purchase, cost)
+			return err
+		})
+		return result, e
+	}
+	if r, e := spend(5); e != nil || r.CoinsDelta != -5 || r.AvailableCoins != 0 {
+		t.Fatal(r, e)
+	}
+	if r, e := spend(5); e != nil || r.CoinsDelta != 0 {
+		t.Fatal("repeat spend", r, e)
+	}
+	if _, e := spend(4); e == nil {
+		t.Fatal("changed operation cost accepted")
+	}
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]string{"reason": "Исправляю выполнение"}))
+	if q.Reward == nil || q.Reward.XPDelta != -25 || q.Reward.CoinsDelta != -5 || q.Reward.AvailableCoins != 0 || q.Reward.CoinCorrection != 5 {
+		t.Fatal("undo after spend", q.Reward)
+	}
+	if e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+		_, err := svc.SpendInTx(t.Context(), tx, account.ID, testkit.NewUser().ID, 1)
+		if err == nil {
+			t.Fatal("spent during correction")
+		}
+		return nil
+	}); e != nil {
+		t.Fatal(e)
+	}
+	input = q.Input
+	input.Difficulty = 5
+	q = readQuest(t, f.privateRequest(t, a, "PATCH", "/quests/"+q.ID, version(q), input))
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Подтверждаю исходный результат"}))
+	if q.Reward == nil || q.Reward.XPDelta != 25 || q.Reward.AwardedXP != 25 || q.Reward.EntitlementID != entitlement || q.Reward.CoinCorrection != 0 || q.Reward.AvailableCoins != 0 {
+		t.Fatal("inflated restoration", q.Reward)
+	}
+	for i := 0; i < 3; i++ {
+		q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]string{"reason": "Проверенный цикл"}))
+		q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Восстанавливаю"}))
+	}
+	var xp, coins, quota, entitlements int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT total_xp,coins,(SELECT sum(xp) FROM reward_quota_usage WHERE owner_id=$1),(SELECT count(*) FROM reward_entitlements WHERE owner_id=$1) FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&xp, &coins, &quota, &entitlements); e != nil || xp != 25 || coins != 0 || quota != 25 || entitlements != 1 {
+		t.Fatal("farming cycle", xp, coins, quota, entitlements, e)
+	}
+}
+func TestProgressionHabitCorrectionRestoresAfterDeadline(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "habit-compensation@example.test")
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", habitInput()))
+	path := "/habits/" + h.ID
+	h = readHabit(t, f.privateRequest(t, a, "POST", path+"/logs", habitVersion(h), habits.LogInput{PeriodID: h.Periods[0].ID, Amount: 20, OccurredAt: f.clock.Now()}))
+	entitlement := h.Reward.EntitlementID
+	logs := readHabitLogs(t, f.privateRequest(t, a, "GET", path+"/logs", "", nil))
+	correctPath := path + "/logs/" + logs[0].ID + "/correct"
+	h = readHabit(t, f.privateRequest(t, a, "POST", correctPath, habitVersion(h), habits.CorrectionInput{Amount: 0, Reason: "Ошибочный факт"}))
+	if h.Reward == nil || h.Reward.XPDelta != -10 || h.Reward.CoinsDelta != -2 {
+		t.Fatal(h.Reward)
+	}
+	f.clock.Advance(3 * 24 * time.Hour)
+	if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+		t.Fatal(r.status)
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", correctPath, habitVersion(h), habits.CorrectionInput{Amount: 20, Reason: "Восстановлен исходный факт"}))
+	if h.Reward == nil || h.Reward.Kind != "restoration" || h.Reward.XPDelta != 10 || h.Reward.EntitlementID != entitlement {
+		t.Fatal("late restoration changed right", h.Reward)
+	}
+	svc := progression.NewService(f.pool, f.clock)
+	if e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+		b, e := svc.Balance(t.Context(), tx, account.ID)
+		if b.TotalXP != 10 || b.Quota.HabitUsed != 0 {
+			t.Fatal("restoration consumed fresh quota", b)
+		}
+		return e
+	}); e != nil {
+		t.Fatal(e)
+	}
+}
+func TestProgressionStructureRestoresOnlyExistingLeafRight(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "structure-reward@example.test")
+	in := questInput("Исходный лист")
+	in.Difficulty = 3
+	root := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in))
+	root = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+root.ID+"/complete", version(root), map[string]string{"reason": "Готово"}))
+	root = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+root.ID+"/reopen", version(root), map[string]string{"reason": "Делаю контейнер"}))
+	childIn := questInput("Необязательная часть")
+	childIn.ParentID = &root.ID
+	childIn.Required = false
+	child := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", childIn))
+	root = readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+root.ID, "", nil))
+	root = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+root.ID+"/complete", version(root), map[string]string{"reason": "Контейнер готов"}))
+	if root.Reward != nil && root.Reward.XPDelta != 0 {
+		t.Fatal("container restored reward")
+	}
+	childIn = child.Input
+	childIn.ParentID = nil
+	readQuest(t, f.privateRequest(t, a, "PATCH", "/quests/"+child.ID, version(child), childIn))
+	var xp, rights int64
+	if e := f.pool.QueryRow(t.Context(), `SELECT total_xp,(SELECT count(*) FROM reward_entitlements WHERE owner_id=$1) FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&xp, &rights); e != nil || xp != 25 || rights != 1 {
+		t.Fatal("leaf structure lost or created right", xp, rights, e)
+	}
+	var kind string
+	if e := f.pool.QueryRow(t.Context(), `SELECT kind FROM task_events WHERE owner_id=$1 AND quest_id=$2 ORDER BY id DESC LIMIT 1`, account.ID, root.ID).Scan(&kind); e != nil || kind != "reward_reconciled" {
+		t.Fatal("structural correction missing history", kind, e)
+	}
+}
+func readProgression(t *testing.T, r authResponse) progression.Balance {
+	t.Helper()
+	var out struct {
+		Data progression.Balance `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+		t.Fatalf("progression %d %s", r.status, r.body)
+	}
+	return out.Data
+}
+func readRewardHistory(t *testing.T, r authResponse) progression.LedgerPage {
+	t.Helper()
+	var out struct {
+		Data progression.LedgerPage `json:"data"`
+	}
+	if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+		t.Fatalf("reward history %d %s", r.status, r.body)
+	}
+	return out.Data
+}
+func TestProgressionAPIPrivacyAndStableHistory(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "progression-api@example.test")
+	b, _ := f.signedIn(t, "progression-api-other@example.test")
+	empty := readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if empty.TotalXP != 0 || empty.Coins != 0 || empty.Level.Number != 1 || len(empty.Rules.TaskXP) != 5 {
+		t.Fatal("invented empty progress", empty)
+	}
+	svc := progression.NewService(f.pool, f.clock)
+	for i := 0; i < 51; i++ {
+		if e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+			_, e := svc.Award(t.Context(), tx, account.ID, progression.Source{Kind: "task", Key: testkit.NewUser().ID, Difficulty: 1, Complete: true, Eligible: true, AllowFirst: true})
+			return e
+		}); e != nil {
+			t.Fatal(e)
+		}
+	}
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Настоящая задача")))
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}))
+	balance := readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if balance.TotalXP != 200 || balance.Coins != 40 || balance.AvailableCoins != 40 || balance.Level.Number != 2 || balance.Quota.TaskUsed != 200 {
+		t.Fatal(balance)
+	}
+	first := readRewardHistory(t, f.privateRequest(t, a, "GET", "/progression/history", "", nil))
+	if len(first.Items) != 50 || first.NextCursor == nil || first.Items[0].SourceTitle != "Настоящая задача" || first.Items[0].SourceURL == nil || *first.Items[0].SourceURL != "/app/quests/"+q.ID {
+		t.Fatal("missing source or page", first)
+	}
+	second := readRewardHistory(t, f.privateRequest(t, a, "GET", "/progression/history?before="+*first.NextCursor, "", nil))
+	if len(second.Items) != 2 || second.NextCursor != nil || second.Items[0].Sequence >= first.Items[49].Sequence {
+		t.Fatal("unstable history", second)
+	}
+	other := readProgression(t, f.privateRequest(t, b, "GET", "/progression", "", nil))
+	if other.TotalXP != 0 || len(readRewardHistory(t, f.privateRequest(t, b, "GET", "/progression/history", "", nil)).Items) != 0 {
+		t.Fatal("foreign projection leaked")
+	}
+	if r := f.privateRequest(t, b, "GET", "/progression/history?before="+first.Items[0].ID, "", nil); r.status != 404 {
+		t.Fatal("foreign cursor", r.status)
+	}
+	if r := f.privateRequest(t, a, "GET", "/progression/history?before=bad", "", nil); r.status != 422 {
+		t.Fatal("bad cursor", r.status)
+	}
+}
+
+func TestProgressionRebuildAndOutboxAreIdempotent(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "rebuild@example.test")
+	b, other := f.signedIn(t, "rebuild-other@example.test")
+	input := questInput("Источник сверки")
+	input.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", input))
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}))
+	svc := progression.NewService(f.pool, f.clock)
+	poison := func() {
+		if _, e := f.pool.Exec(t.Context(), `UPDATE user_progress SET total_xp=999,coins=777 WHERE owner_id=$1`, account.ID); e != nil {
+			t.Fatal(e)
+		}
+	}
+	poison()
+	check, e := svc.Check(t.Context(), account.ID)
+	if e != nil || !check.Changed || check.StoredXP != 999 || check.LedgerXP != 25 {
+		t.Fatal(check, e)
+	}
+	var stored int64
+	if e = f.pool.QueryRow(t.Context(), `SELECT total_xp FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&stored); e != nil || stored != 999 {
+		t.Fatal("dry check changed projection", stored, e)
+	}
+	fixed, e := svc.Rebuild(t.Context(), account.ID)
+	if e != nil || !fixed.Changed || fixed.LedgerXP != 25 || fixed.LedgerCoins != 5 || fixed.LedgerEntries != 1 {
+		t.Fatal(fixed, e)
+	}
+	again, e := svc.Rebuild(t.Context(), account.ID)
+	if e != nil || again.Changed {
+		t.Fatal("rebuild not stable", again, e)
+	}
+	poison()
+	live := readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if live.TotalXP != 25 || live.Coins != 5 {
+		t.Fatal("read served corrupt counter", live)
+	}
+	var calls atomic.Int32
+	svc.WithProjectionObserver(func(ctx context.Context, tx pgx.Tx, owner string) error { calls.Add(1); return nil })
+	payload, _ := json.Marshal(map[string]string{"ledger_id": q.Reward.LedgerID})
+	job := jobs.Job{ID: testkit.NewUser().ID, OwnerID: &account.ID, Kind: "progression.reward_changed", Payload: payload}
+	handler := svc.Handlers()[job.Kind]
+	consume := func(job jobs.Job, owner string) error {
+		return svc.WithinOwner(t.Context(), owner, func(tx pgx.Tx) error { return handler(t.Context(), tx, job) })
+	}
+	if e = consume(job, account.ID); e != nil {
+		t.Fatal(e)
+	}
+	poison()
+	job.ID = testkit.NewUser().ID
+	if e = consume(job, account.ID); e != nil {
+		t.Fatal(e)
+	}
+	if calls.Load() != 1 {
+		t.Fatal("duplicate projection consumer", calls.Load())
+	}
+	var receipts, ledger, quota int64
+	if e = f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM reward_projection_events WHERE owner_id=$1),(SELECT count(*) FROM reward_ledger WHERE owner_id=$1),(SELECT sum(xp) FROM reward_quota_usage WHERE owner_id=$1)`, account.ID).Scan(&receipts, &ledger, &quota); e != nil || receipts != 1 || ledger != 1 || quota != 25 {
+		t.Fatal("consumer minted reward", receipts, ledger, quota, e)
+	}
+	foreign := job
+	foreign.OwnerID = &other.ID
+	if e = consume(foreign, other.ID); !errors.Is(e, jobs.ErrPermanent) {
+		t.Fatal("foreign event accepted", e)
+	}
+	readProgression(t, f.privateRequest(t, b, "GET", "/progression", "", nil))
+	owners, e := svc.OwnerBatch(t.Context(), "")
+	if e != nil || len(owners) != 2 {
+		t.Fatal("owner batch", owners, e)
+	}
+	tail, e := svc.OwnerBatch(t.Context(), owners[0])
+	if e != nil || len(tail) != 1 || tail[0] == owners[0] {
+		t.Fatal("batch cursor", tail, e)
+	}
+}
+
+func TestProgressionTwentyConcurrentCompletionsRespectCaps(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "twenty-tasks@example.test")
+	tasks := make([]quests.Quest, 0, 20)
+	for i := 0; i < 20; i++ {
+		in := questInput(fmt.Sprintf("Параллельная работа %d", i+1))
+		in.Difficulty = 5
+		tasks = append(tasks, readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in)))
+	}
+	results := make(chan authResponse, 20)
+	for _, q := range tasks {
+		go func(q quests.Quest) {
+			results <- f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Параллельное подтверждение"}, "race-complete-"+q.ID)
+		}(q)
+	}
+	var delta, coins int64
+	positive := 0
+	for i := 0; i < 20; i++ {
+		q := readQuest(t, <-results)
+		if q.Status != "completed" || q.Reward == nil {
+			t.Fatal("lost completion", q)
+		}
+		delta += q.Reward.XPDelta
+		coins += q.Reward.CoinsDelta
+		if q.Reward.XPDelta > 0 {
+			positive++
+		}
+	}
+	if delta != 200 || coins != 40 || positive != 2 {
+		t.Fatal("parallel quota overflow", delta, coins, positive)
+	}
+	b := readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if b.TotalXP != 200 || b.Coins != 40 || b.Quota.TaskUsed != 200 {
+		t.Fatal(b)
+	}
+	var completed, rights, ledger int
+	if e := f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM quests WHERE owner_id=$1 AND status='completed'),(SELECT count(*) FROM reward_entitlements WHERE owner_id=$1),(SELECT count(*) FROM reward_ledger WHERE owner_id=$1)`, account.ID).Scan(&completed, &rights, &ledger); e != nil || completed != 20 || rights != 20 || ledger != 20 {
+		t.Fatal(completed, rights, ledger, e)
+	}
+}
+func TestProgressionTwentySameSourceAndReplayAfterCacheTTL(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "same-task-race@example.test")
+	in := questInput("Один источник")
+	in.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in))
+	old := version(q)
+	key := "same-completion-twenty-0001"
+	results := make(chan authResponse, 20)
+	for i := 0; i < 20; i++ {
+		go func() {
+			results <- f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", old, map[string]string{"reason": "Готово"}, key)
+		}()
+	}
+	var entitlement string
+	for i := 0; i < 20; i++ {
+		done := readQuest(t, <-results)
+		if done.Reward == nil {
+			t.Fatal("missing cached logical result")
+		}
+		if entitlement == "" {
+			entitlement = done.Reward.EntitlementID
+		}
+		if done.Reward.EntitlementID != entitlement || done.Reward.TotalXP != 25 {
+			t.Fatal("duplicate source right", done.Reward)
+		}
+	}
+	f.clock.Advance(25 * time.Hour)
+	if r := f.request(t, a, "POST", "/refresh", f.csrf(t, a), struct{}{}); r.status != 200 {
+		t.Fatal(r.status)
+	}
+	tag, e := f.pool.Exec(t.Context(), `DELETE FROM idempotency_records WHERE user_id=$1 AND route_key=$2 AND idempotency_key=$3 AND expires_at<=$4`, account.ID, "/api/v1/quests/"+q.ID+"/complete", key, f.clock.Now())
+	if e != nil || tag.RowsAffected() != 1 {
+		t.Fatal("cache TTL fixture", tag, e)
+	}
+	again := readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", old, map[string]string{"reason": "Готово"}, key))
+	if again.Reward == nil || again.Reward.XPDelta != 0 || again.Reward.EntitlementID != entitlement || again.Version != q.Version+1 {
+		t.Fatal("re-award after TTL", again)
+	}
+	var rights, ledger int
+	var xp int64
+	if e = f.pool.QueryRow(t.Context(), `SELECT (SELECT count(*) FROM reward_entitlements WHERE owner_id=$1),(SELECT count(*) FROM reward_ledger WHERE owner_id=$1),total_xp FROM user_progress WHERE owner_id=$1`, account.ID).Scan(&rights, &ledger, &xp); e != nil || rights != 1 || ledger != 1 || xp != 25 {
+		t.Fatal(rights, ledger, xp, e)
+	}
+}
+func TestProgressionFailedReversalDoesNotSplitSpentBalance(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, account := f.signedIn(t, "reversal-rollback@example.test")
+	in := questInput("Проверенный исходный результат")
+	in.Difficulty = 3
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in))
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}))
+	svc := progression.NewService(f.pool, f.clock)
+	if e := svc.WithinOwner(t.Context(), account.ID, func(tx pgx.Tx) error {
+		_, e := svc.SpendInTx(t.Context(), tx, account.ID, testkit.NewUser().ID, 5)
+		return e
+	}); e != nil {
+		t.Fatal(e)
+	}
+	if _, e := f.pool.Exec(t.Context(), `CREATE FUNCTION reject_reversal() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.kind='reversal' THEN RAISE EXCEPTION 'injected reversal failure';END IF;RETURN NEW;END $$;CREATE TRIGGER reject_reversal BEFORE INSERT ON reward_ledger FOR EACH ROW EXECUTE FUNCTION reject_reversal()`); e != nil {
+		t.Fatal(e)
+	}
+	key := "reversal-atomic-retry-0001"
+	if r := f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]string{"reason": "Исправление"}, key); r.status != 500 {
+		t.Fatal(r.status)
+	}
+	fresh := readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+q.ID, "", nil))
+	b := readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if fresh.Status != "completed" || fresh.Version != q.Version || b.TotalXP != 25 || b.Coins != 0 || b.CoinCorrection != 0 {
+		t.Fatal("split reversal", fresh, b)
+	}
+	if _, e := f.pool.Exec(t.Context(), `DROP TRIGGER reject_reversal ON reward_ledger;DROP FUNCTION reject_reversal()`); e != nil {
+		t.Fatal(e)
+	}
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]string{"reason": "Исправление"}, key))
+	b = readProgression(t, f.privateRequest(t, a, "GET", "/progression", "", nil))
+	if b.TotalXP != 0 || b.Coins != -5 || b.AvailableCoins != 0 || b.CoinCorrection != 5 || b.Quota.TaskUsed != 25 {
+		t.Fatal("wrong correction", b)
+	}
+}
