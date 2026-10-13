@@ -32,3 +32,11 @@ func TestEconomyV1AndPartialQuotas(t *testing.T) {
 		}
 	}
 }
+
+func TestCoinsUseAwardedIntegerXP(t *testing.T) {
+	for _, c := range []struct{ xp, coins int64 }{{0, 0}, {3, 0}, {5, 1}, {25, 5}, {100, 20}} {
+		if CoinsForAward(c.xp) != c.coins {
+			t.Fatal(c)
+		}
+	}
+}

@@ -69,3 +69,5 @@ func LevelFor(xp int64) Level {
 func Limited(base, kindUsed, totalUsed, kindCap int64) int64 {
 	return max(0, min(base, kindCap-kindUsed, 300-totalUsed))
 }
+
+func CoinsForAward(xp int64) int64 { return max(0, xp) / 5 }

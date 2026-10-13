@@ -1690,7 +1690,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Пороги 99/100/399/400/900 дают ожидаемые уровни; старую версию нельзя редактировать.
   - **КОММИТ СЕЙЧАС:** `feat(progression): add versioned XP rules and level thresholds`
 
-- [ ] **C082. Журнал и entitlement**
+- [x] **C082. Журнал и entitlement**
   - **Сделать:** Создать ledger, source keys, reward_quota_usage, 24-часовые лимиты и проекцию баланса.
   - **Проверить:** Частичная квота даёт правильную сумму; смена зоны не обнуляет окно.
   - **КОММИТ СЕЙЧАС:** `feat(progression): add reward ledger entitlements and rolling quotas`
