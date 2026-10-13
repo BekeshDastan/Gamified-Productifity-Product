@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/routine-runs/templates/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getJournalTemplate"];
+        put: operations["saveJournalTemplate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/routine-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getRoutineHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reviews/week/{date}/apply-plan": {
         parameters: {
             query?: never;
@@ -2251,6 +2283,28 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        JournalTemplate: {
+            /** @enum {string} */
+            kind: "morning" | "evening";
+            version: number;
+            steps: {
+                id: string;
+                label: string;
+            }[];
+        };
+        JournalTemplateInput: {
+            steps: {
+                id: string;
+                label: string;
+            }[];
+        };
+        RoutineHistory: {
+            items: {
+                id: string;
+                snapshot: components["schemas"]["RoutineRun"];
+            }[];
+            next: string;
+        };
         WeekApplyInput: {
             preview_id: string;
             changes: {
@@ -2319,6 +2373,8 @@ export interface components {
             conclusion: string;
             energy: number | null;
             mood: number | null;
+            template_version: number;
+            checked: string[];
         };
         DailyItem: {
             id: string;
@@ -2363,6 +2419,8 @@ export interface components {
             input: components["schemas"]["PlanInput"];
             plan_version: number;
             reason: string;
+            template_version: number;
+            checked: string[];
         };
         JournalInput: {
             /** Format: date */
@@ -4102,6 +4160,98 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getJournalTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "morning" | "evening";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JournalTemplate"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
+    saveJournalTemplate: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                kind: "morning" | "evening";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JournalTemplateInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["JournalTemplate"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getRoutineHistory: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RoutineHistory"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
     applyWeekReview: {
         parameters: {
             query?: never;

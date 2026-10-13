@@ -26,9 +26,11 @@ type Morning struct {
 	Plan planning.Plan `json:"plan"`
 }
 type MorningInput struct {
-	Input       planning.Input `json:"input"`
-	PlanVersion int64          `json:"plan_version"`
-	Reason      string         `json:"reason"`
+	TemplateVersion int64          `json:"template_version"`
+	Checked         []string       `json:"checked"`
+	Input           planning.Input `json:"input"`
+	PlanVersion     int64          `json:"plan_version"`
+	Reason          string         `json:"reason"`
 }
 
 func (s *Service) WithPlanning(p *planning.Service) *Service { s.plans = p; return s }
@@ -74,6 +76,10 @@ func (s *Service) morning(r *http.Request, tx pgx.Tx, owner, date string, in *Mo
 	}
 	var plan planning.Plan
 	if in != nil {
+		template, e := s.checkTemplate(r.Context(), tx, owner, "morning", in.TemplateVersion, in.Checked)
+		if e != nil {
+			return Morning{}, e
+		}
 		var version int64
 		if run != nil {
 			version = run.Version
@@ -86,10 +92,14 @@ func (s *Service) morning(r *http.Request, tx pgx.Tx, owner, date string, in *Mo
 			return Morning{}, e
 		}
 		run, e = s.saveRun(r.Context(), tx, owner, date, "morning", struct {
-			Input       MorningInput `json:"input"`
-			PlanID      string       `json:"plan_id"`
-			PlanVersion int64        `json:"plan_version"`
-		}{*in, plan.ID, plan.Version})
+			Template    RoutineTemplate `json:"template"`
+			Input       MorningInput    `json:"input"`
+			PlanID      string          `json:"plan_id"`
+			PlanVersion int64           `json:"plan_version"`
+		}{template, *in, plan.ID, plan.Version})
+		if e != nil {
+			return Morning{}, e
+		}
 	} else {
 		plan, e = s.plans.ViewInTx(r.Context(), tx, owner, date)
 	}

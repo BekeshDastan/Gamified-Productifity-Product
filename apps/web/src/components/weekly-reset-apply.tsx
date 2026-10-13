@@ -1,4 +1,7 @@
 "use client";
+import { z } from "zod";
+import { useTabDraft, TabDraftRecovery } from "@/lib/forms/tab-draft";
+import { draftKey } from "@/lib/private-drafts";
 import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/lib/api/client";
@@ -7,6 +10,22 @@ import { useUnsavedChanges } from "@/lib/forms/unsaved-changes";
 import { applyWeekReview, type WeekPreview, type WeekApplyInput } from "@/lib/journal";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
+const weeklyDraftSchema = z.object({
+  choices: z.record(
+    z.string(),
+    z.object({
+      action: z.enum(["keep", "move", "archive"]),
+      date: z.string(),
+      reason: z.string().max(1000),
+      top: z.boolean(),
+    }),
+  ),
+  days: z.record(
+    z.string(),
+    z.object({ selected: z.boolean(), minutes: z.number().min(0).max(1440), rest: z.boolean() }),
+  ),
+  reason: z.string().max(1000),
+});
 type Choice = { action: "keep" | "move" | "archive"; date: string; reason: string; top: boolean };
 export function WeeklyResetApply({
   preview,
@@ -33,6 +52,18 @@ export function WeeklyResetApply({
   useUnsavedChanges(
     changes.length > 0 || Object.values(days).some((day) => day.selected) || reason !== "" || busy,
   );
+  const draft = useTabDraft({
+    storageKey: draftKey(account, "weekly:" + snap.week),
+    schema: weeklyDraftSchema,
+    value: { choices, days, reason },
+    dirty: changes.length > 0 || Object.values(days).some((day) => day.selected) || reason !== "",
+    restore: (values) => {
+      setChoices(values.choices);
+      setDays(values.days);
+      setReason(values.reason);
+      setConfirm(false);
+    },
+  });
   function choice(id: string): Choice {
     return choices[id] ?? { action: "keep", date: snap.next_week, reason: "", top: false };
   }
@@ -117,6 +148,7 @@ export function WeeklyResetApply({
     try {
       await applyWeekReview(snap.week, preview, input, operation.current.key);
       void cache.invalidateQueries({ queryKey: accountQueryKey(account) });
+      draft.clear();
       saved();
     } catch (e) {
       setError(
@@ -132,6 +164,7 @@ export function WeeklyResetApply({
   return (
     <Card>
       <h2>Выбрать изменения Weekly Reset</h2>
+      <TabDraftRecovery draft={draft} />
       <p>
         Без выбора задача остаётся как есть. Перенос меняет плановую дату; дедлайн и фиксированные
         события сохраняются. Планы отмеченных дней будут подтверждены с сохранением исходных

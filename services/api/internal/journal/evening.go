@@ -12,11 +12,13 @@ import (
 )
 
 type ReviewInput struct {
-	Obstacle     string `json:"obstacle"`
-	ObstacleNote string `json:"obstacle_note"`
-	Conclusion   string `json:"conclusion"`
-	Energy       *int   `json:"energy"`
-	Mood         *int   `json:"mood"`
+	TemplateVersion int64    `json:"template_version"`
+	Checked         []string `json:"checked"`
+	Obstacle        string   `json:"obstacle"`
+	ObstacleNote    string   `json:"obstacle_note"`
+	Conclusion      string   `json:"conclusion"`
+	Energy          *int     `json:"energy"`
+	Mood            *int     `json:"mood"`
 }
 type DailyItem struct {
 	ID             string  `json:"id"`
@@ -134,6 +136,10 @@ func (s *Service) review(r *http.Request, tx pgx.Tx, owner, date string, in *Rev
 		return Review{}, e
 	}
 	if in != nil {
+		template, e := s.checkTemplate(ctx, tx, owner, "evening", in.TemplateVersion, in.Checked)
+		if e != nil {
+			return Review{}, e
+		}
 		valid, e := validateReview(*in)
 		if e != nil {
 			return Review{}, e
@@ -146,10 +152,11 @@ func (s *Service) review(r *http.Request, tx pgx.Tx, owner, date string, in *Rev
 			return Review{}, p
 		}
 		run, e = s.saveRun(ctx, tx, owner, date, "evening", struct {
-			Answers  ReviewInput `json:"answers"`
-			Stats    DailyStats  `json:"stats"`
-			Timezone string      `json:"timezone"`
-		}{valid, stats, zone})
+			Template RoutineTemplate `json:"template"`
+			Answers  ReviewInput     `json:"answers"`
+			Stats    DailyStats      `json:"stats"`
+			Timezone string          `json:"timezone"`
+		}{template, valid, stats, zone})
 		if e != nil {
 			return Review{}, e
 		}

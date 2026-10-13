@@ -6,6 +6,112 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/routine-runs/templates/{kind}:
+    get:
+      operationId: getJournalTemplate
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - morning
+              - evening
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/JournalTemplate"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: saveJournalTemplate
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - morning
+              - evening
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JournalTemplateInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/JournalTemplate"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/routine-runs:
+    get:
+      operationId: getRoutineHistory
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RoutineHistory"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/reviews/week/{date}/apply-plan:
     post:
       operationId: applyWeekReview
@@ -6882,6 +6988,77 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    JournalTemplate:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - version
+        - steps
+      properties:
+        kind:
+          type: string
+          enum:
+            - morning
+            - evening
+        version:
+          type: integer
+        steps:
+          type: array
+          maxItems: 20
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - label
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+                maxLength: 200
+    JournalTemplateInput:
+      type: object
+      additionalProperties: false
+      required:
+        - steps
+      properties:
+        steps:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - label
+            properties:
+              id:
+                type: string
+              label:
+                type: string
+    RoutineHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - id
+              - snapshot
+            properties:
+              id:
+                type: string
+              snapshot:
+                $ref: "#/components/schemas/RoutineRun"
+        next:
+          type: string
     WeekApplyInput:
       type: object
       additionalProperties: false
@@ -7087,6 +7264,8 @@ components:
         - conclusion
         - energy
         - mood
+        - template_version
+        - checked
       properties:
         obstacle:
           type: string
@@ -7116,6 +7295,13 @@ components:
             - "null"
           minimum: 1
           maximum: 5
+        template_version:
+          type: integer
+        checked:
+          type: array
+          maxItems: 20
+          items:
+            type: string
     DailyItem:
       type: object
       additionalProperties: false
@@ -7236,6 +7422,8 @@ components:
         - input
         - plan_version
         - reason
+        - template_version
+        - checked
       properties:
         input:
           $ref: "#/components/schemas/PlanInput"
@@ -7243,6 +7431,13 @@ components:
           type: integer
         reason:
           type: string
+        template_version:
+          type: integer
+        checked:
+          type: array
+          maxItems: 20
+          items:
+            type: string
     JournalInput:
       type: object
       additionalProperties: false

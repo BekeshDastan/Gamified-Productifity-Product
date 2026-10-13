@@ -8,10 +8,20 @@ import { useSettings } from "@/lib/settings";
 import { accountQueryKey } from "@/lib/api/query-provider";
 import { useConfirmDiscard, SafeLink } from "@/lib/forms/unsaved-changes";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
-import { getReview, saveReview, reviewInput, type Review } from "@/lib/journal";
+import {
+  getReview,
+  saveReview,
+  reviewInput,
+  getRoutineTemplate,
+  type RoutineTemplate,
+  type Review,
+} from "@/lib/journal";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Select } from "./ui/field";
+import { useTabDraft, TabDraftRecovery } from "@/lib/forms/tab-draft";
+import { draftKey } from "@/lib/private-drafts";
+import { RoutineChecklist } from "./routine-templates";
 import { Form } from "./ui/form";
 const obstacles = {
   none: "Не было",
@@ -41,6 +51,12 @@ function Evening({ account, timezone }: { account: string; timezone: string }) {
   const q = useQuery({
     queryKey: accountQueryKey(account, "evening", date),
     queryFn: ({ signal }) => getReview(date, signal),
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  const template = useQuery({
+    queryKey: accountQueryKey(account, "routine-template", "evening"),
+    queryFn: ({ signal }) => getRoutineTemplate("evening", signal),
   });
   return (
     <div className="journal-layout">
@@ -72,9 +88,11 @@ function Evening({ account, timezone }: { account: string; timezone: string }) {
         )}
         {notice && <p role="status">{notice}</p>}
       </Card>
-      {q.data && (
+      {q.data && template.data && (
         <ReviewEditor
           key={date + ":" + q.data.run?.version}
+          account={account}
+          template={template.data}
           date={date}
           review={q.data}
           saved={() => {
@@ -87,28 +105,61 @@ function Evening({ account, timezone }: { account: string; timezone: string }) {
   );
 }
 function ReviewEditor({
+  account,
+  template,
   date,
   review,
   saved,
 }: {
+  account: string;
+  template: RoutineTemplate;
   date: string;
   review: Review;
   saved: () => void;
 }) {
+  const [frozen] = useState(template);
   const operation = useRef({ body: "", key: "" });
   const initial = reviewInput.safeParse(review.run?.payload.answers);
   const { form, onSubmit, saving, error } = useValidatedForm<z.infer<typeof reviewInput>>({
     schema: reviewInput,
     defaultValues: initial.success
-      ? initial.data
-      : { obstacle: "none", obstacle_note: "", conclusion: "", energy: null, mood: null },
+      ? {
+          ...initial.data,
+          template_version: frozen.version,
+          checked: initial.data.checked.filter((id) => frozen.steps.some((step) => step.id === id)),
+        }
+      : {
+          template_version: frozen.version,
+          checked: [],
+          obstacle: "none",
+          obstacle_note: "",
+          conclusion: "",
+          energy: null,
+          mood: null,
+        },
     fields: ["obstacle", "obstacle_note", "conclusion", "energy", "mood"],
     save: async (input) => {
       const body = JSON.stringify(input);
       if (operation.current.body !== body) operation.current = { body, key: crypto.randomUUID() };
       await saveReview(date, review, input, operation.current.key);
+      draft.clear();
       saved();
     },
+  });
+  const draft = useTabDraft({
+    storageKey: draftKey(account, "evening:" + date),
+    schema: reviewInput,
+    value: form.watch(),
+    dirty: form.formState.isDirty,
+    restore: (values) =>
+      form.reset(
+        {
+          ...values,
+          template_version: frozen.version,
+          checked: values.checked.filter((id) => frozen.steps.some((step) => step.id === id)),
+        },
+        { keepDefaultValues: true },
+      ),
   });
   return (
     <Card>
@@ -138,6 +189,12 @@ function ReviewEditor({
         {review.stats.more && <p>Показаны первые 500 задач; итог посчитан по всем источникам.</p>}
       </details>
       <Form saving={saving} error={error} onSubmit={onSubmit}>
+        <TabDraftRecovery draft={draft} />
+        <RoutineChecklist
+          template={frozen}
+          checked={form.watch("checked")}
+          onChange={(value) => form.setValue("checked", value, { shouldDirty: true })}
+        />
         <Select label="Главное препятствие" {...form.register("obstacle")}>
           {Object.entries(obstacles).map(([value, label]) => (
             <option key={value} value={value}>

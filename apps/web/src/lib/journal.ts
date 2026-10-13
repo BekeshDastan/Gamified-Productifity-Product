@@ -88,6 +88,8 @@ export async function saveMorning(
   input: PlanInput,
   reason: string,
   key: string,
+  templateVersion = 0,
+  checked: string[] = [],
 ) {
   await requireAccount();
   return withAuthLock(async () => {
@@ -101,13 +103,21 @@ export async function saveMorning(
             "If-Match": '"' + (current.run?.version ?? 0) + '"',
           },
         },
-        body: { input, plan_version: current.plan.version, reason },
+        body: {
+          input,
+          plan_version: current.plan.version,
+          reason,
+          template_version: templateVersion,
+          checked,
+        },
       });
     return morning.parse(r.data?.data);
   });
 }
 
 export const reviewInput = z.object({
+  template_version: z.number().int(),
+  checked: z.array(z.string()).max(20),
   obstacle: z.enum(["none", "insufficient_time", "low_energy", "external", "unclear", "other"]),
   obstacle_note: z.string().max(2000),
   conclusion: z.string().trim().min(1).max(5000),
@@ -252,4 +262,54 @@ export async function applyWeekReview(
       })
       .parse(r.data?.data);
   });
+}
+
+export const routineTemplate = z.object({
+  kind: z.enum(["morning", "evening"]),
+  version: z.number().int(),
+  steps: z.array(z.object({ id: z.string(), label: z.string() })).max(20),
+});
+export type RoutineTemplate = z.infer<typeof routineTemplate>;
+export async function getRoutineTemplate(kind: "morning" | "evening", signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/routine-runs/templates/{kind}", {
+    params: { path: { kind } },
+    signal,
+  });
+  return routineTemplate.parse(r.data?.data);
+}
+export async function saveRoutineTemplate(
+  template: RoutineTemplate,
+  steps: RoutineTemplate["steps"],
+  key: string,
+) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient(),
+      r = await api.PUT("/api/v1/routine-runs/templates/{kind}", {
+        params: {
+          path: { kind: template.kind },
+          header: {
+            ...authParams().header,
+            "Idempotency-Key": key,
+            "If-Match": '"' + template.version + '"',
+          },
+        },
+        body: { steps },
+      });
+    return routineTemplate.parse(r.data?.data);
+  });
+}
+export async function getRoutineHistory(before: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/routine-runs", {
+    params: { query: { before } },
+    signal,
+  });
+  return z
+    .object({
+      items: z.array(z.object({ id: z.string(), snapshot: routineRun })),
+      next: z.string(),
+    })
+    .parse(r.data?.data);
 }

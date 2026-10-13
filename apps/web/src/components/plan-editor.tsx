@@ -18,33 +18,65 @@ import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
 import { Card } from "./ui/card";
-const editorSchema = planInput.extend({ reason: z.string().max(1000) });
+import { useTabDraft, TabDraftRecovery } from "@/lib/forms/tab-draft";
+import type { RoutineTemplate } from "@/lib/journal";
+import { RoutineChecklist } from "./routine-templates";
+const editorSchema = planInput.extend({
+  reason: z.string().max(1000),
+  checked: z.array(z.string()).max(20),
+});
 export function PlanEditor({
   plan,
   onChanged,
   saveOverride,
   title,
   submitLabel,
+  draftStorageKey,
+  checklist,
+  initialChecked = [],
 }: {
   plan: DayPlan;
   onChanged: () => void;
-  saveOverride?: (input: PlanInput, reason: string, key: string) => Promise<void>;
+  saveOverride?: (
+    input: PlanInput,
+    reason: string,
+    key: string,
+    checked: string[],
+  ) => Promise<void>;
   title?: string;
   submitLabel?: string;
+  draftStorageKey?: string;
+  checklist?: RoutineTemplate;
+  initialChecked?: string[];
 }) {
-  const key = useRef(crypto.randomUUID());
+  const operation = useRef({ body: "", key: "" });
   const [selected, setSelected] = useState("");
   const [titles, setTitles] = useState<Record<string, string>>({});
   const { form, onSubmit, saving, error } = useValidatedForm({
     schema: editorSchema,
-    defaultValues: { ...planInput.parse(plan), reason: "" },
+    defaultValues: { ...planInput.parse(plan), reason: "", checked: initialChecked },
     fields: ["available_minutes", "windows", "quest_ids", "top_ids", "rest", "reason"],
     save: async (values) => {
-      if (saveOverride) await saveOverride(planInput.parse(values), values.reason, key.current);
-      else await savePlan(plan, planInput.parse(values), values.reason, key.current);
-      key.current = crypto.randomUUID();
+      const body = JSON.stringify(values);
+      if (operation.current.body !== body) operation.current = { body, key: crypto.randomUUID() };
+      if (saveOverride)
+        await saveOverride(
+          planInput.parse(values),
+          values.reason,
+          operation.current.key,
+          values.checked,
+        );
+      else await savePlan(plan, planInput.parse(values), values.reason, operation.current.key);
+      draft.clear();
       onChanged();
     },
+  });
+  const draft = useTabDraft({
+    storageKey: draftStorageKey,
+    schema: editorSchema,
+    value: form.watch(),
+    dirty: form.formState.isDirty,
+    restore: (values) => form.reset(values, { keepDefaultValues: true }),
   });
   const ids = form.watch("quest_ids"),
     top = form.watch("top_ids"),
@@ -72,6 +104,14 @@ export function PlanEditor({
         действие ниже. Подтверждение сохраняет исходный план.
       </p>
       <Form saving={saving} error={error} onSubmit={onSubmit}>
+        {draftStorageKey && <TabDraftRecovery draft={draft} />}
+        {checklist && (
+          <RoutineChecklist
+            template={checklist}
+            checked={form.watch("checked")}
+            onChange={(value) => form.setValue("checked", value, { shouldDirty: true })}
+          />
+        )}
         <Input
           label="Доступно минут"
           type="number"

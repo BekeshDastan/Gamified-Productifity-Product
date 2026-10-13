@@ -1911,7 +1911,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Повтор apply не дублирует задачи; конфликт изменения останавливает применение.
   - **КОММИТ СЕЙЧАС:** `feat(reviews): apply reviewed weekly changes idempotently`
 
-- [ ] **C119. Шаблоны ритуалов**
+- [x] **C119. Шаблоны ритуалов**
   - **Сделать:** Добавить свои утренние/вечерние чек-листы, порядок шагов и историю запусков.
   - **Проверить:** Смена шаблона не переписывает уже сохранённый разбор.
   - **КОММИТ СЕЙЧАС:** `feat(routines-ui): add editable routine templates and history`

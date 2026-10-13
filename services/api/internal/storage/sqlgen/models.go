@@ -469,6 +469,14 @@ type JournalEntry struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type JournalRoutineTemplate struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Kind      string             `json:"kind"`
+	Steps     []byte             `json:"steps"`
+	Version   int64              `json:"version"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 type LifeArea struct {
 	ID        pgtype.UUID        `json:"id"`
 	OwnerID   pgtype.UUID        `json:"owner_id"`
@@ -742,6 +750,7 @@ type RoutineRunEvent struct {
 	Version   int64              `json:"version"`
 	Snapshot  []byte             `json:"snapshot"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID        pgtype.Int8        `json:"id"`
 }
 
 type RoutineTemplate struct {
