@@ -147,3 +147,43 @@ export async function actOnFocus(
     return focusSession.parse(r.data?.data);
   });
 }
+export async function confirmFocus(
+  f: FocusSession,
+  result: "progress" | "no_progress" | "rest",
+  comment: string,
+  key: string,
+) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient(),
+      r = await api.POST("/api/v1/focus/sessions/{id}/confirm", {
+        params: {
+          path: { id: f.id },
+          header: {
+            ...authParams().header,
+            "Idempotency-Key": key,
+            "If-Match": '"' + f.version + '"',
+          },
+        },
+        body: { result, comment },
+      });
+    return focusSession.parse(r.data?.data);
+  });
+}
+export const questFocusTime = z.object({
+  quest_id: z.uuid(),
+  mode: z.enum(["from_focus", "manual_override"]),
+  manual_minutes: integer,
+  focus_seconds: integer,
+  effective_seconds: integer,
+  confirmed_sessions: integer,
+  overridden: z.boolean(),
+});
+export async function getQuestFocusTime(id: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/focus/quests/{id}/time", {
+    params: { path: { id } },
+    signal,
+  });
+  return questFocusTime.parse(r.data?.data);
+}

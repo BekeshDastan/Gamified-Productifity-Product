@@ -1761,3 +1761,7 @@ html[data-motion="reduce"] *::after {
   margin: 4px 4px 4px 0;
   max-width: 100%;
 }
+.focus-comment {
+  min-height: 6rem;
+  resize: vertical;
+}

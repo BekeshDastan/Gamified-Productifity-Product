@@ -2,6 +2,7 @@ package character
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"sort"
@@ -109,6 +110,17 @@ func (s *Service) records(ctx context.Context, tx pgx.Tx, owner string) ([]Recor
 			}
 		}
 	}
-	focus := Record{ID: "longest-focus", Name: "Самая длинная подтверждённая фокус-сессия", Unit: "минут", Available: false, Explanation: "Раздел фокуса пока недоступен. Неподтверждённые длительности не становятся рекордом.", Sources: []RecordSource{}}
+	focus := Record{ID: "longest-focus", Name: "Самая длинная подтверждённая фокус-сессия", Unit: "минут", Available: true, Value: number(0), Explanation: "Только подтверждённые рабочие интервалы, без пауз, перерывов и отмеченного отдыха.", Sources: []RecordSource{}}
+	var focusID, focusTitle string
+	var focusSeconds int64
+	e = tx.QueryRow(ctx, `SELECT f.id::text,f.title,s.seconds FROM focus_sessions f CROSS JOIN LATERAL (SELECT COALESCE(sum(floor(extract(epoch FROM(ended_at-started_at)))),0)::bigint seconds FROM focus_segments WHERE owner_id=f.owner_id AND session_id=f.id AND kind='work' AND ended_at IS NOT NULL) s WHERE f.owner_id=$1 AND f.state='finished' AND f.result<>'rest' AND s.seconds>0 ORDER BY s.seconds DESC,f.started_at,f.id LIMIT 1`, owner).Scan(&focusID, &focusTitle, &focusSeconds)
+	if e != nil && !errors.Is(e, pgx.ErrNoRows) {
+		return nil, e
+	}
+	if e == nil {
+		focus.Value = number(focusSeconds / 60)
+		focus.Sources = append(focus.Sources, RecordSource{focusTitle, "/app/focus?session_id=" + focusID})
+	}
+
 	return []Record{streak, focus, important, weekly}, nil
 }

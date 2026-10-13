@@ -72,6 +72,7 @@ type Input struct {
 	PlannedDate      *string    `json:"planned_date"`
 	EstimatedMinutes int        `json:"estimated_minutes"`
 	ActualMinutes    int        `json:"actual_minutes"`
+	ActualTimeMode   string     `json:"actual_time_mode,omitempty"`
 	Tags             []string   `json:"tags"`
 	Status           string     `json:"status"`
 	ParentID         *string    `json:"parent_id"`
@@ -139,6 +140,15 @@ func Validate(in Input) (Input, error) {
 	if in.EstimatedMinutes < 0 || in.EstimatedMinutes > 525600 {
 		return in, invalid("estimated_minutes", "От 0 до 525600 минут")
 	}
+	if in.ActualTimeMode == "" {
+		in.ActualTimeMode = "from_focus"
+		if in.ActualMinutes > 0 {
+			in.ActualTimeMode = "manual_override"
+		}
+	}
+	if in.ActualTimeMode != "from_focus" && in.ActualTimeMode != "manual_override" {
+		return in, invalid("actual_time_mode", "Выберите источник фактического времени")
+	}
 	if in.ActualMinutes < 0 || in.ActualMinutes > 525600 {
 		return in, invalid("actual_minutes", "От 0 до 525600 минут")
 	}
@@ -173,6 +183,12 @@ func scan(row pgx.Row) (Quest, error) {
 	err := row.Scan(&data, &q.ID, &status, &q.Version, &q.CompletedAt, &q.ArchivedAt, &q.CreatedAt, &q.UpdatedAt)
 	if err == nil {
 		err = json.Unmarshal(data, &q.Input)
+	}
+	if q.ActualTimeMode == "" {
+		q.ActualTimeMode = "from_focus"
+		if q.ActualMinutes > 0 {
+			q.ActualTimeMode = "manual_override"
+		}
 	}
 	q.Status = status
 	return q, err

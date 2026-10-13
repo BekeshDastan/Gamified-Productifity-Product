@@ -23,6 +23,7 @@ import { Card } from "./ui/card";
 import { Input, Select, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
 import { QuestFiltersPanel } from "./quest-filters";
+import { QuestFocusTime } from "./focus-review";
 import { QuickFocusStart } from "./quick-focus";
 import { QuestActions, QuestHistory } from "./quest-actions";
 import { QuestStructure, QuestPicker } from "./quest-structure";
@@ -140,6 +141,7 @@ export function Quests({ id }: { id?: string }) {
             labels={labels.data}
             onSaved={() => void query.refetch()}
           />
+          <QuestFocusTime questId={current.id} />
           <QuickFocusStart key={current.id} quest={current} />
           <QuestActions
             quest={current}
@@ -309,6 +311,8 @@ type Labels = Awaited<ReturnType<typeof questLabels>>;
 function formValues(q: QuestInput): Fields {
   return {
     ...q,
+    actual_time_mode:
+      q.actual_time_mode ?? (q.actual_minutes > 0 ? "manual_override" : "from_focus"),
     area_id: q.area_id ?? "",
     parent_id: q.parent_id ?? "",
     deadline: q.deadline ?? "",
@@ -343,6 +347,7 @@ function QuestForm({
       "planned_date",
       "estimated_minutes",
       "actual_minutes",
+      "actual_time_mode",
       "tags",
       "status",
       "parent_id",
@@ -450,6 +455,10 @@ function QuestForm({
           error={errors.deadline?.message}
           {...f.register("deadline")}
         />
+        <Select label="Источник фактического времени" {...f.register("actual_time_mode")}>
+          <option value="from_focus">Из подтверждённых фокус-сессий</option>
+          <option value="manual_override">Ручной итог вместо фокуса</option>
+        </Select>
         <div className="quest-grid">
           <Input
             label="Оценка, минут"
@@ -461,11 +470,16 @@ function QuestForm({
           />
           <Input
             label="Фактически, минут"
+            hint="Ручной ввод заменяет сумму фокуса. Переключитесь обратно на фокус, чтобы использовать подтверждённые сессии."
             type="number"
             min={0}
             max={525600}
             error={errors.actual_minutes?.message}
             {...f.register("actual_minutes", { valueAsNumber: true })}
+            onChange={(e) => {
+              void f.register("actual_minutes", { valueAsNumber: true }).onChange(e);
+              f.setValue("actual_time_mode", "manual_override", { shouldDirty: true });
+            }}
           />
         </div>
         <fieldset>

@@ -5722,6 +5722,98 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/FocusAction"
+  /api/v1/focus/sessions/{id}/confirm:
+    post:
+      operationId: confirmFocus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FocusSession"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FocusConfirm"
+  /api/v1/focus/quests/{id}/time:
+    get:
+      operationId: getQuestFocusTime
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Приватный результат операции
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/QuestFocusTime"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
 components:
   requestBodies:
     Empty:
@@ -8622,6 +8714,11 @@ components:
             - type: "null"
         required:
           type: boolean
+        actual_time_mode:
+          type: string
+          enum:
+            - from_focus
+            - manual_override
     QuestDTO:
       type: object
       additionalProperties: false
@@ -8734,6 +8831,11 @@ components:
           type: boolean
         reward:
           $ref: "#/components/schemas/RewardDTO"
+        actual_time_mode:
+          type: string
+          enum:
+            - from_focus
+            - manual_override
     QuestPageDTO:
       type: object
       required:
@@ -10341,3 +10443,53 @@ components:
             - extend
         comment:
           type: string
+    FocusConfirm:
+      type: object
+      additionalProperties: false
+      required:
+        - result
+        - comment
+      properties:
+        result:
+          type: string
+          enum:
+            - progress
+            - no_progress
+            - rest
+        comment:
+          type: string
+          maxLength: 2000
+    QuestFocusTime:
+      type: object
+      additionalProperties: false
+      required:
+        - quest_id
+        - mode
+        - manual_minutes
+        - focus_seconds
+        - effective_seconds
+        - confirmed_sessions
+        - overridden
+      properties:
+        quest_id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum:
+            - from_focus
+            - manual_override
+        manual_minutes:
+          type: integer
+          minimum: 0
+        focus_seconds:
+          type: integer
+          minimum: 0
+        effective_seconds:
+          type: integer
+          minimum: 0
+        confirmed_sessions:
+          type: integer
+          minimum: 0
+        overridden:
+          type: boolean

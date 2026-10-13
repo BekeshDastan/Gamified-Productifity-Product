@@ -2071,6 +2071,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/focus/sessions/{id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["confirmFocus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/focus/quests/{id}/time": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getQuestFocusTime"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2804,6 +2836,8 @@ export interface components {
             status: "backlog" | "todo" | "in_progress" | "postponed" | "completed" | "failed" | "skipped";
             parent_id: string | null;
             required: boolean;
+            /** @enum {string} */
+            actual_time_mode?: "from_focus" | "manual_override";
         };
         QuestDTO: {
             title: string;
@@ -2831,6 +2865,8 @@ export interface components {
             parent_id: string | null;
             required: boolean;
             reward?: components["schemas"]["RewardDTO"];
+            /** @enum {string} */
+            actual_time_mode?: "from_focus" | "manual_override";
         };
         QuestPageDTO: {
             items: components["schemas"]["QuestDTO"][];
@@ -3337,6 +3373,22 @@ export interface components {
             /** @enum {string} */
             action: "pause" | "resume" | "finish" | "cancel" | "break" | "next" | "extend";
             comment: string;
+        };
+        FocusConfirm: {
+            /** @enum {string} */
+            result: "progress" | "no_progress" | "rest";
+            comment: string;
+        };
+        QuestFocusTime: {
+            /** Format: uuid */
+            quest_id: string;
+            /** @enum {string} */
+            mode: "from_focus" | "manual_override";
+            manual_minutes: number;
+            focus_seconds: number;
+            effective_seconds: number;
+            confirmed_sessions: number;
+            overridden: boolean;
         };
     };
     responses: {
@@ -8149,6 +8201,75 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["FocusSession"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    confirmFocus: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+                "If-Match": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FocusConfirm"];
+            };
+        };
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FocusSession"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getQuestFocusTime: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Приватный результат операции */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestFocusTime"];
                         meta: components["schemas"]["Meta"];
                     };
                 };

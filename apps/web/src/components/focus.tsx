@@ -23,6 +23,7 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
+import { FocusReview } from "./focus-review";
 import { Dialog } from "./ui/dialog";
 
 const labels: Record<string, string> = {
@@ -79,7 +80,8 @@ export function Focus() {
     cache = useQueryClient(),
     q = useFocus(),
     settings = useSettings();
-  const [error, setError] = useState(""),
+  const [notice, setNotice] = useState(""),
+    [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [cancel, setCancel] = useState(false);
   const lock = useRef(false),
@@ -168,6 +170,7 @@ export function Focus() {
           {Math.ceil(q.data.sync.uncertaintyMs / 1000)} сек.
         </p>
       )}
+      {notice && <p role="status">{notice}</p>}
       {error && <p role="alert">{error}</p>}
       {s && clock ? (
         <Card>
@@ -254,7 +257,14 @@ export function Focus() {
             </Button>
           </div>
           {s.state === "awaiting_confirmation" && (
-            <p>Рабочие интервалы сохранены. Ожидается подтверждение результата.</p>
+            <FocusReview
+              key={s.id}
+              session={s}
+              saved={() => {
+                setNotice("Итог сохранён. Статус задачи остался под вашим управлением.");
+                changed();
+              }}
+            />
           )}
         </Card>
       ) : (

@@ -182,6 +182,7 @@ func reusable(in Input) Input {
 	in.ParentID = nil
 	in.Status = "backlog"
 	in.ActualMinutes = 0
+	in.ActualTimeMode = "from_focus"
 	in.PlannedDate = nil
 	in.Deadline = nil
 	return in

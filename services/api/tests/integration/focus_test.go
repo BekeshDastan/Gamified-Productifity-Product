@@ -258,3 +258,120 @@ func TestFocusQuickIntervalContinuesOnlyByChoice(t *testing.T) {
 		t.Fatal("auto complete", q.Status)
 	}
 }
+func readQuestFocusTime(t *testing.T, r authResponse) focus.QuestTime {
+	t.Helper()
+	var out struct{ Data focus.QuestTime }
+	if r.status != 200 || json.Unmarshal(r.body, &out) != nil {
+		t.Fatal(r.status, string(r.body))
+	}
+	return out.Data
+}
+func TestFocusConfirmIsPermanentAndManualTimeReplacesFocus(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "focus-review@example.test")
+	other, _ := f.signedIn(t, "focus-review-other@example.test")
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Один шаг")))
+	in := focusInput()
+	in.QuestID = &q.ID
+	s := readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", in))
+	if r := f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), focus.ConfirmInput{Result: "progress"}); r.status != 409 {
+		t.Fatal("confirm running", r.status)
+	}
+	f.clock.Advance(120 * time.Second)
+	s = focusAct(t, f, a, s, "finish")
+	timing := func() focus.QuestTime {
+		return readQuestFocusTime(t, f.privateRequest(t, a, "GET", "/focus/quests/"+q.ID+"/time", "", nil))
+	}
+	if timing().FocusSeconds != 0 {
+		t.Fatal("unconfirmed time")
+	}
+	confirmed := focus.ConfirmInput{Result: "progress", Comment: "Первый результат"}
+	s = readFocus(t, f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), confirmed))
+	for range 3 {
+		again := readFocus(t, f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", `"1"`, confirmed))
+		if again.Version != s.Version || again.ActiveSeconds != 120 {
+			t.Fatal(again)
+		}
+	}
+	if got := timing(); got.Mode != "from_focus" || got.FocusSeconds != 120 || got.EffectiveSeconds != 120 || got.ConfirmedSessions != 1 {
+		t.Fatal(got)
+	}
+	q = readQuest(t, f.privateRequest(t, a, "GET", "/quests/"+q.ID, "", nil))
+	if q.Status != "todo" || q.ActualMinutes != 0 {
+		t.Fatal("timer changed task", q)
+	}
+	edit := q.Input
+	edit.ActualMinutes = 7
+	edit.ActualTimeMode = "manual_override"
+	q = readQuest(t, f.privateRequest(t, a, "PATCH", "/quests/"+q.ID, version(q), edit))
+	if got := timing(); got.EffectiveSeconds != 420 || got.FocusSeconds != 120 || !got.Overridden {
+		t.Fatal("double time", got)
+	}
+	edit = q.Input
+	edit.ActualTimeMode = "from_focus"
+	q = readQuest(t, f.privateRequest(t, a, "PATCH", "/quests/"+q.ID, version(q), edit))
+	if got := timing(); got.EffectiveSeconds != 120 || got.ManualMinutes != 7 || got.Overridden {
+		t.Fatal("source restore", got)
+	}
+	if r := f.privateRequest(t, other, "GET", "/focus/quests/"+q.ID+"/time", "", nil); r.status != 404 {
+		t.Fatal("foreign", r.status)
+	}
+	if r := f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), focus.ConfirmInput{Result: "rest"}); r.status != 409 {
+		t.Fatal("result reroll", r.status)
+	}
+	f.clock.Advance(25 * time.Hour)
+	f.loginAs(t, a, "focus-review@example.test")
+	replay := readFocus(t, f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", `"1"`, confirmed))
+	if replay.ActiveSeconds != 120 || replay.State != "finished" {
+		t.Fatal(replay)
+	}
+	in = focusInput()
+	in.QuestID = &q.ID
+	s = readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", in))
+	f.clock.Advance(time.Minute)
+	s = focusAct(t, f, a, s, "finish")
+	readFocus(t, f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), focus.ConfirmInput{Result: "rest"}))
+	if timing().FocusSeconds != 120 {
+		t.Fatal("rest became work")
+	}
+	var xp, n int64
+	if e := f.pool.QueryRow(t.Context(), "SELECT total_xp,(SELECT count(*) FROM reward_ledger WHERE owner_id=$1) FROM user_progress WHERE owner_id=$1", who.ID).Scan(&xp, &n); e != nil || xp != 0 || n != 0 {
+		t.Fatal("timer XP", xp, n, e)
+	}
+}
+func TestFocusConfirmedEvidenceQualifiesWithoutXP(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "focus-evidence@example.test")
+	for i := 0; i < 10; i++ {
+		if i%2 == 0 {
+			f.loginAs(t, a, "focus-evidence@example.test")
+		}
+		in := focusInput()
+		in.Mode = "quick"
+		in.WorkMinutes = 5
+		s := readFocus(t, f.privateRequest(t, a, "POST", "/focus/start", "", in))
+		f.clock.Advance(5 * time.Minute)
+		cur := readCurrentFocus(t, f.privateRequest(t, a, "GET", "/focus/current", "", nil))
+		s = *cur.Session
+		s = focusAct(t, f, a, s, "finish")
+		readFocus(t, f.privateRequest(t, a, "POST", "/focus/sessions/"+s.ID+"/confirm", focusVersion(s), focus.ConfirmInput{Result: "progress"}))
+	}
+	p := readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	found := false
+	for _, r := range p.Records {
+		if r.ID == "longest-focus" {
+			if !r.Available || r.Value == nil || *r.Value != 5 || len(r.Sources) != 1 {
+				t.Fatal(r)
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("missing focus record")
+	}
+	var active bool
+	var xp int64
+	if e := f.pool.QueryRow(t.Context(), "SELECT active,(SELECT total_xp FROM user_progress WHERE owner_id=$1) FROM user_achievements WHERE owner_id=$1 AND definition_id='focus-10'", who.ID).Scan(&active, &xp); e != nil || !active || xp != 0 {
+		t.Fatal("focus evidence", active, xp, e)
+	}
+}

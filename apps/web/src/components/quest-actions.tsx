@@ -227,9 +227,13 @@ export function QuestHistory({ quest }: { quest: Quest }) {
                   <dd className="quest-description">{e.after.description || "Не добавлено"}</dd>
                   <dt>Сложность</dt>
                   <dd>{e.after.difficulty}/5</dd>
-                  <dt>Оценка / фактически</dt>
+                  <dt>Оценка / ручной итог</dt>
                   <dd>
-                    {e.after.estimated_minutes} / {e.after.actual_minutes} мин.
+                    {e.after.estimated_minutes} / {e.after.actual_minutes} мин. Источник:{" "}
+                    {e.after.actual_time_mode === "from_focus"
+                      ? "подтверждённый фокус"
+                      : "ручная запись"}
+                    .
                   </dd>
                 </dl>
               </details>
