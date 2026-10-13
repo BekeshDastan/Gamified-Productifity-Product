@@ -715,6 +715,25 @@ type RoutineApplication struct {
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 }
 
+type RoutineRun struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Kind      string             `json:"kind"`
+	Payload   []byte             `json:"payload"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type RoutineRunEvent struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	RunID     pgtype.UUID        `json:"run_id"`
+	Version   int64              `json:"version"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type RoutineTemplate struct {
 	OwnerID pgtype.UUID `json:"owner_id"`
 	ID      string      `json:"id"`

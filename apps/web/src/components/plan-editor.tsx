@@ -8,6 +8,7 @@ import {
   blockInput,
   movePlanQuest,
   type DayPlan,
+  type PlanInput,
 } from "@/lib/planning";
 import { getQuest } from "@/lib/quests";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
@@ -18,7 +19,19 @@ import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
 import { Card } from "./ui/card";
 const editorSchema = planInput.extend({ reason: z.string().max(1000) });
-export function PlanEditor({ plan, onChanged }: { plan: DayPlan; onChanged: () => void }) {
+export function PlanEditor({
+  plan,
+  onChanged,
+  saveOverride,
+  title,
+  submitLabel,
+}: {
+  plan: DayPlan;
+  onChanged: () => void;
+  saveOverride?: (input: PlanInput, reason: string, key: string) => Promise<void>;
+  title?: string;
+  submitLabel?: string;
+}) {
   const key = useRef(crypto.randomUUID());
   const [selected, setSelected] = useState("");
   const [titles, setTitles] = useState<Record<string, string>>({});
@@ -27,7 +40,8 @@ export function PlanEditor({ plan, onChanged }: { plan: DayPlan; onChanged: () =
     defaultValues: { ...planInput.parse(plan), reason: "" },
     fields: ["available_minutes", "windows", "quest_ids", "top_ids", "rest", "reason"],
     save: async (values) => {
-      await savePlan(plan, planInput.parse(values), values.reason, key.current);
+      if (saveOverride) await saveOverride(planInput.parse(values), values.reason, key.current);
+      else await savePlan(plan, planInput.parse(values), values.reason, key.current);
       key.current = crypto.randomUUID();
       onChanged();
     },
@@ -52,7 +66,7 @@ export function PlanEditor({ plan, onChanged }: { plan: DayPlan; onChanged: () =
   }
   return (
     <Card>
-      <h2>{plan.confirmed_at ? "Изменить текущий план" : "Черновик плана"}</h2>
+      <h2>{title ?? (plan.confirmed_at ? "Изменить текущий план" : "Черновик плана")}</h2>
       <p className="ui-hint">
         Выбор задач не переносит их плановую дату автоматически. Для переноса используйте отдельное
         действие ниже. Подтверждение сохраняет исходный план.
@@ -179,7 +193,7 @@ export function PlanEditor({ plan, onChanged }: { plan: DayPlan; onChanged: () =
           <Input label="Причина изменения плана" {...form.register("reason")} />
         )}
         <Button type="submit">
-          {plan.confirmed_at ? "Сохранить дополнение" : "Сохранить черновик"}
+          {submitLabel ?? (plan.confirmed_at ? "Сохранить дополнение" : "Сохранить черновик")}
         </Button>
       </Form>
     </Card>

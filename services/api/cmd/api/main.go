@@ -93,8 +93,9 @@ func main() {
 	calendarService := calendar.NewService(pool, platform.RealClock{}, questService)
 	calendarService.Mount(router, sessions.Protect)
 	habits.NewService(pool, platform.RealClock{}).WithProgression(rewardService).Mount(router, sessions.Protect)
-	journal.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
-	planning.NewService(pool, platform.RealClock{}, questService, calendarService).Mount(router, sessions.Protect)
+	planService := planning.NewService(pool, platform.RealClock{}, questService, calendarService)
+	planService.Mount(router, sessions.Protect)
+	journal.NewService(pool, platform.RealClock{}).WithPlanning(planService).Mount(router, sessions.Protect)
 	server := &http.Server{
 		Addr:              cfg.Address,
 		Handler:           router,

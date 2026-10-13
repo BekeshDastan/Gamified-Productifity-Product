@@ -6,6 +6,83 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/routine-runs/morning/{date}:
+    get:
+      operationId: getMorning
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Morning"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: saveMorning
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MorningInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Morning"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/journal/entries:
     get:
       operationId: listJournal
@@ -6613,6 +6690,61 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    RoutineRun:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - date
+        - kind
+        - version
+        - payload
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        date:
+          type: string
+        kind:
+          type: string
+        version:
+          type: integer
+        payload:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    Morning:
+      type: object
+      additionalProperties: false
+      required:
+        - run
+        - plan
+      properties:
+        run:
+          anyOf:
+            - $ref: "#/components/schemas/RoutineRun"
+            - type: "null"
+        plan:
+          $ref: "#/components/schemas/DayPlan"
+    MorningInput:
+      type: object
+      additionalProperties: false
+      required:
+        - input
+        - plan_version
+        - reason
+      properties:
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        plan_version:
+          type: integer
+        reason:
+          type: string
     JournalInput:
       type: object
       additionalProperties: false

@@ -3,6 +3,7 @@ package journal
 import (
 	"context"
 	"errors"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
 	"github.com/go-chi/chi/v5"
@@ -15,10 +16,13 @@ import (
 	"unicode/utf8"
 )
 
-type Service struct{ *privateapi.Service }
+type Service struct {
+	*privateapi.Service
+	plans *planning.Service
+}
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
-	return &Service{privateapi.New(pool, clock)}
+	return &Service{Service: privateapi.New(pool, clock)}
 }
 
 type Input struct {
@@ -164,6 +168,7 @@ func (s *Service) list(r *http.Request, tx pgx.Tx, owner string) (Page, error) {
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountMorning(r)
 		r.Get("/api/v1/journal/entries", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) { return s.list(r, tx, owner) })
 			s.Reply(w, r, out, e)

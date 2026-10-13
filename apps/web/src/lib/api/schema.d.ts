@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/routine-runs/morning/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getMorning"];
+        put: operations["saveMorning"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/journal/entries": {
         parameters: {
             query?: never;
@@ -2171,6 +2187,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        RoutineRun: {
+            /** Format: uuid */
+            id: string;
+            date: string;
+            kind: string;
+            version: number;
+            payload: {
+                [key: string]: unknown;
+            };
+            created_at: string;
+            updated_at: string;
+        };
+        Morning: {
+            run: components["schemas"]["RoutineRun"] | null;
+            plan: components["schemas"]["DayPlan"];
+        };
+        MorningInput: {
+            input: components["schemas"]["PlanInput"];
+            plan_version: number;
+            reason: string;
+        };
         JournalInput: {
             /** Format: date */
             date: string;
@@ -3909,6 +3946,72 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getMorning: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Morning"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    saveMorning: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MorningInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Morning"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
     listJournal: {
         parameters: {
             query?: {

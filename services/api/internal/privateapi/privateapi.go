@@ -21,6 +21,20 @@ type Service struct {
 }
 type Operation func(context.Context, pgx.Tx, string) (any, error)
 
+// MatchVersion permits the explicit zero version only for a missing singleton.
+func MatchVersion(r *http.Request, current int64) *platform.APIError {
+	if current == 0 {
+		if r.Header.Get("If-Match") == `"0"` {
+			return nil
+		}
+		return Problem(409, "VERSION_CONFLICT", "Запись ещё не создана. Обновите данные")
+	}
+	if r.Header.Get("If-Match") == `"0"` {
+		return Problem(409, "VERSION_CONFLICT", "Запись уже создана. Обновите данные")
+	}
+	return platform.MatchVersion(r, current)
+}
+
 func New(pool *pgxpool.Pool, clock platform.Clock) *Service { return &Service{pool, clock} }
 func Problem(status int, code, message string) *platform.APIError {
 	return &platform.APIError{Status: status, Code: code, Message: message}

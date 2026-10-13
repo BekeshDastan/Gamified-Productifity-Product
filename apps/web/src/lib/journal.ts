@@ -62,3 +62,47 @@ export async function saveJournalEntry(
     return journalEntry.parse(r.data?.data);
   });
 }
+
+import { dayPlan, type PlanInput } from "@/lib/planning";
+export const routineRun = z.object({
+  id: z.uuid(),
+  date: z.string(),
+  kind: z.string(),
+  version: z.number().int(),
+  payload: z.record(z.string(), z.unknown()),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+export const morning = z.object({ run: routineRun.nullable(), plan: dayPlan });
+export async function getMorning(date: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/routine-runs/morning/{date}", {
+    params: { path: { date } },
+    signal,
+  });
+  return morning.parse(r.data?.data);
+}
+export async function saveMorning(
+  date: string,
+  current: z.infer<typeof morning>,
+  input: PlanInput,
+  reason: string,
+  key: string,
+) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient(),
+      r = await api.PUT("/api/v1/routine-runs/morning/{date}", {
+        params: {
+          path: { date },
+          header: {
+            ...authParams().header,
+            "Idempotency-Key": key,
+            "If-Match": '"' + (current.run?.version ?? 0) + '"',
+          },
+        },
+        body: { input, plan_version: current.plan.version, reason },
+      });
+    return morning.parse(r.data?.data);
+  });
+}
