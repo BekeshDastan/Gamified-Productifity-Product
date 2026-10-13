@@ -1837,7 +1837,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Два одновременных start дают одну сессию; время хранится серверными отметками.
   - **КОММИТ СЕЙЧАС:** `feat(focus): add single active session and timing segments`
 
-- [ ] **C106. Управление временем**
+- [x] **C106. Управление временем**
   - **Сделать:** Реализовать переходы, исключение пауз, предел длительности и version.
   - **Проверить:** Повтор pause не добавляет время; finish из недопустимого состояния даёт 409.
   - **КОММИТ СЕЙЧАС:** `feat(focus): implement start pause resume and finish transitions`

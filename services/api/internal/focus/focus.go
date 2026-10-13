@@ -62,44 +62,45 @@ type Segment struct {
 	Seconds   int64      `json:"seconds"`
 }
 type Session struct {
-	ID            string     `json:"id"`
-	State         string     `json:"state"`
-	Mode          string     `json:"mode"`
-	Phase         string     `json:"phase"`
-	Title         string     `json:"title"`
-	QuestID       *string    `json:"quest_id"`
-	GoalID        *string    `json:"goal_id"`
-	AreaID        *string    `json:"area_id"`
-	Timezone      string     `json:"timezone"`
-	WorkMinutes   int        `json:"work_minutes"`
-	BreakMinutes  int        `json:"break_minutes"`
-	SoundEnabled  bool       `json:"sound_enabled"`
-	Cycle         int64      `json:"cycle"`
-	Version       int64      `json:"version"`
-	StartedAt     time.Time  `json:"started_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
-	EndedAt       *time.Time `json:"ended_at"`
-	PhaseDeadline *time.Time `json:"phase_deadline"`
-	Result        string     `json:"result"`
-	Comment       string     `json:"comment"`
-	ActiveSeconds int64      `json:"active_seconds"`
-	BreakSeconds  int64      `json:"break_seconds"`
-	Segments      []Segment  `json:"segments"`
+	ID                    string     `json:"id"`
+	State                 string     `json:"state"`
+	Mode                  string     `json:"mode"`
+	Phase                 string     `json:"phase"`
+	Title                 string     `json:"title"`
+	QuestID               *string    `json:"quest_id"`
+	GoalID                *string    `json:"goal_id"`
+	AreaID                *string    `json:"area_id"`
+	Timezone              string     `json:"timezone"`
+	WorkMinutes           int        `json:"work_minutes"`
+	BreakMinutes          int        `json:"break_minutes"`
+	SoundEnabled          bool       `json:"sound_enabled"`
+	Cycle                 int64      `json:"cycle"`
+	Version               int64      `json:"version"`
+	StartedAt             time.Time  `json:"started_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
+	EndedAt               *time.Time `json:"ended_at"`
+	PhaseDeadline         *time.Time `json:"phase_deadline"`
+	PhaseRemainingSeconds *int64     `json:"phase_remaining_seconds"`
+	Result                string     `json:"result"`
+	Comment               string     `json:"comment"`
+	ActiveSeconds         int64      `json:"active_seconds"`
+	BreakSeconds          int64      `json:"break_seconds"`
+	Segments              []Segment  `json:"segments"`
 }
 type Current struct {
 	ServerNow time.Time `json:"server_now"`
 	Session   *Session  `json:"session"`
 }
 
-const columns = "id::text,state,mode,phase,title,quest_id::text,goal_id::text,area_id::text,timezone,work_minutes,break_minutes,sound_enabled,cycle,version,started_at,updated_at,ended_at,phase_deadline,result,comment"
+const columns = "id::text,state,mode,phase,title,quest_id::text,goal_id::text,area_id::text,timezone,work_minutes,break_minutes,sound_enabled,cycle,version,started_at,updated_at,ended_at,phase_deadline,result,comment,phase_remaining_seconds"
 
-func (s *Service) get(ctx context.Context, tx pgx.Tx, owner, id string) (Session, error) {
+func (s *Service) load(ctx context.Context, tx pgx.Tx, owner, id string) (Session, error) {
 	var f Session
 	f.Segments = []Segment{}
 	if !validID(id) {
 		return f, problem(404, "NOT_FOUND", "Сессия не найдена")
 	}
-	e := tx.QueryRow(ctx, "SELECT "+columns+" FROM focus_sessions WHERE owner_id=$1 AND id=$2 FOR UPDATE", owner, id).Scan(&f.ID, &f.State, &f.Mode, &f.Phase, &f.Title, &f.QuestID, &f.GoalID, &f.AreaID, &f.Timezone, &f.WorkMinutes, &f.BreakMinutes, &f.SoundEnabled, &f.Cycle, &f.Version, &f.StartedAt, &f.UpdatedAt, &f.EndedAt, &f.PhaseDeadline, &f.Result, &f.Comment)
+	e := tx.QueryRow(ctx, "SELECT "+columns+" FROM focus_sessions WHERE owner_id=$1 AND id=$2 FOR UPDATE", owner, id).Scan(&f.ID, &f.State, &f.Mode, &f.Phase, &f.Title, &f.QuestID, &f.GoalID, &f.AreaID, &f.Timezone, &f.WorkMinutes, &f.BreakMinutes, &f.SoundEnabled, &f.Cycle, &f.Version, &f.StartedAt, &f.UpdatedAt, &f.EndedAt, &f.PhaseDeadline, &f.Result, &f.Comment, &f.PhaseRemainingSeconds)
 	if errors.Is(e, pgx.ErrNoRows) {
 		e = problem(404, "NOT_FOUND", "Сессия не найдена")
 	}
@@ -320,6 +321,7 @@ func decode[T any](s *Service, w http.ResponseWriter, r *http.Request, fn func(T
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountActions(r)
 		r.Get("/api/v1/focus/current", func(w http.ResponseWriter, r *http.Request) {
 			id, e := owner(r.Context())
 			var out Current
