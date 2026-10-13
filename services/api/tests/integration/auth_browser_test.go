@@ -139,7 +139,30 @@ func TestBrowserAuth(t *testing.T) {
 	if err := command.Run(); err != nil {
 		t.Fatal("real authentication browser suite failed", err)
 	}
-	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token="} {
+	deadline := time.Now().Add(30 * time.Second)
+	for {
+		var pending int
+		e := pool.QueryRow(ctx, "SELECT (SELECT count(*) FROM outbox_events WHERE kind IN('character.changed','progression.reward_changed') AND dispatched_at IS NULL)+(SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed') AND state IN('pending','running','retry_wait'))").Scan(&pending)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if pending == 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("derived-profile events did not finish", pending)
+		}
+		select {
+		case <-ctx.Done():
+			t.Fatal("browser fixture cancelled")
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+	var dead int
+	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
+		t.Fatal("derived-profile outbox handler failure", dead, e)
+	}
+	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token="} {
 		if strings.Contains(logs.String(), secret) {
 			t.Fatal("sensitive authentication data in API logs")
 		}

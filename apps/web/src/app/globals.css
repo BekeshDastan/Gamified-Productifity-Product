@@ -1721,3 +1721,18 @@ html[data-motion="reduce"] *::after {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 20px;
 }
+.skill-area,
+.skill-list,
+.skill-list li {
+  min-width: 0;
+}
+.skill-map {
+  display: block;
+  max-width: 100%;
+}
+@media (max-width: 700px) {
+  .skill-list {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+}

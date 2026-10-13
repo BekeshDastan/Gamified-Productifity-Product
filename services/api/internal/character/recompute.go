@@ -2,6 +2,7 @@ package character
 
 import (
 	"context"
+	"errors"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -32,7 +33,7 @@ func (s *Service) RecomputeAll(ctx context.Context) (int, error) {
 			return count, nil
 		}
 		for _, id := range ids {
-			if _, e = s.Get(ctx, id); e != nil {
+			if _, e = s.RecomputeOwner(ctx, id); e != nil {
 				return count, e
 			}
 			count++
@@ -42,3 +43,13 @@ func (s *Service) RecomputeAll(ctx context.Context) (int, error) {
 	}
 }
 func ValidOwner(id string) bool { var value pgtype.UUID; return value.Scan(id) == nil && value.Valid }
+
+func (s *Service) RecomputeOwner(ctx context.Context, owner string) (Profile, error) {
+	for range 1000 {
+		p, e := s.Get(ctx, owner)
+		if e != nil || !p.Recalculating {
+			return p, e
+		}
+	}
+	return Profile{}, errors.New("habit evidence backfill requires continuation")
+}

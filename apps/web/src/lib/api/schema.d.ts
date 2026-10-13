@@ -1799,6 +1799,22 @@ export interface paths {
         patch: operations["selectCharacterTitle"];
         trace?: never;
     };
+    "/api/v1/cosmetics/v1/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCosmeticAsset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2783,6 +2799,7 @@ export interface components {
             title: string;
             titles: components["schemas"]["CharacterTitle"][];
             records: components["schemas"]["CharacterRecord"][];
+            recalculating: boolean;
         };
         EquipmentInput: {
             /** @enum {string} */
@@ -6996,6 +7013,38 @@ export interface operations {
             409: components["responses"]["Error"];
             422: components["responses"]["Error"];
             429: components["responses"]["Error"];
+        };
+    };
+    getCosmeticAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file: "accessory-0.svg" | "accessory-1.svg" | "accessory-2.svg" | "background-0.svg" | "background-1.svg" | "background-2.svg" | "base-0.svg" | "base-1.svg" | "base-2.svg" | "base-3.svg" | "clothes-0.svg" | "clothes-1.svg" | "clothes-2.svg" | "clothes-3.svg" | "frame-0.svg" | "frame-1.svg" | "frame-2.svg" | "head-0.svg" | "head-1.svg" | "head-2.svg";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Оригинальный локальный SVG из неизменяемого каталога v1 */
+            200: {
+                headers: {
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/svg+xml": string;
+                };
+            };
+            /** @description Файл вне каталога */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
         };
     };
 }

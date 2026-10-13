@@ -30,6 +30,7 @@ type InventoryItem struct {
 	Revoked bool   `json:"revoked"`
 }
 type Profile struct {
+	Recalculating  bool              `json:"recalculating"`
 	Title          string            `json:"title"`
 	Titles         []Title           `json:"titles"`
 	Records        []Record          `json:"records"`
@@ -180,6 +181,11 @@ func (s *Service) view(ctx context.Context, tx pgx.Tx, owner string) (Profile, e
 	out.Records, e = s.records(ctx, tx, owner)
 	if e != nil {
 		return out, e
+	}
+	for _, record := range out.Records {
+		if record.ID == "best-streak" {
+			out.Recalculating = !record.Available
+		}
 	}
 	if e = json.Unmarshal(data, &out.Equipment); e != nil {
 		return out, e

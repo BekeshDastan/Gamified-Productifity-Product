@@ -4878,6 +4878,55 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CharacterTitleInput"
+  /api/v1/cosmetics/v1/{file}:
+    get:
+      operationId: getCosmeticAsset
+      security: []
+      parameters:
+        - in: path
+          name: file
+          required: true
+          schema:
+            type: string
+            enum:
+              - accessory-0.svg
+              - accessory-1.svg
+              - accessory-2.svg
+              - background-0.svg
+              - background-1.svg
+              - background-2.svg
+              - base-0.svg
+              - base-1.svg
+              - base-2.svg
+              - base-3.svg
+              - clothes-0.svg
+              - clothes-1.svg
+              - clothes-2.svg
+              - clothes-3.svg
+              - frame-0.svg
+              - frame-1.svg
+              - frame-2.svg
+              - head-0.svg
+              - head-1.svg
+              - head-2.svg
+      responses:
+        "200":
+          description: Оригинальный локальный SVG из неизменяемого каталога v1
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Файл вне каталога
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
   requestBodies:
     Empty:
@@ -8526,6 +8575,7 @@ components:
         - title
         - titles
         - records
+        - recalculating
       properties:
         version:
           type: integer
@@ -8576,6 +8626,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CharacterRecord"
+        recalculating:
+          type: boolean
     EquipmentInput:
       type: object
       additionalProperties: false

@@ -14,6 +14,11 @@ export function ToastProvider({
 }) {
   const nextId = useRef(0);
   const [notices, setNotices] = useState<(Notice & { id: number; owner: string })[]>([]);
+  const [noticeOwner, setNoticeOwner] = useState(owner);
+  if (noticeOwner !== owner) {
+    setNoticeOwner(owner);
+    setNotices([]);
+  }
   function notify(notice: Notice) {
     const id = ++nextId.current;
     setNotices((items) => [...items.slice(-2), { ...notice, id, owner }]);

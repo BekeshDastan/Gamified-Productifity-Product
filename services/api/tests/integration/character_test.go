@@ -4,6 +4,7 @@ package integration
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/character"
@@ -12,6 +13,9 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"github.com/jackc/pgx/v5"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
@@ -254,4 +258,165 @@ func TestCharacterTitlesAndRecordsFollowCorrectedEvidence(t *testing.T) {
 	if v := record(p, "weekly-regularity"); v == nil || *v != 85 {
 		t.Fatal("stale weekly", p.Records)
 	}
+}
+
+func TestCharacterPrivacyAssetsAndAtomicAchievementGrant(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	anon := authClient(t)
+	for _, path := range []string{"/character", "/character/inventory", "/achievements", "/skill-tree"} {
+		if r := f.privateRequest(t, anon, "GET", path, "", nil); r.status != 401 {
+			t.Fatal("anonymous private profile", path, r.status)
+		}
+	}
+	resp, e := http.Get(f.server.URL + "/api/v1/cosmetics/v1/base-0.svg")
+	if e != nil {
+		t.Fatal(e)
+	}
+	b, e := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if e != nil || resp.StatusCode != 200 || resp.Header.Get("Content-Type") != "image/svg+xml" || !strings.Contains(resp.Header.Get("Cache-Control"), "immutable") || !strings.Contains(string(b), "<svg") {
+		t.Fatal("local asset", resp.StatusCode, e)
+	}
+	resp, e = http.Get(f.server.URL + "/api/v1/cosmetics/v1/not-a-catalog-file.svg")
+	if e != nil {
+		t.Fatal(e)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != 404 {
+		t.Fatal("asset whitelist", resp.StatusCode)
+	}
+	a, owner := f.signedIn(t, "atomic-character@example.test")
+	in := questInput("Одно достижение")
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in))
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]string{"reason": "Готово"}))
+	if _, e = f.pool.Exec(t.Context(), "CREATE FUNCTION reject_achievement_insert() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected achievement failure';END $$;CREATE TRIGGER reject_achievement_insert BEFORE INSERT ON achievement_changes FOR EACH ROW EXECUTE FUNCTION reject_achievement_insert()"); e != nil {
+		t.Fatal(e)
+	}
+	if r := f.privateRequest(t, a, "GET", "/character", "", nil); r.status != 500 {
+		t.Fatal("failure injection", r.status)
+	}
+	var n int
+	if e = f.pool.QueryRow(t.Context(), "SELECT (SELECT count(*) FROM character_profiles WHERE owner_id=$1)+(SELECT count(*) FROM user_achievements WHERE owner_id=$1)+(SELECT count(*) FROM character_inventory WHERE owner_id=$1)", owner.ID).Scan(&n); e != nil || n != 0 {
+		t.Fatal("partial unlock", n, e)
+	}
+	if _, e = f.pool.Exec(t.Context(), "DROP TRIGGER reject_achievement_insert ON achievement_changes;DROP FUNCTION reject_achievement_insert()"); e != nil {
+		t.Fatal(e)
+	}
+	p := readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	for _, query := range []string{"UPDATE user_achievements SET awarded_at=awarded_at+interval '1 hour' WHERE owner_id=$1", "DELETE FROM user_achievements WHERE owner_id=$1", "UPDATE character_inventory SET granted_at=granted_at+interval '1 hour' WHERE owner_id=$1", "DELETE FROM character_inventory WHERE owner_id=$1"} {
+		if _, e = f.pool.Exec(t.Context(), query, owner.ID); e == nil {
+			t.Fatal("mutable original grant")
+		}
+	}
+	if r := f.privateRequest(t, a, "PATCH", "/character/title", "", map[string]string{"title_id": "level:auto"}); r.status != 422 {
+		t.Fatal("missing version", r.status)
+	}
+	input := map[string]string{"title_id": "achievement:task-1"}
+	key := "character-title-fixed-001"
+	v := characterVersion(p)
+	p = readCharacter(t, f.privateRequest(t, a, "PATCH", "/character/title", v, input, key))
+	input["title_id"] = "level:auto"
+	if r := f.privateRequest(t, a, "PATCH", "/character/title", v, input, key); r.status != 409 {
+		t.Fatal("key mismatch", r.status)
+	}
+	handler := character.NewService(f.pool, f.clock, progression.NewService(f.pool, f.clock)).Handlers()["character.changed"]
+	for _, job := range []jobs.Job{{Payload: []byte("{}")}, {OwnerID: &owner.ID, Payload: []byte("null")}, {OwnerID: &owner.ID, Payload: []byte("{bad")}, {OwnerID: &owner.ID, Payload: []byte("{\"owner_id\":\"other\"}")}} {
+		e = progression.NewService(f.pool, f.clock).WithinOwner(t.Context(), owner.ID, func(tx pgx.Tx) error { return handler(t.Context(), tx, job) })
+		if !errors.Is(e, jobs.ErrPermanent) {
+			t.Fatal("invalid derived event", e)
+		}
+	}
+}
+func TestCharacterLongHistoryUsesBoundedEvidenceAndCompletesRecompute(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, owner := f.signedIn(t, "backfill-character@example.test")
+	in := habitInput()
+	in.StartsOn = "2016-10-13"
+	in.Schedule.Weekdays = []int{1, 2, 3, 4, 5, 6, 7}
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", in))
+	if !h.HasMore {
+		t.Fatal("fixture must need backfill")
+	}
+	var before, after int
+	if e := f.pool.QueryRow(t.Context(), "SELECT count(*) FROM habit_periods WHERE owner_id=$1", owner.ID).Scan(&before); e != nil {
+		t.Fatal(e)
+	}
+	p := readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	if e := f.pool.QueryRow(t.Context(), "SELECT count(*) FROM habit_periods WHERE owner_id=$1", owner.ID).Scan(&after); e != nil || after-before > 400 || !p.Recalculating {
+		t.Fatal("unbounded or hidden backfill", before, after, p.Recalculating, e)
+	}
+	svc := character.NewService(f.pool, f.clock, progression.NewService(f.pool, f.clock))
+	p, e := svc.RecomputeOwner(t.Context(), owner.ID)
+	if e != nil || p.Recalculating {
+		t.Fatal("incomplete admin recompute", e)
+	}
+	var xp, awards int64
+	if e = f.pool.QueryRow(t.Context(), "SELECT total_xp,(SELECT count(*) FROM user_achievements WHERE owner_id=$1 AND definition_id IN('period-7','streak-7','comeback-1')) FROM user_progress WHERE owner_id=$1", owner.ID).Scan(&xp, &awards); e != nil || xp != 0 || awards != 0 {
+		t.Fatal("empty history fabricated success", xp, awards, e)
+	}
+}
+
+func TestCharacterWeeklyNormIsOnePeriodAndNotDailyRegularity(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, _ := f.signedIn(t, "weekly-character@example.test")
+	in := habitInput()
+	in.StartsOn = "2026-10-05"
+	in.Kind = "binary"
+	in.Schedule = habits.Schedule{Frequency: "weekly", Weekdays: []int{}, Target: 3}
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", in))
+	period := h.Periods[0]
+	for range 3 {
+		h = readHabit(t, f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs", habitVersion(h), habits.LogInput{PeriodID: period.ID, Amount: 1, OccurredAt: period.Start.Add(time.Hour)}))
+	}
+	p := readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	for _, r := range p.Records {
+		if r.ID == "best-streak" && (r.Value == nil || *r.Value != 1) {
+			t.Fatal("weekly norm split into days", r)
+		}
+		if r.ID == "weekly-regularity" && r.Value != nil {
+			t.Fatal("weekly norm converted into daily rate", r)
+		}
+	}
+	var response struct{ Data []character.AchievementStatus }
+	r := f.privateRequest(t, a, "GET", "/achievements", "", nil)
+	if json.Unmarshal(r.body, &response) != nil {
+		t.Fatal(string(r.body))
+	}
+	for _, d := range response.Data {
+		if d.ID == "period-7" && (d.Current != 1 || d.Active) {
+			t.Fatal("three logs became three or seven successes", d)
+		}
+	}
+}
+func TestCharacterComebackSurvivesNewMissAndRevertsOnlyOnCorrection(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, owner := f.signedIn(t, "comeback-character@example.test")
+	in := habitInput()
+	in.StartsOn = "2026-10-10"
+	in.Schedule.Weekdays = []int{1, 2, 3, 4, 5, 6, 7}
+	h := readHabit(t, f.privateRequest(t, a, "POST", "/habits", "", in))
+	var success habits.Period
+	for _, p := range h.Periods {
+		if p.Start.UTC().Format(time.DateOnly) == "2026-10-11" {
+			success = p
+		}
+	}
+	h = readHabit(t, f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs", habitVersion(h), habits.LogInput{PeriodID: success.ID, Amount: 20, OccurredAt: success.Start.Add(time.Hour)}))
+	readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	assert := func(want bool) {
+		var active bool
+		if e := f.pool.QueryRow(t.Context(), "SELECT active FROM user_achievements WHERE owner_id=$1 AND definition_id='comeback-1'", owner.ID).Scan(&active); e != nil || active != want {
+			t.Fatal("historical Comeback", active, want, e)
+		}
+	}
+	assert(true)
+	f.clock.Advance(48 * time.Hour)
+	f.loginAs(t, a, "comeback-character@example.test")
+	readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	assert(true)
+	h = readHabit(t, f.privateRequest(t, a, "GET", "/habits/"+h.ID, "", nil))
+	logs := readHabitLogs(t, f.privateRequest(t, a, "GET", "/habits/"+h.ID+"/logs", "", nil))
+	readHabit(t, f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs/"+logs[0].ID+"/correct", habitVersion(h), habits.CorrectionInput{Amount: 0, Reason: "Не было полного выполнения"}))
+	readCharacter(t, f.privateRequest(t, a, "GET", "/character", "", nil))
+	assert(false)
 }

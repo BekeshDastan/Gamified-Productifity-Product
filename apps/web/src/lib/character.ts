@@ -18,6 +18,7 @@ export const slotNames = {
 const slot = z.enum(slots),
   integer = z.number().int();
 export const characterSchema = z.object({
+  recalculating: z.boolean(),
   version: integer.positive(),
   catalog_version: z.string(),
   equipment: z.object({

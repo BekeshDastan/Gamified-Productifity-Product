@@ -39,6 +39,11 @@ export function Character() {
       <Button variant="secondary" onClick={() => void query.refetch()}>
         Обновить персонажа
       </Button>
+      {query.data.recalculating && (
+        <p role="status">
+          Догружаем историю привычек. Рекорды и условия обновятся после её проверки.
+        </p>
+      )}
       <CharacterEquipment profile={query.data} />
       <ProfileTitles profile={query.data} />
       <ProfileRecords records={query.data.records} />

@@ -104,7 +104,8 @@ func (s *Service) mountAchievements(r chi.Router) {
 }
 func (s *Service) Handlers() map[string]jobs.Handler {
 	return map[string]jobs.Handler{"character.changed": func(ctx context.Context, tx pgx.Tx, job jobs.Job) error {
-		if job.OwnerID == nil || string(job.Payload) != "{}" {
+		var payload map[string]json.RawMessage
+		if job.OwnerID == nil || !ValidOwner(*job.OwnerID) || json.Unmarshal(job.Payload, &payload) != nil || payload == nil || len(payload) != 0 {
 			return jobs.ErrPermanent
 		}
 		if e := s.progress.LockOwner(ctx, tx, *job.OwnerID); e != nil {
