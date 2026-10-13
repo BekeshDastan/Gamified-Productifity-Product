@@ -55,12 +55,17 @@ func (s *Service) futureBoundary(h Habit, value, field string) error {
 		return e
 	}
 	a := time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, z)
-	if !a.After(s.clock.Now()) || value < h.StartsOn || (h.EndsOn != nil && value > *h.EndsOn) {
+	finalBoundary := false
+	if h.EndsOn != nil && field == "ends_on" {
+		end, _ := date(*h.EndsOn)
+		finalBoundary = value == end.AddDate(0, 0, 1).Format(time.DateOnly)
+	}
+	if !a.After(s.clock.Now()) || value < h.StartsOn || (h.EndsOn != nil && value > *h.EndsOn && !finalBoundary) {
 		return invalid(field, "Выберите ещё не начавшийся период в пределах действия привычки")
 	}
 	v := activeSchedule(h, value)
 	start, _ := periodBounds(d, v.Schedule.Frequency, z)
-	if !a.Equal(start) {
+	if !a.Equal(start) && value != h.StartsOn && !finalBoundary {
 		return invalid("date", "Пауза и возобновление начинаются на границе периода")
 	}
 	return nil
@@ -168,10 +173,10 @@ func (s *Service) emergency(ctx context.Context, tx pgx.Tx, id string, h Habit, 
 	if period == nil {
 		return h, problem(404, "NOT_FOUND", "Период не найден")
 	}
-	if period.Excluded || !s.clock.Now().Before(period.End) || s.clock.Now().Before(period.Start) || period.Amount >= period.Target {
+	if period.EmergencyReason != "" || period.Excluded || !s.clock.Now().Before(period.End) || s.clock.Now().Before(period.Start) || period.Amount >= period.Target {
 		return h, invalid("period_id", "Экстренный пропуск доступен только для текущей незавершённой нормы")
 	}
-	if _, e = tx.Exec(ctx, `UPDATE habit_periods SET excluded=true,emergency_reason=$3 WHERE owner_id=$1 AND id=$2`, id, in.PeriodID, in.Reason); e != nil {
+	if _, e = tx.Exec(ctx, `UPDATE habit_periods SET emergency_reason=$3,emergency_at=$4 WHERE owner_id=$1 AND id=$2`, id, in.PeriodID, in.Reason, s.clock.Now().UTC()); e != nil {
 		return h, e
 	}
 	if e = s.bump(ctx, tx, id, h.ID); e != nil {

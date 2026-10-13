@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/habits/starter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getHabitStarter"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/habits/{id}/periods": {
         parameters: {
             query?: never;
@@ -1659,6 +1675,10 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        HabitStarter: {
+            id: string;
+            title: string;
+        };
         HabitLogPage: {
             items: components["schemas"]["HabitLog"][];
             next_cursor: string | null;
@@ -1757,6 +1777,7 @@ export interface components {
             excluded: boolean;
             emergency_reason: string;
             rest_reason: string;
+            emergency_at: string | null;
         };
         HabitScheduleChange: {
             effective_from: string;
@@ -1784,6 +1805,7 @@ export interface components {
             pauses: components["schemas"]["HabitPause"][];
             as_of: string;
             archives: components["schemas"]["HabitArchive"][];
+            starter_id?: string | null;
         };
         HabitScheduleVersion: {
             version: number;
@@ -1801,6 +1823,7 @@ export interface components {
             starts_on: string;
             ends_on: string | null;
             schedule: components["schemas"]["HabitSchedule"];
+            starter_id?: string | null;
         };
         HabitSchedule: {
             /** @enum {string} */
@@ -2926,6 +2949,35 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getHabitStarter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["HabitStarter"] | null;
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     getHabitPeriods: {
         parameters: {
             query?: {

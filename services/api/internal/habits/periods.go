@@ -7,19 +7,20 @@ import (
 )
 
 type Period struct {
-	RestReason      string    `json:"rest_reason"`
-	ID              string    `json:"id"`
-	Key             string    `json:"key"`
-	Start           time.Time `json:"start"`
-	End             time.Time `json:"end"`
-	Timezone        string    `json:"timezone"`
-	ScheduleVersion int64     `json:"schedule_version"`
-	Target          float64   `json:"target"`
-	Amount          float64   `json:"amount"`
-	Progress        int       `json:"progress"`
-	State           string    `json:"state"`
-	Excluded        bool      `json:"excluded"`
-	EmergencyReason string    `json:"emergency_reason"`
+	EmergencyAt     *time.Time `json:"emergency_at"`
+	RestReason      string     `json:"rest_reason"`
+	ID              string     `json:"id"`
+	Key             string     `json:"key"`
+	Start           time.Time  `json:"start"`
+	End             time.Time  `json:"end"`
+	Timezone        string     `json:"timezone"`
+	ScheduleVersion int64      `json:"schedule_version"`
+	Target          float64    `json:"target"`
+	Amount          float64    `json:"amount"`
+	Progress        int        `json:"progress"`
+	State           string     `json:"state"`
+	Excluded        bool       `json:"excluded"`
+	EmergencyReason string     `json:"emergency_reason"`
 }
 
 func (s *Service) materialize(ctx context.Context, tx pgx.Tx, id string, h Habit) (bool, error) {
@@ -92,7 +93,7 @@ func (s *Service) materialize(ctx context.Context, tx pgx.Tx, id string, h Habit
 	return more, e
 }
 func (s *Service) periods(ctx context.Context, tx pgx.Tx, id string, h Habit) ([]Period, error) {
-	rows, e := tx.Query(ctx, `SELECT p.id::text,p.period_key,p.starts_at,p.ends_at,p.timezone,p.schedule_version,p.target,p.excluded,p.emergency_reason,p.rest_reason,COALESCE((SELECT sum(l.amount) FROM habit_logs l WHERE l.owner_id=p.owner_id AND l.period_id=p.id),0)::double precision FROM habit_periods p WHERE p.owner_id=$1 AND p.habit_id=$2 ORDER BY p.starts_at,p.id`, id, h.ID)
+	rows, e := tx.Query(ctx, `SELECT p.id::text,p.period_key,p.starts_at,p.ends_at,p.timezone,p.schedule_version,p.target,p.excluded,p.emergency_reason,p.emergency_at,p.rest_reason,COALESCE((SELECT sum(l.amount) FROM habit_logs l WHERE l.owner_id=p.owner_id AND l.period_id=p.id),0)::double precision FROM habit_periods p WHERE p.owner_id=$1 AND p.habit_id=$2 ORDER BY p.starts_at,p.id`, id, h.ID)
 	if e != nil {
 		return nil, e
 	}
@@ -100,7 +101,7 @@ func (s *Service) periods(ctx context.Context, tx pgx.Tx, id string, h Habit) ([
 	out := []Period{}
 	for rows.Next() {
 		var p Period
-		if e = rows.Scan(&p.ID, &p.Key, &p.Start, &p.End, &p.Timezone, &p.ScheduleVersion, &p.Target, &p.Excluded, &p.EmergencyReason, &p.RestReason, &p.Amount); e != nil {
+		if e = rows.Scan(&p.ID, &p.Key, &p.Start, &p.End, &p.Timezone, &p.ScheduleVersion, &p.Target, &p.Excluded, &p.EmergencyReason, &p.EmergencyAt, &p.RestReason, &p.Amount); e != nil {
 			return nil, e
 		}
 		p.Progress = int(min(100, p.Amount/p.Target*100))

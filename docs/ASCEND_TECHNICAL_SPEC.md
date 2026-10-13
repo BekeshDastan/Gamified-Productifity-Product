@@ -1671,7 +1671,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Архив не удаляет историю и не порождает новые обязательные периоды.
   - **КОММИТ СЕЙЧАС:** `feat(habits): add archival schedule previews and log history`
 
-- [ ] **C080. Приёмка личной основы**
+- [x] **C080. Приёмка личной основы**
   - **Сделать:** Пройти сценарий цель → задача → календарь → привычка, границы недель и смену пояса.
   - **Проверить:** F04–F08 проходят; после merge можно поставить v0.2-core.
   - **КОММИТ СЕЙЧАС:** `test(habits): cover schedule streak and core product flows`

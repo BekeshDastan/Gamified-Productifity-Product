@@ -9,6 +9,7 @@ import { useSettings } from "@/lib/settings";
 import { questLabels } from "@/lib/quests";
 import {
   habitInput,
+  getHabitStarter,
   useHabits,
   createHabit,
   logHabit,
@@ -49,8 +50,34 @@ function useRequestKey() {
 export function Habits() {
   const [archived, setArchived] = useState(false),
     discard = useConfirmDiscard();
+  const auth = useAuth();
+  const [starter, setStarter] = useState<{ id: string; title: string }>();
+  const suggestion = useQuery({
+    queryKey: ["account", auth.session?.account.id, "habit-starter"],
+    queryFn: ({ signal }) => getHabitStarter(signal),
+    enabled: !!auth.session?.account.id,
+  });
   const data = useHabits(archived),
+    settings = useSettings(),
     changed = useHabitChanged();
+  if (data.isPending || !settings.data)
+    return (
+      <Card>
+        <p role={data.isError || settings.isError ? "alert" : "status"}>
+          {data.isError || settings.isError
+            ? "Не удалось загрузить привычки и настройки."
+            : "Загружаем привычки и ваш часовой пояс…"}
+        </p>
+        <Button
+          onClick={() => {
+            void data.refetch();
+            void settings.refetch();
+          }}
+        >
+          Повторить
+        </Button>
+      </Card>
+    );
   return (
     <>
       <Button
@@ -64,7 +91,27 @@ export function Habits() {
       {!archived && (
         <Card>
           <h2>Новая привычка</h2>
-          <HabitCreate changed={changed} />
+          {suggestion.data && !starter && (
+            <>
+              <p>Сохранённая идея: {suggestion.data.title}</p>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  if (discard()) setStarter(suggestion.data ?? undefined);
+                }}
+              >
+                Настроить стартовую привычку
+              </Button>
+            </>
+          )}
+          <HabitCreate
+            key={starter?.id ?? "new"}
+            starter={starter}
+            changed={() => {
+              setStarter(undefined);
+              changed();
+            }}
+          />
         </Card>
       )}
       {data.isPending && <p role="status">Загружаем привычки…</p>}
@@ -88,7 +135,13 @@ export function Habits() {
     </>
   );
 }
-function HabitCreate({ changed }: { changed: () => void }) {
+function HabitCreate({
+  changed,
+  starter,
+}: {
+  changed: () => void;
+  starter?: { id: string; title: string };
+}) {
   const settings = useSettings(),
     auth = useAuth(),
     key = useRequestKey();
@@ -99,7 +152,8 @@ function HabitCreate({ changed }: { changed: () => void }) {
   const flow = useValidatedForm({
     schema: habitInput,
     defaultValues: {
-      title: "",
+      title: starter?.title ?? "",
+      starter_id: starter?.id ?? null,
       kind: "count",
       unit: "страниц",
       minimum: 1,
@@ -215,7 +269,7 @@ function HabitCreate({ changed }: { changed: () => void }) {
       {frequency === "daily" && (
         <fieldset>
           <legend>Запланированные дни</legend>
-          <div className="form-actions">
+          <div className="habit-weekdays">
             {weekdays.map((name, i) => (
               <label key={name}>
                 <input
@@ -319,14 +373,17 @@ export function HabitCard({
               <details hidden={!!h.archived_at}>
                 <summary>Пауза и экстренный пропуск</summary>
                 <HabitPauseForm key={"pause:" + h.version} habit={h} changed={changed} />
-                {current && !current.excluded && current.state === "open" && (
-                  <HabitEmergencyForm
-                    key={"emergency:" + h.version}
-                    habit={h}
-                    period={current}
-                    changed={changed}
-                  />
-                )}
+                {current &&
+                  !current.excluded &&
+                  current.state === "open" &&
+                  !current.emergency_reason && (
+                    <HabitEmergencyForm
+                      key={"emergency:" + h.version}
+                      habit={h}
+                      period={current}
+                      changed={changed}
+                    />
+                  )}
                 <ul>
                   {h.pauses.map((p) => (
                     <li key={p.id}>
@@ -465,7 +522,10 @@ function HabitEmergencyForm({
         {...flow.form.register("reason")}
         error={flow.form.formState.errors.reason?.message}
       />
-      <p className="ui-hint">Только текущий период. Это не успешное выполнение.</p>
+      <p className="ui-hint">
+        Причина сохраняется для текущего периода. Норма остаётся в расчёте; это не успешное
+        выполнение.
+      </p>
       <Button type="submit" variant="secondary">
         Отметить экстренный пропуск
       </Button>

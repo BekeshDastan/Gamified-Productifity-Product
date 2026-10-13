@@ -1579,3 +1579,32 @@ html[data-motion="reduce"] *::after {
 .habit-heatmap [data-state="rest"] {
   border-style: dashed;
 }
+
+.habit-weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.habit-weekdays label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0 0.5rem;
+}
+.habit-card progress {
+  appearance: none;
+  border: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: var(--muted);
+}
+.habit-card progress::-webkit-progress-bar {
+  background: var(--muted);
+}
+.habit-card progress::-webkit-progress-value {
+  background: var(--accent);
+}
+.habit-card progress::-moz-progress-bar {
+  background: var(--accent);
+}

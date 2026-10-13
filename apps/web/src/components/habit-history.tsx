@@ -177,7 +177,7 @@ function ScheduleForm({ habit: h, changed }: { habit: Habit; changed: () => void
           error={f.formState.errors.schedule?.target?.message}
         />
         {frequency === "daily" && (
-          <fieldset>
+          <fieldset className="habit-weekdays">
             <legend>Новые запланированные дни</legend>
             {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((label, i) => (
               <label key={label}>

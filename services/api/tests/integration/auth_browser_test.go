@@ -29,6 +29,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/mail"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/profile"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 )
 
 type authLogs struct {
@@ -72,20 +73,21 @@ func TestBrowserAuth(t *testing.T) {
 	if err := sessions.Mount(router, limits); err != nil {
 		t.Fatal(err)
 	}
-	profile.NewService(pool, clock).Mount(router, sessions.Protect)
-	goalService := goals.NewService(pool, clock)
+	domainClock := testkit.NewClock(time.Date(2026, 10, 12, 12, 0, 0, 0, time.UTC))
+	profile.NewService(pool, domainClock).Mount(router, sessions.Protect)
+	goalService := goals.NewService(pool, domainClock)
 	goalService.Mount(router, sessions.Protect)
 	files, err := blob.NewLocal(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer files.Close()
-	questService := quests.NewService(pool, clock).WithObserver(goalService.QuestChanged).WithFiles(files, blob.UnavailableScanner{})
+	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
-	calendarService := calendar.NewService(pool, clock, questService)
+	calendarService := calendar.NewService(pool, domainClock, questService)
 	calendarService.Mount(router, sessions.Protect)
-	habits.NewService(pool, clock).Mount(router, sessions.Protect)
-	planning.NewService(pool, clock, questService, calendarService).Mount(router, sessions.Protect)
+	habits.NewService(pool, domainClock).Mount(router, sessions.Protect)
+	planning.NewService(pool, domainClock, questService, calendarService).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
 		t.Fatal("stop dev before browser acceptance; API test port unavailable")

@@ -6,6 +6,40 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/habits/starter:
+    get:
+      operationId: getHabitStarter
+      parameters: []
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    anyOf:
+                      - $ref: "#/components/schemas/HabitStarter"
+                      - type: "null"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/habits/{id}/periods:
     get:
       operationId: getHabitPeriods
@@ -5074,6 +5108,17 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    HabitStarter:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+        title:
+          type: string
     HabitLogPage:
       type: object
       additionalProperties: false
@@ -5344,6 +5389,7 @@ components:
         - excluded
         - emergency_reason
         - rest_reason
+        - emergency_at
       properties:
         id:
           type: string
@@ -5376,6 +5422,10 @@ components:
           type: string
         rest_reason:
           type: string
+        emergency_at:
+          anyOf:
+            - type: string
+            - type: "null"
     HabitScheduleChange:
       type: object
       additionalProperties: false
@@ -5470,6 +5520,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/HabitArchive"
+        starter_id:
+          anyOf:
+            - type: string
+            - type: "null"
     HabitScheduleVersion:
       type: object
       additionalProperties: false
@@ -5524,6 +5578,10 @@ components:
             - type: "null"
         schedule:
           $ref: "#/components/schemas/HabitSchedule"
+        starter_id:
+          anyOf:
+            - type: string
+            - type: "null"
     HabitSchedule:
       type: object
       additionalProperties: false

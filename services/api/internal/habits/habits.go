@@ -23,14 +23,15 @@ type Schedule struct {
 	Target    float64 `json:"target"`
 }
 type Input struct {
-	Title    string   `json:"title"`
-	Kind     string   `json:"kind"`
-	Unit     string   `json:"unit"`
-	Minimum  float64  `json:"minimum"`
-	AreaID   *string  `json:"area_id"`
-	StartsOn string   `json:"starts_on"`
-	EndsOn   *string  `json:"ends_on"`
-	Schedule Schedule `json:"schedule"`
+	StarterID *string  `json:"starter_id,omitempty"`
+	Title     string   `json:"title"`
+	Kind      string   `json:"kind"`
+	Unit      string   `json:"unit"`
+	Minimum   float64  `json:"minimum"`
+	AreaID    *string  `json:"area_id"`
+	StartsOn  string   `json:"starts_on"`
+	EndsOn    *string  `json:"ends_on"`
+	Schedule  Schedule `json:"schedule"`
 }
 type ScheduleVersion struct {
 	Version       int64    `json:"version"`
@@ -112,6 +113,9 @@ func validateSchedule(s Schedule) (Schedule, error) {
 	return s, nil
 }
 func Validate(in Input) (Input, error) {
+	if in.StarterID != nil && !uuid(*in.StarterID) {
+		return in, invalid("starter_id", "Стартовая привычка не найдена")
+	}
 	in.Title = strings.TrimSpace(in.Title)
 	in.Unit = strings.TrimSpace(in.Unit)
 	if !utf8.ValidString(in.Title) || len([]rune(in.Title)) < 1 || len([]rune(in.Title)) > 200 || strings.ContainsRune(in.Title, 0) {
@@ -216,6 +220,19 @@ func (s *Service) get(ctx context.Context, tx pgx.Tx, id, key string) (Habit, er
 	return h, e
 }
 func (s *Service) create(ctx context.Context, tx pgx.Tx, id string, in Input) (Habit, error) {
+	if in.StarterID != nil {
+		var promoted *string
+		e := tx.QueryRow(ctx, `SELECT promoted_entity_id::text FROM onboarding_starters WHERE owner_id=$1 AND id=$2 AND kind='habit' FOR UPDATE`, id, *in.StarterID).Scan(&promoted)
+		if errors.Is(e, pgx.ErrNoRows) {
+			return Habit{}, problem(404, "NOT_FOUND", "Стартовая привычка не найдена")
+		}
+		if e != nil {
+			return Habit{}, e
+		}
+		if promoted != nil {
+			return s.view(ctx, tx, id, *promoted)
+		}
+	}
 	start, _ := date(in.StartsOn)
 	now := s.clock.Now()
 	if start.Before(now.AddDate(-10, 0, 0)) || start.After(now.AddDate(1, 0, 0)) {
@@ -248,6 +265,11 @@ func (s *Service) create(ctx context.Context, tx pgx.Tx, id string, in Input) (H
 	}
 	if _, e = tx.Exec(ctx, `INSERT INTO habit_schedules(owner_id,habit_id,version,effective_from,schedule,reason) VALUES($1,$2,1,$3::text::date,$4,'Начальное расписание')`, id, key, in.StartsOn, schedule); e != nil {
 		return Habit{}, e
+	}
+	if in.StarterID != nil {
+		if _, e = tx.Exec(ctx, `UPDATE onboarding_starters SET promoted_entity_id=$3,version=version+1,updated_at=$4 WHERE owner_id=$1 AND id=$2`, id, *in.StarterID, key, s.clock.Now().UTC()); e != nil {
+			return Habit{}, e
+		}
 	}
 	return s.view(ctx, tx, id, key)
 }
@@ -344,6 +366,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		s.mountLogs(r)
 		s.mountPauses(r)
 		s.mountHistory(r)
+		s.mountStarter(r)
 		r.Get("/api/v1/habits", func(w http.ResponseWriter, r *http.Request) {
 			id, e := owner(r.Context())
 			var out []Habit

@@ -11,6 +11,7 @@ export const habitSchedule = z.object({
   target: z.number().positive().max(1000000),
 });
 export const habitInput = z.object({
+  starter_id: z.uuid().nullable().optional(),
   title: z.string().trim().min(1, "Укажите название").max(200),
   kind: z.enum(["binary", "count", "duration"]),
   unit: z.string().trim().min(1, "Укажите единицу").max(40),
@@ -33,6 +34,7 @@ export const habitPeriod = z.object({
   state: z.enum(["open", "success", "missed", "rest"]),
   excluded: z.boolean(),
   emergency_reason: z.string(),
+  emergency_at: z.string().nullable(),
   rest_reason: z.string(),
 });
 export const habitSchema = habitInput.extend({
@@ -285,4 +287,11 @@ export async function archiveHabit(h: Habit, restore: boolean, reason: string, k
       : await api.POST("/api/v1/habits/{id}/archive", { params: params(h, key), body: { reason } });
     return habitSchema.parse(r.data?.data);
   });
+}
+
+export const habitStarter = z.object({ id: z.uuid(), title: z.string() });
+export async function getHabitStarter(signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/habits/starter", { signal });
+  return habitStarter.nullable().parse(r.data?.data);
 }

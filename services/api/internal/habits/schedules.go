@@ -128,7 +128,7 @@ func (s *Service) scheduleChange(ctx context.Context, tx pgx.Tx, id string, h Ha
 	if _, e = tx.Exec(ctx, `UPDATE habits SET version=version+1,updated_at=$3 WHERE owner_id=$1 AND id=$2`, id, h.ID, s.clock.Now().UTC()); e != nil {
 		return h, e
 	}
-	return s.get(ctx, tx, id, h.ID)
+	return s.view(ctx, tx, id, h.ID)
 }
 
 func (s *Service) mountSchedules(r chi.Router) {
