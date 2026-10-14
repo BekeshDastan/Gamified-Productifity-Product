@@ -166,6 +166,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		s.mountReminders(r)
 		s.mountDeliveries(r)
 		s.mountPush(r)
+		s.mountSource(r)
 		r.Get("/api/v1/notifications", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
 				return s.list(ctx, tx, owner, r.URL.Query().Get("before"))

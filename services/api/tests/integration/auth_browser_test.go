@@ -114,6 +114,7 @@ func TestBrowserAuth(t *testing.T) {
 	analyticsService := analytics.NewService(pool, domainClock).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
 	notificationService := notifications.NewService(pool, domainClock).WithHabits(habitService).WithSchedulingClock(clock)
+	notificationService.ConfigurePush("test-public-key", nil)
 	characterService.WithAchievementObserver(notificationService.AchievementChanged)
 	analyticsService.WithReportObserver(notificationService.ReportCreated)
 

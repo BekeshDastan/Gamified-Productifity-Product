@@ -106,5 +106,16 @@ func TestNotificationEventsAchievementCorrectionFocusAndRecipientPrivacy(t *test
 	if r := f.privateRequest(t, a, "GET", "/notifications/"+partner.Items[0].ID, "", nil); r.status != 404 {
 		t.Fatal("foreign notification")
 	}
+	if r := f.privateRequest(t, a, "GET", "/notifications/"+partner.Items[0].ID+"/source", "", nil); r.status != 404 {
+		t.Fatal("foreign source")
+	}
+	for _, n := range page.Items {
+		if n.Kind == "focus_result" {
+			r := f.privateRequest(t, a, "GET", "/notifications/"+n.ID+"/source", "", nil)
+			if r.status != 200 || !strings.Contains(string(r.body), `"available":false`) {
+				t.Fatal("stale source", r.status, string(r.body))
+			}
+		}
+	}
 	_ = pgx.ErrNoRows
 }

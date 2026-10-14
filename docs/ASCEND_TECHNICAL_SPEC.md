@@ -2156,7 +2156,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Секретные поля и дневник не появляются в push/email партнёру.
   - **КОММИТ СЕЙЧАС:** `feat(notifications): notify achievements invites and scheduled summaries`
 
-- [ ] **C159. Интерфейс управления**
+- [x] **C159. Интерфейс управления**
   - **Сделать:** Добавить колокольчик, центр, экран каналов, тихие часы и действие перейти к источнику.
   - **Проверить:** Ссылка на удалённый объект показывает понятное состояние, а не раскрывает чужой объект.
   - **КОММИТ СЕЙЧАС:** `feat(notifications-ui): add inbox preferences and snooze controls`

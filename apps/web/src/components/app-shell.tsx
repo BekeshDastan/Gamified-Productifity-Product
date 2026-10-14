@@ -29,12 +29,12 @@ import { AccountThemeSelect, PersonalizationEffects } from "./personalization";
 import { useAuth } from "@/lib/auth/provider";
 import { AccountQueryProvider } from "@/lib/api/query-provider";
 import { TaskViewObserver } from "./task-view-observer";
+import { NotificationBell } from "./notifications";
 
-const planned = [
-  { label: "Друзья", icon: Users },
-  { label: "Уведомления", icon: Bell },
-];
+const planned = [{ label: "Друзья", icon: Users }];
 const available = [
+  { href: "/app/notifications", label: "Уведомления", icon: Bell },
+  { href: "/app/settings/notifications", label: "Каналы уведомлений", icon: Bell },
   { href: "/app/navigator", label: "Навигатор", icon: Compass },
   { href: "/app/analytics", label: "Аналитика", icon: ChartNoAxesCombined },
   { href: "/app/seasons", label: "Сезоны", icon: Sprout },
@@ -151,6 +151,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span>{available.find((item) => item.href === pathname)?.label ?? "ASCEND"}</span>
             </div>
             <AccountThemeSelect />
+            <NotificationBell />
             <span className="account-state">
               <LockKeyhole size={14} aria-hidden="true" />
               {auth.session

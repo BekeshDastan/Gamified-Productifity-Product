@@ -6,6 +6,49 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/notifications/{id}/source:
+    get:
+      operationId: getNotificationSource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - available
+                      - url
+                      - message
+                    properties:
+                      available:
+                        type: boolean
+                      url:
+                        anyOf:
+                          - type: string
+                          - type: "null"
+                      message:
+                        type: string
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
   /api/v1/notifications/push:
     get:
       operationId: getPushDevices

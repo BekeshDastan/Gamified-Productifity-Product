@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { createApiClient } from "@/lib/api/client";
+import { authClient, authParams } from "@/lib/auth/session";
 import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { AuthFrame } from "./auth-forms";
 import { Button } from "./ui/button";
@@ -21,11 +21,13 @@ export function NotificationUnsubscribe() {
       queueMicrotask(() => setError("Откройте ссылку из письма."));
       return;
     }
-    void createApiClient()
-      .POST("/api/v1/notifications/unsubscribe/preview", {
-        params: { header: { Origin: window.location.origin } },
-        body: { token: value },
-      })
+    void authClient()
+      .then((client) =>
+        client.POST("/api/v1/notifications/unsubscribe/preview", {
+          params: authParams(),
+          body: { token: value },
+        }),
+      )
       .then((r) => {
         setToken(value);
         const data = r.data?.data;
@@ -50,11 +52,13 @@ export function NotificationUnsubscribe() {
             onClick={() => {
               setBusy(true);
               setError("");
-              void createApiClient()
-                .POST("/api/v1/notifications/unsubscribe", {
-                  params: { header: { Origin: window.location.origin } },
-                  body: { token, confirm: true },
-                })
+              void authClient()
+                .then((client) =>
+                  client.POST("/api/v1/notifications/unsubscribe", {
+                    params: authParams(),
+                    body: { token, confirm: true },
+                  }),
+                )
                 .then(() => setDone(true))
                 .catch((e) =>
                   setError(e instanceof Error ? e.message : "Не удалось сохранить настройку."),
