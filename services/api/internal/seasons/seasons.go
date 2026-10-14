@@ -21,6 +21,7 @@ type Service struct {
 	*privateapi.Service
 	challenges      *challenges.Service
 	schedulingClock platform.Clock
+	recovery        *recoveryServices
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
@@ -227,6 +228,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		r.Use(protect)
 		s.mountLinks(r)
 		s.mountClosure(r)
+		s.mountRecovery(r)
 		r.Get("/api/v1/seasons", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) { return s.list(r, tx, owner) })
 			s.Reply(w, r, out, e)

@@ -6,6 +6,103 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/recovery/comeback:
+    get:
+      operationId: getComebackOffer
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RecoveryEligibility"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+  /api/v1/recovery/comeback/history:
+    get:
+      operationId: getComebackHistory
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RecoveryHistory"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/recovery/comeback/{id}/decide:
+    post:
+      operationId: decideComeback
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoveryDecision"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RecoveryOffer"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
   /api/v1/seasons/{id}/close:
     post:
       operationId: closeSeason
@@ -8233,6 +8330,192 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    RecoveryStep:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - description
+        - estimated_minutes
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        estimated_minutes:
+          type: integer
+          minimum: 1
+          maximum: 15
+    RecoveryResult:
+      type: object
+      additionalProperties: false
+      required:
+        - goal_id
+        - run_id
+        - quest_ids
+        - steps
+      properties:
+        goal_id:
+          type:
+            - string
+            - "null"
+        run_id:
+          type:
+            - string
+            - "null"
+        quest_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecoveryStep"
+    RecoveryOffer:
+      type: object
+      additionalProperties: false
+      required:
+        - catalog_version
+        - challenge_rules
+        - reward_xp
+        - economy_version
+        - rejoin
+        - visibility
+        - source_policy
+        - steps
+        - last_result_at
+        - inactive_since
+        - id
+        - offered_at
+        - expires_at
+        - state
+        - version
+        - decided_at
+        - result
+      properties:
+        catalog_version:
+          type: string
+        challenge_rules:
+          $ref: "#/components/schemas/ChallengeConfig"
+        reward_xp:
+          type: integer
+        economy_version:
+          type: string
+        rejoin:
+          type: boolean
+        visibility:
+          type: string
+          enum:
+            - private
+        source_policy:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecoveryStep"
+        last_result_at:
+          type:
+            - string
+            - "null"
+        inactive_since:
+          type: string
+        id:
+          type: string
+          format: uuid
+        offered_at:
+          type: string
+        expires_at:
+          type: string
+        state:
+          type: string
+          enum:
+            - offered
+            - accepted
+            - declined
+            - withdrawn
+            - expired
+        version:
+          type: integer
+          minimum: 1
+        decided_at:
+          type:
+            - string
+            - "null"
+        result:
+          anyOf:
+            - $ref: "#/components/schemas/RecoveryResult"
+            - type: "null"
+    RecoveryEligibility:
+      type: object
+      additionalProperties: false
+      required:
+        - timezone
+        - eligible
+        - last_result_at
+        - inactive_since
+        - cooldown_until
+        - offer
+      properties:
+        timezone:
+          type: string
+        eligible:
+          type: boolean
+        last_result_at:
+          type:
+            - string
+            - "null"
+        inactive_since:
+          type: string
+        cooldown_until:
+          type:
+            - string
+            - "null"
+        offer:
+          anyOf:
+            - $ref: "#/components/schemas/RecoveryOffer"
+            - type: "null"
+    RecoveryHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecoveryOffer"
+        next:
+          type: string
+    RecoveryDecision:
+      type: object
+      additionalProperties: false
+      required:
+        - timezone
+        - accept
+        - steps
+        - area_id
+      properties:
+        timezone:
+          type: string
+        accept:
+          type: boolean
+        steps:
+          type: array
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/RecoveryStep"
+        area_id:
+          type:
+            - string
+            - "null"
     SeasonCloseInput:
       type: object
       additionalProperties: false

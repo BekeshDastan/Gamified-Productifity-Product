@@ -1994,7 +1994,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Новый сезон не сбрасывает уровень; прошлая сводка доступна после изменения текущих целей.
   - **КОММИТ СЕЙЧАС:** `feat(seasons): close seasons with immutable summary snapshots`
 
-- [ ] **C132. Comeback Challenge**
+- [x] **C132. Comeback Challenge**
   - **Сделать:** Реализовать предложение трёх простых шагов, cooldown, согласие и связанное испытание.
   - **Проверить:** Отказ не штрафует; повтор предложения не создаёт несколько одинаковых вызовов.
   - **КОММИТ СЕЙЧАС:** `feat(recovery): offer small return challenges after inactivity`

@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/v1/recovery/comeback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getComebackOffer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recovery/comeback/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getComebackHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recovery/comeback/{id}/decide": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["decideComeback"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/seasons/{id}/close": {
         parameters: {
             query?: never;
@@ -2731,6 +2779,58 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        RecoveryStep: {
+            id: string;
+            title: string;
+            description: string;
+            estimated_minutes: number;
+        };
+        RecoveryResult: {
+            goal_id: string | null;
+            run_id: string | null;
+            quest_ids: string[];
+            steps: components["schemas"]["RecoveryStep"][];
+        };
+        RecoveryOffer: {
+            catalog_version: string;
+            challenge_rules: components["schemas"]["ChallengeConfig"];
+            reward_xp: number;
+            economy_version: string;
+            rejoin: boolean;
+            /** @enum {string} */
+            visibility: "private";
+            source_policy: string;
+            steps: components["schemas"]["RecoveryStep"][];
+            last_result_at: string | null;
+            inactive_since: string;
+            /** Format: uuid */
+            id: string;
+            offered_at: string;
+            expires_at: string;
+            /** @enum {string} */
+            state: "offered" | "accepted" | "declined" | "withdrawn" | "expired";
+            version: number;
+            decided_at: string | null;
+            result: components["schemas"]["RecoveryResult"] | null;
+        };
+        RecoveryEligibility: {
+            timezone: string;
+            eligible: boolean;
+            last_result_at: string | null;
+            inactive_since: string;
+            cooldown_until: string | null;
+            offer: components["schemas"]["RecoveryOffer"] | null;
+        };
+        RecoveryHistory: {
+            items: components["schemas"]["RecoveryOffer"][];
+            next: string;
+        };
+        RecoveryDecision: {
+            timezone: string;
+            accept: boolean;
+            steps: components["schemas"]["RecoveryStep"][];
+            area_id: string | null;
+        };
         SeasonCloseInput: {
             confirm: boolean;
             reason: string;
@@ -5028,6 +5128,96 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getComebackOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RecoveryEligibility"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+        };
+    };
+    getComebackHistory: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RecoveryHistory"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
+    decideComeback: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecoveryDecision"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RecoveryOffer"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            503: components["responses"]["Error"];
+        };
+    };
     closeSeason: {
         parameters: {
             query?: never;

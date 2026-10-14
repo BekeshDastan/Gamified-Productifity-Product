@@ -800,6 +800,27 @@ type QuestView struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type RecoveryOffer struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	Snapshot  []byte             `json:"snapshot"`
+	OfferedAt pgtype.Timestamptz `json:"offered_at"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	State     string             `json:"state"`
+	Version   int64              `json:"version"`
+	Request   []byte             `json:"request"`
+	Result    []byte             `json:"result"`
+	DecidedAt pgtype.Timestamptz `json:"decided_at"`
+}
+
+type RecoveryOfferEvent struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	OfferID   pgtype.UUID        `json:"offer_id"`
+	Version   int64              `json:"version"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type RecurrenceExclusion struct {
 	OwnerID       pgtype.UUID `json:"owner_id"`
 	SeriesID      pgtype.UUID `json:"series_id"`

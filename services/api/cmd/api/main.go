@@ -97,7 +97,7 @@ func main() {
 	habits.NewService(pool, platform.RealClock{}).WithProgression(rewardService).Mount(router, sessions.Protect)
 	challengeService := challenges.NewService(pool, platform.RealClock{}).WithProgression(rewardService).WithQuests(questService)
 	challengeService.Mount(router, sessions.Protect)
-	seasons.NewService(pool, platform.RealClock{}).WithChallenges(challengeService).Mount(router, sessions.Protect)
+	seasons.NewService(pool, platform.RealClock{}).WithChallenges(challengeService).WithRecovery(questService, goalService).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, platform.RealClock{}, questService, calendarService)
 	planService.Mount(router, sessions.Protect)
 	journal.NewService(pool, platform.RealClock{}).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
