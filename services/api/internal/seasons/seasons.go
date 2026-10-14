@@ -19,7 +19,8 @@ import (
 
 type Service struct {
 	*privateapi.Service
-	challenges *challenges.Service
+	challenges      *challenges.Service
+	schedulingClock platform.Clock
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
@@ -132,7 +133,10 @@ func (s *Service) create(ctx context.Context, tx pgx.Tx, owner string, in Create
 	if e != nil {
 		return v, e
 	}
-	return v, s.event(ctx, tx, owner, "created", v)
+	if e = s.event(ctx, tx, owner, "created", v); e != nil {
+		return v, e
+	}
+	return v, s.schedule(ctx, tx, owner, v)
 }
 
 type Confirmation struct {
@@ -222,6 +226,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountLinks(r)
+		s.mountClosure(r)
 		r.Get("/api/v1/seasons", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) { return s.list(r, tx, owner) })
 			s.Reply(w, r, out, e)

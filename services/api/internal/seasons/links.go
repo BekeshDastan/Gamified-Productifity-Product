@@ -140,6 +140,15 @@ func (s *Service) overview(ctx context.Context, tx pgx.Tx, owner, id string) (Ov
 		return out, e
 	}
 	out.Season = v
+	if v.FinalSnapshot != nil {
+		var saved Summary
+		if e = json.Unmarshal(v.FinalSnapshot, &saved); e != nil {
+			return out, e
+		}
+		out = saved.Overview
+		out.Season = v
+		return out, nil
+	}
 	type item struct {
 		id       string
 		baseline json.RawMessage

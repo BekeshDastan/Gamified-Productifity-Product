@@ -104,7 +104,7 @@ func TestBrowserAuth(t *testing.T) {
 	habits.NewService(pool, domainClock).WithProgression(rewardService).Mount(router, sessions.Protect)
 	challengeService := challenges.NewService(pool, domainClock).WithSchedulingClock(clock).WithProgression(rewardService).WithQuests(questService)
 	challengeService.Mount(router, sessions.Protect)
-	seasons.NewService(pool, domainClock).WithChallenges(challengeService).Mount(router, sessions.Protect)
+	seasons.NewService(pool, domainClock).WithSchedulingClock(clock).WithChallenges(challengeService).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, domainClock, questService, calendarService)
 	planService.Mount(router, sessions.Protect)
 	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
@@ -127,6 +127,9 @@ func TestBrowserAuth(t *testing.T) {
 	go func() {
 		defer worker.Done()
 		handlers := sessions.MailHandlers(mailer)
+		for kind, handler := range seasons.NewService(pool, domainClock).WithChallenges(challengeService).Handlers() {
+			handlers[kind] = handler
+		}
 		for kind, handler := range challenges.NewService(pool, domainClock).WithProgression(rewardService).Handlers() {
 			handlers[kind] = handler
 		}
@@ -175,7 +178,7 @@ func TestBrowserAuth(t *testing.T) {
 		}
 	}
 	var dead int
-	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed','challenges.changed') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
+	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed','challenges.changed','challenges.close','seasons.close') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
 		t.Fatal("derived-profile outbox handler failure", dead, e)
 	}
 	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token=", "JOURNAL_PRIVATE_SENTINEL_C120", "CHALLENGE_PRIVATE_SENTINEL_C128"} {

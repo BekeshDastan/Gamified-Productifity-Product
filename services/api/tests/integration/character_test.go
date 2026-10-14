@@ -188,7 +188,10 @@ func TestCharacterAchievementEventsRepeatsCorrectionsAndMassRecompute(t *testing
 		t.Fatal("catalog response", string(r.body))
 	}
 	for _, d := range result.Data {
-		if (d.Metric == character.CompletedSeasons || d.Metric == character.CoopChallenges) && (d.Active || d.Available) {
+		if d.Metric == character.CompletedSeasons && (!d.Available || d.Active || d.Current != 0) {
+			t.Fatal("empty season history must be available with zero completions", d)
+		}
+		if d.Metric == character.CoopChallenges && (d.Active || d.Available) {
 			t.Fatal("invented unavailable evidence", d)
 		}
 	}

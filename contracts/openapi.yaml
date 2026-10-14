@@ -6,6 +6,129 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/seasons/{id}/close:
+    post:
+      operationId: closeSeason
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeasonCloseInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SeasonSummary"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}/archive:
+    post:
+      operationId: archiveSeason
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeasonArchiveInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PersonalSeason"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}/summary:
+    get:
+      operationId: getSeasonSummary
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SeasonSummary"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
   /api/v1/seasons/{id}/overview:
     get:
       operationId: getSeasonOverview
@@ -8110,6 +8233,100 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    SeasonCloseInput:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+        - reason
+      properties:
+        confirm:
+          type: boolean
+        reason:
+          type: string
+          maxLength: 2000
+    SeasonArchiveInput:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+        - archived
+      properties:
+        confirm:
+          type: boolean
+        archived:
+          type: boolean
+    SeasonActivity:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - until
+        - tasks
+        - habit_norms
+        - focus_seconds
+        - reviews
+        - xp_delta
+        - coins_delta
+        - level_at_close
+      properties:
+        from:
+          type:
+            - string
+            - "null"
+        until:
+          type: string
+        tasks:
+          type: integer
+        habit_norms:
+          type: integer
+        focus_seconds:
+          type: integer
+        reviews:
+          type: integer
+        xp_delta:
+          type: integer
+        coins_delta:
+          type: integer
+        level_at_close:
+          type: integer
+    SeasonSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - kind
+        - at
+        - early
+        - reason
+        - overview
+        - activity
+        - goals_achieved
+        - goals_unavailable
+        - challenges_achieved
+      properties:
+        version:
+          type: string
+        kind:
+          type: string
+          enum:
+            - season_result
+        at:
+          type: string
+        early:
+          type: boolean
+        reason:
+          type: string
+        overview:
+          $ref: "#/components/schemas/SeasonOverview"
+        activity:
+          $ref: "#/components/schemas/SeasonActivity"
+        goals_achieved:
+          type: integer
+        goals_unavailable:
+          type: integer
+        challenges_achieved:
+          type: integer
     SeasonSource:
       type: object
       additionalProperties: false
