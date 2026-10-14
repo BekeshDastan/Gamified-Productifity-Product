@@ -2043,7 +2043,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Пример Daily Score 65 проходит; отдых и пустой день не получают фальшивый балл.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): implement versioned daily and discipline scores`
 
-- [ ] **C140. Время и оценки задач**
+- [x] **C140. Время и оценки задач**
   - **Сделать:** Реализовать plan/actual, активные минуты, выборку шаблонов и исключение двойного ручного учёта.
   - **Проверить:** Паузы не учитываются; отсутствие actual не заменяется нулём работы.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): compare estimates actual time and focused sessions`

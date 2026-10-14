@@ -416,7 +416,20 @@ func (s *Service) mountTools(r chi.Router) {
 						if p := platform.MatchVersion(r, preview.Version); p != nil {
 							return nil, p
 						}
-						return s.insert(r.Context(), tx, id, preview.Input)
+						q, e := s.insert(r.Context(), tx, id, preview.Input)
+						if e != nil {
+							return q, e
+						}
+						t, e := template(r.Context(), tx, id, key)
+						if e != nil {
+							return q, e
+						}
+						snapshot, e := json.Marshal(t.Input)
+						if e != nil {
+							return q, e
+						}
+						_, e = tx.Exec(r.Context(), `INSERT INTO task_template_origins(owner_id,quest_id,template_id,template_name,template_version,template_input,created_at) VALUES($1,$2,$3,$4,$5,$6,$7)`, id, q.ID, t.ID, t.Name, t.Version, snapshot, s.clock.Now())
+						return q, e
 					})
 				}
 				var preview TemplatePreview

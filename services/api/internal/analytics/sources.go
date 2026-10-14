@@ -164,6 +164,9 @@ func (s *Service) collectBase(ctx context.Context, tx pgx.Tx, owner string, in R
 	if e = s.outcomes(ctx, tx, owner, in, timezone, out, add); e != nil {
 		return nil, e
 	}
+	if e = s.timeMetrics(ctx, tx, owner, in, timezone, out); e != nil {
+		return nil, e
+	}
 	for i := range out {
 		sort.SliceStable(out[i].Sources, func(a, b int) bool {
 			x, y := out[i].Sources[a], out[i].Sources[b]

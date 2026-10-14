@@ -1037,6 +1037,16 @@ type TaskEvent struct {
 	Details      []byte             `json:"details"`
 }
 
+type TaskTemplateOrigin struct {
+	OwnerID         pgtype.UUID        `json:"owner_id"`
+	QuestID         pgtype.UUID        `json:"quest_id"`
+	TemplateID      pgtype.UUID        `json:"template_id"`
+	TemplateName    string             `json:"template_name"`
+	TemplateVersion int64              `json:"template_version"`
+	TemplateInput   []byte             `json:"template_input"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
 type User struct {
 	ID              pgtype.UUID        `json:"id"`
 	Email           string             `json:"email"`

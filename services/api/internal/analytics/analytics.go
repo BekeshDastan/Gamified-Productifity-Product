@@ -39,6 +39,7 @@ type Source struct {
 	Version int64     `json:"version"`
 }
 type Day struct {
+	TimeMetrics
 	Scores Scores `json:"scores"`
 	Outcomes
 	Date         string   `json:"date"`
@@ -49,6 +50,7 @@ type Day struct {
 	Sources      []Source `json:"sources"`
 }
 type Week struct {
+	TimeTotals
 	OutcomeTotals
 	Start        string `json:"start"`
 	End          string `json:"end"`
@@ -215,6 +217,7 @@ func aggregateWeeks(days []Day) []Week {
 		}
 		w := &out[len(out)-1]
 		w.OutcomeTotals.add(d.OutcomeTotals)
+		w.TimeTotals.add(d.TimeTotals)
 		if postponed[start] == nil {
 			postponed[start] = map[string]bool{}
 		}
@@ -264,6 +267,7 @@ func (s *Service) Handlers() map[string]jobs.Handler {
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountTime(r)
 		r.Get("/api/v1/analytics", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
 				return s.read(ctx, tx, owner, Range{r.URL.Query().Get("from"), r.URL.Query().Get("to")}, false)

@@ -6,6 +6,41 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/analytics/templates:
+    get:
+      operationId: getAnalyticsTemplateSamples
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsTemplateSamples"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/analytics:
     get:
       operationId: getAnalytics
@@ -8531,6 +8566,129 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    AnalyticsTaskTime:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - url
+        - estimated_minutes
+        - actual_seconds
+        - focus_seconds
+        - manual_minutes
+        - mode
+        - confirmed_sessions
+        - completed_at
+        - template_id
+        - template_name
+        - template_version
+        - area_id
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        estimated_minutes:
+          anyOf:
+            - type: integer
+            - type: "null"
+        actual_seconds:
+          anyOf:
+            - type: integer
+            - type: "null"
+        focus_seconds:
+          type: integer
+        manual_minutes:
+          anyOf:
+            - type: integer
+            - type: "null"
+        mode:
+          type: string
+        confirmed_sessions:
+          type: integer
+        completed_at:
+          type: string
+        template_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        template_name:
+          anyOf:
+            - type: string
+            - type: "null"
+        template_version:
+          anyOf:
+            - type: integer
+            - type: "null"
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
+    AnalyticsTemplateSample:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - version
+        - count
+        - average_estimated_minutes
+        - average_actual_seconds
+        - factor
+        - sufficient
+        - quest_ids
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+        count:
+          type: integer
+        average_estimated_minutes:
+          anyOf:
+            - type: number
+            - type: "null"
+        average_actual_seconds:
+          anyOf:
+            - type: number
+            - type: "null"
+        factor:
+          anyOf:
+            - type: number
+            - type: "null"
+        sufficient:
+          type: boolean
+        quest_ids:
+          type: array
+          items:
+            type: string
+    AnalyticsTemplateSamples:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - timezone
+        - computed_at
+        - items
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        timezone:
+          type: string
+        computed_at:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsTemplateSample"
     AnalyticsRollingScore:
       type: object
       additionalProperties: false
@@ -8779,6 +8937,12 @@ components:
         - habits_complete
         - habits
         - scores
+        - estimated_tasks
+        - actual_known_tasks
+        - comparable_tasks
+        - comparable_estimated_seconds
+        - comparable_actual_seconds
+        - task_times
       properties:
         date:
           type: string
@@ -8848,6 +9012,20 @@ components:
             $ref: "#/components/schemas/AnalyticsHabitOutcome"
         scores:
           $ref: "#/components/schemas/AnalyticsScores"
+        estimated_tasks:
+          type: integer
+        actual_known_tasks:
+          type: integer
+        comparable_tasks:
+          type: integer
+        comparable_estimated_seconds:
+          type: integer
+        comparable_actual_seconds:
+          type: integer
+        task_times:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsTaskTime"
     AnalyticsWeek:
       type: object
       additionalProperties: false
@@ -8878,6 +9056,11 @@ components:
         - goals_achieved
         - goals_not_achieved
         - goals_cancelled
+        - estimated_tasks
+        - actual_known_tasks
+        - comparable_tasks
+        - comparable_estimated_seconds
+        - comparable_actual_seconds
       properties:
         start:
           type: string
@@ -8930,6 +9113,16 @@ components:
         goals_not_achieved:
           type: integer
         goals_cancelled:
+          type: integer
+        estimated_tasks:
+          type: integer
+        actual_known_tasks:
+          type: integer
+        comparable_tasks:
+          type: integer
+        comparable_estimated_seconds:
+          type: integer
+        comparable_actual_seconds:
           type: integer
     AnalyticsView:
       type: object

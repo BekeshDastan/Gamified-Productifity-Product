@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/analytics/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAnalyticsTemplateSamples"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/analytics": {
         parameters: {
             query?: never;
@@ -2875,6 +2891,40 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AnalyticsTaskTime: {
+            id: string;
+            title: string;
+            url: string;
+            estimated_minutes: number | null;
+            actual_seconds: number | null;
+            focus_seconds: number;
+            manual_minutes: number | null;
+            mode: string;
+            confirmed_sessions: number;
+            completed_at: string;
+            template_id: string | null;
+            template_name: string | null;
+            template_version: number | null;
+            area_id: string | null;
+        };
+        AnalyticsTemplateSample: {
+            id: string;
+            name: string;
+            version: number;
+            count: number;
+            average_estimated_minutes: number | null;
+            average_actual_seconds: number | null;
+            factor: number | null;
+            sufficient: boolean;
+            quest_ids: string[];
+        };
+        AnalyticsTemplateSamples: {
+            from: string;
+            to: string;
+            timezone: string;
+            computed_at: string;
+            items: components["schemas"]["AnalyticsTemplateSample"][];
+        };
         AnalyticsRollingScore: {
             from: string;
             to: string;
@@ -2975,6 +3025,12 @@ export interface components {
             habits_complete: boolean;
             habits: components["schemas"]["AnalyticsHabitOutcome"][];
             scores: components["schemas"]["AnalyticsScores"];
+            estimated_tasks: number;
+            actual_known_tasks: number;
+            comparable_tasks: number;
+            comparable_estimated_seconds: number;
+            comparable_actual_seconds: number;
+            task_times: components["schemas"]["AnalyticsTaskTime"][];
         };
         AnalyticsWeek: {
             start: string;
@@ -3003,6 +3059,11 @@ export interface components {
             goals_achieved: number;
             goals_not_achieved: number;
             goals_cancelled: number;
+            estimated_tasks: number;
+            actual_known_tasks: number;
+            comparable_tasks: number;
+            comparable_estimated_seconds: number;
+            comparable_actual_seconds: number;
         };
         AnalyticsView: {
             from: string;
@@ -5428,6 +5489,34 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getAnalyticsTemplateSamples: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsTemplateSamples"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
     getAnalytics: {
         parameters: {
             query: {
