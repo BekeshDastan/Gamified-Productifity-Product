@@ -61,7 +61,7 @@ func TestBrowserAuth(t *testing.T) {
 		t.Skip("run npm run test:auth-e2e for the real browser suite")
 	}
 	t.Setenv("FEATURE_MYSTERY_REWARDS", "true")
-	pool, ctx := databaseWithTimeout(t, 10*time.Minute)
+	pool, ctx := databaseWithTimeout(t, 12*time.Minute)
 	key := make([]byte, 32)
 	if _, err := rand.Read(key); err != nil {
 		t.Fatal(err)
@@ -76,7 +76,8 @@ func TestBrowserAuth(t *testing.T) {
 	// Separate quotas for this isolated acceptance fixture, preserving production
 	// 5-failure account allowance; multiple test accounts share one browser host.
 	limits := auth.DefaultLimits()
-	limits.Registrations = 40
+	// The UI suite has more than 40 scenarios and creates isolated accounts.
+	limits.Registrations = 80
 	limits.MailRequests = 20
 	// Acceptance compresses many lifecycle actions into seconds. Production's
 	// default 120/min quota is covered separately by HTTP integration tests.

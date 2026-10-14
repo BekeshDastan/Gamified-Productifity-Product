@@ -18,6 +18,7 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
+import { CalendarDays, Coffee } from "lucide-react";
 const days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"];
 export function ScheduleEditor() {
   const auth = useAuth();
@@ -59,8 +60,9 @@ function ScheduleForm({ initial, ownerId }: { initial: Settings; ownerId: string
   });
   const intervals = useFieldArray({ control: flow.form.control, name: "work_intervals" });
   const rest = flow.form.watch("rest_days");
+  const work = flow.form.watch("work_intervals");
   return (
-    <Card className="settings-card">
+    <Card className="settings-card schedule-composer">
       <h2>Время в вашем ритме</h2>
       <p className="ui-hint">
         Дата последнего сохранения:{" "}
@@ -68,6 +70,31 @@ function ScheduleForm({ initial, ownerId }: { initial: Settings; ownerId: string
         {initial.timezone}
       </p>
       <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
+        <div className="schedule-week-preview" aria-label="Предпросмотр рабочей недели">
+          {days.map((day, index) => (
+            <div key={day} data-rest={rest.includes(index + 1)}>
+              <strong>{day.slice(0, 2)}</strong>
+              {rest.includes(index + 1) ? (
+                <>
+                  <Coffee size={19} aria-hidden="true" />
+                  <small>Отдых</small>
+                </>
+              ) : (
+                <>
+                  <CalendarDays size={19} aria-hidden="true" />
+                  <small>
+                    {work.filter((item) => item.day === index + 1).length
+                      ? work
+                          .filter((item) => item.day === index + 1)
+                          .map((item) => `${item.start}–${item.end}`)
+                          .join(" · ")
+                      : "Свободно"}
+                  </small>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
         <Input
           label="Часовой пояс"
           placeholder="Например, Asia/Almaty"
@@ -123,6 +150,32 @@ function ScheduleForm({ initial, ownerId }: { initial: Settings; ownerId: string
           ))}
         </fieldset>
         <h3>Рабочие интервалы</h3>
+        {!intervals.fields.length && (
+          <div className="schedule-presets">
+            <p>Начните с готового ритма и подстройте его под себя.</p>
+            <div className="button-row">
+              {[
+                { end: "12:00", label: "Утро по будням" },
+                { end: "18:00", label: "Рабочий день 9–18" },
+              ].map((preset) => (
+                <Button
+                  key={preset.end}
+                  variant="secondary"
+                  disabled={[1, 2, 3, 4, 5].every((day) => rest.includes(day))}
+                  onClick={() =>
+                    intervals.replace(
+                      [1, 2, 3, 4, 5]
+                        .filter((day) => !rest.includes(day))
+                        .map((day) => ({ day, start: "09:00", end: preset.end })),
+                    )
+                  }
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         <p className="ui-hint">
           Время местное. Начало и конец — в пределах одного дня; интервалы в дни отдыха не
           сохраняются.

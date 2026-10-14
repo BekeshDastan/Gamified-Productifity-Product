@@ -15,8 +15,10 @@ import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { ThemeSelect } from "./theme-select";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { Select } from "./ui/field";
 import { Form } from "./ui/form";
+import { Sun, Moon, Monitor, Feather, Sparkles, Play, Volume2 } from "lucide-react";
+import { ChoiceCards } from "./ui/choice-cards";
+import { ChoiceChips } from "./ui/experience";
 
 export function PersonalizationEffects() {
   const query = useSettings();
@@ -129,6 +131,7 @@ function AppearanceForm({ initial, ownerId }: { initial: Settings; ownerId: stri
   const cache = useQueryClient();
   const [version, setVersion] = useState(initial.version);
   const [saved, setSaved] = useState(false);
+  const [preview, setPreview] = useState(0);
   const flow = useValidatedForm({
     schema: preferencesSchema,
     defaultValues: preferencesSchema.parse(initial),
@@ -162,24 +165,90 @@ function AppearanceForm({ initial, ownerId }: { initial: Settings; ownerId: stri
     });
   }
   return (
-    <Card className="settings-card">
+    <Card className="settings-card appearance-composer">
       <h2>Комфорт прежде всего</h2>
       <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
-        <Select label="Тема аккаунта" {...flow.form.register("personalization.theme")}>
-          <option value="system">Системная</option>
-          <option value="light">Светлая</option>
-          <option value="dark">Тёмная</option>
-        </Select>
-        <Select label="Уменьшение движения" {...flow.form.register("personalization.motion")}>
-          <option value="system">По настройке устройства</option>
-          <option value="reduce">Всегда уменьшать</option>
-        </Select>
-        <Select label="Игровой режим" {...flow.form.register("personalization.game_mode")}>
-          <option value="calm">Спокойный</option>
-          <option value="standard">Стандартный</option>
-        </Select>
-        <label className="auth-checkbox">
+        <ChoiceCards
+          label="Тема аккаунта"
+          value={flow.form.watch("personalization.theme")}
+          options={[
+            {
+              value: "system",
+              label: "Системная",
+              description: "В ритме вашего устройства",
+              icon: Monitor,
+              tone: "blue",
+            },
+            {
+              value: "light",
+              label: "Светлая",
+              description: "Воздух и мягкие цвета",
+              icon: Sun,
+              tone: "gold",
+            },
+            {
+              value: "dark",
+              label: "Тёмная",
+              description: "Спокойное вечернее пространство",
+              icon: Moon,
+              tone: "violet",
+            },
+          ]}
+          onChange={(value) =>
+            flow.form.setValue("personalization.theme", value, { shouldDirty: true })
+          }
+        />
+        <div
+          className="appearance-preview"
+          data-preview-theme={flow.form.watch("personalization.theme")}
+          data-preview-motion={flow.form.watch("personalization.motion")}
+        >
+          <div className="preview-mini" key={preview} aria-hidden="true">
+            <i />
+            <span />
+            <span />
+            <span />
+          </div>
+          <div>
+            <strong>Ваше пространство</strong>
+            <p>Предпросмотр. Изменения применятся после сохранения.</p>
+            <Button variant="secondary" onClick={() => setPreview((value) => value + 1)}>
+              <Play size={15} aria-hidden="true" />
+              Проверить анимацию
+            </Button>
+          </div>
+        </div>
+        <div className="settings-choice">
+          <h3>Уменьшение движения</h3>
+          <ChoiceChips
+            label="Уменьшение движения"
+            value={flow.form.watch("personalization.motion")}
+            options={[
+              { value: "system", label: "По настройке устройства", icon: <Sparkles size={16} /> },
+              { value: "reduce", label: "Всегда уменьшать", icon: <Feather size={16} /> },
+            ]}
+            onChange={(value) =>
+              flow.form.setValue("personalization.motion", value, { shouldDirty: true })
+            }
+          />
+        </div>
+        <div className="settings-choice">
+          <h3>Игровой режим</h3>
+          <ChoiceChips
+            label="Игровой режим"
+            value={flow.form.watch("personalization.game_mode")}
+            options={[
+              { value: "calm", label: "Спокойный" },
+              { value: "standard", label: "Стандартный" },
+            ]}
+            onChange={(value) =>
+              flow.form.setValue("personalization.game_mode", value, { shouldDirty: true })
+            }
+          />
+        </div>
+        <label className="auth-checkbox setting-toggle">
           <input type="checkbox" {...flow.form.register("personalization.sound")} />
+          <Volume2 size={20} aria-hidden="true" />
           Разрешать звуки приложения
         </label>
         <p className="ui-hint">

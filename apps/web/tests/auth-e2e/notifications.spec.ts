@@ -96,7 +96,22 @@ test("notifications consent inbox snooze unsubscribe and denied push keep person
   await item.getByRole("button", { name: "Проверить источник", exact: true }).click();
   await expect(item.getByRole("link", { name: "Перейти к источнику", exact: true })).toBeVisible();
   await item.getByRole("button", { name: "Прочитано", exact: true }).click();
-  await expect(item).toContainText("Прочитано");
+  await expect(
+    item.getByRole("button", { name: "Отметить непрочитанным", exact: true }),
+  ).toBeEnabled();
+  const inboxFilter = page.getByRole("group", {
+    name: "Показать уведомления на странице",
+    exact: true,
+  });
+  await inboxFilter.getByRole("button", { name: "Непрочитанные", exact: true }).click();
+  await expect(item).toHaveCount(0);
+  await inboxFilter.getByRole("button", { name: "Прочитанные", exact: true }).click();
+  await expect(item).toBeVisible();
+  await inboxFilter.getByRole("button", { name: "Все", exact: true }).click();
+  await page.reload();
+  await expect(
+    item.getByRole("button", { name: "Отметить непрочитанным", exact: true }),
+  ).toBeEnabled();
   await item.getByText("История внешних отправок", { exact: true }).click();
   await expect(
     item.getByRole("heading", { name: "Письмо: Принято сервисом отправки", exact: true }),

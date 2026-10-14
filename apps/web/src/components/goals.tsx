@@ -20,7 +20,8 @@ import {
 } from "@/lib/goals";
 import { questLabels } from "@/lib/quests";
 import { MeterRing } from "./ui/meter-ring";
-import { Target } from "lucide-react";
+import { Target, Flag, ListChecks, TrendingUp, CalendarDays } from "lucide-react";
+import { ChoiceCards } from "./ui/choice-cards";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input, Select, DatePicker } from "./ui/field";
@@ -126,13 +127,18 @@ export function Goals({ id }: { id?: string }) {
           <SafeLink className="text-link" href="/app/goals">
             Все цели
           </SafeLink>
-          <Card>
-            <h2>{current.title}</h2>
-            <p>
-              {goalStates[current.state]}
-              {current.archived_at ? " · Архив" : ""}
-              {current.overdue ? " · Срок прошёл" : ""}
-            </p>
+          <Card className="goal-detail-hero">
+            <div className="goal-detail-heading">
+              <MeterRing value={current.progress} label="Достижение цели" />
+              <div>
+                <h2>{current.title}</h2>
+                <p>
+                  {goalStates[current.state]}
+                  {current.archived_at ? " · Архив" : ""}
+                  {current.overdue ? " · Срок прошёл" : ""}
+                </p>
+              </div>
+            </div>
             <p className="quest-description">{current.motive || "Мотив пока не добавлен."}</p>
             <h3>Критерий успеха</h3>
             <p className="quest-description">{current.criteria}</p>
@@ -140,6 +146,12 @@ export function Goals({ id }: { id?: string }) {
               {progressTypes[current.progress_type]} · {Number(current.progress.toFixed(2))}%
             </p>
             <progress aria-label="Прогресс цели" value={current.progress} max={100} />
+            <div className="record-meta">
+              <span>
+                <CalendarDays size={16} aria-hidden="true" />
+                {current.start_date ?? "Без даты старта"} → {current.target_date ?? "В своём темпе"}
+              </span>
+            </div>
             {current.progress_type === "metric" && (
               <p>
                 {current.current} / {current.target} {current.unit}
@@ -404,7 +416,7 @@ function GoalForm({
   const editable =
     !record || (!record.archived_at && ["draft", "active", "paused"].includes(record.state));
   return (
-    <Card>
+    <Card className="goal-composer">
       <h2>{current ? "Редактирование цели" : "Новая цель"}</h2>
       {record && <Input label="Состояние цели" value={goalStates[record.state]} readOnly />}
       <Form saving={flow.saving || !editable} error={flow.error} onSubmit={flow.onSubmit}>
@@ -446,23 +458,39 @@ function GoalForm({
             error={e.target_date?.message}
           />
         </div>
-        <Select
+        <ChoiceCards
           label="Способ расчёта прогресса"
           value={f.watch("progress_type")}
-          onChange={(e) => {
-            const type = e.target.value as Fields["progress_type"];
+          options={[
+            {
+              value: "milestones",
+              label: "Этапы",
+              description: "Пройдите путь шаг за шагом",
+              icon: Flag,
+              tone: "violet",
+            },
+            {
+              value: "quests",
+              label: "Связанные задачи",
+              description: "Продвигайтесь, завершая дела",
+              icon: ListChecks,
+              tone: "mint",
+            },
+            {
+              value: "metric",
+              label: "Числовой результат",
+              description: "Следите за измеримым результатом",
+              icon: TrendingUp,
+              tone: "blue",
+            },
+          ]}
+          onChange={(type) => {
             f.setValue("progress_type", type, { shouldDirty: true });
             f.setValue("start", 0, { shouldDirty: true });
             f.setValue("target", type === "metric" ? 10 : 1, { shouldDirty: true });
             f.setValue("unit", "", { shouldDirty: true });
           }}
-        >
-          {Object.entries(progressTypes).map(([v, n]) => (
-            <option key={v} value={v}>
-              {n}
-            </option>
-          ))}
-        </Select>
+        />
         {f.watch("progress_type") === "metric" && (
           <div className="quest-grid">
             <Input

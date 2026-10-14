@@ -21,7 +21,9 @@ import {
 } from "@/lib/habits";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink, useConfirmDiscard } from "@/lib/forms/unsaved-changes";
-import { Sprout } from "lucide-react";
+import { Sprout, CheckCircle2, Hash, Timer, Flame, Trophy } from "lucide-react";
+import { ChoiceCards } from "./ui/choice-cards";
+import { ChoiceChips } from "./ui/experience";
 import { MeterRing } from "./ui/meter-ring";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -221,26 +223,49 @@ function HabitCreate({
     frequency = useWatch({ control: f.control, name: "schedule.frequency" }),
     days = useWatch({ control: f.control, name: "schedule.weekdays" });
   return (
-    <Form onSubmit={flow.onSubmit} saving={flow.saving} error={flow.error}>
+    <Form
+      className="habit-composer"
+      onSubmit={flow.onSubmit}
+      saving={flow.saving}
+      error={flow.error}
+    >
       <Input label="Название привычки" {...f.register("title")} error={e.title?.message} />
+      <ChoiceCards
+        label="Тип привычки"
+        value={f.watch("kind")}
+        options={[
+          {
+            value: "binary",
+            label: "Выполнено / нет",
+            description: "Одно действие — одна отметка",
+            icon: CheckCircle2,
+            tone: "mint",
+          },
+          {
+            value: "count",
+            label: "Количество",
+            description: "Страницы, повторы, шаги",
+            icon: Hash,
+            tone: "violet",
+          },
+          {
+            value: "duration",
+            label: "Длительность",
+            description: "Минуты для регулярной практики",
+            icon: Timer,
+            tone: "blue",
+          },
+        ]}
+        onChange={(kind) => {
+          f.setValue("kind", kind, { shouldDirty: true });
+          if (kind === "binary") {
+            f.setValue("minimum", 1);
+            f.setValue("schedule.target", 1);
+            f.setValue("unit", "раз");
+          } else if (kind === "duration") f.setValue("unit", "мин");
+        }}
+      />
       <div className="form-grid">
-        <Select
-          label="Тип привычки"
-          {...f.register("kind")}
-          onChange={(event) => {
-            const kind = event.target.value as "binary" | "count" | "duration";
-            f.setValue("kind", kind, { shouldDirty: true });
-            if (kind === "binary") {
-              f.setValue("minimum", 1);
-              f.setValue("schedule.target", 1);
-              f.setValue("unit", "раз");
-            } else if (kind === "duration") f.setValue("unit", "мин");
-          }}
-        >
-          <option value="binary">Выполнено / нет</option>
-          <option value="count">Количество</option>
-          <option value="duration">Длительность</option>
-        </Select>
         <Input label="Единица" {...f.register("unit")} error={e.unit?.message} />
         <Input
           label="Минимальный шаг"
@@ -345,7 +370,7 @@ export function HabitCard({
     (p) => Date.parse(p.start) <= Date.parse(h.as_of) && Date.parse(h.as_of) < Date.parse(p.end),
   );
   return (
-    <Card className="habit-card" id={"habit-" + h.id}>
+    <Card className="habit-card" id={"habit-" + h.id} data-state={current?.state ?? "rest"}>
       <div className="habit-card-heading">
         <span className="habit-symbol">
           <Sprout size={24} aria-hidden="true" />
@@ -357,16 +382,23 @@ export function HabitCard({
         <p role="status">Восстанавливаем периоды истории…</p>
       ) : (
         <>
-          <p>
-            Серия: <strong>{h.stats.current}</strong> · Лучшая: <strong>{h.stats.best}</strong>
-          </p>
+          <div className="habit-streaks">
+            <span>
+              <Flame size={17} aria-hidden="true" />
+              Серия: <strong>{h.stats.current}</strong>
+            </span>
+            <span>
+              <Trophy size={17} aria-hidden="true" />
+              Лучшая: <strong>{h.stats.best}</strong>
+            </span>
+          </div>
           <p className="ui-hint">
             Успешных периодов: {h.stats.successful}; пропусков: {h.stats.missed}. Доля выполнения:{" "}
             {h.stats.rate}%. {h.stats.recovering && "Вы снова возвращаетесь к привычке."}
           </p>
           {current ? (
             <>
-              <p>
+              <p className="habit-current-state">
                 {stateLabels[current.state]} · {current.amount} / {current.target} {h.unit} ·{" "}
                 {current.progress}%
               </p>
@@ -475,8 +507,33 @@ function HabitLogForm({
     },
   });
   return (
-    <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
+    <Form
+      className="habit-checkin"
+      saving={flow.saving}
+      error={flow.error}
+      onSubmit={flow.onSubmit}
+    >
       <HabitVersion recordRef={record} habit={h} flow={flow} />
+      <ChoiceChips
+        label={`Быстрая отметка: ${h.title}`}
+        value={flow.form.watch("amount")}
+        options={Array.from(
+          new Set([
+            h.minimum,
+            ...(h.kind === "binary"
+              ? []
+              : [
+                  Math.min(h.minimum * 5, 1000000),
+                  Number(Math.max(0, p.target - p.amount).toFixed(3)),
+                ]),
+          ]),
+        )
+          .filter((value) => value > 0 && value <= 1000000)
+          .map((value) => ({ value, label: `${value} ${h.unit}` }))}
+        onChange={(value) =>
+          flow.form.setValue("amount", value, { shouldDirty: true, shouldValidate: true })
+        }
+      />
       <div className="form-grid">
         <Input
           label={`Количество (${h.unit})`}

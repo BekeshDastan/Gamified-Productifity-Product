@@ -17,7 +17,7 @@ async function account(page: Page) {
   await page.getByRole("button", { name: "Войти", exact: true }).click();
   await expect(page).toHaveURL("/app");
   await page.goto("/app/calendar");
-  await expect(page.getByLabel("Вид календаря")).toBeVisible();
+  await expect(page.getByRole("group", { name: "Вид календаря", exact: true })).toBeVisible();
 }
 async function openList(page: Page) {
   const summary = page.getByText(/События диапазона — доступный список/);
@@ -53,7 +53,21 @@ test("calendar recurring edits persist across five views and the quest list", as
     "multiMonthYear",
     "listMonth",
   ]) {
-    await page.getByLabel("Вид календаря").selectOption(view);
+    await page
+      .getByRole("group", { name: "Вид календаря", exact: true })
+      .getByRole("button", {
+        name: (
+          {
+            timeGridDay: "День",
+            timeGridWeek: "Неделя",
+            dayGridMonth: "Месяц",
+            multiMonthYear: "Год",
+            listMonth: "Список",
+          } as Record<string, string>
+        )[view],
+        exact: true,
+      })
+      .click();
     await expect(page.getByLabel("Источник календаря")).toHaveValue("block");
     const list = await openList(page);
     await expect(list.getByRole("button", { name: /Ежедневное чтение/ })).toHaveCount(
@@ -61,7 +75,10 @@ test("calendar recurring edits persist across five views and the quest list", as
     );
     await expect(page.locator(".fc-view")).toBeVisible();
   }
-  await page.getByLabel("Вид календаря").selectOption("dayGridMonth");
+  await page
+    .getByRole("group", { name: "Вид календаря", exact: true })
+    .getByRole("button", { name: "Месяц", exact: true })
+    .click();
   await selectEvent(page, "2026-10-12 · Ежедневное чтение");
   await page.getByLabel("Название события").fill("Чтение перенесено");
   await page.getByLabel("Начало события").fill("2026-10-13");
@@ -127,7 +144,10 @@ test("calendar time block drag resize and failed move revert", async ({ page }, 
   await page.getByLabel("Конец события").fill("2026-10-12T10:00");
   await page.getByRole("button", { name: "Сохранить событие", exact: true }).click();
   await expect(page.getByLabel("Название события")).toHaveCount(0);
-  await page.getByLabel("Вид календаря").selectOption("timeGridDay");
+  await page
+    .getByRole("group", { name: "Вид календаря", exact: true })
+    .getByRole("button", { name: "День", exact: true })
+    .click();
   const event = page.locator(".fc-timegrid-event").filter({ hasText: "Работа над проектом" });
   await expect(event).toHaveCount(1);
   await event.scrollIntoViewIfNeeded();
@@ -146,7 +166,10 @@ test("calendar time block drag resize and failed move revert", async ({ page }, 
   expect((await moved).status()).toBe(200);
   await expect(page.getByRole("status").filter({ hasText: "Событие сохранено" })).toBeVisible();
   await page.reload();
-  await page.getByLabel("Вид календаря").selectOption("timeGridDay");
+  await page
+    .getByRole("group", { name: "Вид календаря", exact: true })
+    .getByRole("button", { name: "День", exact: true })
+    .click();
   await event.scrollIntoViewIfNeeded();
   let current = await event.boundingBox();
   if (!current) throw Error("moved event missing");
@@ -167,7 +190,10 @@ test("calendar time block drag resize and failed move revert", async ({ page }, 
   expect((await resized).status()).toBe(200);
   await expect(page.getByRole("status").filter({ hasText: "Событие сохранено" })).toBeVisible();
   await page.reload();
-  await page.getByLabel("Вид календаря").selectOption("timeGridDay");
+  await page
+    .getByRole("group", { name: "Вид календаря", exact: true })
+    .getByRole("button", { name: "День", exact: true })
+    .click();
   await event.scrollIntoViewIfNeeded();
   current = await event.boundingBox();
   if (!current) throw Error("resized event missing");

@@ -102,9 +102,18 @@ test("new account setup resumes, preferences survive another device and password
     page.getByRole("status").filter({ hasText: "Приватность сохранена." }),
   ).toBeVisible();
   await page.goto("/app/settings/appearance");
-  await page.getByLabel("Тема аккаунта").selectOption("dark");
-  await page.getByLabel("Уменьшение движения", { exact: true }).selectOption("reduce");
-  await page.getByLabel("Игровой режим", { exact: true }).selectOption("standard");
+  await page
+    .getByRole("group", { name: "Тема аккаунта", exact: true })
+    .getByRole("button", { name: "Тёмная", exact: true })
+    .click();
+  await page
+    .getByRole("group", { name: "Уменьшение движения", exact: true })
+    .getByRole("button", { name: "Всегда уменьшать", exact: true })
+    .click();
+  await page
+    .getByRole("group", { name: "Игровой режим", exact: true })
+    .getByRole("button", { name: "Стандартный", exact: true })
+    .click();
   await page.getByLabel("Разрешать звуки приложения").check();
   await page.getByRole("button", { name: "Поднять Фокус", exact: true }).click();
   await page.getByRole("button", { name: "Сохранить оформление", exact: true }).click();

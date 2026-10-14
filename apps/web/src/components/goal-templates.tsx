@@ -19,6 +19,7 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
+import { Compass, ArrowUpRight } from "lucide-react";
 export function GoalTemplates({
   onSaved,
   guided = false,
@@ -46,16 +47,21 @@ export function GoalTemplates({
         <p role="status">Загружаем шаблоны…</p>
       ) : templates.data ? (
         <>
-          <div className="button-row">
+          <div className="goal-template-choices">
             {templates.data.map((t) => (
               <Button
                 key={t.id}
                 variant="secondary"
+                aria-label={t.name}
+                aria-pressed={selected?.id === t.id}
                 onClick={() => {
                   if (discard()) setSelected(t);
                 }}
               >
-                {t.name}
+                <Compass size={24} aria-hidden="true" />
+                <strong>{t.name}</strong>
+                <small>{t.description}</small>
+                <ArrowUpRight size={18} aria-hidden="true" />
               </Button>
             ))}
           </div>

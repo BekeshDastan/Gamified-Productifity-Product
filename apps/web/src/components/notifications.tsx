@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell } from "lucide-react";
+import { Bell, BellRing, CheckCheck, Clock3 } from "lucide-react";
+import { ChoiceChips, EmptyScene } from "./ui/experience";
 import { useAuth } from "@/lib/auth/provider";
 import { createApiClient } from "@/lib/api/client";
 import { SafeLink, useUnsavedChanges, useConfirmDiscard } from "@/lib/forms/unsaved-changes";
@@ -62,6 +63,7 @@ export function Notifications() {
   const { id, key, changed } = useNotificationsScope(),
     action = useChallengeAction();
   const [before, setBefore] = useState("");
+  const [filter, setFilter] = useState("all");
   const q = useQuery({
     queryKey: [...key, "inbox", before],
     queryFn: ({ signal }) => api.inbox(before, signal),
@@ -81,14 +83,16 @@ export function Notifications() {
         Личная история событий и напоминаний. Вы сами выбираете каналы и время.
       </p>
       <SafeLink href="/app/settings/notifications">Каналы и тихие часы</SafeLink>
-      <Card className="notification-card">
+      <Card className="notification-card inbox-heading">
         <h2>Входящие</h2>
-        <p>
-          Непрочитанных сигналов: {q.data?.unread ?? "…"}. История сохраняется и при отключённом
-          сигнале.
-        </p>
+        <div className="inbox-count">
+          <BellRing size={28} aria-hidden="true" />
+          <strong>{q.data?.unread ?? "…"}</strong>
+          <span>непрочитанных сигналов</span>
+        </div>
+        <p className="ui-hint">История сохраняется и при отключённом сигнале.</p>
         <Button
-          disabled={!q.data || action.pending}
+          disabled={!q.data || !q.data.unread || action.pending}
           onClick={() =>
             void action.run(async () => {
               await api.markAll(q.data!.computed_at);
@@ -113,14 +117,42 @@ export function Notifications() {
           </div>
         )}
       </Card>
-      {q.data?.items.map((n) => (
-        <NotificationRow
-          key={n.id}
-          item={n}
-          reminder={reminders.data?.find((r) => r.id === n.reminder_id)}
-          changed={changed}
-        />
-      ))}
+      {!!q.data?.items.length && (
+        <>
+          <ChoiceChips
+            label="Показать уведомления на странице"
+            value={filter}
+            options={[
+              { value: "all", label: "Все", icon: <Bell size={16} /> },
+              { value: "unread", label: "Непрочитанные", icon: <BellRing size={16} /> },
+              { value: "read", label: "Прочитанные", icon: <CheckCheck size={16} /> },
+            ]}
+            onChange={setFilter}
+          />
+          <p className="ui-hint">Фильтр применяется к текущей странице истории.</p>
+          {!q.data.items.some(
+            (n) => filter === "all" || (filter === "read" ? !!n.read_at : !n.read_at),
+          ) && (
+            <EmptyScene
+              title={
+                filter === "unread" ? "Здесь всё просмотрено" : "Пока нет прочитанных уведомлений"
+              }
+              description="Выберите другой фильтр или следующую страницу истории."
+              tone="mint"
+            />
+          )}
+        </>
+      )}
+      {q.data?.items
+        .filter((n) => filter === "all" || (filter === "read" ? !!n.read_at : !n.read_at))
+        .map((n) => (
+          <NotificationRow
+            key={n.id}
+            item={n}
+            reminder={reminders.data?.find((r) => r.id === n.reminder_id)}
+            changed={changed}
+          />
+        ))}
       {before && <Button onClick={() => setBefore("")}>К новым уведомлениям</Button>}
       {q.data?.next && <Button onClick={() => setBefore(q.data!.next)}>Следующие 25</Button>}
     </>
@@ -158,9 +190,14 @@ function NotificationRow({
   return (
     <Card className="notification-card" data-unread={!n.read_at}>
       <article aria-label={n.title}>
-        <h2>{n.title}</h2>
+        <div className="notification-title">
+          <span aria-hidden="true">
+            {n.read_at ? <CheckCheck size={23} /> : <BellRing size={23} />}
+          </span>
+          <h2>{n.title}</h2>
+        </div>
         <p>{n.message}</p>
-        <p>
+        <p className="notification-meta">
           <time dateTime={n.created_at}>{new Date(n.created_at).toLocaleString("ru-RU")}</time> ·{" "}
           {n.read_at ? "Прочитано" : "Не прочитано"}
           {n.muted ? " · Сигнал выключен" : ""}
@@ -227,6 +264,17 @@ function Snooze({
   return (
     <fieldset>
       <legend>Напомнить позже</legend>
+      <ChoiceChips
+        label="Быстро отложить напоминание"
+        value={minutes}
+        options={[10, 30, 60].map((value) => ({
+          value,
+          label: `${value} мин`,
+          icon: <Clock3 size={15} />,
+        }))}
+        onChange={setMinutes}
+        disabled={action.pending}
+      />
       <label>
         Через{" "}
         <select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
@@ -346,7 +394,7 @@ function PreferencesForm({ initial }: { initial: api.Preferences }) {
   useUnsavedChanges(dirty);
   const set = (v: Partial<api.PreferencesInput>) => setValue({ ...value, ...v });
   return (
-    <Card className="notification-card">
+    <Card className="notification-card notification-settings">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -381,30 +429,32 @@ function PreferencesForm({ initial }: { initial: api.Preferences }) {
       >
         <h2>Типы и каналы</h2>
         <p>
-          In-app управляет сигналом и счётчиком. Тихие часы и лимит применяются к письмам и push;
+          Сигнал в приложении управляет счётчиком. Тихие часы и лимит применяются к письмам и push;
           история событий остаётся в центре.
         </p>
-        {value.channels.map((c, i) => (
-          <fieldset key={c.type}>
-            <legend>{names[c.type] ?? c.type}</legend>
-            {(["in_app", "email", "push"] as const).map((k) => (
-              <label key={k}>
-                <input
-                  type="checkbox"
-                  checked={c[k]}
-                  onChange={(e) =>
-                    set({
-                      channels: value.channels.map((p, j) =>
-                        j === i ? { ...p, [k]: e.target.checked } : p,
-                      ),
-                    })
-                  }
-                />
-                {k === "in_app" ? "Сигнал в приложении" : k === "email" ? "Email" : "Push"}
-              </label>
-            ))}
-          </fieldset>
-        ))}
+        <div className="notification-channels">
+          {value.channels.map((c, i) => (
+            <fieldset key={c.type} disabled={action.pending}>
+              <legend>{names[c.type] ?? c.type}</legend>
+              {(["in_app", "email", "push"] as const).map((k) => (
+                <label key={k}>
+                  <input
+                    type="checkbox"
+                    checked={c[k]}
+                    onChange={(e) =>
+                      set({
+                        channels: value.channels.map((p, j) =>
+                          j === i ? { ...p, [k]: e.target.checked } : p,
+                        ),
+                      })
+                    }
+                  />
+                  {k === "in_app" ? "Сигнал в приложении" : k === "email" ? "Email" : "Push"}
+                </label>
+              ))}
+            </fieldset>
+          ))}
+        </div>
         <h2>Время и частота</h2>
         <label>
           <input

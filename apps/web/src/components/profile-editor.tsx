@@ -82,9 +82,21 @@ function ProfileForm({ profile }: { profile: Profile }) {
       return { name: updated.name, nickname: updated.nickname, avatar: updated.avatar };
     },
   });
+  const Avatar = catalog.find((item) => item.id === flow.form.watch("avatar"))?.Icon ?? Mountain;
   return (
-    <Card className="settings-card">
+    <Card className="settings-card profile-composer">
       <h2>Как к вам обращаться</h2>
+      <div className="profile-preview" aria-label="Предпросмотр профиля">
+        <span>
+          <Avatar size={38} aria-hidden="true" />
+        </span>
+        <div>
+          <strong>{flow.form.watch("name") || "Ваше имя"}</strong>
+          <small>
+            {flow.form.watch("nickname") ? `@${flow.form.watch("nickname")}` : "Ваш личный путь"}
+          </small>
+        </div>
+      </div>
       <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
         <Input
           label="Имя"

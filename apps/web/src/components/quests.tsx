@@ -31,6 +31,9 @@ import { QuestStructure, QuestPicker } from "./quest-structure";
 import { QuestFiles } from "./quest-files";
 import { QuestTemplates, QuestArchive, QuestBatchPanel } from "./quest-tools";
 import { QuestGoalLink } from "./goal-plan";
+import { DateTime } from "luxon";
+import { CalendarDays, Clock3, Flag, ListChecks } from "lucide-react";
+import { ChoiceChips } from "./ui/experience";
 
 export function Quests({ id }: { id?: string }) {
   const auth = useAuth();
@@ -123,7 +126,10 @@ export function Quests({ id }: { id?: string }) {
           <SafeLink className="text-link" href="/app/quests">
             Все задачи
           </SafeLink>
-          <Card>
+          <Card className="task-detail-hero" data-priority={current.priority}>
+            <span className="detail-emblem" aria-hidden="true">
+              <ListChecks size={29} />
+            </span>
             <h2>{current.title}</h2>
             <p>
               {statuses[current.status]}
@@ -135,6 +141,22 @@ export function Quests({ id }: { id?: string }) {
             <p className="quest-description">
               {current.description || "Описание пока не добавлено."}
             </p>
+            <div className="record-meta">
+              <span>
+                <Clock3 size={15} aria-hidden="true" />
+                {current.estimated_minutes
+                  ? `${current.estimated_minutes} мин`
+                  : "Без оценки времени"}
+              </span>
+              <span>
+                <CalendarDays size={15} aria-hidden="true" />
+                {current.planned_date ?? "Без плановой даты"}
+              </span>
+              <span>
+                <Flag size={15} aria-hidden="true" />
+                {{ low: "Низкий", normal: "Обычный", high: "Высокий" }[current.priority]} приоритет
+              </span>
+            </div>
           </Card>
           <QuickFocusStart key={current.id} quest={current} />
           <QuestActions
@@ -197,6 +219,23 @@ export function Quests({ id }: { id?: string }) {
       )}
       {collection && (
         <>
+          <ChoiceChips
+            label="Быстрый фильтр задач"
+            value={filters.status}
+            options={[
+              { value: "", label: "Все задачи" },
+              ...["todo", "in_progress", "completed"].map((value) => ({
+                value,
+                label: statuses[value as keyof typeof statuses],
+              })),
+            ]}
+            onChange={(status) => {
+              if (confirmDiscard()) {
+                setFilters({ ...filters, status });
+                setPage(1);
+              }
+            }}
+          />
           <details className="section-disclosure">
             <summary>Шаблоны задач</summary>
             <div className="disclosure-content">
@@ -212,6 +251,7 @@ export function Quests({ id }: { id?: string }) {
             <summary>Поиск и фильтры</summary>
             <div className="disclosure-content">
               <QuestFiltersPanel
+                key={JSON.stringify(filters)}
                 filters={filters}
                 labels={labels.data}
                 onApply={(f) => {
@@ -247,18 +287,31 @@ export function Quests({ id }: { id?: string }) {
           {!board && (
             <div className="quest-list">
               {collection.items.map((q) => (
-                <Card key={q.id}>
+                <Card
+                  key={q.id}
+                  className="task-record-card"
+                  data-status={q.status}
+                  data-priority={q.priority}
+                >
                   <h2>
                     <SafeLink className="text-link" href={"/app/quests/" + q.id}>
                       {q.title}
                     </SafeLink>
                   </h2>
-                  <p>
-                    {statuses[q.status]} · Сложность {q.difficulty}/5
-                  </p>
-                  <p>
-                    План: {q.planned_date ?? "не задан"} · Оценка: {q.estimated_minutes} мин.
-                  </p>
+                  <div className="record-meta">
+                    <span className="record-status">{statuses[q.status]}</span>
+                    <span>Сложность {q.difficulty}/5</span>
+                  </div>
+                  <div className="record-meta">
+                    <span>
+                      <CalendarDays size={14} aria-hidden="true" />
+                      {q.planned_date ?? "Без даты"}
+                    </span>
+                    <span>
+                      <Clock3 size={14} aria-hidden="true" />
+                      {q.estimated_minutes ? `${q.estimated_minutes} мин` : "Без оценки"}
+                    </span>
+                  </div>
                   {q.deadline && settings.data && (
                     <p>Дедлайн: {formatMoment(q.deadline, settings.data)}</p>
                   )}
@@ -274,7 +327,7 @@ export function Quests({ id }: { id?: string }) {
               </p>
               <div className="quest-kanban" aria-label="Доска задач" tabIndex={0}>
                 {Object.entries(statuses).map(([status, label]) => (
-                  <section className="quest-column" key={status}>
+                  <section className="quest-column" key={status} data-status={status}>
                     <h2>
                       {label} · {collection.items.filter((q) => q.status === status).length}
                     </h2>
@@ -424,28 +477,74 @@ function QuestForm({
   const f = flow.form;
   const errors = f.formState.errors;
   return (
-    <Card className="settings-card">
+    <Card className="settings-card task-composer">
       <h2>{current ? "Редактирование задачи" : "Новая задача"}</h2>
       <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
         <Input
           label="Название задачи"
+          placeholder="Какой следующий шаг?"
           maxLength={200}
           error={errors.title?.message}
           {...f.register("title")}
         />
-        <DatePicker
-          label="Плановая дата"
-          error={errors.planned_date?.message}
-          {...f.register("planned_date")}
-        />
-        <Input
-          label="Оценка, минут"
-          type="number"
-          min={0}
-          max={525600}
-          error={errors.estimated_minutes?.message}
-          {...f.register("estimated_minutes", { valueAsNumber: true })}
-        />
+        <div className="task-composer-essentials">
+          <DatePicker
+            label="Плановая дата"
+            error={errors.planned_date?.message}
+            {...f.register("planned_date")}
+          />
+          <Input
+            label="Оценка, минут"
+            type="number"
+            min={0}
+            max={525600}
+            error={errors.estimated_minutes?.message}
+            {...f.register("estimated_minutes", { valueAsNumber: true })}
+          />
+        </div>
+        <div className="task-shortcuts">
+          <ChoiceChips
+            label="Когда заняться задачей"
+            value={f.watch("planned_date")}
+            options={[
+              { value: "", label: "Без даты" },
+              {
+                value: DateTime.now()
+                  .setZone(settings.data?.timezone ?? "UTC")
+                  .toISODate()!,
+                label: "Сегодня",
+              },
+              {
+                value: DateTime.now()
+                  .setZone(settings.data?.timezone ?? "UTC")
+                  .plus({ days: 1 })
+                  .toISODate()!,
+                label: "Завтра",
+              },
+            ]}
+            onChange={(value) =>
+              f.setValue("planned_date", value, { shouldDirty: true, shouldValidate: true })
+            }
+          />
+          <ChoiceChips
+            label="Сколько времени займёт задача"
+            value={f.watch("estimated_minutes")}
+            options={[15, 25, 45, 60].map((value) => ({ value, label: `${value} мин` }))}
+            onChange={(value) =>
+              f.setValue("estimated_minutes", value, { shouldDirty: true, shouldValidate: true })
+            }
+          />
+          <ChoiceChips
+            label="Быстрый выбор приоритета"
+            value={f.watch("priority")}
+            options={[
+              { value: "low", label: "Не спеша" },
+              { value: "normal", label: "Обычный" },
+              { value: "high", label: "Важное", icon: <Flag size={15} /> },
+            ]}
+            onChange={(value) => f.setValue("priority", value, { shouldDirty: true })}
+          />
+        </div>
         <details className="form-disclosure">
           <summary>Дополнительные параметры</summary>
           <div className="disclosure-content">

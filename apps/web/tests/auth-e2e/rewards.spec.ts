@@ -22,7 +22,10 @@ async function goal(page: Page, title: string) {
   await page.getByRole("button", { name: "Создать цель", exact: true }).click();
   await page.getByLabel("Название цели", { exact: true }).fill(title);
   await page.getByLabel("Критерий успеха", { exact: true }).fill("Проверить результат");
-  await page.getByLabel("Способ расчёта прогресса").selectOption("metric");
+  await page
+    .getByRole("group", { name: "Способ расчёта прогресса", exact: true })
+    .getByRole("button", { name: "Числовой результат", exact: true })
+    .click();
   await page.getByLabel("Целевое значение").fill("1");
   await page.getByLabel("Единица результата").fill("результат");
   await page.getByLabel("Начальное состояние цели").selectOption("active");

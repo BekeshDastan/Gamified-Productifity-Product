@@ -35,6 +35,8 @@ import { Card } from "./ui/card";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
 import { QuestPicker } from "./quest-structure";
+import { ChoiceChips } from "./ui/experience";
+import { DateTime } from "luxon";
 const views = {
   timeGridDay: "День",
   timeGridWeek: "Неделя",
@@ -163,22 +165,17 @@ export default function CalendarWorkspace() {
         >
           <Plus size={17} aria-hidden="true" /> Добавить событие
         </Button>
-        <Select
+        <ChoiceChips
           label="Вид календаря"
           value={view}
-          onChange={(e) => {
+          options={Object.entries(views).map(([value, label]) => ({ value, label }))}
+          onChange={(value) => {
             if (discard()) {
-              setView(e.target.value);
-              ref.current?.getApi().changeView(e.target.value);
+              setView(value);
+              ref.current?.getApi().changeView(value);
             }
           }}
-        >
-          {Object.entries(views).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v}
-            </option>
-          ))}
-        </Select>
+        />
         <details
           className="calendar-filters"
           onBlur={(event) => {
@@ -543,8 +540,16 @@ function EventForm({
   });
   const { form } = editor;
   const errors = form.formState.errors;
+  const allDay = form.watch("all_day");
+  const start = DateTime.fromISO(form.watch("start"), { zone: form.watch("timezone") });
+  const end = DateTime.fromISO(form.watch("end"), { zone: form.watch("timezone") });
   return (
-    <Form saving={editor.saving} error={editor.error} onSubmit={editor.onSubmit}>
+    <Form
+      className="calendar-event-composer"
+      saving={editor.saving}
+      error={editor.error}
+      onSubmit={editor.onSubmit}
+    >
       {series && (
         <Select label="Изменить повторения" {...form.register("scope")}>
           <option value="this">Только это повторение</option>
@@ -614,6 +619,44 @@ function EventForm({
           {...form.register("end")}
           error={errors.end?.message}
         />
+        {current?.source !== "quest" && (
+          <ChoiceChips
+            label="Длительность события"
+            value={
+              start.isValid && end.isValid
+                ? end.diff(start, allDay ? "days" : "minutes").as(allDay ? "days" : "minutes")
+                : 0
+            }
+            disabled={!start.isValid}
+            options={(allDay ? [1, 2, 7] : [15, 30, 60, 90]).map((value) => ({
+              value,
+              label: allDay
+                ? ({ 1: "Один день", 2: "Два дня", 7: "Неделя" }[value] ?? `${value} дней`)
+                : `${value} мин`,
+            }))}
+            onChange={(value) =>
+              form.setValue(
+                "end",
+                start
+                  .plus(allDay ? { days: value } : { minutes: value })
+                  .toFormat(allDay ? "yyyy-MM-dd" : "yyyy-MM-dd'T'HH:mm"),
+                { shouldDirty: true, shouldValidate: true },
+              )
+            }
+          />
+        )}
+        {start.isValid && end.isValid && end > start && (
+          <div className="event-preview" aria-label="Предпросмотр события">
+            <span className="event-preview-dot" />
+            <div>
+              <strong>{form.watch("title") || "Новое событие"}</strong>
+              <small>
+                {start.toFormat(allDay ? "dd LLL" : "dd LLL, HH:mm")} →{" "}
+                {end.toFormat(allDay ? "dd LLL (не включая)" : "dd LLL, HH:mm")}
+              </small>
+            </div>
+          </div>
+        )}
       </fieldset>
       {current && (
         <Input

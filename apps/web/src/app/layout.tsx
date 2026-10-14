@@ -5,6 +5,7 @@ import "./globals.css";
 import "./product.css";
 import "./experience.css";
 import "./interaction.css";
+import "./workspaces.css";
 
 export const metadata: Metadata = {
   title: "ASCEND — Level Up Your Life",

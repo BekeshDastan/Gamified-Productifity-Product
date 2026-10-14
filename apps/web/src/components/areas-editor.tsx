@@ -21,7 +21,7 @@ import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink, useConfirmDiscard } from "@/lib/forms/unsaved-changes";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { Input, Select } from "./ui/field";
+import { Input } from "./ui/field";
 import { Form } from "./ui/form";
 const icons = {
   book: BookOpen,
@@ -245,14 +245,43 @@ function LabelForm({
           error={flow.form.formState.errors.name?.message}
           {...flow.form.register("name")}
         />
-        <Input label="Цвет" type="color" {...flow.form.register("color")} />
-        <Select label="Значок" {...flow.form.register("icon")}>
-          {Object.entries(iconLabels).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
+        <Input
+          label="Цвет"
+          type="color"
+          {...flow.form.register("color")}
+          value={flow.form.watch("color")}
+        />
+        <div className="color-swatches" role="group" aria-label="Готовые цвета">
+          {["#6554d9", "#2b8c78", "#d76b4c", "#3688c2", "#b17f20", "#ae5c9e"].map((color) => (
+            <button
+              type="button"
+              key={color}
+              style={{ backgroundColor: color }}
+              aria-label={`Цвет ${color}`}
+              aria-pressed={flow.form.watch("color") === color}
+              onClick={() => flow.form.setValue("color", color, { shouldDirty: true })}
+            />
           ))}
-        </Select>
+        </div>
+        <fieldset className="icon-picker">
+          <legend>Значок</legend>
+          <div>
+            {(Object.keys(icons) as (keyof typeof icons)[]).map((value) => {
+              const Icon = icons[value];
+              return (
+                <button
+                  type="button"
+                  key={value}
+                  aria-pressed={flow.form.watch("icon") === value}
+                  onClick={() => flow.form.setValue("icon", value, { shouldDirty: true })}
+                >
+                  <Icon size={22} aria-hidden="true" />
+                  <span>{iconLabels[value]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
         {existing && (
           <label className="auth-checkbox">
             <input type="checkbox" {...flow.form.register("archived")} />В архиве

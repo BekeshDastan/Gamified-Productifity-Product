@@ -185,7 +185,10 @@ test("habits core goal task calendar flow and weekly norm", async ({ page }) => 
   await page.goto("/app/habits");
   await page.getByRole("button", { name: "Создать привычку", exact: true }).click();
   await page.getByLabel("Название привычки").fill("Учебная практика трижды в неделю");
-  await page.getByLabel("Тип привычки").selectOption("binary");
+  await page
+    .getByRole("group", { name: "Тип привычки", exact: true })
+    .getByRole("button", { name: "Выполнено / нет", exact: true })
+    .click();
   await page.getByLabel("Период нормы", { exact: true }).selectOption("weekly");
   await page.getByLabel("Норма периода", { exact: true }).fill("3");
   await expect(page.getByLabel("Название привычки")).toHaveValue(
