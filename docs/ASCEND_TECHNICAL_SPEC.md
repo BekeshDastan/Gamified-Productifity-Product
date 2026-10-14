@@ -2087,7 +2087,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** После opt-out правило не приходит повторно; карточка не раскрывает частный текст.
   - **КОММИТ СЕЙЧАС:** `feat(recommendations-ui): show evidence actions snooze and opt-out`
 
-- [ ] **C147. Алгоритм свободных слотов**
+- [x] **C147. Алгоритм свободных слотов**
   - **Сделать:** Реализовать deterministic сортировку, рабочие интервалы, перерывы, зависимости и разрешённое дробление.
   - **Проверить:** В тестовом расписании нет пересечений, сохраняются фиксированные события и дедлайны.
   - **КОММИТ СЕЙЧАС:** `feat(planning): suggest feasible slots by deadline priority and duration`
