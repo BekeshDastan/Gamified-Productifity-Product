@@ -1999,7 +1999,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Отказ не штрафует; повтор предложения не создаёт несколько одинаковых вызовов.
   - **КОММИТ СЕЙЧАС:** `feat(recovery): offer small return challenges after inactivity`
 
-- [ ] **C133. Режим низкой энергии**
+- [x] **C133. Режим низкой энергии**
   - **Сделать:** Создать preview минимального плана с выделением фиксированных обязательств и ручным подтверждением.
   - **Проверить:** Важное событие не удаляется молча; исходный подтверждённый план сохраняется.
   - **КОММИТ СЕЙЧАС:** `feat(recovery): preview reduced future plans while preserving deadlines`

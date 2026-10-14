@@ -625,6 +625,17 @@ type LifeArea struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type LowEnergyPreview struct {
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	ID           pgtype.UUID        `json:"id"`
+	Snapshot     []byte             `json:"snapshot"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
+	ApplyRequest []byte             `json:"apply_request"`
+	Result       []byte             `json:"result"`
+	AppliedAt    pgtype.Timestamptz `json:"applied_at"`
+}
+
 type Milestone struct {
 	ID                        pgtype.UUID        `json:"id"`
 	OwnerID                   pgtype.UUID        `json:"owner_id"`

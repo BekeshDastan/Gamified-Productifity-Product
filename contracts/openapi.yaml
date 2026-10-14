@@ -6,6 +6,121 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/recovery/low-energy/preview:
+    post:
+      operationId: previewLowEnergy
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LowEnergyInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/LowEnergyPreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/recovery/low-energy/{id}:
+    get:
+      operationId: getLowEnergyPreview
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/LowEnergyPreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/recovery/low-energy/{id}/apply:
+    post:
+      operationId: applyLowEnergy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LowEnergyApply"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/LowEnergyPreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/recovery/comeback:
     get:
       operationId: getComebackOffer
@@ -8330,6 +8445,106 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    LowEnergyInput:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - minimum_minutes
+      properties:
+        date:
+          type: string
+          format: date
+        minimum_minutes:
+          type: integer
+          minimum: 0
+          maximum: 240
+    LowEnergyApply:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+        - reason
+        - optional_ids
+        - confirm_unknown
+      properties:
+        confirm:
+          type: boolean
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        optional_ids:
+          type: array
+          items:
+            type: string
+        confirm_unknown:
+          type: boolean
+    LowEnergyCandidate:
+      allOf:
+        - $ref: "#/components/schemas/PlanItem"
+        - type: object
+          additionalProperties: false
+          required:
+            - required
+            - proposed
+            - eligible
+            - reason
+          properties:
+            required:
+              type: boolean
+            proposed:
+              type: boolean
+            eligible:
+              type: boolean
+            reason:
+              type: string
+    LowEnergyPreview:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - minimum_minutes
+        - id
+        - expires_at
+        - timezone
+        - original
+        - candidates
+        - commitments
+        - source_hash
+        - applied_at
+        - result
+      properties:
+        date:
+          type: string
+        minimum_minutes:
+          type: integer
+        id:
+          type: string
+        expires_at:
+          type: string
+        timezone:
+          type: string
+        original:
+          $ref: "#/components/schemas/DayPlan"
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/LowEnergyCandidate"
+        commitments:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+        source_hash:
+          type: string
+        applied_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        result:
+          anyOf:
+            - $ref: "#/components/schemas/DayPlan"
+            - type: "null"
     RecoveryStep:
       type: object
       additionalProperties: false
