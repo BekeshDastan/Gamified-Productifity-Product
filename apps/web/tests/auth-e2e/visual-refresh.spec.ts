@@ -39,6 +39,17 @@ test("visual refresh: clock controls, silent motion and responsive sections", as
   await page.getByLabel("Рабочий интервал, минут").fill("40");
   await expect(page.getByLabel("Таймер фокуса", { exact: true })).toHaveText("40:00");
   await page.getByLabel("Рабочий интервал, минут").fill("25");
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await expect
+    .poll(() =>
+      page.getByRole("button", { name: "Начать фокус-сессию", exact: true }).evaluate((button) => {
+        const box = button.getBoundingClientRect();
+        return box.top >= 0 && box.bottom <= innerHeight;
+      }),
+    )
+    .toBe(true);
+  await page.screenshot({ path: info.outputPath("focus-laptop.png") });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   const video = page.locator("video");
   await expect
     .poll(() => video.evaluate((v: HTMLVideoElement) => v.readyState))

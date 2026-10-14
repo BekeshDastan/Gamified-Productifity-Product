@@ -72,7 +72,8 @@ Exact final ImageGen prompt:
 - Focus checks cover server time across two tabs, pause/reload, confirmation,
   Pomodoro work/break boundaries and disabled sound. The new visual scenario
   verifies all three clock modes, duration edits, silent video playback/pause
-  and system reduced motion.
+  and system reduced motion. At 1280×720 the start button is visible without
+  scrolling; a height-aware clock size keeps the controls within reach.
 - Four main routes (Today, Focus, Calendar and Settings) pass mobile WCAG A/AA
   automated scans in both themes. Seventeen additional account sections were
   checked at 360 pixels for overflow and application errors.

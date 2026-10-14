@@ -1601,6 +1601,21 @@ input[type="radio"] {
     gap: 30px;
   }
 }
+@media (min-width: 1001px) and (max-height: 820px) {
+  .focus-start-stage,
+  .focus-active-stage {
+    padding-top: 24px;
+  }
+  .focus-start-stage .focus-dial,
+  .focus-active-stage .focus-dial {
+    width: min(100%, 260px);
+    margin: 20px auto;
+  }
+  .focus-start-stage .dial-center output,
+  .focus-active-stage .dial-center output {
+    font-size: 54px;
+  }
+}
 @media (min-width: 768px) and (max-width: 1000px) {
   .app-sidebar {
     width: 214px;
