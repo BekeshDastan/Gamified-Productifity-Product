@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/analytics/balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAnalyticsBalance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/targets/{area_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setAnalyticsTarget"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/analytics/templates": {
         parameters: {
             query?: never;
@@ -2891,6 +2923,53 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AnalyticsTargetInput: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** @enum {string} */
+            metric: "tasks" | "focus_minutes" | "habit_norms";
+            target: number;
+            confirm: boolean;
+        };
+        AnalyticsTarget: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            area_id: string;
+            /** @enum {string} */
+            metric: "tasks" | "focus_minutes" | "habit_norms";
+            target: number;
+            version: number;
+            updated_at: string;
+        };
+        AnalyticsBalanceAxis: {
+            id: string;
+            name: string;
+            archived: boolean;
+            /** @enum {string} */
+            metric: "tasks" | "focus_minutes" | "habit_norms";
+            unit: string;
+            target: number | null;
+            actual: number | null;
+            percent: number | null;
+            version: number;
+            sources: components["schemas"]["AnalyticsSource"][];
+        };
+        AnalyticsBalance: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            timezone: string;
+            computed_at: string | null;
+            stale: boolean;
+            source_revision: number;
+            projected_revision: number;
+            axes: components["schemas"]["AnalyticsBalanceAxis"][];
+        };
         AnalyticsTaskTime: {
             id: string;
             title: string;
@@ -5490,6 +5569,73 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getAnalyticsBalance: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsBalance"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    setAnalyticsTarget: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                area_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyticsTargetInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsTarget"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
     getAnalyticsTemplateSamples: {
         parameters: {
             query: {

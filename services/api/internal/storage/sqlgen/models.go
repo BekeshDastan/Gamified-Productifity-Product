@@ -734,6 +734,28 @@ type OutboxEvent struct {
 	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
 }
 
+type PersonalAreaTarget struct {
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	AreaID     pgtype.UUID        `json:"area_id"`
+	StartsOn   pgtype.Date        `json:"starts_on"`
+	EndsBefore pgtype.Date        `json:"ends_before"`
+	Metric     string             `json:"metric"`
+	Target     pgtype.Numeric     `json:"target"`
+	Version    int64              `json:"version"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type PersonalAreaTargetEvent struct {
+	ID         int64              `json:"id"`
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	AreaID     pgtype.UUID        `json:"area_id"`
+	StartsOn   pgtype.Date        `json:"starts_on"`
+	EndsBefore pgtype.Date        `json:"ends_before"`
+	Version    int64              `json:"version"`
+	Snapshot   []byte             `json:"snapshot"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type PersonalSeason struct {
 	OwnerID       pgtype.UUID        `json:"owner_id"`
 	ID            pgtype.UUID        `json:"id"`

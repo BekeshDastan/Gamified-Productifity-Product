@@ -269,6 +269,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountTime(r)
+		s.mountBalance(r)
 		r.Get("/api/v1/analytics", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
 				return s.read(ctx, tx, owner, Range{r.URL.Query().Get("from"), r.URL.Query().Get("to")}, false)

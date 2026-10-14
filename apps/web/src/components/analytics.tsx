@@ -4,11 +4,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DateTime } from "luxon";
 import { useAuth } from "@/lib/auth/provider";
 import { useSettings } from "@/lib/settings";
-import { SafeLink } from "@/lib/forms/unsaved-changes";
+import { SafeLink, useConfirmDiscard } from "@/lib/forms/unsaved-changes";
 import * as api from "@/lib/analytics";
 import { useChallengeAction } from "./challenges";
 import { AnalyticsChart } from "./analytics-charts";
 import { AnalyticsHeatmap } from "./analytics-heatmap";
+import { AnalyticsBalance } from "./analytics-balance";
 import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Card } from "./ui/card";
@@ -25,6 +26,7 @@ export function Analytics() {
   );
 }
 function Workspace({ account, timezone }: { account: string; timezone: string }) {
+  const discard = useConfirmDiscard();
   const today = DateTime.now().setZone(timezone).toISODate()!,
     initial = {
       from: DateTime.fromISO(today).minus({ days: 29 }).toISODate()!,
@@ -48,10 +50,12 @@ function Workspace({ account, timezone }: { account: string; timezone: string })
       queryFn: ({ signal }) => api.getTemplateSamples(range, signal),
     });
   function applyRange(value: api.AnalyticsRange) {
+    if (!discard()) return false;
     setRange(value);
     setFrom(value.from);
     setTo(DateTime.fromISO(value.to).minus({ days: 1 }).toISODate()!);
     setFilter("");
+    return true;
   }
   function choose(day: string, kind = "") {
     setDate(day);
@@ -253,12 +257,13 @@ function Workspace({ account, timezone }: { account: string; timezone: string })
           <p>Записанных копий шаблонов в периоде пока нет.</p>
         )}
       </Card>
+      <AnalyticsBalance account={account} timezone={timezone} range={range} />
       <AnalyticsHeatmap
         account={account}
         timezone={timezone}
         choose={(day) => {
-          applyRange({ from: day, to: DateTime.fromISO(day).plus({ days: 1 }).toISODate()! });
-          setDate(day);
+          if (applyRange({ from: day, to: DateTime.fromISO(day).plus({ days: 1 }).toISODate()! }))
+            setDate(day);
         }}
       />
     </div>

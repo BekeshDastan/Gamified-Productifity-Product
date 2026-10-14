@@ -16,6 +16,82 @@ async function account(page: Page) {
   await page.getByRole("button", { name: "Войти", exact: true }).click();
   await expect(page).toHaveURL("/app");
 }
+test("analytics personal targets require consent preserve units and protect local edits", async ({
+  page,
+}, info) => {
+  test.setTimeout(120000);
+  await account(page);
+  await page.goto("/app/settings/areas");
+  for (const name of ["Дела", "Фокус", "Привычки"]) {
+    await page.getByLabel("Название направления", { exact: true }).fill(name);
+    await page.getByRole("button", { name: "Создать направление", exact: true }).click();
+    await expect(page.getByLabel("Название направления", { exact: true })).toHaveValue("");
+  }
+  await page.goto("/app/analytics");
+  await page.getByRole("button", { name: "7 дней", exact: true }).click();
+  const table = page.getByRole("region", {
+    name: "Личные ориентиры и фактические значения",
+    exact: true,
+  });
+  await expect(table.getByText("Нет оценки", { exact: true })).toHaveCount(3);
+  for (const [name, metric, target] of [
+    ["Дела", "tasks", "10"],
+    ["Фокус", "focus_minutes", "60"],
+    ["Привычки", "habit_norms", "3"],
+  ]) {
+    await page.getByText(`${name}: изменить ориентир и открыть записи`, { exact: true }).click();
+    await page.getByLabel(`Показатель: ${name}`, { exact: true }).selectOption(metric);
+    await page.getByLabel(`Ориентир: ${name}`, { exact: true }).fill(target);
+    const save = page.getByRole("button", { name: `Сохранить ориентир «${name}»`, exact: true });
+    await expect(save).toBeDisabled();
+    await page
+      .getByLabel(`Подтверждаю ориентир для направления «${name}» на выбранный период`, {
+        exact: true,
+      })
+      .check();
+    await save.click();
+    await expect(
+      page.getByLabel(`Подтверждаю ориентир для направления «${name}» на выбранный период`, {
+        exact: true,
+      }),
+    ).not.toBeChecked();
+  }
+  await expect(
+    page.getByRole("group", { name: "Диаграмма выполнения личных ориентиров", exact: true }),
+  ).toBeVisible();
+  await expect(table.getByText("10 задач", { exact: true })).toBeVisible();
+  await expect(table.getByText("60 минут", { exact: true })).toBeVisible();
+  await expect(table.getByText("3 периодов", { exact: true })).toBeVisible();
+  await page.getByLabel("Ориентир: Дела", { exact: true }).fill("20");
+  page.once("dialog", (d) => d.dismiss());
+  await page.getByRole("button", { name: "30 дней", exact: true }).click();
+  await expect(page.getByLabel("Начало аналитики", { exact: true })).toHaveValue("2026-10-06");
+  await expect(page.getByLabel("Ориентир: Дела", { exact: true })).toHaveValue("20");
+  page.once("dialog", (d) => d.accept());
+  await page
+    .locator("details")
+    .filter({ has: page.getByLabel("Ориентир: Дела", { exact: true }) })
+    .getByRole("button", { name: "Обновить исходный ориентир", exact: true })
+    .click();
+  await expect(page.getByLabel("Ориентир: Дела", { exact: true })).toHaveValue("10");
+  await page.getByRole("button", { name: "30 дней", exact: true }).click();
+  await expect(table.getByText("Нет оценки", { exact: true })).toHaveCount(3);
+  await page.getByRole("button", { name: "7 дней", exact: true }).click();
+  await expect(
+    page.getByRole("group", { name: "Диаграмма выполнения личных ориентиров", exact: true }),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+    .toBe(true);
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.screenshot({ path: info.outputPath("personal-targets-mobile.png"), fullPage: true });
+  await page
+    .getByRole("heading", { name: "Баланс по собственным ориентирам", exact: true })
+    .scrollIntoViewIfNeeded();
+  await page.screenshot({ path: info.outputPath("personal-target-radar-mobile.png") });
+});
 test("analytics charts tables heatmap and exact source links agree in both themes", async ({
   page,
 }, info) => {

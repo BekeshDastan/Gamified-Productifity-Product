@@ -2053,7 +2053,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Клик по графику открывает точные исходные записи; табличный итог совпадает.
   - **КОММИТ СЕЙЧАС:** `feat(analytics-ui): add interactive charts heatmaps and source drilldowns`
 
-- [ ] **C142. Баланс направлений**
+- [x] **C142. Баланс направлений**
   - **Сделать:** Реализовать личные ориентиры, нормализованные оси и отдельные единицы.
   - **Проверить:** Нет заданной цели — нет оценки; 0 target не вызывает деление на ноль.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): add personal target radar without invented scores`

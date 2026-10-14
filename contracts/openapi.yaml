@@ -6,6 +6,88 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/analytics/balance:
+    get:
+      operationId: getAnalyticsBalance
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsBalance"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics/targets/{area_id}:
+    put:
+      operationId: setAnalyticsTarget
+      parameters:
+        - name: area_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatchSingleton"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsTargetInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsTarget"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/analytics/templates:
     get:
       operationId: getAnalyticsTemplateSamples
@@ -8566,6 +8648,149 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    AnalyticsTargetInput:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - metric
+        - target
+        - confirm
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        metric:
+          type: string
+          enum:
+            - tasks
+            - focus_minutes
+            - habit_norms
+        target:
+          type: number
+          minimum: 0
+          maximum: 1000000
+          multipleOf: 0.001
+        confirm:
+          type: boolean
+    AnalyticsTarget:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - area_id
+        - metric
+        - target
+        - version
+        - updated_at
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        area_id:
+          type: string
+        metric:
+          type: string
+          enum:
+            - tasks
+            - focus_minutes
+            - habit_norms
+        target:
+          type: number
+        version:
+          type: integer
+        updated_at:
+          type: string
+    AnalyticsBalanceAxis:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - archived
+        - metric
+        - unit
+        - target
+        - actual
+        - percent
+        - version
+        - sources
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        archived:
+          type: boolean
+        metric:
+          type: string
+          enum:
+            - tasks
+            - focus_minutes
+            - habit_norms
+        unit:
+          type: string
+        target:
+          anyOf:
+            - type: number
+            - type: "null"
+        actual:
+          anyOf:
+            - type: number
+            - type: "null"
+        percent:
+          anyOf:
+            - type: number
+            - type: "null"
+        version:
+          type: integer
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsSource"
+    AnalyticsBalance:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - timezone
+        - computed_at
+        - stale
+        - source_revision
+        - projected_revision
+        - axes
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        timezone:
+          type: string
+        computed_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        stale:
+          type: boolean
+        source_revision:
+          type: integer
+        projected_revision:
+          type: integer
+        axes:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsBalanceAxis"
     AnalyticsTaskTime:
       type: object
       additionalProperties: false

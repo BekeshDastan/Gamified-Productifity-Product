@@ -202,6 +202,64 @@ export const scoreStates: Record<string, string> = {
   unavailable_timezone: "Часовой пояс недоступен",
   invalid_date: "Дата недоступна",
 };
+export const balanceAxis = z.object({
+  id: text,
+  name: text,
+  archived: bool,
+  metric: z.enum(["tasks", "focus_minutes", "habit_norms"]),
+  unit: text,
+  target: number.nullable(),
+  actual: number.nullable(),
+  percent: number.nullable(),
+  version: integer,
+  sources: z.array(source),
+});
+export const balanceView = z.object({
+  ...rangeSchema,
+  timezone: text,
+  computed_at: text.nullable(),
+  stale: bool,
+  source_revision: integer,
+  projected_revision: integer,
+  axes: z.array(balanceAxis),
+});
+export type BalanceAxis = z.infer<typeof balanceAxis>;
+export async function getBalance(range: AnalyticsRange, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/analytics/balance", {
+    params: { query: range },
+    signal,
+  });
+  return balanceView.parse(r.data?.data);
+}
+export async function setBalanceTarget(
+  area_id: string,
+  version: number,
+  body: S["AnalyticsTargetInput"],
+  key: string,
+) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient(),
+      r = await api.PUT("/api/v1/analytics/targets/{area_id}", {
+        params: {
+          path: { area_id },
+          header: { ...authParams().header, "If-Match": `"${version}"`, "Idempotency-Key": key },
+        },
+        body,
+      });
+    return z
+      .object({
+        ...rangeSchema,
+        area_id: text,
+        metric: text,
+        target: number,
+        version: integer,
+        updated_at: text,
+      })
+      .parse(r.data?.data);
+  });
+}
 export const sourceKinds: Record<string, string> = {
   task: "Завершение задачи",
   planned: "Обязательство плана",
