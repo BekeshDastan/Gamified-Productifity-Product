@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/v1/seasons/{id}/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSeasonOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/seasons/{id}/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setSeasonLinks"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/seasons/{id}/monthly-boss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["linkSeasonMonthlyBoss"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/seasons": {
         parameters: {
             query?: never;
@@ -2635,6 +2683,53 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        SeasonSource: {
+            id: string;
+            name: string;
+            metric: string;
+            value: number | null;
+            target: number;
+            unit: string;
+            percent: number | null;
+            state: string;
+            result: string | null;
+            version: number;
+            stages_completed: number;
+            stages_total: number;
+            url: string;
+            baseline: {
+                [key: string]: unknown;
+            } | null;
+        };
+        SeasonBoss: {
+            boss_id: string;
+            goal_id: string;
+            name: string;
+            month: string;
+            timezone: string;
+            state: string;
+            progress: number;
+            source_changed: boolean;
+        };
+        SeasonOverview: {
+            season: components["schemas"]["PersonalSeason"];
+            main_goal_id: string | null;
+            goals: components["schemas"]["SeasonSource"][];
+            challenges: components["schemas"]["SeasonSource"][];
+            bosses: components["schemas"]["SeasonBoss"][];
+        };
+        SeasonLinksInput: {
+            goal_ids: string[];
+            main_goal_id: string | null;
+            challenge_ids: string[];
+        };
+        SeasonMonthlyLinkInput: {
+            /** Format: uuid */
+            boss_id: string;
+            month: string;
+            source_version: number;
+            confirm: boolean;
+        };
         CreateSeason: {
             title: string;
             theme: string;
@@ -4853,6 +4948,113 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getSeasonOverview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SeasonOverview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            503: components["responses"]["Error"];
+        };
+    };
+    setSeasonLinks: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeasonLinksInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SeasonOverview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            503: components["responses"]["Error"];
+        };
+    };
+    linkSeasonMonthlyBoss: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeasonMonthlyLinkInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SeasonOverview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            503: components["responses"]["Error"];
+        };
+    };
     listSeasons: {
         parameters: {
             query?: {

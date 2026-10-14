@@ -928,6 +928,33 @@ type RoutineTemplate struct {
 	Version int64       `json:"version"`
 }
 
+type SeasonChallengeLink struct {
+	OwnerID  pgtype.UUID        `json:"owner_id"`
+	SeasonID pgtype.UUID        `json:"season_id"`
+	RunID    pgtype.UUID        `json:"run_id"`
+	Baseline []byte             `json:"baseline"`
+	LinkedAt pgtype.Timestamptz `json:"linked_at"`
+}
+
+type SeasonGoalLink struct {
+	OwnerID  pgtype.UUID        `json:"owner_id"`
+	SeasonID pgtype.UUID        `json:"season_id"`
+	GoalID   pgtype.UUID        `json:"goal_id"`
+	IsMain   bool               `json:"is_main"`
+	Baseline []byte             `json:"baseline"`
+	LinkedAt pgtype.Timestamptz `json:"linked_at"`
+}
+
+type SeasonMonthlyBossLink struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	SeasonID      pgtype.UUID        `json:"season_id"`
+	Month         string             `json:"month"`
+	Timezone      string             `json:"timezone"`
+	BossID        pgtype.UUID        `json:"boss_id"`
+	SourceVersion int64              `json:"source_version"`
+	LinkedAt      pgtype.Timestamptz `json:"linked_at"`
+}
+
 type Tag struct {
 	ID        pgtype.UUID        `json:"id"`
 	OwnerID   pgtype.UUID        `json:"owner_id"`
