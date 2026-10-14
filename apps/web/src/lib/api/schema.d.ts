@@ -4,6 +4,246 @@
  */
 
 export interface paths {
+    "/api/v1/notifications/{id}/source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getNotificationSource"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/push": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getPushDevices"];
+        put?: never;
+        post: operations["registerPushDevice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/push/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["revokePushDevice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{id}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getNotificationDeliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notification-deliveries/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["retryNotificationDelivery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/unsubscribe/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewNotificationUnsubscribe"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/unsubscribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["unsubscribeNotifications"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listReminders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reminders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getReminder"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reminders/{id}/snooze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["snoozeReminder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getNotificationPreferences"];
+        put: operations["setNotificationPreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getNotification"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["readNotification"];
+        trace?: never;
+    };
+    "/api/v1/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["readAllNotifications"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/analytics/future-self": {
         parameters: {
             query?: never;
@@ -3115,6 +3355,167 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        PushInput: {
+            endpoint: string;
+            p256dh: string;
+            auth: string;
+            confirm: boolean;
+        };
+        PushDevice: {
+            id: string;
+            provider: string;
+            version: number;
+            /** Format: date-time */
+            expires_at: string;
+            revoked_at: string | null;
+        };
+        PushDevices: {
+            items: components["schemas"]["PushDevice"][];
+            public_key: string;
+            configured: boolean;
+        };
+        NotificationDelivery: {
+            id: string;
+            notification_id: string;
+            channel: string;
+            subscription_id: string | null;
+            state: string;
+            version: number;
+            attempts: number;
+            auto_attempts: number;
+            /** Format: date-time */
+            next_run_at: string;
+            /** Format: date-time */
+            expires_at: string;
+            last_attempt_id: string | null;
+            last_error_code: string;
+            provider_accepted_at: string | null;
+            unknown_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        NotificationDeliveryPage: {
+            items: components["schemas"]["NotificationDelivery"][];
+        };
+        NotificationDeliveryRetry: {
+            confirm: boolean;
+            acknowledge_duplicates: boolean;
+        };
+        NotificationUnsubscribeToken: {
+            token: string;
+        };
+        NotificationUnsubscribe: {
+            token: string;
+            confirm: boolean;
+        };
+        NotificationUnsubscribePreview: {
+            type: string;
+            title: string;
+        };
+        NotificationUnsubscribed: {
+            unsubscribed: boolean;
+        };
+        Reminder: {
+            id: string;
+            source_kind: string;
+            source_id: string;
+            parent_id: string | null;
+            source_revision: number;
+            /** Format: date-time */
+            source_due_at: string;
+            /** Format: date-time */
+            next_run_at: string;
+            /** Format: date-time */
+            expires_at: string;
+            version: number;
+            state: string;
+            urgent_override: boolean;
+            snoozed_until: string | null;
+            notification_id: string | null;
+            url: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ReminderPage: {
+            items: components["schemas"]["Reminder"][];
+        };
+        ReminderSnooze: {
+            minutes: number;
+            urgent_override: boolean;
+            confirm: boolean;
+        };
+        NotificationChannelPolicy: {
+            /** @enum {string} */
+            type: "deadline" | "habit" | "achievement" | "invite" | "report" | "focus_result";
+            in_app: boolean;
+            email: boolean;
+            push: boolean;
+        };
+        NotificationQuietWindow: {
+            enabled: boolean;
+            start: string;
+            end: string;
+        };
+        NotificationPreferencesInput: {
+            timezone: string;
+            use_profile_timezone: boolean;
+            quiet: components["schemas"]["NotificationQuietWindow"];
+            daily_cap: number;
+            deadline_lead_minutes: number;
+            habit_lead_minutes: number;
+            channels: components["schemas"]["NotificationChannelPolicy"][];
+        };
+        NotificationPreferences: {
+            timezone: string;
+            use_profile_timezone: boolean;
+            quiet: components["schemas"]["NotificationQuietWindow"];
+            daily_cap: number;
+            deadline_lead_minutes: number;
+            habit_lead_minutes: number;
+            channels: components["schemas"]["NotificationChannelPolicy"][];
+            version: number;
+            effective_timezone: string;
+            updated_at: string | null;
+        };
+        Notification: {
+            id: string;
+            kind: string;
+            source_kind: string;
+            source_id: string;
+            source_revision: number;
+            event_key: string;
+            url: string;
+            reminder_id: string | null;
+            title: string;
+            message: string;
+            /** Format: date-time */
+            created_at: string;
+            read_at: string | null;
+            version: number;
+            active: boolean;
+            muted: boolean;
+        };
+        NotificationPage: {
+            items: components["schemas"]["Notification"][];
+            next: string;
+            unread: number;
+            /** Format: date-time */
+            computed_at: string;
+        };
+        NotificationRead: {
+            read: boolean;
+        };
+        NotificationReadAll: {
+            /** Format: date-time */
+            seen_before: string;
+        };
+        NotificationReadAllResult: {
+            updated: number;
+        };
         FutureSelfWeek: {
             from: string;
             to: string;
@@ -6060,6 +6461,573 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getNotificationSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            available: boolean;
+                            url: string | null;
+                            message: string;
+                        };
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
+    getPushDevices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PushDevices"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    registerPushDevice: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PushInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PushDevice"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    revokePushDevice: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            revoked: boolean;
+                        };
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getNotificationDeliveries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationDeliveryPage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    retryNotificationDelivery: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationDeliveryRetry"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationDelivery"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    previewNotificationUnsubscribe: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationUnsubscribeToken"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationUnsubscribePreview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            403: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    unsubscribeNotifications: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationUnsubscribe"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationUnsubscribed"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            403: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    listReminders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ReminderPage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getReminder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Reminder"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    snoozeReminder: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReminderSnooze"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Reminder"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getNotificationPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationPreferences"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+        };
+    };
+    setNotificationPreferences: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationPreferencesInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationPreferences"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    listNotifications: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationPage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    getNotification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Notification"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    readNotification: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationRead"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Notification"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    readAllNotifications: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationReadAll"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["NotificationReadAllResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     getFutureSelf: {
         parameters: {
             query: {

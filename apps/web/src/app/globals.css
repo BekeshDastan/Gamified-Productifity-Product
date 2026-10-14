@@ -1896,3 +1896,55 @@ html[data-motion="reduce"] *::after {
   border-top: 1px solid var(--line);
   padding-block: 1rem;
 }
+.notification-bell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--foreground);
+  border-radius: 12px;
+}
+.notification-bell:hover {
+  background: var(--muted);
+}
+.notification-card {
+  margin-block: 16px;
+  overflow-wrap: anywhere;
+}
+.notification-card fieldset {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-block: 16px;
+  min-width: 0;
+}
+.notification-card label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-block: 12px;
+}
+.notification-card input:not([type="checkbox"]),
+.notification-card select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--background);
+  color: var(--foreground);
+  max-width: 100%;
+}
+.notification-card input[type="checkbox"] {
+  min-width: 20px;
+  min-height: 20px;
+}
+.notification-card button,
+.notification-card a {
+  margin: 4px 8px 4px 0;
+}
+.notification-card summary {
+  padding-block: 14px;
+  cursor: pointer;
+}

@@ -117,3 +117,16 @@ FullCalendar Standard core/react/daygrid/timegrid/list/multimonth/interaction/lu
 [React v6](https://legacy.fullcalendar.io/v6/react),
 [multiMonth v6](https://legacy.fullcalendar.io/v6/multimonth-grid),
 [Luxon](https://github.com/moment/luxon).
+
+## Этап 20: Web Push
+
+github.com/SherClockHolmes/webpush-go v1.4.0 закреплён в go.mod/sum (MIT).
+Используются шифрование aes128gcm и VAPID; HTTP client ограничивает время и запрещает redirects.
+Endpoint допускается только у FCM, Mozilla и Apple push, ключ P-256 и auth проверяются до сохранения.
+
+[Релиз v1.4.0](https://github.com/SherClockHolmes/webpush-go/releases/tag/v1.4.0),
+[Исходный код](https://github.com/SherClockHolmes/webpush-go/blob/v1.4.0/webpush.go),
+[Apple Web Push](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers).
+
+[RFC 8292, контакт VAPID](https://www.rfc-editor.org/rfc/rfc8292.html#section-2.1):
+для HTTPS origin используется его URI, для локального HTTP — mailto адрес MAIL_FROM.

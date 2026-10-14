@@ -29,6 +29,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/journal"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/navigator"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/notifications"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -98,7 +99,7 @@ func TestBrowserAuth(t *testing.T) {
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	characterService.Mount(router, sessions.Protect)
 	rewards.NewService(pool, domainClock, rewardService, characterService).Mount(router, sessions.Protect)
-	focus.NewService(pool, domainClock, rewardService).Mount(router, sessions.Protect)
+
 	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, domainClock, questService)
@@ -112,6 +113,18 @@ func TestBrowserAuth(t *testing.T) {
 	planService.Mount(router, sessions.Protect)
 	analyticsService := analytics.NewService(pool, domainClock).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
+	notificationService := notifications.NewService(pool, domainClock).WithHabits(habitService).WithSchedulingClock(clock)
+	notificationService.ConfigurePush("test-public-key", nil)
+	characterService.WithAchievementObserver(notificationService.AchievementChanged)
+	analyticsService.WithReportObserver(notificationService.ReportCreated)
+
+	if err := notificationService.ConfigureDelivery("http://127.0.0.1:3100", key, nil); err != nil {
+		t.Fatal(err)
+	}
+	notificationService.Mount(router, sessions.Protect)
+	focusService := focus.NewService(pool, domainClock, rewardService).WithResultObserver(notificationService.FocusChanged)
+	focusService.Mount(router, sessions.Protect)
+	notificationService.WithFocusSettlement(focusService.SettleDueInTx)
 	navigator.NewService(pool, domainClock, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")
@@ -126,6 +139,9 @@ func TestBrowserAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if err := notificationService.ConfigureDelivery("http://127.0.0.1:3100", key, mailer); err != nil {
+		t.Fatal(err)
+	}
 	workerCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	var worker sync.WaitGroup
@@ -133,6 +149,9 @@ func TestBrowserAuth(t *testing.T) {
 	go func() {
 		defer worker.Done()
 		handlers := sessions.MailHandlers(mailer)
+		for kind, handler := range notificationService.Handlers() {
+			handlers[kind] = handler
+		}
 		for kind, handler := range analyticsService.Handlers() {
 			handlers[kind] = handler
 		}
@@ -170,7 +189,7 @@ func TestBrowserAuth(t *testing.T) {
 	deadline := time.Now().Add(30 * time.Second)
 	for {
 		var pending int
-		e := pool.QueryRow(ctx, "SELECT (SELECT count(*) FROM outbox_events WHERE kind IN('character.changed','progression.reward_changed','challenges.changed','analytics.changed') AND dispatched_at IS NULL)+(SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed','challenges.changed','analytics.changed') AND state IN('pending','running','retry_wait'))").Scan(&pending)
+		e := pool.QueryRow(ctx, "SELECT (SELECT count(*) FROM outbox_events WHERE kind IN('character.changed','progression.reward_changed','challenges.changed','analytics.changed','notifications.changed','notifications.reminders_continue') AND dispatched_at IS NULL)+(SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed','challenges.changed','analytics.changed','notifications.changed','notifications.reminders_continue') AND state IN('pending','running','retry_wait'))").Scan(&pending)
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -187,7 +206,7 @@ func TestBrowserAuth(t *testing.T) {
 		}
 	}
 	var dead int
-	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed','challenges.changed','analytics.changed','challenges.close','seasons.close') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
+	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed','challenges.changed','analytics.changed','notifications.changed','notifications.reminders_continue','challenges.close','seasons.close','notifications.reminder') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
 		t.Fatal("derived-profile outbox handler failure", dead, e)
 	}
 	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token=", "JOURNAL_PRIVATE_SENTINEL_C120", "CHALLENGE_PRIVATE_SENTINEL_C128"} {

@@ -27,6 +27,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/journal"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/navigator"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/notifications"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -78,7 +79,7 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	characterService.Mount(router, sessions.Protect)
 	rewards.NewService(pool, clock, rewardService, characterService).Mount(router, sessions.Protect)
-	focus.NewService(pool, clock, rewardService).Mount(router, sessions.Protect)
+
 	questService := quests.NewService(pool, clock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, scanner)
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, clock, questService)
@@ -92,6 +93,18 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	planService.Mount(router, sessions.Protect)
 	analyticsService := analytics.NewService(pool, clock).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
+	notificationService := notifications.NewService(pool, clock).WithHabits(habitService)
+	characterService.WithAchievementObserver(notificationService.AchievementChanged)
+	analyticsService.WithReportObserver(notificationService.ReportCreated)
+
+	notificationService.ConfigurePush("test-public-key", nil)
+	if err := notificationService.ConfigureDelivery("http://localhost:3000", bytes.Repeat([]byte{12}, 32), nil); err != nil {
+		t.Fatal(err)
+	}
+	notificationService.Mount(router, sessions.Protect)
+	focusService := focus.NewService(pool, clock, rewardService).WithResultObserver(notificationService.FocusChanged)
+	focusService.Mount(router, sessions.Protect)
+	notificationService.WithFocusSettlement(focusService.SettleDueInTx)
 	navigator.NewService(pool, clock, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, clock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	server := httptest.NewServer(router)

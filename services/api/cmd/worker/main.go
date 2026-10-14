@@ -2,8 +2,14 @@ package main
 
 import (
 	"context"
+	"crypto/ecdh"
+	"encoding/base64"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/analytics"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/challenges"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/focus"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/notifications"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/push"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/seasons"
 	"log/slog"
 	"net"
@@ -49,10 +55,13 @@ func main() {
 		logger.Error("invalid auth configuration")
 		os.Exit(1)
 	}
-	mailer, err := mail.NewSMTP(cfg.Environment, net.JoinHostPort(os.Getenv("SMTP_HOST"), os.Getenv("SMTP_PORT")), os.Getenv("MAIL_FROM"), os.Getenv("SMTP_USERNAME"), os.Getenv("SMTP_PASSWORD"))
+	smtpAdapter, err := mail.NewSMTP(cfg.Environment, net.JoinHostPort(os.Getenv("SMTP_HOST"), os.Getenv("SMTP_PORT")), os.Getenv("MAIL_FROM"), os.Getenv("SMTP_USERNAME"), os.Getenv("SMTP_PASSWORD"))
 	if err != nil {
-		logger.Error("invalid mail configuration")
-		os.Exit(1)
+		logger.Warn("mail_adapter_unavailable")
+	}
+	var mailer mail.Mailer = mail.Unavailable{}
+	if smtpAdapter != nil {
+		mailer = smtpAdapter
 	}
 	logger.Info("worker starting")
 	clock := platform.RealClock{}
@@ -65,6 +74,37 @@ func main() {
 	if err := analyticsService.StartReportSchedule(ctx); err != nil {
 		logger.Error("report_schedule_failed")
 		os.Exit(1)
+	}
+	notificationService := notifications.NewService(pool, clock).WithHabits(habits.NewService(pool, clock).WithProgression(rewardService))
+	characterService.WithAchievementObserver(notificationService.AchievementChanged)
+	notificationService.WithFocusSettlement(focus.NewService(pool, clock, rewardService).WithResultObserver(notificationService.FocusChanged).SettleDueInTx)
+	analyticsService.WithReportObserver(notificationService.ReportCreated)
+
+	publicKey, privateKey := os.Getenv("PUSH_VAPID_PUBLIC_KEY"), os.Getenv("PUSH_VAPID_PRIVATE_KEY")
+	if publicKey != "" && privateKey != "" {
+		raw, e := base64.RawURLEncoding.DecodeString(privateKey)
+		if e != nil {
+			logger.Error("invalid push configuration")
+			os.Exit(1)
+		}
+		key, e := ecdh.P256().NewPrivateKey(raw)
+		if e != nil || base64.RawURLEncoding.EncodeToString(key.PublicKey().Bytes()) != publicKey {
+			logger.Error("invalid push configuration")
+			os.Exit(1)
+		}
+		notificationService.ConfigurePush(publicKey, push.Adapter{PublicKey: publicKey, PrivateKey: privateKey, Subject: push.Contact(cfg.Origin, os.Getenv("MAIL_FROM"))})
+	}
+
+	if err := notificationService.ConfigureDelivery(cfg.Origin, authConfig.SigningKey, mailer); err != nil {
+		logger.Error("notification_configuration_failed")
+		os.Exit(1)
+	}
+	if err := notificationService.StartReminderSchedule(ctx); err != nil {
+		logger.Error("reminder_schedule_failed")
+		os.Exit(1)
+	}
+	for kind, handler := range notificationService.Handlers() {
+		handlers[kind] = handler
 	}
 	for kind, handler := range analyticsService.Handlers() {
 		handlers[kind] = handler

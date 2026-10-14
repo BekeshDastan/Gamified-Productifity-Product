@@ -55,11 +55,17 @@ func (s *Service) evaluateAchievements(ctx context.Context, tx pgx.Tx, owner str
 		if e != nil {
 			return false, e
 		}
-		_, e = tx.Exec(ctx, "INSERT INTO achievement_changes(owner_id,definition_id,definition_version,active,evidence,created_at) VALUES($1,$2,$3,$4,$5,$6)", owner, d.ID, d.Version, met, evidence, s.clock.Now())
+		var revision int64
+		e = tx.QueryRow(ctx, "INSERT INTO achievement_changes(owner_id,definition_id,definition_version,active,evidence,created_at) VALUES($1,$2,$3,$4,$5,$6) RETURNING id", owner, d.ID, d.Version, met, evidence, s.clock.Now()).Scan(&revision)
 		if e != nil {
 			return false, e
 		}
 		changed = true
+		if s.achievementObserver != nil {
+			if e = s.achievementObserver(ctx, tx, owner, d.ID+"/"+d.Version, revision, met); e != nil {
+				return false, e
+			}
+		}
 	}
 	return changed, nil
 }

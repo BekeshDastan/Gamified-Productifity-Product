@@ -111,9 +111,9 @@ function Evening({
           template={template.data}
           date={date}
           review={q.data}
-          saved={() => {
+          saved={async () => {
+            await cache.invalidateQueries({ queryKey: accountQueryKey(account) });
             setNotice("Вечерний разбор сохранён.");
-            void cache.invalidateQueries({ queryKey: accountQueryKey(account) });
           }}
         />
       )}
@@ -131,7 +131,7 @@ function ReviewEditor({
   template: RoutineTemplate;
   date: string;
   review: Review;
-  saved: () => void;
+  saved: () => Promise<void>;
 }) {
   const [frozen] = useState(template);
   const operation = useRef({ body: "", key: "" });
@@ -159,7 +159,7 @@ function ReviewEditor({
       if (operation.current.body !== body) operation.current = { body, key: crypto.randomUUID() };
       await saveReview(date, review, input, operation.current.key);
       draft.clear();
-      saved();
+      await saved();
     },
   });
   const draft = useTabDraft({

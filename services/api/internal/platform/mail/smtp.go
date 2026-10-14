@@ -9,6 +9,7 @@ import (
 	"net"
 	stdmail "net/mail"
 	"net/smtp"
+	"net/textproto"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -20,6 +21,12 @@ type Mailer interface {
 }
 
 var ErrTLSRequired = errors.New("SMTP requires TLS")
+var ErrDeliveryUnknown = errors.New("SMTP delivery outcome is unknown")
+var ErrUnavailable = errors.New("mail adapter unavailable")
+
+type Unavailable struct{}
+
+func (Unavailable) Send(context.Context, Message) error { return ErrUnavailable }
 
 type SMTP struct {
 	address, host, from, username, password string
@@ -93,11 +100,17 @@ func (s *SMTP) Send(ctx context.Context, message Message) error {
 	text := strings.ReplaceAll(strings.ReplaceAll(message.Text, "\r\n", "\n"), "\n", "\r\n")
 	_, err = fmt.Fprintf(writer, "From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n%s\r\n", s.from, to.String(), mime.QEncoding.Encode("UTF-8", message.Subject), text)
 	if err != nil {
-		_ = writer.Close()
 		return err
 	}
 	if err := writer.Close(); err != nil {
-		return err
+		var reply *textproto.Error
+		if errors.As(err, &reply) && reply.Code >= 400 {
+			return err
+		}
+		return ErrDeliveryUnknown
 	}
-	return client.Quit()
+	// DATA's successful 250 response proves provider acceptance. A lost QUIT
+	// response cannot turn that evidence into a retryable delivery failure.
+	_ = client.Quit()
+	return nil
 }

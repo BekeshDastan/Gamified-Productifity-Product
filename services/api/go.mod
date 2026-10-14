@@ -3,6 +3,7 @@ module github.com/BekeshDastan/Gamified-Productifity-Product/services/api
 go 1.26.9
 
 require (
+	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/jackc/pgx/v5 v5.11.0

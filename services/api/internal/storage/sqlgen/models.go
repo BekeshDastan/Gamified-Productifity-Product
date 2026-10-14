@@ -738,6 +738,94 @@ type NavigatorTaskView struct {
 	VisibleSeconds int32              `json:"visible_seconds"`
 }
 
+type Notification struct {
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	ID             pgtype.UUID        `json:"id"`
+	Kind           string             `json:"kind"`
+	SourceKind     string             `json:"source_kind"`
+	SourceID       string             `json:"source_id"`
+	SourceRevision int64              `json:"source_revision"`
+	EventKey       string             `json:"event_key"`
+	SourceUrl      string             `json:"source_url"`
+	ReminderID     pgtype.UUID        `json:"reminder_id"`
+	Title          string             `json:"title"`
+	Message        string             `json:"message"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	ReadAt         pgtype.Timestamptz `json:"read_at"`
+	Version        int64              `json:"version"`
+	Active         bool               `json:"active"`
+	Muted          bool               `json:"muted"`
+}
+
+type NotificationDelivery struct {
+	OwnerID            pgtype.UUID        `json:"owner_id"`
+	ID                 pgtype.UUID        `json:"id"`
+	NotificationID     pgtype.UUID        `json:"notification_id"`
+	Channel            string             `json:"channel"`
+	SubscriptionID     pgtype.UUID        `json:"subscription_id"`
+	State              string             `json:"state"`
+	Version            int64              `json:"version"`
+	Attempts           int32              `json:"attempts"`
+	AutoAttempts       int32              `json:"auto_attempts"`
+	NextRunAt          pgtype.Timestamptz `json:"next_run_at"`
+	ExpiresAt          pgtype.Timestamptz `json:"expires_at"`
+	LastAttemptID      pgtype.UUID        `json:"last_attempt_id"`
+	LastErrorCode      string             `json:"last_error_code"`
+	ProviderAcceptedAt pgtype.Timestamptz `json:"provider_accepted_at"`
+	UnknownAt          pgtype.Timestamptz `json:"unknown_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+type NotificationDeliveryAttempt struct {
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	DeliveryID pgtype.UUID        `json:"delivery_id"`
+	Attempt    int32              `json:"attempt"`
+	AttemptID  pgtype.UUID        `json:"attempt_id"`
+	Channel    string             `json:"channel"`
+	State      string             `json:"state"`
+	StartedAt  pgtype.Timestamptz `json:"started_at"`
+	FinishedAt pgtype.Timestamptz `json:"finished_at"`
+	ErrorCode  string             `json:"error_code"`
+}
+
+type NotificationInviteSource struct {
+	RecipientID pgtype.UUID        `json:"recipient_id"`
+	ID          pgtype.UUID        `json:"id"`
+	Revision    int64              `json:"revision"`
+	Active      bool               `json:"active"`
+	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type NotificationPreference struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Payload   []byte             `json:"payload"`
+	Version   int64              `json:"version"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type NotificationPreferenceEvent struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Version   int64              `json:"version"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type NotificationPushSubscription struct {
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	ID           pgtype.UUID        `json:"id"`
+	Endpoint     string             `json:"endpoint"`
+	EndpointHash string             `json:"endpoint_hash"`
+	P256dh       string             `json:"p256dh"`
+	Auth         string             `json:"auth"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
+	RevokedAt    pgtype.Timestamptz `json:"revoked_at"`
+	Version      int64              `json:"version"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Onboarding struct {
 	OwnerID     pgtype.UUID        `json:"owner_id"`
 	Step        int32              `json:"step"`
@@ -931,6 +1019,26 @@ type RecurrenceSeriesHistory struct {
 	AfterState  []byte             `json:"after_state"`
 	Reason      string             `json:"reason"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type Reminder struct {
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	ID             pgtype.UUID        `json:"id"`
+	SourceKind     string             `json:"source_kind"`
+	SourceID       pgtype.UUID        `json:"source_id"`
+	ParentID       pgtype.UUID        `json:"parent_id"`
+	SourceRevision int64              `json:"source_revision"`
+	SourceDueAt    pgtype.Timestamptz `json:"source_due_at"`
+	NextRunAt      pgtype.Timestamptz `json:"next_run_at"`
+	ExpiresAt      pgtype.Timestamptz `json:"expires_at"`
+	Version        int64              `json:"version"`
+	State          string             `json:"state"`
+	UrgentOverride bool               `json:"urgent_override"`
+	SnoozedUntil   pgtype.Timestamptz `json:"snoozed_until"`
+	NotificationID pgtype.UUID        `json:"notification_id"`
+	SourceUrl      string             `json:"source_url"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }
 
 type ReportPreview struct {
