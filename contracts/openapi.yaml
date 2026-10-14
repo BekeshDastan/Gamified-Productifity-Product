@@ -6,6 +6,26 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/recovery/status:
+    get:
+      operationId: getRecoveryStatus
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RecoveryStatus"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
   /api/v1/recovery/low-energy/preview:
     post:
       operationId: previewLowEnergy
@@ -8445,6 +8465,91 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    RecoveryHabit:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - url
+        - stats
+        - periods
+        - current_amount
+        - full_target
+        - minimum
+        - minimum_met
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        stats:
+          $ref: "#/components/schemas/HabitStats"
+        periods:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitPeriod"
+        current_amount:
+          anyOf:
+            - type: number
+            - type: "null"
+        full_target:
+          anyOf:
+            - type: number
+            - type: "null"
+        minimum:
+          anyOf:
+            - type: number
+            - type: "null"
+        minimum_met:
+          anyOf:
+            - type: boolean
+            - type: "null"
+    ComebackProgress:
+      type: object
+      additionalProperties: false
+      required:
+        - offer_id
+        - goal_id
+        - run_id
+        - url
+        - member
+      properties:
+        offer_id:
+          type: string
+        goal_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        run_id:
+          type: string
+        url:
+          type: string
+        member:
+          $ref: "#/components/schemas/ChallengeMember"
+    RecoveryStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - computed_at
+        - complete
+        - habits
+        - comebacks
+      properties:
+        computed_at:
+          type: string
+        complete:
+          type: boolean
+        habits:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecoveryHabit"
+        comebacks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComebackProgress"
     LowEnergyInput:
       type: object
       additionalProperties: false
