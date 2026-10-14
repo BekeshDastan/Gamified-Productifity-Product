@@ -8531,6 +8531,81 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    AnalyticsRollingScore:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - score
+        - active_days
+        - task_obligations
+        - habit_obligations
+        - dates
+        - state
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        score:
+          anyOf:
+            - type: integer
+            - type: "null"
+        active_days:
+          type: integer
+        task_obligations:
+          type: integer
+        habit_obligations:
+          type: integer
+        dates:
+          type: array
+          items:
+            type: string
+        state:
+          type: string
+    AnalyticsScores:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - state
+        - closed
+        - t
+        - h
+        - r
+        - daily
+        - discipline_day
+        - discipline
+      properties:
+        version:
+          type: string
+        state:
+          type: string
+        closed:
+          type: boolean
+        t:
+          anyOf:
+            - type: number
+            - type: "null"
+        h:
+          anyOf:
+            - type: number
+            - type: "null"
+        r:
+          anyOf:
+            - type: number
+            - type: "null"
+        daily:
+          anyOf:
+            - type: integer
+            - type: "null"
+        discipline_day:
+          anyOf:
+            - type: number
+            - type: "null"
+        discipline:
+          $ref: "#/components/schemas/AnalyticsRollingScore"
     AnalyticsDefinition:
       type: object
       additionalProperties: false
@@ -8703,6 +8778,7 @@ components:
         - task_weight_completed
         - habits_complete
         - habits
+        - scores
       properties:
         date:
           type: string
@@ -8770,6 +8846,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnalyticsHabitOutcome"
+        scores:
+          $ref: "#/components/schemas/AnalyticsScores"
     AnalyticsWeek:
       type: object
       additionalProperties: false

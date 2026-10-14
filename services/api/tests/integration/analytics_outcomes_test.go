@@ -74,6 +74,9 @@ func TestAnalyticsOutcomeDenominatorsAndGoalUnits(t *testing.T) {
 	if !d.HabitsComplete || d.HabitObligations != 2 || d.HabitSuccesses != 1 || d.HabitMissed != 1 || d.GoalsAchieved != 1 || len(d.Habits) != 2 || d.Plan == nil || !d.Plan.Confirmed || len(d.Plan.Snapshot.Items) != 7 || d.TaskWeightTotal != 14 || d.TaskWeightCompleted != 6 {
 		t.Fatal("wrong habit/goal/snapshot basis", d)
 	}
+	if d.Scores.Daily == nil || *d.Scores.Daily != 56 || !d.Scores.Closed || d.Scores.Discipline.ActiveDays != 1 || d.Scores.Discipline.Score != nil {
+		t.Fatal("incorrect score or invented sample", d.Scores)
+	}
 	if v.Weeks[0].OutcomeTotals != d.OutcomeTotals {
 		t.Fatal("weekly totals disagree", v.Weeks, d.OutcomeTotals)
 	}

@@ -9,7 +9,35 @@ import (
 )
 
 func (s *Service) collect(ctx context.Context, tx pgx.Tx, owner string, in Range, timezone string) ([]Day, error) {
-	from, to, e := validateRange(in)
+	from, _, e := validateRange(in)
+	if e != nil {
+		return nil, e
+	}
+	expanded := from.AddDate(0, 0, -14)
+	if expanded.Year() < 1 {
+		expanded = time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC)
+	}
+	days, e := s.collectBase(ctx, tx, owner, Range{expanded.Format(time.DateOnly), in.To}, timezone)
+	if e != nil {
+		return nil, e
+	}
+	now := s.Clock.Now()
+	for i := range days {
+		days[i].Scores = scoreDay(days[i], timezone, now)
+	}
+	for i := range days {
+		days[i].Scores.Discipline = rollingScore(days, days[i].Date, days[i].Scores)
+	}
+	out := []Day{}
+	for _, d := range days {
+		if d.Date >= in.From {
+			out = append(out, d)
+		}
+	}
+	return out, nil
+}
+func (s *Service) collectBase(ctx context.Context, tx pgx.Tx, owner string, in Range, timezone string) ([]Day, error) {
+	from, to, e := validateRangeLimit(in, 380)
 	if e != nil {
 		return nil, e
 	}

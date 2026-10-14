@@ -2038,7 +2038,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Контрольные задачи каждого статуса дают ожидаемую таблицу без смешения просрочки и провала.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): calculate task habit and goal outcome metrics`
 
-- [ ] **C139. Оценки дня и регулярности**
+- [x] **C139. Оценки дня и регулярности**
   - **Сделать:** Добавить формулы T/H/R, null-компоненты, минимальную выборку и исходные снимки плана.
   - **Проверить:** Пример Daily Score 65 проходит; отдых и пустой день не получают фальшивый балл.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): implement versioned daily and discipline scores`

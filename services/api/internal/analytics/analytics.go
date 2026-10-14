@@ -39,6 +39,7 @@ type Source struct {
 	Version int64     `json:"version"`
 }
 type Day struct {
+	Scores Scores `json:"scores"`
 	Outcomes
 	Date         string   `json:"date"`
 	Completed    int      `json:"completed"`
@@ -77,12 +78,15 @@ type projectionState struct {
 }
 
 func validateRange(in Range) (time.Time, time.Time, error) {
+	return validateRangeLimit(in, 366)
+}
+func validateRangeLimit(in Range, limit int) (time.Time, time.Time, error) {
 	a, e := time.Parse(time.DateOnly, in.From)
 	if e != nil || privateapi.Day(in.From) != nil {
 		return a, a, privateapi.Invalid("Укажите начало диапазона")
 	}
 	b, e := time.Parse(time.DateOnly, in.To)
-	if e != nil || privateapi.Day(in.To) != nil || !b.After(a) || b.Sub(a) > 366*24*time.Hour {
+	if e != nil || privateapi.Day(in.To) != nil || !b.After(a) || b.Sub(a) > time.Duration(limit)*24*time.Hour {
 		return a, b, privateapi.Invalid("Диапазон: от 1 до 366 дней; конечная дата не включается")
 	}
 	return a, b, nil

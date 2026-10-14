@@ -2875,6 +2875,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AnalyticsRollingScore: {
+            from: string;
+            to: string;
+            score: number | null;
+            active_days: number;
+            task_obligations: number;
+            habit_obligations: number;
+            dates: string[];
+            state: string;
+        };
+        AnalyticsScores: {
+            version: string;
+            state: string;
+            closed: boolean;
+            t: number | null;
+            h: number | null;
+            r: number | null;
+            daily: number | null;
+            discipline_day: number | null;
+            discipline: components["schemas"]["AnalyticsRollingScore"];
+        };
         AnalyticsDefinition: {
             id: string;
             label: string;
@@ -2953,6 +2974,7 @@ export interface components {
             task_weight_completed: number;
             habits_complete: boolean;
             habits: components["schemas"]["AnalyticsHabitOutcome"][];
+            scores: components["schemas"]["AnalyticsScores"];
         };
         AnalyticsWeek: {
             start: string;

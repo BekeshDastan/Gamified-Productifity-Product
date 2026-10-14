@@ -980,6 +980,11 @@ type RoutineTemplate struct {
 	Version int64       `json:"version"`
 }
 
+type ScoreVersion struct {
+	Version    string `json:"version"`
+	Definition []byte `json:"definition"`
+}
+
 type SeasonChallengeLink struct {
 	OwnerID  pgtype.UUID        `json:"owner_id"`
 	SeasonID pgtype.UUID        `json:"season_id"`
