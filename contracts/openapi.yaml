@@ -6,6 +6,120 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/reminders:
+    get:
+      operationId: listReminders
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ReminderPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/reminders/{id}:
+    get:
+      operationId: getReminder
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Reminder"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/reminders/{id}/snooze:
+    post:
+      operationId: snoozeReminder
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderSnooze"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Reminder"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/notifications/preferences:
     get:
       operationId: getNotificationPreferences
@@ -9378,6 +9492,97 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    Reminder:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - source_kind
+        - source_id
+        - parent_id
+        - source_revision
+        - source_due_at
+        - next_run_at
+        - expires_at
+        - version
+        - state
+        - urgent_override
+        - snoozed_until
+        - notification_id
+        - url
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        source_kind:
+          type: string
+        source_id:
+          type: string
+        parent_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        source_revision:
+          type: integer
+        source_due_at:
+          type: string
+          format: date-time
+        next_run_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        state:
+          type: string
+        urgent_override:
+          type: boolean
+        snoozed_until:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        notification_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ReminderPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reminder"
+    ReminderSnooze:
+      type: object
+      additionalProperties: false
+      required:
+        - minutes
+        - urgent_override
+        - confirm
+      properties:
+        minutes:
+          type: integer
+          minimum: 5
+          maximum: 1440
+        urgent_override:
+          type: boolean
+        confirm:
+          type: boolean
     NotificationChannelPolicy:
       type: object
       additionalProperties: false

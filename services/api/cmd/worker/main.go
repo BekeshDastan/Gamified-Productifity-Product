@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/analytics"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/challenges"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/notifications"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/seasons"
 	"log/slog"
 	"net"
@@ -65,6 +67,14 @@ func main() {
 	if err := analyticsService.StartReportSchedule(ctx); err != nil {
 		logger.Error("report_schedule_failed")
 		os.Exit(1)
+	}
+	notificationService := notifications.NewService(pool, clock).WithHabits(habits.NewService(pool, clock).WithProgression(rewardService))
+	if err := notificationService.StartReminderSchedule(ctx); err != nil {
+		logger.Error("reminder_schedule_failed")
+		os.Exit(1)
+	}
+	for kind, handler := range notificationService.Handlers() {
+		handlers[kind] = handler
 	}
 	for kind, handler := range analyticsService.Handlers() {
 		handlers[kind] = handler

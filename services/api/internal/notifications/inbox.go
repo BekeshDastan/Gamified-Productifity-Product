@@ -4,6 +4,7 @@ package notifications
 import (
 	"context"
 	"errors"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
 	"github.com/go-chi/chi/v5"
@@ -14,7 +15,11 @@ import (
 	"time"
 )
 
-type Service struct{ *privateapi.Service }
+type Service struct {
+	*privateapi.Service
+	habits          *habits.Service
+	schedulingClock platform.Clock
+}
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
 	return &Service{Service: privateapi.New(pool, clock)}
@@ -47,7 +52,7 @@ type Page struct {
 	ComputedAt time.Time      `json:"computed_at"`
 }
 
-var titles = map[string]string{"deadline": "Приближается срок задачи", "habit": "Окно привычки", "achievement": "Новое достижение", "invite": "Новое приглашение", "report": "Готов отчёт", "focus_result": "Подтвердите итоги фокуса"}
+var titles = map[string]string{"deadline": "Напоминание о сроке задачи", "habit": "Окно привычки", "achievement": "Новое достижение", "invite": "Новое приглашение", "report": "Готов отчёт", "focus_result": "Подтвердите итоги фокуса"}
 var messages = map[string]string{"deadline": "Проверьте задачу и свободные окна. Решение об изменении плана остаётся за вами.", "habit": "В текущем запланированном периоде ещё осталась норма. Можно открыть привычку.", "achievement": "В приложении появилось достижение по подтверждённым записям.", "invite": "Приглашение доступно в приложении. Доступ появляется только после вашего согласия.", "report": "Сохранён личный отчёт. Откройте его в приложении.", "focus_result": "Таймер завершён; рабочие минуты ждут вашего подтверждения."}
 
 const columns = `id::text,kind,source_kind,source_id,source_revision,event_key,source_url,reminder_id::text,title,message,created_at,read_at,version,active,muted`
@@ -144,6 +149,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountPreferences(r)
+		s.mountReminders(r)
 		r.Get("/api/v1/notifications", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
 				return s.list(ctx, tx, owner, r.URL.Query().Get("before"))

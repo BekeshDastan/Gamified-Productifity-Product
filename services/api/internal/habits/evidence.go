@@ -14,6 +14,7 @@ type Evidence struct {
 	AreaID  *string
 	Periods []Period
 	Stats   Stats
+	Version int64
 }
 
 func (s *Service) EvidenceInTx(ctx context.Context, tx pgx.Tx, owner string, advance ...bool) ([]Evidence, bool, error) {
@@ -72,7 +73,7 @@ func (s *Service) EvidenceInTx(ctx context.Context, tx pgx.Tx, owner string, adv
 		if e != nil {
 			return nil, false, e
 		}
-		out = append(out, Evidence{h.ID, h.Title, h.AreaID, p, CalculateStats(p, s.clock.Now())})
+		out = append(out, Evidence{h.ID, h.Title, h.AreaID, p, CalculateStats(p, s.clock.Now()), h.Version})
 	}
 	return out, true, nil
 }

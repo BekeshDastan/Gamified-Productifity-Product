@@ -966,6 +966,26 @@ type RecurrenceSeriesHistory struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type Reminder struct {
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	ID             pgtype.UUID        `json:"id"`
+	SourceKind     string             `json:"source_kind"`
+	SourceID       pgtype.UUID        `json:"source_id"`
+	ParentID       pgtype.UUID        `json:"parent_id"`
+	SourceRevision int64              `json:"source_revision"`
+	SourceDueAt    pgtype.Timestamptz `json:"source_due_at"`
+	NextRunAt      pgtype.Timestamptz `json:"next_run_at"`
+	ExpiresAt      pgtype.Timestamptz `json:"expires_at"`
+	Version        int64              `json:"version"`
+	State          string             `json:"state"`
+	UrgentOverride bool               `json:"urgent_override"`
+	SnoozedUntil   pgtype.Timestamptz `json:"snoozed_until"`
+	NotificationID pgtype.UUID        `json:"notification_id"`
+	SourceUrl      string             `json:"source_url"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
 type ReportPreview struct {
 	OwnerID   pgtype.UUID        `json:"owner_id"`
 	ID        pgtype.UUID        `json:"id"`

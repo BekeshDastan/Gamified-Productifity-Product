@@ -2136,7 +2136,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Отключённый канал не планирует новые отправки; тихие часы считаются правильно.
   - **КОММИТ СЕЙЧАС:** `feat(notifications): add per-type channels quiet hours and frequency caps`
 
-- [ ] **C155. Напоминания задач и привычек**
+- [x] **C155. Напоминания задач и привычек**
   - **Сделать:** Связать сроки, окна привычек и revision источника с jobs и snooze.
   - **Проверить:** Перенос отменяет старый reminder; удалённая задача не отправляет уведомление.
   - **КОММИТ СЕЙЧАС:** `feat(reminders): schedule revise cancel and snooze reminders`
