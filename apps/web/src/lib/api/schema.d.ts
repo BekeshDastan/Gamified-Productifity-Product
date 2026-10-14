@@ -2992,6 +2992,7 @@ export interface components {
             area_id: string | null;
             version: number;
             date: string;
+            qualifier: string;
         };
         AnalyticsDay: {
             date: string;

@@ -27,16 +27,17 @@ type Range struct {
 	To   string `json:"to"`
 }
 type Source struct {
-	Date    string    `json:"date"`
-	Kind    string    `json:"kind"`
-	ID      string    `json:"id"`
-	Name    string    `json:"name"`
-	URL     string    `json:"url"`
-	At      time.Time `json:"at"`
-	Value   float64   `json:"value"`
-	Unit    string    `json:"unit"`
-	AreaID  *string   `json:"area_id"`
-	Version int64     `json:"version"`
+	Qualifier string    `json:"qualifier"`
+	Date      string    `json:"date"`
+	Kind      string    `json:"kind"`
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	URL       string    `json:"url"`
+	At        time.Time `json:"at"`
+	Value     float64   `json:"value"`
+	Unit      string    `json:"unit"`
+	AreaID    *string   `json:"area_id"`
+	Version   int64     `json:"version"`
 }
 type Day struct {
 	TimeMetrics

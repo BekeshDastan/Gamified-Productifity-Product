@@ -2048,7 +2048,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Паузы не учитываются; отсутствие actual не заменяется нулём работы.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): compare estimates actual time and focused sessions`
 
-- [ ] **C141. Графики и heatmap**
+- [x] **C141. Графики и heatmap**
   - **Сделать:** Подключить Recharts, диапазоны, годовую heatmap, легенды и таблицы-альтернативы.
   - **Проверить:** Клик по графику открывает точные исходные записи; табличный итог совпадает.
   - **КОММИТ СЕЙЧАС:** `feat(analytics-ui): add interactive charts heatmaps and source drilldowns`

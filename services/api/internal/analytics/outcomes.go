@@ -115,6 +115,23 @@ func (s *Service) outcomes(ctx context.Context, tx pgx.Tx, owner string, in Rang
 	if e != nil {
 		return e
 	}
+	for i := range days {
+		for j := range days[i].Sources {
+			source := &days[i].Sources[j]
+			if source.Kind != "task" {
+				continue
+			}
+			q := tasks[source.ID]
+			switch {
+			case q.Deadline == nil:
+				source.Qualifier = "no_deadline"
+			case q.Completed != nil && q.Completed.After(*q.Deadline):
+				source.Qualifier = "late"
+			default:
+				source.Qualifier = "on_time"
+			}
+		}
+	}
 	rows, e = tx.Query(ctx, `SELECT local_date::text,timezone,version,payload,snapshot,confirmed_at FROM day_plans WHERE owner_id=$1 AND local_date>=$2::text::date AND local_date<$3::text::date ORDER BY local_date`, owner, in.From, in.To)
 	if e != nil {
 		return e

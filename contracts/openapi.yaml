@@ -8879,6 +8879,7 @@ components:
         - area_id
         - version
         - date
+        - qualifier
       properties:
         kind:
           type: string
@@ -8901,6 +8902,8 @@ components:
         version:
           type: integer
         date:
+          type: string
+        qualifier:
           type: string
     AnalyticsDay:
       type: object
