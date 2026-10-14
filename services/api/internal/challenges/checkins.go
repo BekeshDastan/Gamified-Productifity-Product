@@ -73,6 +73,9 @@ func (s *Service) createCheckin(ctx context.Context, tx pgx.Tx, owner, runID str
 	if !privateapi.UUID(in.OperationID) {
 		return Checkin{}, privateapi.Invalid("Нужен UUID операции")
 	}
+	if strings.ContainsRune(in.Note, 0) {
+		return Checkin{}, privateapi.Invalid("Нулевой символ в заметке недопустим")
+	}
 	body, e := json.Marshal(in)
 	if e != nil {
 		return Checkin{}, e

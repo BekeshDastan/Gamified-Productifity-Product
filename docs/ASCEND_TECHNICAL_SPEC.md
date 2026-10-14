@@ -1965,7 +1965,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Одновременное закрытие worker и API выдаёт одну награду.
   - **КОММИТ СЕЙЧАС:** `feat(challenges): finalize results and award capped one-time rewards`
 
-- [ ] **C128. Приёмка испытаний**
+- [x] **C128. Приёмка испытаний**
   - **Сделать:** Пройти накопительный, периодический и ручной вызов, выход и окончание срока.
   - **Проверить:** Результат совпадает с правилами; дубли событий и закрытие не увеличивают счёт.
   - **КОММИТ СЕЙЧАС:** `test(challenges): cover scoring periods corrections and finalization`

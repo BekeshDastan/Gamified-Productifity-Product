@@ -97,6 +97,24 @@ func TestChallengeManualCheckinsCorrectionsPermanentReplayAndPrivateEvidence(t *
 	if ev.ConsentAt != nil || ev.Version != 3 {
 		t.Fatal(ev)
 	}
+	if repeat := readEvidence(t, f.privateRequest(t, a, "PUT", ep, `"3"`, challenges.EvidenceInput{Visibility: "private"})); repeat.Version != 3 {
+		t.Fatal("same consent rewrote history")
+	}
+	var evidenceList struct{ Data []challenges.Evidence }
+	er := f.privateRequest(t, a, "GET", path+"/check-ins/"+v.ID+"/evidence", "", nil)
+	if er.status != 200 || json.Unmarshal(er.body, &evidenceList) != nil || len(evidenceList.Data) != 1 || !evidenceList.Data[0].Available {
+		t.Fatal(er.status, string(er.body))
+	}
+	if r := f.privateRequest(t, a, "PUT", ep, `"2"`, challenges.EvidenceInput{Visibility: "participants", Consent: true}); r.status != 409 {
+		t.Fatal("stale consent", r.status)
+	}
+	if r := f.privateRequest(t, a, "DELETE", "/attachments/"+file.ID, fmt.Sprintf(`"%d"`, file.Version), struct{}{}); r.status != 200 {
+		t.Fatal("delete evidence file", r.status, string(r.body))
+	}
+	er = f.privateRequest(t, a, "GET", path+"/check-ins/"+v.ID+"/evidence", "", nil)
+	if er.status != 200 || json.Unmarshal(er.body, &evidenceList) != nil || evidenceList.Data[0].Available || evidenceList.Data[0].URL != "" || evidenceList.Data[0].Name != "Файл недоступен" {
+		t.Fatal("deleted evidence still downloadable", er.status, string(er.body))
+	}
 	if r := f.privateRequest(t, b, "GET", path+"/check-ins/"+v.ID+"/evidence", "", nil); r.status != 404 {
 		t.Fatal("foreign evidence", r.status)
 	}

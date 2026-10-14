@@ -145,6 +145,9 @@ func (s *Service) acceptSuggestion(ctx context.Context, tx pgx.Tx, owner string,
 	if privateapi.Day(in.StartsOn) != nil {
 		return out, privateapi.Invalid("Проверьте период")
 	}
+	if (in.Period != "daily" && in.Period != "weekly") || in.TemplateID == "" || len(in.TemplateID) > 100 || strings.ContainsRune(in.TemplateID, 0) || (in.AreaID != nil && !privateapi.UUID(*in.AreaID)) {
+		return out, privateapi.Invalid("Проверьте период, шаблон и направление")
+	}
 	request, e := json.Marshal(in)
 	if e != nil {
 		return out, e

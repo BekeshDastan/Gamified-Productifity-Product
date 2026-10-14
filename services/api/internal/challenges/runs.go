@@ -121,6 +121,19 @@ func (s *Service) createRun(ctx context.Context, tx pgx.Tx, owner string, in Cre
 	if !privateapi.UUID(in.OperationID) {
 		return Run{}, privateapi.Invalid("Нужен UUID операции")
 	}
+	// Reject strings PostgreSQL JSON/text cannot represent before comparing a
+	// permanent operation request. Replay still precedes time-sensitive checks.
+	texts := []string{in.Input.Name, in.Input.StartsOn, in.Input.EndsOn, in.Input.Metric, in.Input.Unit, in.Input.Kind, in.Input.Period}
+	for _, v := range []*string{in.TemplateID, in.Input.AreaID, in.Input.GoalID, in.Input.HabitID} {
+		if v != nil {
+			texts = append(texts, *v)
+		}
+	}
+	for _, v := range texts {
+		if strings.ContainsRune(v, 0) {
+			return Run{}, privateapi.Invalid("Нулевой символ в правилах недопустим")
+		}
+	}
 	request, e := json.Marshal(in)
 	if e != nil {
 		return Run{}, e

@@ -52,6 +52,20 @@ func TestChallengeSuggestionsRequireAcceptanceAndDeduplicate(t *testing.T) {
 	if e := f.pool.QueryRow(f.ctx, "SELECT count(*) FROM quests WHERE owner_id=$1 AND status='backlog' AND planned_date IS NULL", who.ID).Scan(&n); e != nil || n != 1 {
 		t.Fatal("acceptance changed plan", n, e)
 	}
+	r = f.privateRequest(t, a, "GET", "/challenges/suggestions?period=daily&available_minutes=5", "", nil)
+	if r.status != 200 || json.Unmarshal(r.body, &list) != nil || list.Data.Items[0].QuestID == nil || *list.Data.Items[0].QuestID != id {
+		t.Fatal("accepted suggestion lost identity", r.status, string(r.body))
+	}
+	r = f.privateRequest(t, a, "GET", "/challenges/suggestions?period=weekly&available_minutes=45", "", nil)
+	if r.status != 200 || json.Unmarshal(r.body, &list) != nil || len(list.Data.Items) != 10 || list.Data.StartsOn != "2026-10-12" {
+		t.Fatal("weekly suggestions", r.status, string(r.body))
+	}
+	for _, query := range []string{"period=yearly&available_minutes=15", "period=daily&available_minutes=bad", "period=daily&available_minutes=15&area_id=bad", "period=daily&available_minutes=15&area_id=00000000-0000-4000-8000-000000000001"} {
+		r := f.privateRequest(t, a, "GET", "/challenges/suggestions?"+query, "", nil)
+		if r.status != 422 && r.status != 404 {
+			t.Fatal(query, r.status)
+		}
+	}
 	in.AvailableMinutes = 10
 	if r := f.privateRequest(t, a, "POST", "/challenges/suggestions/accept", "", in); r.status != 409 {
 		t.Fatal("changed request", r.status)
