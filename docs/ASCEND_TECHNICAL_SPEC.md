@@ -2112,7 +2112,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** 4 часа × 12 недель дают 48; недостаточные данные не превращаются в обещанный прогноз уровня.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): project activity volume from complete weekly history`
 
-- [ ] **C152. Приёмка автоматизации**
+- [x] **C152. Приёмка автоматизации**
   - **Сделать:** Заблокировать внешнюю сеть, проверить советы, расписание, opt-out и Future Self.
   - **Проверить:** Все функции работают через локальный API; ни одна не меняет данные без согласия.
   - **КОММИТ СЕЙЧАС:** `test(rules): verify deterministic advice and confirmed scheduling offline`

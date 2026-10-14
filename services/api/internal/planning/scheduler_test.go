@@ -64,3 +64,18 @@ func TestSchedulerSplitsOnlyWithConsentAndMinimumChunk(t *testing.T) {
 		t.Fatal(v)
 	}
 }
+func TestScheduleInputRejectsInvalidDatesDuplicatesAndBreaks(t *testing.T) {
+	id := "00000000-0000-4000-8000-000000000001"
+	valid := ScheduleInput{From: "2026-10-13", To: "2026-10-14", Tasks: []TaskOption{{ID: id}}}
+	cases := []ScheduleInput{}
+	for _, change := range []func(*ScheduleInput){func(v *ScheduleInput) { v.From = "no date" }, func(v *ScheduleInput) { v.To = "bad" }, func(v *ScheduleInput) { v.To = "2026-10-13" }, func(v *ScheduleInput) { v.BetweenMinutes = -1 }, func(v *ScheduleInput) { v.Tasks = nil }, func(v *ScheduleInput) { v.Tasks = []TaskOption{{ID: id}, {ID: id}} }, func(v *ScheduleInput) { v.Tasks = []TaskOption{{ID: "foreign"}} }, func(v *ScheduleInput) { v.Breaks = []Interval{{Start: time.Now(), End: time.Time{}}} }} {
+		v := valid
+		change(&v)
+		cases = append(cases, v)
+	}
+	for _, v := range cases {
+		if _, _, e := validateSchedule(v); e == nil {
+			t.Fatal(v)
+		}
+	}
+}

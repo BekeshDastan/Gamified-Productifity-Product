@@ -72,3 +72,30 @@ func TestRuleRejectsCodeUnknownMetricsAndInvalidMetadata(t *testing.T) {
 		t.Fatal("unbounded cooldown")
 	}
 }
+func TestDisabledInvalidAndMissingFactsNeverEvaluate(t *testing.T) {
+	r := DefaultRules()[0]
+	r.Enabled = false
+	if v, e := Evaluate([]Rule{r}, []Fact{{RuleID: r.ID, Numbers: map[string]float64{"postponements": 99, "window_days": 14}}}); e != nil || len(v) != 0 {
+		t.Fatal(v, e)
+	}
+	r.Enabled = true
+	if v, e := Evaluate([]Rule{r}, []Fact{{RuleID: r.ID, Numbers: map[string]float64{}}}); e != nil || len(v) != 0 {
+		t.Fatal(v, e)
+	}
+	r.ID = "code"
+	if _, e := Evaluate([]Rule{r}, nil); e == nil {
+		t.Fatal("invalid rule accepted")
+	}
+}
+func TestEveryActionHasOwnedLocalDestination(t *testing.T) {
+	for _, r := range DefaultRules() {
+		c := Candidate{Rule: r, Fact: Fact{Sources: []Evidence{{URL: "/app/quests/own"}}}}
+		url := actionURL(c)
+		if len(url) < 5 || url[:5] != "/app/" {
+			t.Fatal(r.ID, url)
+		}
+	}
+	if actionURL(Candidate{}) != "/app/navigator" {
+		t.Fatal("missing fallback")
+	}
+}

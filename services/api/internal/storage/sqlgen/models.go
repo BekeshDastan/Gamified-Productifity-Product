@@ -705,6 +705,39 @@ type MysteryGrant struct {
 	OpenedAt       pgtype.Timestamptz `json:"opened_at"`
 }
 
+type NavigatorCard struct {
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	ID           pgtype.UUID        `json:"id"`
+	RuleID       string             `json:"rule_id"`
+	RuleVersion  int64              `json:"rule_version"`
+	Subject      string             `json:"subject"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	Hidden       bool               `json:"hidden"`
+	SnoozedUntil pgtype.Timestamptz `json:"snoozed_until"`
+	Version      int64              `json:"version"`
+}
+
+type NavigatorRulePreference struct {
+	OwnerID  pgtype.UUID `json:"owner_id"`
+	RuleID   string      `json:"rule_id"`
+	Disabled bool        `json:"disabled"`
+	Version  int64       `json:"version"`
+}
+
+type NavigatorRuleVersion struct {
+	ID      string `json:"id"`
+	Version int64  `json:"version"`
+	Payload []byte `json:"payload"`
+}
+
+type NavigatorTaskView struct {
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	QuestID        pgtype.UUID        `json:"quest_id"`
+	LastSeen       pgtype.Timestamptz `json:"last_seen"`
+	Visible        bool               `json:"visible"`
+	VisibleSeconds int32              `json:"visible_seconds"`
+}
+
 type Onboarding struct {
 	OwnerID     pgtype.UUID        `json:"owner_id"`
 	Step        int32              `json:"step"`
@@ -1055,6 +1088,23 @@ type SeasonMonthlyBossLink struct {
 	BossID        pgtype.UUID        `json:"boss_id"`
 	SourceVersion int64              `json:"source_version"`
 	LinkedAt      pgtype.Timestamptz `json:"linked_at"`
+}
+
+type SmartScheduleApply struct {
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	OperationID pgtype.UUID        `json:"operation_id"`
+	PreviewID   pgtype.UUID        `json:"preview_id"`
+	Request     []byte             `json:"request"`
+	Result      []byte             `json:"result"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type SmartSchedulePreview struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	Snapshot  []byte             `json:"snapshot"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type Tag struct {

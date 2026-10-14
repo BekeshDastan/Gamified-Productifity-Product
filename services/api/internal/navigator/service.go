@@ -145,22 +145,24 @@ func actionURL(c Candidate) string {
 		if len(c.Fact.Sources) > 0 {
 			return c.Fact.Sources[0].URL
 		}
-	case "R02", "R06":
-		return "/app/calendar"
+	case "R02":
+		return "/app/planning"
+	case "R06":
+		return "/app/seasons"
 	case "R03":
 		return "/app/navigator#deadline-radar"
 	case "R05":
-		return "/app/character"
+		return "/app/seasons"
 	case "R08":
 		return "/app/journal"
 	case "R09":
 		return "/app/analytics"
 	case "R11":
-		return "/app/character"
+		return "/app/achievements"
 	case "R12":
 		return "/app/calendar"
 	case "R14":
-		return "/app/rewards"
+		return "/app/bosses"
 	case "R15":
 		return "/app/focus"
 	}
