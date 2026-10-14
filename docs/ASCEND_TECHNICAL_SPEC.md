@@ -2009,7 +2009,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Реальный пропуск остаётся в истории; восстановление не рисует ложную непрерывность.
   - **КОММИТ СЕЙЧАС:** `feat(recovery): separate comeback progress from habit streak history`
 
-- [ ] **C135. Экраны сезонов**
+- [x] **C135. Экраны сезонов**
   - **Сделать:** Подключить сезонную страницу, архив, выбор Boss и понятное управление recovery.
   - **Проверить:** Все кнопки меняют реальные сущности; игрок видит последствие досрочного завершения.
   - **КОММИТ СЕЙЧАС:** `feat(seasons-ui): add season overview archive and recovery controls`
