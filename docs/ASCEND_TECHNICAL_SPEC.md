@@ -1960,7 +1960,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Предложение не появляется в обязательном плане до принятия.
   - **КОММИТ СЕЙЧАС:** `feat(challenges-ui): suggest daily and weekly quests from templates`
 
-- [ ] **C127. Закрытие и награды**
+- [x] **C127. Закрытие и награды**
   - **Сделать:** Реализовать окончен/достигнут/не достигнут, итоговый снимок и entitlement 25 XP в пределах квоты.
   - **Проверить:** Одновременное закрытие worker и API выдаёт одну награду.
   - **КОММИТ СЕЙЧАС:** `feat(challenges): finalize results and award capped one-time rewards`

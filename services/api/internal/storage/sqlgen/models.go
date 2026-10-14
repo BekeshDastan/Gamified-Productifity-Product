@@ -185,6 +185,21 @@ type ChallengeEvidenceEvent struct {
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
+type ChallengeFinalSource struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ParticipantID pgtype.UUID        `json:"participant_id"`
+	SourceKind    string             `json:"source_kind"`
+	SourceKey     pgtype.UUID        `json:"source_key"`
+	Title         string             `json:"title"`
+	SourceUrl     string             `json:"source_url"`
+	Amount        int64              `json:"amount"`
+	SourceTime    pgtype.Timestamptz `json:"source_time"`
+	SourceStart   pgtype.Timestamptz `json:"source_start"`
+	SourceVersion int64              `json:"source_version"`
+	Active        bool               `json:"active"`
+	CapturedAt    pgtype.Timestamptz `json:"captured_at"`
+}
+
 type ChallengeMembershipWindow struct {
 	OwnerID       pgtype.UUID        `json:"owner_id"`
 	ParticipantID pgtype.UUID        `json:"participant_id"`

@@ -116,6 +116,15 @@ func (s *Service) rebuild(ctx context.Context, tx pgx.Tx, owner string, run Run,
 		return member, privateapi.Problem(409, "SCORING_VERSION_UNAVAILABLE", "Версия правил сейчас недоступна")
 	}
 	now := s.Clock.Now().UTC()
+	if member.ClosedAt != nil {
+		var snapshot FinalSnapshot
+		if e := json.Unmarshal(member.FinalSnapshot, &snapshot); e != nil {
+			return member, e
+		}
+		if snapshot.Kind == "result" {
+			now = *member.ClosedAt
+		}
+	}
 	if e := s.syncCredits(ctx, tx, owner, run, member, now); e != nil {
 		return member, e
 	}
@@ -157,7 +166,7 @@ func (s *Service) rebuild(ctx context.Context, tx pgx.Tx, owner string, run Run,
 	if saved == nil {
 		return member, privateapi.Problem(404, "NOT_FOUND", "Участие не найдено")
 	}
-	return *saved, nil
+	return s.syncClosedReward(ctx, tx, owner, run, *saved, progress)
 }
 func (s *Service) currentProgress(ctx context.Context, tx pgx.Tx, owner, id string) (Member, error) {
 	run, e := s.getRun(ctx, tx, owner, id)

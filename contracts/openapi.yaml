@@ -6,6 +6,94 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/challenges/runs/{id}/close:
+    post:
+      operationId: closeChallenge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeCloseInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeFinalization"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/final-sources:
+    get:
+      operationId: getChallengeFinalSources
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeSourcePage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/habits/{id}/periods/{period}:
     get:
       operationId: getHabitPeriodSource
@@ -7748,6 +7836,36 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ChallengeCloseInput:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+        - reason
+      properties:
+        confirm:
+          type: boolean
+        reason:
+          type: string
+          maxLength: 1000
+    ChallengeFinalization:
+      type: object
+      additionalProperties: false
+      required:
+        - run
+        - member
+        - reward
+      properties:
+        run:
+          $ref: "#/components/schemas/ChallengeRun"
+        member:
+          anyOf:
+            - $ref: "#/components/schemas/ChallengeMember"
+            - type: "null"
+        reward:
+          anyOf:
+            - $ref: "#/components/schemas/RewardDTO"
+            - type: "null"
     QuestSuggestions:
       type: object
       additionalProperties: false
@@ -8154,6 +8272,8 @@ components:
           type:
             - string
             - "null"
+        reward:
+          $ref: "#/components/schemas/RewardDTO"
     ChallengeMembership:
       type: object
       additionalProperties: false

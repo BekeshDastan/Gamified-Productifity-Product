@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createApiClient } from "@/lib/api/client";
 import { authClient, authParams, withAuthLock } from "@/lib/auth/session";
 import { requireAccount } from "@/lib/profile";
+import { rewardSchema } from "@/lib/progression";
 import type { components } from "@/lib/api/schema";
 type S = components["schemas"];
 export type ChallengeRun = S["ChallengeRun"];
@@ -91,6 +92,7 @@ const progress = z.object({
   ),
 });
 const member = z.object({
+  reward: rewardSchema.optional(),
   id: z.uuid(),
   run_id: z.uuid(),
   rules_hash: z.string(),
@@ -106,6 +108,43 @@ const member = z.object({
   final_snapshot: z.record(z.string(), z.unknown()).nullable(),
   closed_at: z.string().nullable(),
 });
+export const challengeFinalSnapshot = z.object({
+  kind: z.literal("result"),
+  result: z.enum(["achieved", "not_achieved", "left"]),
+  at: z.string(),
+  reason: z.string(),
+  rules_hash: z.string(),
+  progress: progress.nullable(),
+});
+export async function closeChallenge(run: ChallengeRun, reason: string, key: string) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient(),
+      r = await api.POST("/api/v1/challenges/runs/{id}/close", {
+        params: { path: { id: run.id }, header: headers(key, run.version) },
+        body: { confirm: true, reason },
+      });
+    return z
+      .object({ run: runSchema, member: member.nullable(), reward: rewardSchema.nullable() })
+      .parse(r.data?.data);
+  });
+}
+export async function challengeFinalSources(id: string, before = "", signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/challenges/runs/{id}/final-sources", {
+    params: { path: { id }, query: { before } },
+    signal,
+  });
+  return z
+    .object({
+      items: z.array(source),
+      next: z.string(),
+      total: z.number(),
+      unit: z.string(),
+      timezone: z.string(),
+    })
+    .parse(r.data?.data);
+}
 const source = z.object({
   kind: z.enum(["task", "habit", "focus", "review", "stage", "manual"]),
   key: z.uuid(),

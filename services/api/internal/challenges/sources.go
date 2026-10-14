@@ -2,6 +2,7 @@ package challenges
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
 	"github.com/jackc/pgx/v5"
@@ -30,15 +31,23 @@ func sourceQuery(metric string) string {
 	}
 }
 func (s *Service) syncCredits(ctx context.Context, tx pgx.Tx, owner string, run Run, member Member, now time.Time) error {
-	query := `WITH args AS (SELECT $1::uuid owner_id,$2::uuid participant_id,$3::timestamptz starts_at,$4::timestamptz ends_at,$5::uuid area_id,$6::uuid goal_id,$7::uuid habit_id,$8::text starts_on,$9::text ends_on,$10::timestamptz as_of,$11::text timezone,$12::uuid run_id), sources AS (` + sourceQuery(run.Rules.Metric) + `), eligible AS MATERIALIZED (
- SELECT s.* FROM sources s WHERE amount>0 AND source_time>=$3 AND source_time<$4 AND source_time<=$10 AND source_start>=$3 AND EXISTS(SELECT 1 FROM challenge_membership_windows w WHERE w.owner_id=$1 AND w.participant_id=$2 AND s.source_start>=w.joined_at AND s.source_time>=w.joined_at AND (w.left_at IS NULL OR s.source_time<w.left_at))
+	frozen := false
+	if member.ClosedAt != nil {
+		var snapshot FinalSnapshot
+		if e := json.Unmarshal(member.FinalSnapshot, &snapshot); e != nil {
+			return e
+		}
+		frozen = snapshot.Kind == "result"
+	}
+	query := `WITH args AS (SELECT $1::uuid owner_id,$2::uuid participant_id,$3::timestamptz starts_at,$4::timestamptz ends_at,$5::uuid area_id,$6::uuid goal_id,$7::uuid habit_id,$8::text starts_on,$9::text ends_on,$10::timestamptz as_of,$11::text timezone,$12::uuid run_id,$13::boolean frozen), sources AS (` + sourceQuery(run.Rules.Metric) + `), eligible AS MATERIALIZED (
+ SELECT s.* FROM sources s WHERE amount>0 AND source_time>=$3 AND source_time<$4 AND source_time<=$10 AND source_start>=$3 AND (($13 AND EXISTS(SELECT 1 FROM challenge_final_sources f WHERE f.owner_id=$1 AND f.participant_id=$2 AND f.source_kind=s.source_kind AND f.source_key=s.source_key)) OR (NOT $13 AND EXISTS(SELECT 1 FROM challenge_membership_windows w WHERE w.owner_id=$1 AND w.participant_id=$2 AND s.source_start>=w.joined_at AND s.source_time>=w.joined_at AND (w.left_at IS NULL OR s.source_time<w.left_at))))
  ), inserted AS (
  INSERT INTO challenge_source_credits AS c(owner_id,participant_id,source_kind,source_key,title,source_url,amount,source_time,source_start,source_version,active,updated_at)
  SELECT $1,$2,source_kind,source_key,title,source_url,amount,source_time,source_start,source_version,true,$10 FROM eligible
  ON CONFLICT(owner_id,participant_id,source_kind,source_key) DO UPDATE SET title=excluded.title,source_url=excluded.source_url,amount=excluded.amount,source_time=excluded.source_time,source_start=excluded.source_start,source_version=excluded.source_version,active=true,updated_at=excluded.updated_at
  WHERE ROW(c.title,c.source_url,c.amount,c.source_time,c.source_start,c.source_version,c.active) IS DISTINCT FROM ROW(excluded.title,excluded.source_url,excluded.amount,excluded.source_time,excluded.source_start,excluded.source_version,true) RETURNING 1)
  UPDATE challenge_source_credits c SET active=false,updated_at=$10 WHERE c.owner_id=$1 AND c.participant_id=$2 AND c.active AND NOT EXISTS(SELECT 1 FROM eligible e WHERE e.source_kind=c.source_kind AND e.source_key=c.source_key)`
-	_, e := tx.Exec(ctx, query, owner, member.ID, run.StartsAt, run.EndsAt, run.Rules.AreaID, run.Rules.GoalID, run.Rules.HabitID, run.Rules.StartsOn, run.Rules.EndsOn, now, run.Rules.Timezone, run.ID)
+	_, e := tx.Exec(ctx, query, owner, member.ID, run.StartsAt, run.EndsAt, run.Rules.AreaID, run.Rules.GoalID, run.Rules.HabitID, run.Rules.StartsOn, run.Rules.EndsOn, now, run.Rules.Timezone, run.ID, frozen)
 	return e
 }
 
@@ -61,6 +70,13 @@ type SourcePage struct {
 }
 
 func (s *Service) sourcePage(r *http.Request, tx pgx.Tx, owner string, run Run, member Member) (SourcePage, error) {
+	return s.sourcePageTable(r, tx, owner, run, member, "challenge_source_credits")
+}
+func (s *Service) sourcePageTable(r *http.Request, tx pgx.Tx, owner string, run Run, member Member, table string) (SourcePage, error) {
+	// Only server-selected table constants enter this query.
+	if table != "challenge_source_credits" && table != "challenge_final_sources" {
+		return SourcePage{}, privateapi.Invalid("Источник недоступен")
+	}
 	out := SourcePage{Items: []Source{}, Unit: run.Rules.Unit, Timezone: run.Rules.Timezone}
 	q := r.URL.Query()
 	before := q.Get("before")
@@ -79,7 +95,7 @@ func (s *Service) sourcePage(r *http.Request, tx pgx.Tx, owner string, run Run, 
 			return out, privateapi.Invalid("Некорректная страница")
 		}
 		var t time.Time
-		e := tx.QueryRow(r.Context(), "SELECT source_time FROM challenge_source_credits WHERE owner_id=$1 AND participant_id=$2 AND source_key=$3", owner, member.ID, before).Scan(&t)
+		e := tx.QueryRow(r.Context(), "SELECT source_time FROM "+table+" WHERE owner_id=$1 AND participant_id=$2 AND source_key=$3", owner, member.ID, before).Scan(&t)
 		if errors.Is(e, pgx.ErrNoRows) {
 			return out, privateapi.Problem(404, "NOT_FOUND", "Источник не найден")
 		}
@@ -89,7 +105,7 @@ func (s *Service) sourcePage(r *http.Request, tx pgx.Tx, owner string, run Run, 
 		at = &t
 		key = &before
 	}
-	const where = ` FROM challenge_source_credits WHERE owner_id=$1 AND participant_id=$2 AND active AND ($3::text IS NULL OR (source_time AT TIME ZONE $4)::date=$3::text::date)`
+	where := ` FROM ` + table + ` WHERE owner_id=$1 AND participant_id=$2 AND active AND ($3::text IS NULL OR (source_time AT TIME ZONE $4)::date=$3::text::date)`
 	if e := tx.QueryRow(r.Context(), "SELECT count(*)"+where, owner, member.ID, dateParam, run.Rules.Timezone).Scan(&out.Total); e != nil {
 		return out, e
 	}

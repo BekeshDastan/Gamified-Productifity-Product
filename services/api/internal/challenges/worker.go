@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Service) Handlers() map[string]jobs.Handler {
-	return map[string]jobs.Handler{"challenges.changed": s.ownerChanged}
+	return map[string]jobs.Handler{"challenges.changed": s.ownerChanged, "challenges.close": s.expired}
 }
 func (s *Service) ownerChanged(ctx context.Context, tx pgx.Tx, job jobs.Job) error {
 	if job.OwnerID == nil || s.progress == nil {

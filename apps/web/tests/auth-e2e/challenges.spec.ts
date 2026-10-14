@@ -21,10 +21,11 @@ async function data(page: Page, path: string) {
   expect(r.status()).toBe(200);
   return (await r.json()).data;
 }
-async function create(page: Page, name: string, template?: string) {
+async function create(page: Page, name: string, template?: string, target?: number) {
   await page.getByRole("button", { name: "Создать испытание", exact: true }).click();
   if (template) await page.getByLabel("Шаблон испытания", { exact: true }).selectOption(template);
   await page.getByLabel("Название испытания", { exact: true }).fill(name);
+  if (target) await page.getByLabel("Целевой результат", { exact: true }).fill(String(target));
   await page.getByLabel("Начало испытания", { exact: true }).fill("2026-10-12");
   await page.getByRole("button", { name: "Создать с этими правилами", exact: true }).click();
   await expect(
@@ -80,28 +81,40 @@ test("challenges label manual reports preserve corrections and remain accessible
   test.setTimeout(120000);
   await account(page);
   await page.goto("/app/challenges");
-  const id = await create(page, "Моё чтение", "reading-pages");
+  const id = await create(page, "Моё чтение", "reading-pages", 10);
   await join(page);
   await page.getByLabel("Количество самоотчёта", { exact: true }).fill("10");
   await page
     .getByLabel("Заметка к самоотчёту", { exact: true })
     .fill("CHALLENGE_PRIVATE_SENTINEL_C128");
   await page.getByRole("button", { name: "Сохранить самоотчёт", exact: true }).click();
-  await expect(page.getByText(/10 \/ 35 страниц/)).toBeVisible();
+  await expect(page.getByText(/10 \/ 10 страниц/)).toBeVisible();
   await expect(page.locator('form[aria-busy="true"]')).toHaveCount(0);
   await page.getByRole("button", { name: "Сохранить самоотчёт", exact: true }).click();
   await expect
     .poll(async () => (await data(page, "/challenges/runs/" + id + "/check-ins")).items.length)
     .toBe(2);
   const rows = page.locator('details[id^="checkin-"]');
-  await rows.first().locator("summary").click();
-  await rows
-    .first()
-    .getByLabel(/Исправленное количество:/)
-    .fill("0");
-  await rows.first().getByRole("button", { name: "Сохранить исправление", exact: true }).click();
-  await expect(page.getByText(/10 \/ 35 страниц/)).toBeVisible();
+  await expect(rows).toHaveCount(2);
+  const row = page.locator("#" + (await rows.first().getAttribute("id")));
+  await row.locator("summary").click();
+  await row.getByLabel(/Исправленное количество:/).fill("0");
+  await row.getByRole("button", { name: "Сохранить исправление", exact: true }).click();
+  await expect(page.getByText(/10 \/ 10 страниц/)).toBeVisible();
   await expect(page.locator('form[aria-busy="true"]')).toHaveCount(0);
+  await page
+    .getByLabel("Подтверждаю закрытие испытания и сохранение итога", { exact: true })
+    .check();
+  await page
+    .getByRole("button", { name: "Закрыть испытание и сохранить итог", exact: true })
+    .click();
+  await expect(page.getByText(/Итог: Цель достигнута/)).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Награда этого испытания: 25 XP" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Показать источники первого итога", exact: true }).click();
+  await expect(page.getByText(/Исходные записи на момент первого закрытия/)).toBeVisible();
+  expect((await data(page, "/challenges/runs/" + id + "/final-sources")).total).toBe(1);
   await page.setViewportSize({ width: 360, height: 800 });
   await page.emulateMedia({ reducedMotion: "reduce" });
   for (const theme of ["light", "dark"]) {

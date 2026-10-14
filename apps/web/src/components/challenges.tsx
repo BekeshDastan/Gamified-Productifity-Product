@@ -14,6 +14,7 @@ import { Button } from "./ui/button";
 import { Card, Progress } from "./ui/card";
 import { Input, Select } from "./ui/field";
 import { CheckinList } from "./challenge-checkins";
+import { useRewardNotice } from "./progression";
 const metrics = {
   tasks: "Выполненные задачи",
   habits: "Полные нормы привычки",
@@ -121,7 +122,6 @@ function Workspace({ account, timezone }: { account: string; timezone: string })
           }}
         />
       )}
-      <QuestSuggestions account={account} />
       <Card>
         <h2>Мои испытания</h2>
         {runs.isPending && <p role="status">Загружаем запуски…</p>}
@@ -156,6 +156,7 @@ function Workspace({ account, timezone }: { account: string; timezone: string })
         </div>
       </Card>
       {id && <RunDetail key={id} account={account} id={id} changed={changed} />}
+      <QuestSuggestions account={account} />
     </div>
   );
 }
@@ -514,10 +515,16 @@ function RunDetail({ account, id, changed }: { account: string; id: string; chan
     [reason, setReason] = useState(""),
     [decision, setDecision] = useState(false),
     [before, setBefore] = useState(""),
-    action = useChallengeAction();
+    [finalView, setFinalView] = useState(false),
+    [closeAccepted, setCloseAccepted] = useState(false),
+    action = useChallengeAction(),
+    rewardNotice = useRewardNotice();
   const sources = useQuery({
-    queryKey: ["account", account, "challenge-sources", id, before],
-    queryFn: ({ signal }) => api.challengeSources(id, before, signal),
+    queryKey: ["account", account, "challenge-sources", id, before, finalView],
+    queryFn: ({ signal }) =>
+      finalView
+        ? api.challengeFinalSources(id, before, signal)
+        : api.challengeSources(id, before, signal),
     enabled: !!membership.data?.member,
   });
   if (run.isPending || membership.isPending)
@@ -533,6 +540,7 @@ function RunDetail({ account, id, changed }: { account: string; id: string; chan
   const r = run.data,
     m = progress.data ?? membership.data.member,
     p = m?.progress;
+  const original = api.challengeFinalSnapshot.safeParse(m?.final_snapshot);
   return (
     <Card>
       <h2>{r.rules.name}</h2>
@@ -646,6 +654,22 @@ function RunDetail({ account, id, changed }: { account: string; id: string; chan
       {m && (
         <>
           <h3>Источники зачёта</h3>
+          {original.success && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setFinalView(!finalView);
+                setBefore("");
+              }}
+            >
+              {finalView ? "Показать текущие источники" : "Показать источники первого итога"}
+            </Button>
+          )}
+          {finalView && (
+            <p className="ui-hint">
+              Исходные записи на момент первого закрытия. Исправления видны в текущем результате.
+            </p>
+          )}
           {sources.isError && <p role="alert">Источники недоступны. Нажмите «Обновить».</p>}
           <ul>
             {sources.data?.items.map((v) => (
@@ -685,7 +709,75 @@ function RunDetail({ account, id, changed }: { account: string; id: string; chan
           . Первый итог сохранён в истории.
         </p>
       )}
+      {original.success && (
+        <p>
+          Первый итог{" "}
+          {DateTime.fromISO(original.data.at)
+            .setZone(r.rules.timezone)
+            .toFormat("dd.MM.yyyy HH:mm")}
+          :{" "}
+          {original.data.result === "achieved"
+            ? "цель достигнута"
+            : original.data.result === "left"
+              ? "выход"
+              : "цель не достигнута"}
+          .{" "}
+          {original.data.progress && (
+            <>
+              {original.data.progress.current} / {original.data.progress.target}{" "}
+              {units[original.data.progress.unit]}.
+            </>
+          )}
+        </p>
+      )}
+      {m?.reward && (
+        <p role="status">
+          Награда этого испытания: {m.reward.awarded_xp} XP. {m.reward.reason}
+        </p>
+      )}
       {r.state === "open" && (
+        <div>
+          <h3>Сохранить итог</h3>
+          <p className="ui-hint">
+            После закрытия новые действия не дополнят этот запуск. Итог и его источники сохранятся.
+            Исправления прежних записей корректируют текущий результат и прежнюю награду.
+          </p>
+          <Input
+            label="Причина закрытия (необязательно)"
+            value={reason}
+            maxLength={1000}
+            onChange={(e) => setReason(e.target.value)}
+          />
+          <label>
+            <input
+              type="checkbox"
+              checked={closeAccepted}
+              onChange={(e) => setCloseAccepted(e.target.checked)}
+            />{" "}
+            Подтверждаю закрытие испытания и сохранение итога
+          </label>
+          <Button
+            disabled={
+              !closeAccepted ||
+              action.pending ||
+              (!(m?.state === "joined" && p?.target_met) &&
+                DateTime.now().toMillis() < Date.parse(r.ends_at))
+            }
+            onClick={() =>
+              void action.run(async () => {
+                const result = await api.closeChallenge(r, reason, crypto.randomUUID());
+                rewardNotice(result.reward ?? undefined);
+                setCloseAccepted(false);
+                setReason("");
+                changed();
+              })
+            }
+          >
+            Закрыть испытание и сохранить итог
+          </Button>
+        </div>
+      )}
+      {r.state === "open" && m?.state !== "finished" && (
         <details>
           <summary>Управление участием</summary>
           <Input

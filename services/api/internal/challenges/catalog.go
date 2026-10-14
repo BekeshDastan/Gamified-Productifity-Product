@@ -141,8 +141,9 @@ func ReadCatalog() (Catalog, error) {
 
 type Service struct {
 	*privateapi.Service
-	progress *progression.Service
-	quests   *quests.Service
+	progress        *progression.Service
+	quests          *quests.Service
+	schedulingClock platform.Clock
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
@@ -156,6 +157,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		s.mountProgress(r)
 		s.mountCheckins(r)
 		s.mountSuggestions(r)
+		s.mountFinalization(r)
 		r.Get("/api/v1/challenges/catalog", func(w http.ResponseWriter, r *http.Request) { out, e := ReadCatalog(); s.Reply(w, r, out, e) })
 	})
 }

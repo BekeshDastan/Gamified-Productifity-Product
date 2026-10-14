@@ -193,7 +193,11 @@ func (s *Service) createRun(ctx context.Context, tx pgx.Tx, owner string, in Cre
 		return Run{}, e
 	}
 	hash := sha256.Sum256(body)
-	return scanRun(tx.QueryRow(ctx, `INSERT INTO challenge_runs(owner_id,id,request,rules,rules_hash,catalog_id,catalog_version,starts_at,ends_at,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING `+runColumns, owner, in.OperationID, request, body, hex.EncodeToString(hash[:]), in.TemplateID, version, starts, ends, s.Clock.Now().UTC()))
+	run, e := scanRun(tx.QueryRow(ctx, `INSERT INTO challenge_runs(owner_id,id,request,rules,rules_hash,catalog_id,catalog_version,starts_at,ends_at,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING `+runColumns, owner, in.OperationID, request, body, hex.EncodeToString(hash[:]), in.TemplateID, version, starts, ends, s.Clock.Now().UTC()))
+	if e != nil {
+		return run, e
+	}
+	return run, s.scheduleClose(ctx, tx, owner, run)
 }
 
 type RunPage struct {

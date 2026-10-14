@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"net/http"
@@ -15,20 +16,21 @@ import (
 )
 
 type Member struct {
-	ID            string          `json:"id"`
-	RunID         string          `json:"run_id"`
-	RulesHash     string          `json:"rules_hash"`
-	State         string          `json:"state"`
-	Version       int64           `json:"version"`
-	FirstJoinedAt time.Time       `json:"first_joined_at"`
-	LeftAt        *time.Time      `json:"left_at"`
-	LeaveReason   string          `json:"leave_reason"`
-	UpdatedAt     time.Time       `json:"updated_at"`
-	Progress      json.RawMessage `json:"progress"`
-	ComputedAt    *time.Time      `json:"computed_at"`
-	Result        *string         `json:"result"`
-	FinalSnapshot json.RawMessage `json:"final_snapshot"`
-	ClosedAt      *time.Time      `json:"closed_at"`
+	Reward        *progression.Reward `json:"reward,omitempty"`
+	ID            string              `json:"id"`
+	RunID         string              `json:"run_id"`
+	RulesHash     string              `json:"rules_hash"`
+	State         string              `json:"state"`
+	Version       int64               `json:"version"`
+	FirstJoinedAt time.Time           `json:"first_joined_at"`
+	LeftAt        *time.Time          `json:"left_at"`
+	LeaveReason   string              `json:"leave_reason"`
+	UpdatedAt     time.Time           `json:"updated_at"`
+	Progress      json.RawMessage     `json:"progress"`
+	ComputedAt    *time.Time          `json:"computed_at"`
+	Result        *string             `json:"result"`
+	FinalSnapshot json.RawMessage     `json:"final_snapshot"`
+	ClosedAt      *time.Time          `json:"closed_at"`
 }
 type Membership struct {
 	Member *Member `json:"member"`
