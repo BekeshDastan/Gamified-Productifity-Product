@@ -101,7 +101,7 @@ func TestBrowserAuth(t *testing.T) {
 	calendarService := calendar.NewService(pool, domainClock, questService)
 	calendarService.Mount(router, sessions.Protect)
 	habits.NewService(pool, domainClock).WithProgression(rewardService).Mount(router, sessions.Protect)
-	challenges.NewService(pool, domainClock).WithProgression(rewardService).Mount(router, sessions.Protect)
+	challenges.NewService(pool, domainClock).WithProgression(rewardService).WithQuests(questService).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, domainClock, questService, calendarService)
 	planService.Mount(router, sessions.Protect)
 	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
@@ -175,7 +175,7 @@ func TestBrowserAuth(t *testing.T) {
 	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed','challenges.changed') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
 		t.Fatal("derived-profile outbox handler failure", dead, e)
 	}
-	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token=", "JOURNAL_PRIVATE_SENTINEL_C120"} {
+	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token=", "JOURNAL_PRIVATE_SENTINEL_C120", "CHALLENGE_PRIVATE_SENTINEL_C128"} {
 		if strings.Contains(logs.String(), secret) {
 			t.Fatal("sensitive authentication data in API logs")
 		}

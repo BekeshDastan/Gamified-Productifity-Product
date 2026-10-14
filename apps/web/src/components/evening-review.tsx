@@ -32,7 +32,7 @@ const obstacles = {
   unclear: "Неясный следующий шаг",
   other: "Другое",
 };
-export function EveningReview() {
+export function EveningReview({ initialDate }: { initialDate?: string } = {}) {
   const auth = useAuth(),
     settings = useSettings();
   if (!auth.session || !settings.data) return <p>Загружаем вечерний разбор…</p>;
@@ -41,13 +41,28 @@ export function EveningReview() {
       key={auth.session.account.id}
       account={auth.session.account.id}
       timezone={settings.data.timezone}
+      initialDate={initialDate}
     />
   );
 }
-function Evening({ account, timezone }: { account: string; timezone: string }) {
+function Evening({
+  account,
+  timezone,
+  initialDate,
+}: {
+  account: string;
+  timezone: string;
+  initialDate?: string;
+}) {
   const discard = useConfirmDiscard(),
     cache = useQueryClient();
-  const [date, setDate] = useState(() => DateTime.now().setZone(timezone).toISODate()!),
+  const [date, setDate] = useState(() =>
+      initialDate &&
+      /^\d{4}-\d{2}-\d{2}$/.test(initialDate) &&
+      DateTime.fromISO(initialDate).isValid
+        ? initialDate
+        : DateTime.now().setZone(timezone).toISODate()!,
+    ),
     [notice, setNotice] = useState("");
   const q = useQuery({
     queryKey: accountQueryKey(account, "evening", date),

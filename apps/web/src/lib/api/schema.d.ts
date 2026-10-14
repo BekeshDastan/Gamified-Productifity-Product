@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/v1/habits/{id}/periods/{period}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getHabitPeriodSource"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getQuestSuggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/suggestions/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["acceptQuestSuggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/challenges/runs/{id}/check-ins": {
         parameters: {
             query?: never;
@@ -2507,6 +2555,29 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        QuestSuggestions: {
+            /** @enum {string} */
+            period: "daily" | "weekly";
+            /** Format: date */
+            starts_on: string;
+            timezone: string;
+            available_minutes: number;
+            area_id: string | null;
+            items: {
+                template: components["schemas"]["ChallengeQuestTemplate"];
+                quest_id: string | null;
+                reason: string;
+            }[];
+        };
+        AcceptQuestSuggestion: {
+            /** @enum {string} */
+            period: "daily" | "weekly";
+            /** Format: date */
+            starts_on: string;
+            template_id: string;
+            available_minutes: number;
+            area_id: string | null;
+        };
         ChallengeCheckinInput: {
             /** Format: uuid */
             operation_id: string;
@@ -4650,6 +4721,103 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getHabitPeriodSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["HabitPeriod"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
+    getQuestSuggestions: {
+        parameters: {
+            query: {
+                period: "daily" | "weekly";
+                available_minutes: number;
+                area_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestSuggestions"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    acceptQuestSuggestion: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptQuestSuggestion"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            /** Format: uuid */
+                            quest_id: string;
+                        };
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            503: components["responses"]["Error"];
+        };
+    };
     getChallengeCheckins: {
         parameters: {
             query?: {

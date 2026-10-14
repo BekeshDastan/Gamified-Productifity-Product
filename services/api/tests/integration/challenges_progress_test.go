@@ -57,6 +57,16 @@ func TestChallengeAutomaticFocusHabitReviewAndStages(t *testing.T) {
 	f.clock.Advance(time.Minute)
 	h = readHabit(t, f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs", habitVersion(h), habits.LogInput{PeriodID: h.Periods[0].ID, Amount: 20, OccurredAt: f.clock.Now()}))
 	check(hp, 1)
+	periodPath := "/habits/" + h.ID + "/periods/" + h.Periods[0].ID
+	var period struct{ Data habits.Period }
+	pr := f.privateRequest(t, a, "GET", periodPath, "", nil)
+	if pr.status != 200 || json.Unmarshal(pr.body, &period) != nil || period.Data.Amount != 20 {
+		t.Fatal(pr.status, string(pr.body))
+	}
+	other, _ := f.signedIn(t, "challenge-habit-other@example.test")
+	if pr := f.privateRequest(t, other, "GET", periodPath, "", nil); pr.status != 404 {
+		t.Fatal("foreign period source", pr.status)
+	}
 	logs := readHabitLogs(t, f.privateRequest(t, a, "GET", "/habits/"+h.ID+"/logs", "", nil))
 	h = readHabit(t, f.privateRequest(t, a, "POST", "/habits/"+h.ID+"/logs/"+logs[0].ID+"/correct", habitVersion(h), habits.CorrectionInput{Amount: 0, Reason: "Исправление"}))
 	check(hp, 0)

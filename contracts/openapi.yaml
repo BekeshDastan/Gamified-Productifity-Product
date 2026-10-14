@@ -6,6 +6,135 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/habits/{id}/periods/{period}:
+    get:
+      operationId: getHabitPeriodSource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitPeriod"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/suggestions:
+    get:
+      operationId: getQuestSuggestions
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - daily
+              - weekly
+        - name: available_minutes
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 5
+            maximum: 240
+        - name: area_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/QuestSuggestions"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/suggestions/accept:
+    post:
+      operationId: acceptQuestSuggestion
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptQuestSuggestion"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - quest_id
+                    properties:
+                      quest_id:
+                        type: string
+                        format: uuid
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
   /api/v1/challenges/runs/{id}/check-ins:
     get:
       operationId: getChallengeCheckins
@@ -7619,6 +7748,79 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    QuestSuggestions:
+      type: object
+      additionalProperties: false
+      required:
+        - period
+        - starts_on
+        - timezone
+        - available_minutes
+        - area_id
+        - items
+      properties:
+        period:
+          type: string
+          enum:
+            - daily
+            - weekly
+        starts_on:
+          type: string
+          format: date
+        timezone:
+          type: string
+        available_minutes:
+          type: integer
+        area_id:
+          type:
+            - string
+            - "null"
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - template
+              - quest_id
+              - reason
+            properties:
+              template:
+                $ref: "#/components/schemas/ChallengeQuestTemplate"
+              quest_id:
+                type:
+                  - string
+                  - "null"
+              reason:
+                type: string
+    AcceptQuestSuggestion:
+      type: object
+      additionalProperties: false
+      required:
+        - period
+        - starts_on
+        - template_id
+        - available_minutes
+        - area_id
+      properties:
+        period:
+          type: string
+          enum:
+            - daily
+            - weekly
+        starts_on:
+          type: string
+          format: date
+        template_id:
+          type: string
+        available_minutes:
+          type: integer
+          minimum: 5
+          maximum: 240
+        area_id:
+          type:
+            - string
+            - "null"
     ChallengeCheckinInput:
       type: object
       additionalProperties: false

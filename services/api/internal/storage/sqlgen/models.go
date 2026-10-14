@@ -8,6 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AcceptedQuestSuggestion struct {
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	Period         string             `json:"period"`
+	StartsOn       pgtype.Date        `json:"starts_on"`
+	TemplateID     string             `json:"template_id"`
+	CatalogVersion string             `json:"catalog_version"`
+	Request        []byte             `json:"request"`
+	QuestID        pgtype.UUID        `json:"quest_id"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
 type AchievementChange struct {
 	ID                int64              `json:"id"`
 	OwnerID           pgtype.UUID        `json:"owner_id"`

@@ -6,6 +6,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
@@ -141,6 +142,7 @@ func ReadCatalog() (Catalog, error) {
 type Service struct {
 	*privateapi.Service
 	progress *progression.Service
+	quests   *quests.Service
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
@@ -153,6 +155,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		s.mountMembers(r)
 		s.mountProgress(r)
 		s.mountCheckins(r)
+		s.mountSuggestions(r)
 		r.Get("/api/v1/challenges/catalog", func(w http.ResponseWriter, r *http.Request) { out, e := ReadCatalog(); s.Reply(w, r, out, e) })
 	})
 }

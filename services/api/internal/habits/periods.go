@@ -93,7 +93,10 @@ func (s *Service) materialize(ctx context.Context, tx pgx.Tx, id string, h Habit
 	return more, e
 }
 func (s *Service) periods(ctx context.Context, tx pgx.Tx, id string, h Habit) ([]Period, error) {
-	rows, e := tx.Query(ctx, `SELECT p.id::text,p.period_key,p.starts_at,p.ends_at,p.timezone,p.schedule_version,p.target,p.excluded,p.emergency_reason,p.emergency_at,p.rest_reason,COALESCE((SELECT sum(l.amount) FROM habit_logs l WHERE l.owner_id=p.owner_id AND l.period_id=p.id),0)::double precision FROM habit_periods p WHERE p.owner_id=$1 AND p.habit_id=$2 ORDER BY p.starts_at,p.id`, id, h.ID)
+	return s.periodsFor(ctx, tx, id, h, nil)
+}
+func (s *Service) periodsFor(ctx context.Context, tx pgx.Tx, id string, h Habit, periodID *string) ([]Period, error) {
+	rows, e := tx.Query(ctx, `SELECT p.id::text,p.period_key,p.starts_at,p.ends_at,p.timezone,p.schedule_version,p.target,p.excluded,p.emergency_reason,p.emergency_at,p.rest_reason,COALESCE((SELECT sum(l.amount) FROM habit_logs l WHERE l.owner_id=p.owner_id AND l.period_id=p.id),0)::double precision FROM habit_periods p WHERE p.owner_id=$1 AND p.habit_id=$2 AND ($3::uuid IS NULL OR p.id=$3) ORDER BY p.starts_at,p.id`, id, h.ID, periodID)
 	if e != nil {
 		return nil, e
 	}

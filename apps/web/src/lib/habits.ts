@@ -303,3 +303,11 @@ export async function getHabit(id: string) {
   const r = await createApiClient().GET("/api/v1/habits/{id}", { params: { path: { id } } });
   return habitSchema.parse(r.data?.data);
 }
+export async function getHabitPeriod(id: string, period: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/habits/{id}/periods/{period}", {
+    params: { path: { id, period } },
+    signal,
+  });
+  return habitPeriod.parse(r.data?.data);
+}

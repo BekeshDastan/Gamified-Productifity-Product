@@ -1955,7 +1955,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Самоотчёт помечен; прикреплённый файл не становится публичным по умолчанию.
   - **КОММИТ СЕЙЧАС:** `feat(challenges): add declared check-ins and private evidence`
 
-- [ ] **C126. Daily и Weekly Quests**
+- [x] **C126. Daily и Weekly Quests**
   - **Сделать:** Выбирать предложения из каталога по настройкам направлений и доступному времени без генерации ИИ.
   - **Проверить:** Предложение не появляется в обязательном плане до принятия.
   - **КОММИТ СЕЙЧАС:** `feat(challenges-ui): suggest daily and weekly quests from templates`
