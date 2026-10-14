@@ -49,7 +49,10 @@ async function confirm(page: Page, result: "progress" | "rest" = "progress") {
   await page.getByLabel("Комментарий к фокус-сессии").fill("Проверенный итог");
   await page.getByRole("button", { name: "Подтвердить итог сессии", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Итог сохранён" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Новая сессия", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Начать фокус-сессию", exact: true }),
+  ).toBeVisible();
+  await expand(page, "История фокуса и ваши итоги");
 }
 async function accessible(page: Page, name: string, info: { outputPath: (s: string) => string }) {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -151,7 +154,8 @@ test("quick start and Pomodoro boundaries exclude breaks and respect muted sound
   await expand(page, "История, связи и файлы");
   await expect(card(page, "Фактическое время задачи").locator("strong")).toHaveText("5:00");
   await page.goto("/app/focus");
-  await page.getByLabel("Режим фокуса", { exact: true }).selectOption("pomodoro");
+  await page.getByRole("button", { name: "Pomodoro", exact: true }).click();
+  await expand(page, "Связи, поиск и звук");
   await page.getByLabel("Название сессии", { exact: true }).fill("Рабочий ритм");
   await page.getByLabel("Рабочий интервал, минут", { exact: true }).fill("5");
   await page.getByLabel("Перерыв, минут", { exact: true }).fill("1");
@@ -169,7 +173,7 @@ test("quick start and Pomodoro boundaries exclude breaks and respect muted sound
     }),
   ).toBeVisible({ timeout: 30000 });
   await expect(page.getByLabel("Активное рабочее время", { exact: true })).toHaveText("5:00");
-  await expect(page.getByText(/перерывы 1:00/)).toBeVisible();
+  await expect(page.locator(".focus-session-stats")).toContainText("Отдых1:00");
   expect(
     await page.evaluate(
       () => (window as unknown as Window & { __focusAudioAttempts: number }).__focusAudioAttempts,

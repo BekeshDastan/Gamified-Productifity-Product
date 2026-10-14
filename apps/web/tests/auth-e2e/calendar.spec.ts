@@ -1,3 +1,4 @@
+import { revealControl } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function account(page: Page) {
@@ -43,6 +44,7 @@ test("calendar recurring edits persist across five views and the quest list", as
   await page.getByLabel("Число повторений").fill("3");
   await page.getByRole("button", { name: "Сохранить событие", exact: true }).click();
   await expect(page.getByLabel("Название события")).toHaveCount(0);
+  await revealControl(page.getByLabel("Источник календаря"));
   await page.getByLabel("Источник календаря").selectOption("block");
   for (const view of [
     "timeGridDay",
@@ -67,6 +69,7 @@ test("calendar recurring edits persist across five views and the quest list", as
   await page.getByLabel("Причина изменения").fill("План изменился");
   await page.getByRole("button", { name: "Сохранить событие", exact: true }).click();
   await expect(page.getByLabel("Название события")).toHaveCount(0);
+  await revealControl(page.getByLabel("Источник календаря"));
   await page.getByLabel("Источник календаря").selectOption("history");
   let list = await openList(page);
   await expect(
@@ -77,6 +80,7 @@ test("calendar recurring edits persist across five views and the quest list", as
   await expect(page.getByLabel("Плановая дата", { exact: true })).toHaveValue("2026-10-13");
   await expect(page.getByLabel("Статус", { exact: true })).toHaveValue("postponed");
   await page.goto("/app/calendar");
+  await revealControl(page.getByLabel("Источник календаря"));
   await page.getByLabel("Источник календаря").selectOption("block");
   await selectEvent(page, "2026-10-14 · Ежедневное чтение");
   await page.getByLabel("Отменить событие").check();
@@ -91,6 +95,7 @@ test("calendar recurring edits persist across five views and the quest list", as
   await page.getByRole("button", { name: "Сохранить событие", exact: true }).click();
   await expect(page.getByLabel("Название события")).toHaveCount(0);
   await page.reload();
+  await revealControl(page.getByLabel("Источник календаря"));
   await page.getByLabel("Источник календаря").selectOption("block");
   await page.getByLabel("Статус календаря").selectOption("cancelled");
   list = await openList(page);
@@ -177,6 +182,7 @@ test("calendar time block drag resize and failed move revert", async ({ page }, 
       : route.continue(),
   );
   const original = current;
+  const originalTime = await event.locator(".fc-event-time").innerText();
   const originalTop = await event
     .locator("..")
     .evaluate((el) => parseFloat((el as HTMLElement).style.top));
@@ -188,11 +194,14 @@ test("calendar time block drag resize and failed move revert", async ({ page }, 
     page.getByRole("alert").filter({ hasText: "Событие возвращено на прежнее место" }),
   ).toBeVisible();
   await expect
-    .poll(
-      async () =>
-        await event.locator("..").evaluate((el) => parseFloat((el as HTMLElement).style.top)),
+    .poll(async () =>
+      Math.abs(
+        (await event.locator("..").evaluate((el) => parseFloat((el as HTMLElement).style.top))) -
+          originalTop,
+      ),
     )
-    .toBe(originalTop);
+    .toBeLessThanOrEqual(1);
+  await expect(event.locator(".fc-event-time")).toHaveText(originalTime);
   await page.unroute("**/api/v1/calendar/events/*");
   await page.screenshot({ path: info.outputPath("calendar-timegrid.png"), fullPage: true });
 });

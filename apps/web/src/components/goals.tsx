@@ -19,6 +19,8 @@ import {
   type GoalFilters,
 } from "@/lib/goals";
 import { questLabels } from "@/lib/quests";
+import { MeterRing } from "./ui/meter-ring";
+import { Target } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input, Select, DatePicker } from "./ui/field";
@@ -196,9 +198,15 @@ export function Goals({ id }: { id?: string }) {
             }}
           />
           <p>Найдено: {collection.total}</p>
-          <div className="quest-grid">
+          <div className="quest-grid goal-cards">
             {collection.items.map((g) => (
-              <Card key={g.id}>
+              <Card key={g.id} className="goal-card">
+                <div className="goal-card-art">
+                  <span>
+                    <Target size={24} aria-hidden="true" />
+                  </span>
+                  <MeterRing value={g.progress} label="Прогресс цели" />
+                </div>
                 <h2>
                   <SafeLink className="text-link" href={"/app/goals/" + g.id}>
                     {g.title}
@@ -257,7 +265,7 @@ function GoalFilterPanel({
 }) {
   const [draft, setDraft] = useState(filters);
   return (
-    <Card>
+    <Card className="goal-filter-panel">
       <h2>Найти цель</h2>
       <form
         onSubmit={(e) => {

@@ -1,4 +1,5 @@
 "use client";
+import { Plus, SlidersHorizontal, Globe2 } from "lucide-react";
 import { useRef, useState } from "react";
 import type { EventApi } from "@fullcalendar/core";
 import { z } from "zod";
@@ -151,7 +152,7 @@ export default function CalendarWorkspace() {
   }
   return (
     <div className="quest-workspace calendar-workspace">
-      <div className="button-row">
+      <div className="calendar-toolbar">
         <Button
           onClick={() => {
             if (discard()) {
@@ -160,9 +161,98 @@ export default function CalendarWorkspace() {
             }
           }}
         >
-          Добавить событие
+          <Plus size={17} aria-hidden="true" /> Добавить событие
         </Button>
-        <span>Часовой пояс: {zone}</span>
+        <Select
+          label="Вид календаря"
+          value={view}
+          onChange={(e) => {
+            if (discard()) {
+              setView(e.target.value);
+              ref.current?.getApi().changeView(e.target.value);
+            }
+          }}
+        >
+          {Object.entries(views).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
+            </option>
+          ))}
+        </Select>
+        <details
+          className="calendar-filters"
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget))
+              event.currentTarget.open = false;
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.currentTarget.open = false;
+              event.currentTarget.querySelector("summary")?.focus();
+            }
+          }}
+        >
+          <summary>
+            <SlidersHorizontal size={17} aria-hidden="true" /> Фильтры
+            {[area, status, source].filter(Boolean).length > 0 && (
+              <span className="filter-count">{[area, status, source].filter(Boolean).length}</span>
+            )}
+          </summary>
+          <div className="calendar-filter-fields">
+            {" "}
+            <Select
+              label="Направление календаря"
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+            >
+              <option value="">Все направления</option>
+              {labels.data.areas.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </Select>
+            <Select
+              label="Статус календаря"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="">Все статусы</option>
+              <option value="planned">Запланировано</option>
+              <option value="cancelled">Отменено</option>
+              {Object.entries(statuses).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </Select>
+            <Select
+              label="Источник календаря"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+            >
+              <option value="">Все источники</option>
+              <option value="quest">Планы задач</option>
+              <option value="block">Блоки задач</option>
+              <option value="event">События</option>
+              <option value="deadline">Дедлайны</option>
+              <option value="history">Прежние планы</option>
+            </Select>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setArea("");
+                setStatus("");
+                setSource("");
+              }}
+            >
+              Сбросить фильтры
+            </Button>
+          </div>
+        </details>
+        <span className="calendar-zone">
+          <Globe2 size={14} aria-hidden="true" /> {zone}
+        </span>
       </div>
       {notice && <p role="status">{notice}</p>}
       {conflict && (
@@ -177,7 +267,7 @@ export default function CalendarWorkspace() {
         </p>
       )}
       {editing && (
-        <Card>
+        <Card className="calendar-editor">
           <h2>Новое событие</h2>
           <EventForm key="new" zone={zone} areas={labels.data.areas} onSaved={changed} />
         </Card>
@@ -222,62 +312,6 @@ export default function CalendarWorkspace() {
           )}
         </Card>
       )}
-      <div className="quest-form-grid">
-        <Select
-          label="Вид календаря"
-          value={view}
-          onChange={(e) => {
-            if (discard()) {
-              setView(e.target.value);
-              ref.current?.getApi().changeView(e.target.value);
-            }
-          }}
-        >
-          {Object.entries(views).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v}
-            </option>
-          ))}
-        </Select>
-        <Select
-          label="Направление календаря"
-          value={area}
-          onChange={(e) => setArea(e.target.value)}
-        >
-          <option value="">Все направления</option>
-          {labels.data.areas.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </Select>
-        <Select label="Статус календаря" value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">Все статусы</option>
-          <option value="planned">Запланировано</option>
-          <option value="cancelled">Отменено</option>
-          {Object.entries(statuses).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v}
-            </option>
-          ))}
-        </Select>
-        <Select
-          label="Источник календаря"
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
-        >
-          <option value="">Все источники</option>
-          <option value="quest">Планы задач</option>
-          <option value="block">Блоки задач</option>
-          <option value="event">События</option>
-          <option value="deadline">Дедлайны</option>
-          <option value="history">Прежние планы</option>
-        </Select>
-      </div>
-      <p className="ui-hint">
-        ✓ Выполнено · ↷ Перенесено · − Пропущено · × Не получилось · ⊘ Отменено. «Срок» — дедлайн,
-        «Прежний план» — дата до переноса; эти отметки доступны только для просмотра.
-      </p>
       {(data.isFetching || data.data?.materializing) && <p role="status">Обновляем события…</p>}
       {data.isError && (
         <p role="alert">
@@ -346,7 +380,7 @@ export default function CalendarWorkspace() {
               !["deadline", "history"].includes(e.source) &&
               !e.cancelled &&
               !["completed", "failed", "skipped"].includes(e.status),
-            classNames: ["calendar-status-" + e.status],
+            classNames: ["calendar-status-" + e.status, "calendar-source-" + e.source],
             borderColor: labels.data?.areas.find((a) => a.id === e.area_id)?.color,
           }))}
           eventClick={(info) => {
@@ -357,7 +391,18 @@ export default function CalendarWorkspace() {
           }}
         />
       </div>
-      <details>
+      <div className="calendar-legend" aria-label="Обозначения календаря">
+        <span>
+          <i className="legend-indigo" /> Планы и задачи
+        </span>
+        <span>
+          <i className="legend-coral" /> Дедлайны
+        </span>
+        <span>
+          <i className="legend-mint" /> Выполнено
+        </span>
+      </div>
+      <details className="section-disclosure">
         <summary>События диапазона — доступный список ({items.length})</summary>
         <ul className="quest-plain-list">
           {items.map((e) => (

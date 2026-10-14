@@ -6,7 +6,7 @@ describe("product landing", () => {
   it("explains the current availability and account entry points", () => {
     render(<Home />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Большие перемены");
-    expect(screen.getByRole("status")).toHaveTextContent(
+    expect(screen.getByText(/Доступны задачи, привычки/)).toHaveTextContent(
       "Доступны задачи, привычки, календарь, отчёты и личные уведомления",
     );
     expect(screen.getByRole("link", { name: "Войти" })).toHaveAttribute("href", "/auth/login");

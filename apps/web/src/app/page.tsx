@@ -1,6 +1,7 @@
 import { ArrowRight, ArrowUpRight, Compass, Footprints, LockKeyhole, Sprout } from "lucide-react";
 import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { ThemeSelect } from "@/components/theme-select";
+import { FocusDial } from "@/components/focus-dial";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
@@ -58,6 +59,24 @@ export default function Home() {
               личные уведомления. Совместные функции находятся в разработке.
             </p>
           </div>
+          <div className="landing-visual">
+            <div
+              className="landing-landscape"
+              role="img"
+              aria-label="Путь к вершине в мягком свете восхода"
+            />
+            <div className="landing-clock">
+              <span className="eyebrow">МЕСТО ДЛЯ ГЛАВНОГО</span>
+              <FocusDial seconds={1500} caption="Всё начинается с одного шага" />
+              <Button asChild>
+                <Link href="/auth/register">
+                  Найти свой фокус <ArrowRight size={17} aria-hidden="true" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+        <section className="landing-steps">
           <div className="product-preview" aria-label="Как устроен ваш день">
             <p className="eyebrow">ТРИ ПРОСТЫХ ШАГА</p>
             <h2>От мысли к сделанному.</h2>

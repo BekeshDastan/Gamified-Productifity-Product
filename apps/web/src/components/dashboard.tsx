@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { Check, Star } from "lucide-react";
+import { Check, Star, ArrowUpRight, Sparkles, CircleCheck, CalendarDays } from "lucide-react";
 import { QuickTask } from "./quick-task";
 import { StartHint } from "./onboarding";
 import { AccountPanel } from "./account-panel";
@@ -162,12 +162,58 @@ export function Dashboard() {
             {DateTime.fromISO(d.date).setLocale(p.language).toFormat("cccc, d MMMM")}
           </time>
           <h1 className="page-title">Сегодня</h1>
-          <p className="page-intro">Один следующий шаг — и день уже движется.</p>
+          <p className="page-intro">
+            Ваш день. Ваш темп.
+            <br />
+            Начнём с того, что действительно важно.
+          </p>
         </div>
         <div className="button-row">
           <Button asChild variant="secondary">
-            <SafeLink href="/app/focus">Начать фокус</SafeLink>
+            <SafeLink href="/app/focus">
+              Начать фокус <ArrowUpRight size={18} aria-hidden="true" />
+            </SafeLink>
           </Button>
+        </div>
+      </div>
+      <div className="today-pulse" aria-label="Ваш день в цифрах">
+        <div>
+          <span className="pulse-icon lavender">
+            <Sparkles size={20} aria-hidden="true" />
+          </span>
+          <span>
+            В списке сегодня
+            <strong>
+              {d.tasks.length}
+              {d.more_tasks ? "+" : ""}
+              <small> задач</small>
+            </strong>
+          </span>
+        </div>
+        <div>
+          <span className="pulse-icon mint">
+            <CircleCheck size={20} aria-hidden="true" />
+          </span>
+          <span>
+            Уже сделано
+            <strong>
+              {d.tasks.filter((t) => t.status === "completed").length}
+              <small> из списка</small>
+            </strong>
+          </span>
+        </div>
+        <div>
+          <span className="pulse-icon peach">
+            <CalendarDays size={20} aria-hidden="true" />
+          </span>
+          <span>
+            Ближайшие 7 дней
+            <strong>
+              {d.events.length}
+              {d.more_events ? "+" : ""}
+              <small> событий</small>
+            </strong>
+          </span>
         </div>
       </div>
       <StartHint />

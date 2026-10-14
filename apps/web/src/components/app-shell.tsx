@@ -2,7 +2,17 @@
 import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { usePathname } from "next/navigation";
 import { useRef, useState, type ReactNode, type MouseEvent } from "react";
-import { House, CalendarDays, ListTodo, Menu, Plus, ArrowUpRight, UserRound } from "lucide-react";
+import {
+  House,
+  CalendarDays,
+  ListTodo,
+  Menu,
+  Plus,
+  ArrowUpRight,
+  UserRound,
+  Sparkles,
+  Headphones,
+} from "lucide-react";
 import {
   allNavigation,
   navigationGroups,
@@ -37,6 +47,7 @@ function ShellContent({ children }: { children: ReactNode }) {
   const menuTrigger = useRef<HTMLButtonElement | null>(null),
     addTrigger = useRef<HTMLButtonElement | null>(null);
   const current = allNavigation.find((item) => routeIsActive(pathname, item.href));
+  const SectionIcon = current?.icon ?? House;
   function navItems(items: typeof utilityNavigation) {
     return items.map(({ href, label, icon: Icon }) => (
       <Link
@@ -84,7 +95,7 @@ function ShellContent({ children }: { children: ReactNode }) {
     <>
       <PersonalizationEffects />
       <TaskViewObserver />
-      <div className="app-shell">
+      <div className="app-shell" data-section={pathname.split("/")[2] ?? "today"}>
         <a href="#main-content" className="skip-link">
           К содержимому
         </a>
@@ -98,7 +109,15 @@ function ShellContent({ children }: { children: ReactNode }) {
             Добавить задачу
           </Button>
           {navigation()}
-          <p className="sidebar-note">Один шаг. Каждый день.</p>
+          <Link href="/app/focus" className="sidebar-focus">
+            <Headphones size={22} aria-hidden="true" />
+            <span>
+              <strong>Время для главного</strong>
+              <small>Включите свой ритм</small>
+            </span>
+            <ArrowUpRight size={16} aria-hidden="true" />
+          </Link>
+          <p className="sidebar-note">Маленькие шаги. Большие перемены.</p>
         </aside>
         <div className="app-workspace">
           <header className="app-header">
@@ -132,7 +151,12 @@ function ShellContent({ children }: { children: ReactNode }) {
                   {navigation()}
                 </Dialog>
               </span>
-              <span>{current?.label ?? "ASCEND"}</span>
+              <span className="header-breadcrumb">
+                <Sparkles size={15} aria-hidden="true" />
+                <span>Моё пространство</span>
+                <b>/</b>
+                {current?.label ?? "ASCEND"}
+              </span>
             </div>
             <AccountThemeSelect />
             <NotificationBell />
@@ -148,6 +172,9 @@ function ShellContent({ children }: { children: ReactNode }) {
             </Link>
           </header>
           <main id="main-content" tabIndex={-1} className="app-main">
+            <div className="section-emblem" aria-hidden="true">
+              <SectionIcon size={36} strokeWidth={1.5} />
+            </div>
             {pathname.startsWith("/app/settings/") && (
               <nav className="settings-nav" aria-label="Настройки аккаунта">
                 <Link href="/app/settings" className="text-link">

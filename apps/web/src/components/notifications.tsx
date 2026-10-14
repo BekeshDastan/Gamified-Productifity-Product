@@ -104,7 +104,14 @@ export function Notifications() {
         {action.error && <p role="alert">{action.error}</p>}
         {q.isError && <p role="alert">Не удалось загрузить уведомления. Повторите обновление.</p>}
         {q.isPending && <p role="status">Загружаем историю…</p>}
-        {q.data?.items.length === 0 && <p>Пока нет уведомлений.</p>}
+        {q.data?.items.length === 0 && (
+          <div className="notification-empty">
+            <Bell size={30} aria-hidden="true" />
+            <h3>Здесь тихо. Можно сосредоточиться.</h3>
+            <p>Пока нет уведомлений.</p>
+            <SafeLink href="/app/focus">Перейти к фокусу ↗</SafeLink>
+          </div>
+        )}
       </Card>
       {q.data?.items.map((n) => (
         <NotificationRow
@@ -149,7 +156,7 @@ function NotificationRow({
   });
   const currentReminder = reminder ?? ownedReminder.data;
   return (
-    <Card className="notification-card">
+    <Card className="notification-card" data-unread={!n.read_at}>
       <article aria-label={n.title}>
         <h2>{n.title}</h2>
         <p>{n.message}</p>

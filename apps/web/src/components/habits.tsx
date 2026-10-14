@@ -21,6 +21,8 @@ import {
 } from "@/lib/habits";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink, useConfirmDiscard } from "@/lib/forms/unsaved-changes";
+import { Sprout } from "lucide-react";
+import { MeterRing } from "./ui/meter-ring";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
@@ -344,7 +346,13 @@ export function HabitCard({
   );
   return (
     <Card className="habit-card" id={"habit-" + h.id}>
-      <h2>{h.title}</h2>
+      <div className="habit-card-heading">
+        <span className="habit-symbol">
+          <Sprout size={24} aria-hidden="true" />
+        </span>
+        <h2>{h.title}</h2>
+        {current && <MeterRing value={current.progress} label="Норма периода" />}
+      </div>
       {h.has_more ? (
         <p role="status">Восстанавливаем периоды истории…</p>
       ) : (

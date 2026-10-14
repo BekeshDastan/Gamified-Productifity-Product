@@ -25,6 +25,9 @@ import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
 import { FocusHistory } from "./focus-history";
 import { FocusReview } from "./focus-review";
+import { FocusDial } from "./focus-dial";
+import { MotionScene } from "./motion-scene";
+import { Play, Pause, Timer, Coffee, SlidersHorizontal } from "lucide-react";
 import { Dialog } from "./ui/dialog";
 
 const labels: Record<string, string> = {
@@ -146,136 +149,196 @@ export function Focus() {
     );
   return (
     <div className="focus-layout">
-      <Card>
-        <h2>Один шаг за раз</h2>
-        <p>
-          Паузы и перерывы исключаются из рабочего времени. До 4 часов работы и 8 часов от старта.
-          После завершения подтвердите итог; задача остаётся под вашим управлением.
-        </p>
-        <p>За таймер отдельный XP не начисляется.</p>
-      </Card>
       {q.isError && (
         <p role="alert">
           Связь с сервером прервана. Показано последнее сохранённое состояние; счётчик ограничен
           пределом сессии.
         </p>
       )}
-      {Math.abs(q.data.sync.skewMs) > 5000 + q.data.sync.uncertaintyMs ? (
-        <p role="status">
-          Часы устройства отличаются от сервера примерно на{" "}
-          {Math.round(Math.abs(q.data.sync.skewMs) / 1000)} сек. Таймер использует серверное время.
-        </p>
-      ) : (
-        <p className="ui-hint">
-          Время сверено с сервером. Погрешность связи: до{" "}
-          {Math.ceil(q.data.sync.uncertaintyMs / 1000)} сек.
-        </p>
-      )}
       {notice && <p role="status">{notice}</p>}
       {error && <p role="alert">{error}</p>}
       {s && clock ? (
-        <Card>
-          <h2>{s.title}</h2>
-          <p role="status">
-            {labels[s.state]}
-            {s.phase === "break" ? " · Перерыв" : ""}
-          </p>
-          <p>
-            Работа:{" "}
-            <output aria-label="Активное рабочее время" aria-live="off">
-              {duration(clock.active)}
-            </output>{" "}
-            · перерывы {duration(clock.rest)}
-          </p>
-          {s.state === "running" && (
-            <p>
-              До границы интервала:{" "}
-              <output aria-label="Осталось до границы интервала" aria-live="off">
-                {duration(clock.remaining)}
-              </output>
+        <Card className="focus-active">
+          <div className="focus-active-stage">
+            <p className="eyebrow">ВАШЕ ВРЕМЯ</p>
+            <h2>{s.title}</h2>
+            <p className="focus-state" role="status">
+              {labels[s.state]}
+              {s.phase === "break" ? " · Перерыв" : ""}
             </p>
-          )}
-          {s.state === "paused" && s.phase_remaining_seconds !== null && (
-            <p>Осталось после паузы: {duration(s.phase_remaining_seconds)}</p>
-          )}
-          {s.phase === "work_complete" && (
-            <p>Рабочий интервал завершён. Можно закончить или продолжить по своему выбору.</p>
-          )}
-          {s.phase === "break_complete" && (
-            <p>Перерыв завершён. Следующий рабочий интервал начнётся по вашему выбору.</p>
-          )}
-          {clock.boundaryPassed && <p>Интервал достиг границы. Сверяем состояние с сервером…</p>}
-          <p>
-            Цикл {s.cycle} ·{" "}
-            {s.mode === "pomodoro"
-              ? `Pomodoro ${s.work_minutes}/${s.break_minutes} мин.`
-              : s.mode === "quick"
-                ? "Короткий старт: 5 минут"
-                : "Свободная сессия"}
-          </p>
-          {s.quest_id && (
-            <SafeLink href={"/app/quests/" + s.quest_id}>Открыть связанную задачу</SafeLink>
-          )}
-          {s.goal_id && (
-            <SafeLink href={"/app/goals/" + s.goal_id}>Открыть связанную цель</SafeLink>
-          )}
-          <div className="auth-actions">
-            {s.state === "running" && (
-              <Button disabled={busy || clock.boundaryPassed} onClick={() => void action("pause")}>
-                Пауза
-              </Button>
-            )}
-            {s.state === "paused" && (s.phase === "work" || s.phase === "break") && (
-              <Button disabled={busy} onClick={() => void action("resume")}>
-                Продолжить таймер
-              </Button>
-            )}
-            {s.state === "paused" && s.phase === "work_complete" && s.mode === "pomodoro" && (
-              <Button disabled={busy} onClick={() => void action("break")}>
-                Начать перерыв
-              </Button>
-            )}
-            {s.state === "paused" && s.phase.endsWith("_complete") && s.mode === "pomodoro" && (
-              <Button disabled={busy} onClick={() => void action("next")}>
-                Следующий рабочий интервал
-              </Button>
-            )}
-            {s.state === "paused" && s.phase === "work_complete" && s.mode === "quick" && (
-              <Button disabled={busy} onClick={() => void action("extend")}>
-                Продолжить ещё пять минут
-              </Button>
-            )}
-            {(s.state === "running" || s.state === "paused") && (
-              <Button disabled={busy || clock.boundaryPassed} onClick={() => void action("finish")}>
-                Завершить и подвести итог
-              </Button>
-            )}
-            <Button disabled={busy} variant="secondary" onClick={() => setCancel(s.id)}>
-              Отменить сессию
-            </Button>
-            <Button disabled={busy} variant="secondary" onClick={() => void refetch()}>
-              Сверить с сервером
-            </Button>
-          </div>
-          {s.state === "awaiting_confirmation" && (
-            <FocusReview
-              key={s.id}
-              session={s}
-              saved={() => {
-                setNotice("Итог сохранён. Статус задачи остался под вашим управлением.");
-                setError("");
-                changed();
-              }}
+            <FocusDial
+              seconds={s.mode === "free" ? clock.active : clock.remaining}
+              progress={
+                s.mode === "free"
+                  ? (clock.active % 3600) / 3600
+                  : 1 -
+                    clock.remaining /
+                      ((s.phase === "break" || s.phase === "break_complete"
+                        ? s.break_minutes
+                        : s.work_minutes) *
+                        60)
+              }
+              running={s.state === "running" && !clock.boundaryPassed}
+              caption={
+                s.phase.startsWith("break")
+                  ? "Время выдохнуть"
+                  : s.mode === "free"
+                    ? "В своём ритме"
+                    : "Сосредоточьтесь на главном"
+              }
             />
-          )}
+            <div className="focus-controls">
+              {s.state === "running" && (
+                <Button
+                  disabled={busy || clock.boundaryPassed}
+                  onClick={() => void action("pause")}
+                >
+                  <Pause size={17} aria-hidden="true" /> Пауза
+                </Button>
+              )}
+              {s.state === "paused" && (s.phase === "work" || s.phase === "break") && (
+                <Button disabled={busy} onClick={() => void action("resume")}>
+                  <Play size={17} aria-hidden="true" /> Продолжить таймер
+                </Button>
+              )}
+              {s.state === "paused" && s.phase === "work_complete" && s.mode === "pomodoro" && (
+                <Button disabled={busy} onClick={() => void action("break")}>
+                  Начать перерыв
+                </Button>
+              )}
+              {s.state === "paused" && s.phase.endsWith("_complete") && s.mode === "pomodoro" && (
+                <Button disabled={busy} onClick={() => void action("next")}>
+                  Следующий рабочий интервал
+                </Button>
+              )}
+              {s.state === "paused" && s.phase === "work_complete" && s.mode === "quick" && (
+                <Button disabled={busy} onClick={() => void action("extend")}>
+                  Продолжить ещё пять минут
+                </Button>
+              )}
+              {(s.state === "running" || s.state === "paused") && (
+                <Button
+                  disabled={busy || clock.boundaryPassed}
+                  onClick={() => void action("finish")}
+                >
+                  Завершить и подвести итог
+                </Button>
+              )}
+              <Button disabled={busy} variant="secondary" onClick={() => setCancel(s.id)}>
+                Отменить сессию
+              </Button>
+              <Button disabled={busy} variant="secondary" onClick={() => void refetch()}>
+                Сверить с сервером
+              </Button>
+            </div>
+          </div>
+          <aside className="focus-session-side">
+            <div className="focus-session-stats">
+              <span>
+                <Timer size={20} aria-hidden="true" />В работе
+                <strong>
+                  <output aria-label="Активное рабочее время" aria-live="off">
+                    {duration(clock.active)}
+                  </output>
+                </strong>
+              </span>
+              <span>
+                <Coffee size={20} aria-hidden="true" />
+                Отдых<strong>{duration(clock.rest)}</strong>
+                <span className="sr-only">перерывы {duration(clock.rest)}</span>
+              </span>
+            </div>
+            <p>
+              Цикл {s.cycle} ·{" "}
+              {s.mode === "pomodoro"
+                ? "Pomodoro " + s.work_minutes + "/" + s.break_minutes + " мин."
+                : s.mode === "quick"
+                  ? "Короткий старт: 5 минут"
+                  : "Свободная сессия"}
+            </p>
+            {s.state === "running" && (
+              <p className="ui-hint">
+                До границы интервала:{" "}
+                <output aria-label="Осталось до границы интервала" aria-live="off">
+                  {duration(clock.remaining)}
+                </output>
+              </p>
+            )}
+            {s.state === "paused" && s.phase_remaining_seconds !== null && (
+              <p>Осталось после паузы: {duration(s.phase_remaining_seconds)}</p>
+            )}
+            {s.phase === "work_complete" && (
+              <p className="focus-boundary">
+                Рабочий интервал завершён. Можно закончить или продолжить по своему выбору.
+              </p>
+            )}
+            {s.phase === "break_complete" && (
+              <p className="focus-boundary">
+                Перерыв завершён. Следующий рабочий интервал начнётся по вашему выбору.
+              </p>
+            )}
+            {clock.boundaryPassed && (
+              <p role="status">Интервал достиг границы. Сверяем состояние с сервером…</p>
+            )}
+            {s.quest_id && (
+              <SafeLink className="focus-linked" href={"/app/quests/" + s.quest_id}>
+                Открыть связанную задачу ↗
+              </SafeLink>
+            )}
+            {s.goal_id && (
+              <SafeLink className="focus-linked" href={"/app/goals/" + s.goal_id}>
+                Открыть связанную цель ↗
+              </SafeLink>
+            )}
+            <MotionScene />
+            <p className="ui-hint">Сейчас достаточно одного дела. Остальное подождёт.</p>
+          </aside>
+          <div className="focus-review-area">
+            {s.state === "awaiting_confirmation" && (
+              <FocusReview
+                key={s.id}
+                session={s}
+                saved={() => {
+                  setNotice("Итог сохранён. Статус задачи остался под вашим управлением.");
+                  setError("");
+                  changed();
+                }}
+              />
+            )}
+          </div>
         </Card>
       ) : (
-        <Card>
-          <h2>Новая сессия</h2>
+        <Card className="focus-new">
+          <h2 className="sr-only">Новая сессия</h2>
           <FocusStartForm changed={changed} />
         </Card>
       )}
-      <FocusHistory serverNow={q.data.server_now} />
+      <details className="section-disclosure focus-history-disclosure">
+        <summary>История фокуса и ваши итоги</summary>
+        <div className="disclosure-content">
+          <FocusHistory serverNow={q.data.server_now} />
+        </div>
+      </details>
+      <details className="focus-explainer">
+        <summary>Как считаем время</summary>
+        <p>
+          Паузы и перерывы исключаются из рабочего времени. До 4 часов работы и 8 часов от старта.
+          После завершения подтвердите итог; задача остаётся под вашим управлением. За таймер
+          отдельный XP не начисляется.
+        </p>{" "}
+        {Math.abs(q.data.sync.skewMs) > 5000 + q.data.sync.uncertaintyMs ? (
+          <p role="status">
+            Часы устройства отличаются от сервера примерно на{" "}
+            {Math.round(Math.abs(q.data.sync.skewMs) / 1000)} сек. Таймер использует серверное
+            время.
+          </p>
+        ) : (
+          <p className="ui-hint">
+            Время сверено с сервером. Погрешность связи: до{" "}
+            {Math.ceil(q.data.sync.uncertaintyMs / 1000)} сек.
+          </p>
+        )}
+      </details>
       <Dialog
         title="Отмена фокус-сессии"
         description="Интервалы останутся в истории. Время не войдёт в подтверждённый итог задачи."
@@ -330,7 +393,7 @@ function FocusStartForm({ changed }: { changed: () => void }) {
   const flow = useValidatedForm<z.infer<typeof startSchema>>({
     schema: startSchema,
     defaultValues: {
-      mode: "free",
+      mode: "pomodoro",
       title: "",
       quest_id: "",
       goal_id: "",
@@ -372,150 +435,220 @@ function FocusStartForm({ changed }: { changed: () => void }) {
     },
   });
   const selectedTask = useWatch({ control: flow.form.control, name: "quest_id" }),
+    workMinutes = useWatch({ control: flow.form.control, name: "work_minutes" }),
     selectedGoal = useWatch({ control: flow.form.control, name: "goal_id" });
   const mode = useWatch({ control: flow.form.control, name: "mode" }),
     f = flow.form,
     errors = f.formState.errors;
   return (
-    <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
-      <Select label="Режим фокуса" {...f.register("mode")}>
-        <option value="free">Свободная сессия</option>
-        <option value="pomodoro">Pomodoro</option>
-        <option value="quick">Начать с пяти минут</option>
-      </Select>
-      <Input
-        label="Название сессии"
-        hint="Необязательно. При выборе задачи используем её название."
-        {...f.register("title")}
-        error={errors.title?.message}
-      />
-      {mode === "pomodoro" && (
-        <>
-          <Input
-            label="Рабочий интервал, минут"
-            type="number"
-            min={5}
-            max={120}
-            {...f.register("work_minutes", { valueAsNumber: true })}
-            error={errors.work_minutes?.message}
-          />
-          <Input
-            label="Перерыв, минут"
-            type="number"
-            min={1}
-            max={60}
-            {...f.register("break_minutes", { valueAsNumber: true })}
-            error={errors.break_minutes?.message}
-          />
-        </>
-      )}
-      <Input
-        label="Поиск задачи для фокуса"
-        value={taskSearch}
-        onChange={(e) => {
-          setTaskSearch(e.target.value);
-          setTaskPage(1);
-        }}
-      />
-      <Select
-        label="Задача для фокуса"
-        {...f.register("quest_id")}
-        error={errors.quest_id?.message}
-      >
-        <option value="">Без задачи</option>
-        {selectedTask && !tasks.data?.items.some((t) => t.id === selectedTask) && (
-          <option value={selectedTask}>Ранее выбранная задача</option>
-        )}
-        {tasks.data?.items
-          .filter((q) => !["completed", "failed", "skipped"].includes(q.status) && !q.archived_at)
-          .map((q) => (
-            <option key={q.id} value={q.id}>
-              {q.title}
-            </option>
+    <Form
+      className="focus-start-form"
+      saving={flow.saving}
+      error={flow.error}
+      onSubmit={flow.onSubmit}
+    >
+      <div className="focus-start-stage">
+        <div className="focus-mode-tabs" role="group" aria-label="Режим фокуса">
+          {(
+            [
+              { value: "pomodoro", label: "Pomodoro" },
+              { value: "quick", label: "5 минут" },
+              { value: "free", label: "Свободный" },
+            ] as const
+          ).map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              aria-pressed={mode === item.value}
+              onClick={() => f.setValue("mode", item.value, { shouldDirty: true })}
+            >
+              {item.label}
+            </button>
           ))}
-      </Select>
-      <div className="auth-actions">
-        <Button disabled={taskPage === 1} onClick={() => setTaskPage((p) => p - 1)}>
-          Предыдущие задачи
+        </div>
+        <FocusDial
+          seconds={
+            mode === "free"
+              ? 0
+              : mode === "quick"
+                ? 300
+                : (Number.isFinite(workMinutes) ? workMinutes : 25) * 60
+          }
+          caption={
+            mode === "quick"
+              ? "Начните с малого"
+              : mode === "free"
+                ? "Без спешки и ограничений"
+                : "Ваш следующий маленький шаг"
+          }
+        />
+        <Button className="focus-launch" type="submit">
+          <Play size={19} fill="currentColor" aria-hidden="true" /> Начать фокус-сессию
         </Button>
-        <Button
-          disabled={!tasks.data || taskPage * 25 >= tasks.data.total}
-          onClick={() => setTaskPage((p) => p + 1)}
-        >
-          Следующие задачи
-        </Button>
-      </div>
-      <Input
-        label="Поиск цели для фокуса"
-        value={goalSearch}
-        onChange={(e) => {
-          setGoalSearch(e.target.value);
-          setGoalPage(1);
-        }}
-      />
-      <Select label="Цель для фокуса" {...f.register("goal_id")} error={errors.goal_id?.message}>
-        <option value="">Без цели</option>
-        {selectedGoal && !goals.data?.items.some((g) => g.id === selectedGoal) && (
-          <option value={selectedGoal}>Ранее выбранная цель</option>
-        )}
-        {goals.data?.items
-          .filter((g) => !g.archived_at && !["achieved", "cancelled"].includes(g.state))
-          .map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.title}
-            </option>
-          ))}
-      </Select>
-      <div className="auth-actions">
-        <Button disabled={goalPage === 1} onClick={() => setGoalPage((p) => p - 1)}>
-          Предыдущие цели
-        </Button>
-        <Button
-          disabled={!goals.data || goalPage * 25 >= goals.data.total}
-          onClick={() => setGoalPage((p) => p + 1)}
-        >
-          Следующие цели
-        </Button>
-      </div>
-      <Select label="Направление фокуса" {...f.register("area_id")} error={errors.area_id?.message}>
-        <option value="">Из задачи или цели</option>
-        {areas.data?.areas
-          .filter((a) => !a.archived)
-          .map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-      </Select>
-      {(tasks.isError || goals.isError || areas.isError) && (
-        <p role="alert">
-          Не удалось загрузить связи.{" "}
-          <Button
-            onClick={() => {
-              void tasks.refetch();
-              void goals.refetch();
-              void areas.refetch();
-            }}
-          >
-            Повторить загрузку связей
-          </Button>
-        </p>
-      )}
-      <label>
-        <input
-          type="checkbox"
-          {...f.register("sound_enabled")}
-          disabled={!settings.data?.personalization.sound}
-        />{" "}
-        Звук окончания интервала
-      </label>
-      {!settings.data?.personalization.sound && (
         <p className="ui-hint">
-          Звук выключен в профиле.{" "}
-          <SafeLink href="/app/settings/appearance">Настроить звук</SafeLink>
+          {mode === "pomodoro"
+            ? "Работа, пауза, свежий взгляд."
+            : mode === "quick"
+              ? "Всего пять минут. Дальше решите сами."
+              : "Считаем время, пока вы работаете."}
         </p>
-      )}
-      <Button type="submit">Начать фокус-сессию</Button>
+      </div>
+      <aside className="focus-setup">
+        <p className="eyebrow">СОЗДАЙТЕ СВОЙ РИТМ</p>
+        <h3>На чём сосредоточимся?</h3>
+        <Input
+          label="Название сессии"
+          hint="Необязательно. При выборе задачи используем её название."
+          {...f.register("title")}
+          error={errors.title?.message}
+        />
+
+        <Select
+          label="Задача для фокуса"
+          {...f.register("quest_id")}
+          error={errors.quest_id?.message}
+        >
+          <option value="">Без задачи</option>
+          {selectedTask && !tasks.data?.items.some((t) => t.id === selectedTask) && (
+            <option value={selectedTask}>Ранее выбранная задача</option>
+          )}
+          {tasks.data?.items
+            .filter((q) => !["completed", "failed", "skipped"].includes(q.status) && !q.archived_at)
+            .map((q) => (
+              <option key={q.id} value={q.id}>
+                {q.title}
+              </option>
+            ))}
+        </Select>
+
+        {mode === "pomodoro" && (
+          <div className="focus-interval-fields">
+            <Input
+              label="Рабочий интервал, минут"
+              type="number"
+              min={5}
+              max={120}
+              {...f.register("work_minutes", { valueAsNumber: true })}
+              error={errors.work_minutes?.message}
+            />
+            <Input
+              label="Перерыв, минут"
+              type="number"
+              min={1}
+              max={60}
+              {...f.register("break_minutes", { valueAsNumber: true })}
+              error={errors.break_minutes?.message}
+            />
+          </div>
+        )}
+
+        <details className="focus-options">
+          <summary>
+            <SlidersHorizontal size={16} aria-hidden="true" /> Связи, поиск и звук
+          </summary>
+          <div className="disclosure-content">
+            {" "}
+            <Input
+              label="Поиск задачи для фокуса"
+              value={taskSearch}
+              onChange={(e) => {
+                setTaskSearch(e.target.value);
+                setTaskPage(1);
+              }}
+            />
+            <div className="auth-actions">
+              <Button disabled={taskPage === 1} onClick={() => setTaskPage((p) => p - 1)}>
+                Предыдущие задачи
+              </Button>
+              <Button
+                disabled={!tasks.data || taskPage * 25 >= tasks.data.total}
+                onClick={() => setTaskPage((p) => p + 1)}
+              >
+                Следующие задачи
+              </Button>
+            </div>
+            <Input
+              label="Поиск цели для фокуса"
+              value={goalSearch}
+              onChange={(e) => {
+                setGoalSearch(e.target.value);
+                setGoalPage(1);
+              }}
+            />
+            <Select
+              label="Цель для фокуса"
+              {...f.register("goal_id")}
+              error={errors.goal_id?.message}
+            >
+              <option value="">Без цели</option>
+              {selectedGoal && !goals.data?.items.some((g) => g.id === selectedGoal) && (
+                <option value={selectedGoal}>Ранее выбранная цель</option>
+              )}
+              {goals.data?.items
+                .filter((g) => !g.archived_at && !["achieved", "cancelled"].includes(g.state))
+                .map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.title}
+                  </option>
+                ))}
+            </Select>
+            <div className="auth-actions">
+              <Button disabled={goalPage === 1} onClick={() => setGoalPage((p) => p - 1)}>
+                Предыдущие цели
+              </Button>
+              <Button
+                disabled={!goals.data || goalPage * 25 >= goals.data.total}
+                onClick={() => setGoalPage((p) => p + 1)}
+              >
+                Следующие цели
+              </Button>
+            </div>
+            <Select
+              label="Направление фокуса"
+              {...f.register("area_id")}
+              error={errors.area_id?.message}
+            >
+              <option value="">Из задачи или цели</option>
+              {areas.data?.areas
+                .filter((a) => !a.archived)
+                .map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+            </Select>
+            {(tasks.isError || goals.isError || areas.isError) && (
+              <p role="alert">
+                Не удалось загрузить связи.{" "}
+                <Button
+                  onClick={() => {
+                    void tasks.refetch();
+                    void goals.refetch();
+                    void areas.refetch();
+                  }}
+                >
+                  Повторить загрузку связей
+                </Button>
+              </p>
+            )}
+            <label>
+              <input
+                type="checkbox"
+                {...f.register("sound_enabled")}
+                disabled={!settings.data?.personalization.sound}
+              />{" "}
+              Звук окончания интервала
+            </label>
+            {!settings.data?.personalization.sound && (
+              <p className="ui-hint">
+                Звук выключен в профиле.{" "}
+                <SafeLink href="/app/settings/appearance">Настроить звук</SafeLink>
+              </p>
+            )}
+          </div>
+        </details>
+        <MotionScene compact />
+      </aside>
     </Form>
   );
 }
@@ -523,6 +656,7 @@ export function FocusSummary() {
   const q = useFocus();
   return (
     <>
+      <Timer className="focus-widget-clock" size={100} strokeWidth={1} aria-hidden="true" />
       <h2>Фокус</h2>
       {q.data?.session ? (
         <p>

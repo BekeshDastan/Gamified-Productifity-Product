@@ -34,7 +34,7 @@ export function GoalTemplates({
   const [selected, setSelected] = useState<GoalTemplate>();
   const discard = useConfirmDiscard();
   return (
-    <Card>
+    <Card className="goal-template-gallery">
       <h2>{guided ? "Навигатор новой цели" : "Начать с шаблона"}</h2>
       {guided && (
         <p>
