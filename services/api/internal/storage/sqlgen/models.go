@@ -132,6 +132,48 @@ type CalendarEventHistory struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type ChallengeCheckin struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ID            pgtype.UUID        `json:"id"`
+	ParticipantID pgtype.UUID        `json:"participant_id"`
+	Request       []byte             `json:"request"`
+	LocalDate     pgtype.Date        `json:"local_date"`
+	Unit          string             `json:"unit"`
+	InitialAmount int64              `json:"initial_amount"`
+	Amount        int64              `json:"amount"`
+	Note          string             `json:"note"`
+	Version       int64              `json:"version"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ChallengeCheckinEvent struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	CheckinID pgtype.UUID        `json:"checkin_id"`
+	Version   int64              `json:"version"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type ChallengeEvidence struct {
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	CheckinID    pgtype.UUID        `json:"checkin_id"`
+	AttachmentID pgtype.UUID        `json:"attachment_id"`
+	Visibility   string             `json:"visibility"`
+	ConsentAt    pgtype.Timestamptz `json:"consent_at"`
+	Version      int64              `json:"version"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ChallengeEvidenceEvent struct {
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	CheckinID    pgtype.UUID        `json:"checkin_id"`
+	AttachmentID pgtype.UUID        `json:"attachment_id"`
+	Version      int64              `json:"version"`
+	Snapshot     []byte             `json:"snapshot"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
 type ChallengeMembershipWindow struct {
 	OwnerID       pgtype.UUID        `json:"owner_id"`
 	ParticipantID pgtype.UUID        `json:"participant_id"`

@@ -23,6 +23,8 @@ func sourceQuery(metric string) string {
 		return `SELECT 'review'::text source_kind,d.id source_key,'Вечерний разбор '||d.local_date::text title,'/app/journal?section=evening&review_date='||d.local_date::text source_url,1::bigint amount,d.created_at source_time,d.created_at source_start,d.version source_version FROM daily_reviews d WHERE d.owner_id=$1 AND d.local_date BETWEEN $8::text::date AND $9::text::date`
 	case "stages":
 		return `SELECT 'stage'::text source_kind,m.id source_key,m.title,'/app/goals/'||m.goal_id::text||'#milestone-'||m.id::text source_url,1::bigint amount,m.challenge_first_qualified_at source_time,m.challenge_first_qualified_at source_start,g.version source_version FROM milestones m JOIN goals g ON g.owner_id=m.owner_id AND g.id=m.goal_id WHERE m.owner_id=$1 AND m.goal_id=$6 AND m.challenge_completed AND m.challenge_first_qualified_at IS NOT NULL AND ($5::uuid IS NULL OR g.area_id=$5)`
+	case "manual":
+		return `SELECT 'manual'::text source_kind,c.id source_key,'Самоотчёт '||c.local_date::text title,'/app/challenges?run_id='||$12::text||'&checkin_id='||c.id::text source_url,c.amount*CASE WHEN c.unit='minutes' THEN 60 ELSE 1 END amount,c.created_at source_time,c.created_at source_start,c.version source_version FROM challenge_checkins c WHERE c.owner_id=$1 AND c.participant_id=$2 AND c.amount>0`
 	default:
 		return `SELECT 'manual'::text source_kind,NULL::uuid source_key,''::text title,''::text source_url,0::bigint amount,NULL::timestamptz source_time,NULL::timestamptz source_start,0::bigint source_version WHERE false`
 	}

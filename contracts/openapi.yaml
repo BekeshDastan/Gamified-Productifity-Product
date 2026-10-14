@@ -6,6 +6,238 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/challenges/runs/{id}/check-ins:
+    get:
+      operationId: getChallengeCheckins
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeCheckinPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createChallengeCheckin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeCheckin"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeCheckinInput"
+  /api/v1/challenges/runs/{id}/check-ins/{checkin}:
+    patch:
+      operationId: correctChallengeCheckin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: checkin
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeCheckin"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeCheckinCorrection"
+  /api/v1/challenges/runs/{id}/check-ins/{checkin}/evidence:
+    get:
+      operationId: getChallengeEvidence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: checkin
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChallengeEvidence"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/check-ins/{checkin}/evidence/{file}:
+    put:
+      operationId: setChallengeEvidence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: checkin
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: file
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/IfMatchSingleton"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeEvidence"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeEvidenceInput"
   /api/v1/challenges/runs/{id}/progress:
     get:
       operationId: getChallengeProgress
@@ -7387,6 +7619,149 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ChallengeCheckinInput:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - unit
+        - amount
+        - note
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        unit:
+          type: string
+          enum:
+            - count
+            - pages
+            - minutes
+        amount:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        note:
+          type: string
+          maxLength: 2000
+    ChallengeCheckinCorrection:
+      type: object
+      additionalProperties: false
+      required:
+        - amount
+        - note
+      properties:
+        amount:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        note:
+          type: string
+          maxLength: 2000
+    ChallengeCheckin:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - participant_id
+        - date
+        - unit
+        - initial_amount
+        - amount
+        - note
+        - version
+        - created_at
+        - updated_at
+        - confirmation
+      properties:
+        id:
+          type: string
+        participant_id:
+          type: string
+        date:
+          type: string
+          format: date
+        unit:
+          type: string
+        initial_amount:
+          type: integer
+        amount:
+          type: integer
+        note:
+          type: string
+        version:
+          type: integer
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        confirmation:
+          type: string
+          enum:
+            - self_report
+    ChallengeCheckinPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengeCheckin"
+        next:
+          type: string
+    ChallengeEvidenceInput:
+      type: object
+      additionalProperties: false
+      required:
+        - visibility
+        - consent
+      properties:
+        visibility:
+          type: string
+          enum:
+            - private
+            - participants
+        consent:
+          type: boolean
+    ChallengeEvidence:
+      type: object
+      additionalProperties: false
+      required:
+        - attachment_id
+        - name
+        - url
+        - visibility
+        - consent_at
+        - version
+        - available
+        - confirmation
+      properties:
+        attachment_id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        visibility:
+          type: string
+          enum:
+            - private
+            - participants
+        consent_at:
+          type:
+            - string
+            - "null"
+        version:
+          type: integer
+        available:
+          type: boolean
+        confirmation:
+          type: string
+          enum:
+            - self_report
     ChallengeProgress:
       type: object
       additionalProperties: false
