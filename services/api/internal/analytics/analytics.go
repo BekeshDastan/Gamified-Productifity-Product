@@ -27,6 +27,7 @@ type Range struct {
 	To   string `json:"to"`
 }
 type Source struct {
+	Date    string    `json:"date"`
 	Kind    string    `json:"kind"`
 	ID      string    `json:"id"`
 	Name    string    `json:"name"`
@@ -38,6 +39,7 @@ type Source struct {
 	Version int64     `json:"version"`
 }
 type Day struct {
+	Outcomes
 	Date         string   `json:"date"`
 	Completed    int      `json:"completed"`
 	FocusSeconds int64    `json:"focus_seconds"`
@@ -46,6 +48,7 @@ type Day struct {
 	Sources      []Source `json:"sources"`
 }
 type Week struct {
+	OutcomeTotals
 	Start        string `json:"start"`
 	End          string `json:"end"`
 	Days         int    `json:"days"`
@@ -55,6 +58,7 @@ type Week struct {
 	CoinsDelta   int64  `json:"coins_delta"`
 }
 type View struct {
+	Definitions []Definition `json:"definitions"`
 	Range
 	Timezone          string     `json:"timezone"`
 	ProjectionVersion string     `json:"projection_version"`
@@ -91,7 +95,7 @@ func (s *Service) state(ctx context.Context, tx pgx.Tx, owner string) (projectio
 	e := tx.QueryRow(ctx, `SELECT source_revision,projected_revision,timezone,requested_from::text,requested_to::text,computed_at FROM analytics_projection_state WHERE owner_id=$1`, owner).Scan(&v.Revision, &v.Projected, &v.Timezone, &v.From, &v.To, &v.At)
 	return v, e
 }
-func (s *Service) read(ctx context.Context, tx pgx.Tx, owner string, in Range, rebuild bool) (View, error) {
+func (s *Service) read(ctx context.Context, tx pgx.Tx, owner string, in Range, rebuild bool, enqueue ...bool) (View, error) {
 	if _, _, e := validateRange(in); e != nil {
 		return View{}, e
 	}
@@ -110,7 +114,7 @@ func (s *Service) read(ctx context.Context, tx pgx.Tx, owner string, in Range, r
 	if _, e = tx.Exec(ctx, `UPDATE analytics_projection_state SET requested_from=$2::text::date,requested_to=$3::text::date WHERE owner_id=$1`, owner, in.From, in.To); e != nil {
 		return View{}, e
 	}
-	out := View{Range: in, Timezone: timezone, ProjectionVersion: ProjectionVersion, SourceRevision: state.Revision, ProjectedRevision: state.Projected, ComputedAt: state.At, Days: []Day{}, Weeks: []Week{}}
+	out := View{Range: in, Definitions: definitions(), Timezone: timezone, ProjectionVersion: ProjectionVersion, SourceRevision: state.Revision, ProjectedRevision: state.Projected, ComputedAt: state.At, Days: []Day{}, Weeks: []Week{}}
 	rows, e := tx.Query(ctx, `SELECT payload,source_revision,computed_at,projection_version FROM daily_metrics WHERE owner_id=$1 AND timezone=$4 AND local_date>=$2::text::date AND local_date<$3::text::date ORDER BY local_date`, owner, in.From, in.To, timezone)
 	if e != nil {
 		return out, e
@@ -132,6 +136,9 @@ func (s *Service) read(ctx context.Context, tx pgx.Tx, owner string, in Range, r
 			return out, e
 		}
 		out.Days = append(out.Days, d)
+		if !d.HabitsComplete {
+			versionMismatch = true
+		}
 		versionMismatch = versionMismatch || projectionVersion != ProjectionVersion
 		out.ProjectedRevision = min(out.ProjectedRevision, rev)
 		if out.ComputedAt == nil || at.Before(*out.ComputedAt) {
@@ -150,7 +157,7 @@ func (s *Service) read(ctx context.Context, tx pgx.Tx, owner string, in Range, r
 		return s.rebuild(ctx, tx, owner, in, timezone, state.Revision)
 	}
 	out.Weeks = aggregateWeeks(out.Days)
-	if out.Stale {
+	if out.Stale && (len(enqueue) == 0 || enqueue[0]) {
 		if _, e = tx.Exec(ctx, `INSERT INTO outbox_events(id,owner_id,kind,payload,occurred_at) VALUES(gen_random_uuid(),$1,'analytics.changed','{}',$2)`, owner, s.Clock.Now()); e != nil {
 			return out, e
 		}
@@ -163,7 +170,10 @@ func (s *Service) rebuild(ctx context.Context, tx pgx.Tx, owner string, in Range
 		return View{}, e
 	}
 	now := s.Clock.Now()
-	out := View{Range: in, Timezone: timezone, ProjectionVersion: ProjectionVersion, SourceRevision: revision, ProjectedRevision: revision, ComputedAt: &now, Days: days, Weeks: aggregateWeeks(days)}
+	out := View{Range: in, Definitions: definitions(), Timezone: timezone, ProjectionVersion: ProjectionVersion, SourceRevision: revision, ProjectedRevision: revision, ComputedAt: &now, Days: days, Weeks: aggregateWeeks(days)}
+	for _, d := range days {
+		out.Stale = out.Stale || !d.HabitsComplete
+	}
 	for _, d := range days {
 		b, e := json.Marshal(d)
 		if e != nil {
@@ -183,10 +193,14 @@ func (s *Service) rebuild(ctx context.Context, tx pgx.Tx, owner string, in Range
 		}
 	}
 	_, e = tx.Exec(ctx, `UPDATE analytics_projection_state SET projected_revision=$2,timezone=$3,computed_at=$4 WHERE owner_id=$1`, owner, revision, timezone, now)
+	if e == nil && out.Stale {
+		_, e = tx.Exec(ctx, `INSERT INTO outbox_events(id,owner_id,kind,payload,occurred_at) VALUES(gen_random_uuid(),$1,'analytics.changed','{}',$2)`, owner, now)
+	}
 	return out, e
 }
 func aggregateWeeks(days []Day) []Week {
 	out := []Week{}
+	postponed := map[string]map[string]bool{}
 	for _, d := range days {
 		date, _ := time.Parse(time.DateOnly, d.Date)
 		offset := (int(date.Weekday()) + 6) % 7
@@ -196,6 +210,16 @@ func aggregateWeeks(days []Day) []Week {
 			out = append(out, Week{Start: start, End: end})
 		}
 		w := &out[len(out)-1]
+		w.OutcomeTotals.add(d.OutcomeTotals)
+		if postponed[start] == nil {
+			postponed[start] = map[string]bool{}
+		}
+		for _, source := range d.Sources {
+			if source.Kind == "postponement" {
+				postponed[start][source.ID] = true
+			}
+		}
+		w.Postponed = len(postponed[start])
 		w.Days++
 		w.Completed += d.Completed
 		w.FocusSeconds += d.FocusSeconds
@@ -222,7 +246,14 @@ func (s *Service) Handlers() map[string]jobs.Handler {
 		if state.From == nil {
 			return nil
 		}
-		_, e = s.read(ctx, tx, owner, Range{*state.From, *state.To}, true)
+		in := Range{*state.From, *state.To}
+		view, e := s.read(ctx, tx, owner, in, false, false)
+		if e != nil {
+			return e
+		}
+		if view.Stale {
+			_, e = s.read(ctx, tx, owner, in, true, false)
+		}
 		return e
 	}}
 }

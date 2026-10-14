@@ -2875,6 +2875,35 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AnalyticsDefinition: {
+            id: string;
+            label: string;
+            numerator: string;
+            denominator: string;
+            basis: string;
+        };
+        AnalyticsPlanEvidence: {
+            confirmed: boolean;
+            timezone: string;
+            version: number;
+            input: components["schemas"]["PlanInput"];
+            snapshot: components["schemas"]["PlanSnapshot"] | null;
+        };
+        AnalyticsHabitOutcome: {
+            id: string;
+            period_id: string;
+            name: string;
+            unit: string;
+            url: string;
+            timezone: string;
+            start: string;
+            end: string;
+            amount: number;
+            target: number;
+            excluded: boolean;
+            closed: boolean;
+            area_id: string | null;
+        };
         AnalyticsRange: {
             /** Format: date */
             from: string;
@@ -2891,6 +2920,7 @@ export interface components {
             unit: string;
             area_id: string | null;
             version: number;
+            date: string;
         };
         AnalyticsDay: {
             date: string;
@@ -2899,6 +2929,30 @@ export interface components {
             xp_delta: number;
             coins_delta: number;
             sources: components["schemas"]["AnalyticsSource"][];
+            planned: number;
+            planned_completed: number;
+            planned_failed: number;
+            planned_skipped: number;
+            planned_pending: number;
+            on_time: number;
+            late: number;
+            no_deadline: number;
+            failed: number;
+            skipped: number;
+            postponed: number;
+            postponement_events: number;
+            habit_obligations: number;
+            habit_successes: number;
+            habit_missed: number;
+            habit_excluded: number;
+            goals_achieved: number;
+            goals_not_achieved: number;
+            goals_cancelled: number;
+            plan: components["schemas"]["AnalyticsPlanEvidence"] | null;
+            task_weight_total: number;
+            task_weight_completed: number;
+            habits_complete: boolean;
+            habits: components["schemas"]["AnalyticsHabitOutcome"][];
         };
         AnalyticsWeek: {
             start: string;
@@ -2908,6 +2962,25 @@ export interface components {
             focus_seconds: number;
             xp_delta: number;
             coins_delta: number;
+            planned: number;
+            planned_completed: number;
+            planned_failed: number;
+            planned_skipped: number;
+            planned_pending: number;
+            on_time: number;
+            late: number;
+            no_deadline: number;
+            failed: number;
+            skipped: number;
+            postponed: number;
+            postponement_events: number;
+            habit_obligations: number;
+            habit_successes: number;
+            habit_missed: number;
+            habit_excluded: number;
+            goals_achieved: number;
+            goals_not_achieved: number;
+            goals_cancelled: number;
         };
         AnalyticsView: {
             from: string;
@@ -2920,6 +2993,7 @@ export interface components {
             stale: boolean;
             days: components["schemas"]["AnalyticsDay"][];
             weeks: components["schemas"]["AnalyticsWeek"][];
+            definitions: components["schemas"]["AnalyticsDefinition"][];
         };
         RecoveryHabit: {
             id: string;

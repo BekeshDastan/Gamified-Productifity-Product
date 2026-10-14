@@ -2033,7 +2033,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Проекция после rebuild совпадает с исходным потоком, повтор события не удваивает счёт.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): build rebuildable daily and weekly projections`
 
-- [ ] **C138. Метрики выполнения**
+- [x] **C138. Метрики выполнения**
   - **Сделать:** Реализовать planned/completed/on-time/late/failed/skipped/postponed с заданными знаменателями.
   - **Проверить:** Контрольные задачи каждого статуса дают ожидаемую таблицу без смешения просрочки и провала.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): calculate task habit and goal outcome metrics`

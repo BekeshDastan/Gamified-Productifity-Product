@@ -28,6 +28,10 @@ func (s *Service) collect(ctx context.Context, tx pgx.Tx, owner string, in Range
 	}
 	add := func(v Source) {
 		key := v.At.In(zone).Format(time.DateOnly)
+		if v.Date != "" {
+			key = v.Date
+		}
+		v.Date = key
 		i, ok := index[key]
 		if !ok {
 			return
@@ -127,6 +131,9 @@ func (s *Service) collect(ctx context.Context, tx pgx.Tx, owner string, in Range
 	e = rows.Err()
 	rows.Close()
 	if e != nil {
+		return nil, e
+	}
+	if e = s.outcomes(ctx, tx, owner, in, timezone, out, add); e != nil {
 		return nil, e
 	}
 	for i := range out {

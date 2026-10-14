@@ -8531,6 +8531,94 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    AnalyticsDefinition:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - numerator
+        - denominator
+        - basis
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        numerator:
+          type: string
+        denominator:
+          type: string
+        basis:
+          type: string
+    AnalyticsPlanEvidence:
+      type: object
+      additionalProperties: false
+      required:
+        - confirmed
+        - timezone
+        - version
+        - input
+        - snapshot
+      properties:
+        confirmed:
+          type: boolean
+        timezone:
+          type: string
+        version:
+          type: integer
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        snapshot:
+          anyOf:
+            - $ref: "#/components/schemas/PlanSnapshot"
+            - type: "null"
+    AnalyticsHabitOutcome:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - period_id
+        - name
+        - unit
+        - url
+        - timezone
+        - start
+        - end
+        - amount
+        - target
+        - excluded
+        - closed
+        - area_id
+      properties:
+        id:
+          type: string
+        period_id:
+          type: string
+        name:
+          type: string
+        unit:
+          type: string
+        url:
+          type: string
+        timezone:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+        amount:
+          type: number
+        target:
+          type: number
+        excluded:
+          type: boolean
+        closed:
+          type: boolean
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
     AnalyticsRange:
       type: object
       additionalProperties: false
@@ -8557,6 +8645,7 @@ components:
         - unit
         - area_id
         - version
+        - date
       properties:
         kind:
           type: string
@@ -8578,6 +8667,8 @@ components:
             - type: "null"
         version:
           type: integer
+        date:
+          type: string
     AnalyticsDay:
       type: object
       additionalProperties: false
@@ -8588,6 +8679,30 @@ components:
         - xp_delta
         - coins_delta
         - sources
+        - planned
+        - planned_completed
+        - planned_failed
+        - planned_skipped
+        - planned_pending
+        - on_time
+        - late
+        - no_deadline
+        - failed
+        - skipped
+        - postponed
+        - postponement_events
+        - habit_obligations
+        - habit_successes
+        - habit_missed
+        - habit_excluded
+        - goals_achieved
+        - goals_not_achieved
+        - goals_cancelled
+        - plan
+        - task_weight_total
+        - task_weight_completed
+        - habits_complete
+        - habits
       properties:
         date:
           type: string
@@ -8603,6 +8718,58 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnalyticsSource"
+        planned:
+          type: integer
+        planned_completed:
+          type: integer
+        planned_failed:
+          type: integer
+        planned_skipped:
+          type: integer
+        planned_pending:
+          type: integer
+        on_time:
+          type: integer
+        late:
+          type: integer
+        no_deadline:
+          type: integer
+        failed:
+          type: integer
+        skipped:
+          type: integer
+        postponed:
+          type: integer
+        postponement_events:
+          type: integer
+        habit_obligations:
+          type: integer
+        habit_successes:
+          type: integer
+        habit_missed:
+          type: integer
+        habit_excluded:
+          type: integer
+        goals_achieved:
+          type: integer
+        goals_not_achieved:
+          type: integer
+        goals_cancelled:
+          type: integer
+        plan:
+          anyOf:
+            - $ref: "#/components/schemas/AnalyticsPlanEvidence"
+            - type: "null"
+        task_weight_total:
+          type: integer
+        task_weight_completed:
+          type: integer
+        habits_complete:
+          type: boolean
+        habits:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsHabitOutcome"
     AnalyticsWeek:
       type: object
       additionalProperties: false
@@ -8614,6 +8781,25 @@ components:
         - focus_seconds
         - xp_delta
         - coins_delta
+        - planned
+        - planned_completed
+        - planned_failed
+        - planned_skipped
+        - planned_pending
+        - on_time
+        - late
+        - no_deadline
+        - failed
+        - skipped
+        - postponed
+        - postponement_events
+        - habit_obligations
+        - habit_successes
+        - habit_missed
+        - habit_excluded
+        - goals_achieved
+        - goals_not_achieved
+        - goals_cancelled
       properties:
         start:
           type: string
@@ -8629,6 +8815,44 @@ components:
           type: integer
         coins_delta:
           type: integer
+        planned:
+          type: integer
+        planned_completed:
+          type: integer
+        planned_failed:
+          type: integer
+        planned_skipped:
+          type: integer
+        planned_pending:
+          type: integer
+        on_time:
+          type: integer
+        late:
+          type: integer
+        no_deadline:
+          type: integer
+        failed:
+          type: integer
+        skipped:
+          type: integer
+        postponed:
+          type: integer
+        postponement_events:
+          type: integer
+        habit_obligations:
+          type: integer
+        habit_successes:
+          type: integer
+        habit_missed:
+          type: integer
+        habit_excluded:
+          type: integer
+        goals_achieved:
+          type: integer
+        goals_not_achieved:
+          type: integer
+        goals_cancelled:
+          type: integer
     AnalyticsView:
       type: object
       additionalProperties: false
@@ -8643,6 +8867,7 @@ components:
         - stale
         - days
         - weeks
+        - definitions
       properties:
         from:
           type: string
@@ -8670,6 +8895,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnalyticsWeek"
+        definitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDefinition"
     RecoveryHabit:
       type: object
       additionalProperties: false
