@@ -109,6 +109,15 @@ test("navigator explanations opt-out and private sources work without external n
   ).toBeVisible();
   const afterGoals = (await (await page.request.get("/api/v1/goals")).json()).data;
   expect(afterGoals.total).toBe(1);
+  await expect(
+    page.getByRole("heading", { name: "Future Self: объём практики", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Недостаточно данных: нужны минимум две полные наблюдавшиеся недели/),
+  ).toBeVisible();
+  const response = page.waitForResponse((r) => r.url().includes("/analytics/future-self?weeks=26"));
+  await page.getByLabel("Горизонт Future Self", { exact: true }).selectOption("26");
+  expect((await (await response).json()).data.projected_hours).toBeNull();
   await page.setViewportSize({ width: 390, height: 844 });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

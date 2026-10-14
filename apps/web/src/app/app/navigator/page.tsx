@@ -1,6 +1,7 @@
 import { NavigatorCards } from "@/components/navigator";
 import { SmartSchedule } from "@/components/smart-schedule";
 import { GoalWizard } from "@/components/goal-wizard";
+import { FutureSelf } from "@/components/future-self";
 export default function NavigatorPage() {
   return (
     <>
@@ -9,6 +10,7 @@ export default function NavigatorPage() {
       <NavigatorCards />
       <SmartSchedule />
       <GoalWizard />
+      <FutureSelf />
     </>
   );
 }

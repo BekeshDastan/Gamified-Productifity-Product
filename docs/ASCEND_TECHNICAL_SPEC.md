@@ -2107,7 +2107,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Любой созданный шаг виден в preview; сеть к AI-провайдерам не используется.
   - **КОММИТ СЕЙЧАС:** `feat(coach): guide goal breakdown through editable structured templates`
 
-- [ ] **C151. Future Self**
+- [x] **C151. Future Self**
   - **Сделать:** Реализовать среднее полных недель, нулевые недели, минимум наблюдений и выбранный горизонт.
   - **Проверить:** 4 часа × 12 недель дают 48; недостаточные данные не превращаются в обещанный прогноз уровня.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): project activity volume from complete weekly history`

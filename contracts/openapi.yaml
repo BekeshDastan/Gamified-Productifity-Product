@@ -6,6 +6,36 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/analytics/future-self:
+    get:
+      operationId: getFutureSelf
+      parameters:
+        - name: weeks
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 104
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FutureSelf"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/navigator/goals/{id}/first-action:
     post:
       operationId: addGoalFirstAction
@@ -9115,6 +9145,68 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    FutureSelfWeek:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - observed
+        - focus_seconds
+        - sources
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        observed:
+          type: boolean
+        focus_seconds:
+          anyOf:
+            - type: integer
+            - type: "null"
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsSource"
+    FutureSelf:
+      type: object
+      additionalProperties: false
+      required:
+        - timezone
+        - computed_at
+        - horizon_weeks
+        - observed_weeks
+        - available
+        - average_weekly_hours
+        - projected_hours
+        - weeks
+        - text
+      properties:
+        timezone:
+          type: string
+        computed_at:
+          type: string
+        horizon_weeks:
+          type: integer
+        observed_weeks:
+          type: integer
+        available:
+          type: boolean
+        average_weekly_hours:
+          anyOf:
+            - type: number
+            - type: "null"
+        projected_hours:
+          anyOf:
+            - type: number
+            - type: "null"
+        weeks:
+          type: array
+          items:
+            $ref: "#/components/schemas/FutureSelfWeek"
+        text:
+          type: string
     GoalFirstActionInput:
       type: object
       additionalProperties: false

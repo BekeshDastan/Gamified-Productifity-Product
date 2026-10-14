@@ -273,6 +273,7 @@ func (s *Service) Handlers() map[string]jobs.Handler {
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountFuture(r)
 		s.mountTime(r)
 		s.mountBalance(r)
 		s.mountReports(r)
