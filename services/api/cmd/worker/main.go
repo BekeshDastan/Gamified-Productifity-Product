@@ -51,10 +51,13 @@ func main() {
 		logger.Error("invalid auth configuration")
 		os.Exit(1)
 	}
-	mailer, err := mail.NewSMTP(cfg.Environment, net.JoinHostPort(os.Getenv("SMTP_HOST"), os.Getenv("SMTP_PORT")), os.Getenv("MAIL_FROM"), os.Getenv("SMTP_USERNAME"), os.Getenv("SMTP_PASSWORD"))
+	smtpAdapter, err := mail.NewSMTP(cfg.Environment, net.JoinHostPort(os.Getenv("SMTP_HOST"), os.Getenv("SMTP_PORT")), os.Getenv("MAIL_FROM"), os.Getenv("SMTP_USERNAME"), os.Getenv("SMTP_PASSWORD"))
 	if err != nil {
-		logger.Error("invalid mail configuration")
-		os.Exit(1)
+		logger.Warn("mail_adapter_unavailable")
+	}
+	var mailer mail.Mailer = mail.Unavailable{}
+	if smtpAdapter != nil {
+		mailer = smtpAdapter
 	}
 	logger.Info("worker starting")
 	clock := platform.RealClock{}
@@ -69,6 +72,10 @@ func main() {
 		os.Exit(1)
 	}
 	notificationService := notifications.NewService(pool, clock).WithHabits(habits.NewService(pool, clock).WithProgression(rewardService))
+	if err := notificationService.ConfigureDelivery(cfg.Origin, authConfig.SigningKey, mailer); err != nil {
+		logger.Error("notification_configuration_failed")
+		os.Exit(1)
+	}
 	if err := notificationService.StartReminderSchedule(ctx); err != nil {
 		logger.Error("reminder_schedule_failed")
 		os.Exit(1)

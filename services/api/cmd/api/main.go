@@ -107,6 +107,10 @@ func main() {
 	analyticsService := analytics.NewService(pool, platform.RealClock{}).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
 	notificationService := notifications.NewService(pool, platform.RealClock{}).WithHabits(habitService)
+	if err := notificationService.ConfigureDelivery(cfg.Origin, authConfig.SigningKey, nil); err != nil {
+		logger.Error("notification_configuration_failed")
+		os.Exit(1)
+	}
 	notificationService.Mount(router, sessions.Protect)
 	navigator.NewService(pool, platform.RealClock{}, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, platform.RealClock{}).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)

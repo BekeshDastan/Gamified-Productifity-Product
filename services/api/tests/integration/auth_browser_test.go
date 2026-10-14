@@ -114,6 +114,9 @@ func TestBrowserAuth(t *testing.T) {
 	analyticsService := analytics.NewService(pool, domainClock).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
 	notificationService := notifications.NewService(pool, domainClock).WithHabits(habitService).WithSchedulingClock(clock)
+	if err := notificationService.ConfigureDelivery("http://127.0.0.1:3100", key, nil); err != nil {
+		t.Fatal(err)
+	}
 	notificationService.Mount(router, sessions.Protect)
 	navigator.NewService(pool, domainClock, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
@@ -127,6 +130,9 @@ func TestBrowserAuth(t *testing.T) {
 	defer server.Close()
 	mailer, err := mail.NewSMTP("test", os.Getenv("TEST_SMTP_ADDR"), "ascend@example.test", "", "")
 	if err != nil {
+		t.Fatal(err)
+	}
+	if err := notificationService.ConfigureDelivery("http://127.0.0.1:3100", key, mailer); err != nil {
 		t.Fatal(err)
 	}
 	workerCtx, cancel := context.WithCancel(ctx)

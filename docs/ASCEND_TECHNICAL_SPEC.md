@@ -2141,7 +2141,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Перенос отменяет старый reminder; удалённая задача не отправляет уведомление.
   - **КОММИТ СЕЙЧАС:** `feat(reminders): schedule revise cancel and snooze reminders`
 
-- [ ] **C156. Email-доставка**
+- [x] **C156. Email-доставка**
   - **Сделать:** Реализовать SMTP adapter, шаблоны, unsubscribe для необязательных писем и delivery_unknown.
   - **Проверить:** Ошибка SMTP не ломает in-app; неизвестный исход не объявляется доказанной доставкой.
   - **КОММИТ СЕЙЧАС:** `feat(notifications): deliver opted-in mail with retry and delivery states`

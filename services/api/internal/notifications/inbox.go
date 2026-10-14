@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/mail"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -19,6 +20,9 @@ type Service struct {
 	*privateapi.Service
 	habits          *habits.Service
 	schedulingClock platform.Clock
+	mailer          mail.Mailer
+	origin          string
+	unsubscribeKey  []byte
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
@@ -83,8 +87,14 @@ func (s *Service) EmitInTx(ctx context.Context, tx pgx.Tx, owner string, in Even
 		return Notification{}, false, e
 	}
 	n, e := scan(tx.QueryRow(ctx, `INSERT INTO notifications(owner_id,kind,source_kind,source_id,source_revision,event_key,source_url,reminder_id,title,message,created_at,muted) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT(owner_id,event_key,source_revision) DO NOTHING RETURNING `+columns, owner, in.Kind, in.SourceKind, in.SourceID, in.SourceRevision, in.EventKey, in.URL, in.ReminderID, titles[in.Kind], messages[in.Kind], s.Clock.Now(), !prefs.Channel(in.Kind).InApp))
+	if e == nil {
+		if e = s.queueDeliveries(ctx, tx, owner, n); e != nil {
+			return n, true, e
+		}
+		return n, true, nil
+	}
 	if !errors.Is(e, pgx.ErrNoRows) {
-		return n, e == nil, e
+		return n, false, e
 	}
 	n, e = scan(tx.QueryRow(ctx, `SELECT `+columns+` FROM notifications WHERE owner_id=$1 AND event_key=$2 AND source_revision=$3`, owner, in.EventKey, in.SourceRevision))
 	if e == nil && (n.Kind != in.Kind || n.SourceKind != in.SourceKind || n.SourceID != in.SourceID || n.URL != in.URL) {
@@ -146,10 +156,12 @@ func (s *Service) get(ctx context.Context, tx pgx.Tx, owner, id string) (Notific
 	return n, e
 }
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
+	s.mountUnsubscribe(router)
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountPreferences(r)
 		s.mountReminders(r)
+		s.mountDeliveries(r)
 		r.Get("/api/v1/notifications", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
 				return s.list(ctx, tx, owner, r.URL.Query().Get("before"))

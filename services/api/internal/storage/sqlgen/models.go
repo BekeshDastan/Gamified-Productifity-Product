@@ -757,6 +757,38 @@ type Notification struct {
 	Muted          bool               `json:"muted"`
 }
 
+type NotificationDelivery struct {
+	OwnerID            pgtype.UUID        `json:"owner_id"`
+	ID                 pgtype.UUID        `json:"id"`
+	NotificationID     pgtype.UUID        `json:"notification_id"`
+	Channel            string             `json:"channel"`
+	SubscriptionID     pgtype.UUID        `json:"subscription_id"`
+	State              string             `json:"state"`
+	Version            int64              `json:"version"`
+	Attempts           int32              `json:"attempts"`
+	AutoAttempts       int32              `json:"auto_attempts"`
+	NextRunAt          pgtype.Timestamptz `json:"next_run_at"`
+	ExpiresAt          pgtype.Timestamptz `json:"expires_at"`
+	LastAttemptID      pgtype.UUID        `json:"last_attempt_id"`
+	LastErrorCode      string             `json:"last_error_code"`
+	ProviderAcceptedAt pgtype.Timestamptz `json:"provider_accepted_at"`
+	UnknownAt          pgtype.Timestamptz `json:"unknown_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+type NotificationDeliveryAttempt struct {
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	DeliveryID pgtype.UUID        `json:"delivery_id"`
+	Attempt    int32              `json:"attempt"`
+	AttemptID  pgtype.UUID        `json:"attempt_id"`
+	Channel    string             `json:"channel"`
+	State      string             `json:"state"`
+	StartedAt  pgtype.Timestamptz `json:"started_at"`
+	FinishedAt pgtype.Timestamptz `json:"finished_at"`
+	ErrorCode  string             `json:"error_code"`
+}
+
 type NotificationPreference struct {
 	OwnerID   pgtype.UUID        `json:"owner_id"`
 	Payload   []byte             `json:"payload"`

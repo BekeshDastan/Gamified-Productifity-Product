@@ -6,6 +6,150 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/notifications/{id}/deliveries:
+    get:
+      operationId: getNotificationDeliveries
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NotificationDeliveryPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/notification-deliveries/{id}/retry:
+    post:
+      operationId: retryNotificationDelivery
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationDeliveryRetry"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NotificationDelivery"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/notifications/unsubscribe/preview:
+    post:
+      operationId: previewNotificationUnsubscribe
+      parameters:
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationUnsubscribeToken"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NotificationUnsubscribePreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/notifications/unsubscribe:
+    post:
+      operationId: unsubscribeNotifications
+      parameters:
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationUnsubscribe"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NotificationUnsubscribed"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "403":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/reminders:
     get:
       operationId: listReminders
@@ -9492,6 +9636,132 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    NotificationDelivery:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - notification_id
+        - channel
+        - subscription_id
+        - state
+        - version
+        - attempts
+        - auto_attempts
+        - next_run_at
+        - expires_at
+        - last_attempt_id
+        - last_error_code
+        - provider_accepted_at
+        - unknown_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        notification_id:
+          type: string
+        channel:
+          type: string
+        subscription_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        state:
+          type: string
+        version:
+          type: integer
+        attempts:
+          type: integer
+        auto_attempts:
+          type: integer
+        next_run_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        last_attempt_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        last_error_code:
+          type: string
+        provider_accepted_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        unknown_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    NotificationDeliveryPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationDelivery"
+    NotificationDeliveryRetry:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+        - acknowledge_duplicates
+      properties:
+        confirm:
+          type: boolean
+        acknowledge_duplicates:
+          type: boolean
+    NotificationUnsubscribeToken:
+      type: object
+      additionalProperties: false
+      required:
+        - token
+      properties:
+        token:
+          type: string
+    NotificationUnsubscribe:
+      type: object
+      additionalProperties: false
+      required:
+        - token
+        - confirm
+      properties:
+        token:
+          type: string
+        confirm:
+          type: boolean
+    NotificationUnsubscribePreview:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - title
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+    NotificationUnsubscribed:
+      type: object
+      additionalProperties: false
+      required:
+        - unsubscribed
+      properties:
+        unsubscribed:
+          type: boolean
     Reminder:
       type: object
       additionalProperties: false

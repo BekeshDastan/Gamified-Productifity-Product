@@ -78,13 +78,17 @@ func (s *Service) reminderSweep(ctx context.Context, tx pgx.Tx, j jobs.Job) erro
 }
 func (s *Service) Handlers() map[string]jobs.Handler {
 	return map[string]jobs.Handler{
+		"notifications.delivery":        s.sendDelivery,
 		"notifications.reminders_sweep": s.reminderSweep, "notifications.reminder": s.fireReminder,
 		"notifications.changed": func(ctx context.Context, tx pgx.Tx, j jobs.Job) error {
 			var keys map[string]json.RawMessage
 			if j.OwnerID == nil || !privateapi.UUID(*j.OwnerID) || json.Unmarshal(j.Payload, &keys) != nil || keys == nil || len(keys) != 0 {
 				return jobs.ErrPermanent
 			}
-			return s.projectReminders(ctx, tx, *j.OwnerID, "")
+			if e := s.projectReminders(ctx, tx, *j.OwnerID, ""); e != nil {
+				return e
+			}
+			return s.repairDeliveries(ctx, tx, *j.OwnerID)
 		},
 		"notifications.reminders_continue": func(ctx context.Context, tx pgx.Tx, j jobs.Job) error {
 			var in struct {
