@@ -38,6 +38,7 @@ type Notification struct {
 	ReadAt    *time.Time `json:"read_at"`
 	Version   int64      `json:"version"`
 	Active    bool       `json:"active"`
+	Muted     bool       `json:"muted"`
 }
 type Page struct {
 	Items      []Notification `json:"items"`
@@ -49,11 +50,11 @@ type Page struct {
 var titles = map[string]string{"deadline": "Приближается срок задачи", "habit": "Окно привычки", "achievement": "Новое достижение", "invite": "Новое приглашение", "report": "Готов отчёт", "focus_result": "Подтвердите итоги фокуса"}
 var messages = map[string]string{"deadline": "Проверьте задачу и свободные окна. Решение об изменении плана остаётся за вами.", "habit": "В текущем запланированном периоде ещё осталась норма. Можно открыть привычку.", "achievement": "В приложении появилось достижение по подтверждённым записям.", "invite": "Приглашение доступно в приложении. Доступ появляется только после вашего согласия.", "report": "Сохранён личный отчёт. Откройте его в приложении.", "focus_result": "Таймер завершён; рабочие минуты ждут вашего подтверждения."}
 
-const columns = `id::text,kind,source_kind,source_id,source_revision,event_key,source_url,reminder_id::text,title,message,created_at,read_at,version,active`
+const columns = `id::text,kind,source_kind,source_id,source_revision,event_key,source_url,reminder_id::text,title,message,created_at,read_at,version,active,muted`
 
 func scan(row pgx.Row) (Notification, error) {
 	var n Notification
-	e := row.Scan(&n.ID, &n.Kind, &n.SourceKind, &n.SourceID, &n.SourceRevision, &n.EventKey, &n.URL, &n.ReminderID, &n.Title, &n.Message, &n.CreatedAt, &n.ReadAt, &n.Version, &n.Active)
+	e := row.Scan(&n.ID, &n.Kind, &n.SourceKind, &n.SourceID, &n.SourceRevision, &n.EventKey, &n.URL, &n.ReminderID, &n.Title, &n.Message, &n.CreatedAt, &n.ReadAt, &n.Version, &n.Active, &n.Muted)
 	return n, e
 }
 func validateEvent(in Event) error {
@@ -72,7 +73,11 @@ func (s *Service) EmitInTx(ctx context.Context, tx pgx.Tx, owner string, in Even
 	if e := validateEvent(in); e != nil {
 		return Notification{}, false, e
 	}
-	n, e := scan(tx.QueryRow(ctx, `INSERT INTO notifications(owner_id,kind,source_kind,source_id,source_revision,event_key,source_url,reminder_id,title,message,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT(owner_id,event_key,source_revision) DO NOTHING RETURNING `+columns, owner, in.Kind, in.SourceKind, in.SourceID, in.SourceRevision, in.EventKey, in.URL, in.ReminderID, titles[in.Kind], messages[in.Kind], s.Clock.Now()))
+	prefs, e := s.preferences(ctx, tx, owner)
+	if e != nil {
+		return Notification{}, false, e
+	}
+	n, e := scan(tx.QueryRow(ctx, `INSERT INTO notifications(owner_id,kind,source_kind,source_id,source_revision,event_key,source_url,reminder_id,title,message,created_at,muted) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT(owner_id,event_key,source_revision) DO NOTHING RETURNING `+columns, owner, in.Kind, in.SourceKind, in.SourceID, in.SourceRevision, in.EventKey, in.URL, in.ReminderID, titles[in.Kind], messages[in.Kind], s.Clock.Now(), !prefs.Channel(in.Kind).InApp))
 	if !errors.Is(e, pgx.ErrNoRows) {
 		return n, e == nil, e
 	}
@@ -122,7 +127,7 @@ func (s *Service) list(ctx context.Context, tx pgx.Tx, owner, before string) (Pa
 		out.Items = out.Items[:25]
 		out.Next = out.Items[24].ID
 	}
-	e = tx.QueryRow(ctx, `SELECT count(*) FROM notifications WHERE owner_id=$1 AND read_at IS NULL AND active`, owner).Scan(&out.Unread)
+	e = tx.QueryRow(ctx, `SELECT count(*) FROM notifications WHERE owner_id=$1 AND read_at IS NULL AND active AND NOT muted`, owner).Scan(&out.Unread)
 	return out, e
 }
 func (s *Service) get(ctx context.Context, tx pgx.Tx, owner, id string) (Notification, error) {
@@ -138,6 +143,7 @@ func (s *Service) get(ctx context.Context, tx pgx.Tx, owner, id string) (Notific
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountPreferences(r)
 		r.Get("/api/v1/notifications", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
 				return s.list(ctx, tx, owner, r.URL.Query().Get("before"))

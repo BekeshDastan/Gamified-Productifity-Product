@@ -6,6 +6,68 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/notifications/preferences:
+    get:
+      operationId: getNotificationPreferences
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NotificationPreferences"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+    put:
+      operationId: setNotificationPreferences
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatchSingleton"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationPreferencesInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NotificationPreferences"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/notifications:
     get:
       operationId: listNotifications
@@ -9316,6 +9378,124 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    NotificationChannelPolicy:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - in_app
+        - email
+        - push
+      properties:
+        type:
+          type: string
+          enum:
+            - deadline
+            - habit
+            - achievement
+            - invite
+            - report
+            - focus_result
+        in_app:
+          type: boolean
+        email:
+          type: boolean
+        push:
+          type: boolean
+    NotificationQuietWindow:
+      type: object
+      additionalProperties: false
+      required:
+        - enabled
+        - start
+        - end
+      properties:
+        enabled:
+          type: boolean
+        start:
+          type: string
+        end:
+          type: string
+    NotificationPreferencesInput:
+      type: object
+      additionalProperties: false
+      required:
+        - timezone
+        - use_profile_timezone
+        - quiet
+        - daily_cap
+        - deadline_lead_minutes
+        - habit_lead_minutes
+        - channels
+      properties:
+        timezone:
+          type: string
+        use_profile_timezone:
+          type: boolean
+        quiet:
+          $ref: "#/components/schemas/NotificationQuietWindow"
+        daily_cap:
+          type: integer
+          minimum: 0
+          maximum: 50
+        deadline_lead_minutes:
+          type: integer
+          minimum: 0
+          maximum: 10080
+        habit_lead_minutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationChannelPolicy"
+    NotificationPreferences:
+      type: object
+      additionalProperties: false
+      required:
+        - timezone
+        - use_profile_timezone
+        - quiet
+        - daily_cap
+        - deadline_lead_minutes
+        - habit_lead_minutes
+        - channels
+        - version
+        - effective_timezone
+        - updated_at
+      properties:
+        timezone:
+          type: string
+        use_profile_timezone:
+          type: boolean
+        quiet:
+          $ref: "#/components/schemas/NotificationQuietWindow"
+        daily_cap:
+          type: integer
+          minimum: 0
+          maximum: 50
+        deadline_lead_minutes:
+          type: integer
+          minimum: 0
+          maximum: 10080
+        habit_lead_minutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationChannelPolicy"
+        version:
+          type: integer
+        effective_timezone:
+          type: string
+        updated_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
     Notification:
       type: object
       additionalProperties: false
@@ -9334,6 +9514,7 @@ components:
         - read_at
         - version
         - active
+        - muted
       properties:
         id:
           type: string
@@ -9368,6 +9549,8 @@ components:
         version:
           type: integer
         active:
+          type: boolean
+        muted:
           type: boolean
     NotificationPage:
       type: object

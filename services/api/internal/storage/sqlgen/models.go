@@ -754,6 +754,21 @@ type Notification struct {
 	ReadAt         pgtype.Timestamptz `json:"read_at"`
 	Version        int64              `json:"version"`
 	Active         bool               `json:"active"`
+	Muted          bool               `json:"muted"`
+}
+
+type NotificationPreference struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Payload   []byte             `json:"payload"`
+	Version   int64              `json:"version"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type NotificationPreferenceEvent struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Version   int64              `json:"version"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type Onboarding struct {
