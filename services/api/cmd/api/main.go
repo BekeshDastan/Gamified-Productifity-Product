@@ -20,6 +20,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/journal"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/navigator"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -104,6 +105,7 @@ func main() {
 	planService.Mount(router, sessions.Protect)
 	analyticsService := analytics.NewService(pool, platform.RealClock{}).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
+	navigator.NewService(pool, platform.RealClock{}, planService, goalService, habitService, analyticsService).Mount(router, sessions.Protect)
 	journal.NewService(pool, platform.RealClock{}).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	server := &http.Server{
 		Addr:              cfg.Address,

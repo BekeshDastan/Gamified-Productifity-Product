@@ -6,6 +6,180 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/navigator:
+    get:
+      operationId: getNavigator
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NavigatorPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+  /api/v1/navigator/rules/{id}:
+    put:
+      operationId: setNavigatorRule
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NavigatorSetting"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatchSingleton"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NavigatorSetting"
+  /api/v1/navigator/cards/{id}/decision:
+    post:
+      operationId: decideNavigatorCard
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NavigatorDecisionResult"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NavigatorDecision"
+  /api/v1/navigator/task-view/{id}:
+    post:
+      operationId: trackNavigatorTaskView
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NavigatorAccepted"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NavigatorTaskView"
   /api/v1/analytics/reports/preview:
     post:
       operationId: previewAnalyticsReport
@@ -8774,6 +8948,201 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    NavigatorCondition:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - op
+        - value
+      properties:
+        metric:
+          type: string
+        op:
+          type: string
+          enum:
+            - gt
+            - gte
+            - eq
+            - lt
+        value:
+          type: number
+    NavigatorRule:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - version
+        - priority
+        - conditions
+        - template_key
+        - action_type
+        - cooldown_seconds
+        - enabled
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+        priority:
+          type: integer
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigatorCondition"
+        template_key:
+          type: string
+        action_type:
+          type: string
+        cooldown_seconds:
+          type: integer
+        enabled:
+          type: boolean
+    NavigatorEvidence:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - id
+        - version
+        - url
+      properties:
+        kind:
+          type: string
+        id:
+          type: string
+        version:
+          type: integer
+        url:
+          type: string
+    NavigatorFact:
+      type: object
+      additionalProperties: false
+      required:
+        - rule_id
+        - subject
+        - numbers
+        - sources
+      properties:
+        rule_id:
+          type: string
+        subject:
+          type: string
+        numbers:
+          type: object
+          additionalProperties:
+            type: number
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigatorEvidence"
+    NavigatorCard:
+      type: object
+      additionalProperties: false
+      required:
+        - rule
+        - fact
+        - id
+        - version
+        - created_at
+        - message
+        - action_url
+      properties:
+        rule:
+          $ref: "#/components/schemas/NavigatorRule"
+        fact:
+          $ref: "#/components/schemas/NavigatorFact"
+        id:
+          type: string
+        version:
+          type: integer
+        created_at:
+          type: string
+        message:
+          type: string
+        action_url:
+          type: string
+    NavigatorSetting:
+      type: object
+      additionalProperties: false
+      required:
+        - rule_id
+        - disabled
+        - version
+      properties:
+        rule_id:
+          type: string
+        disabled:
+          type: boolean
+        version:
+          type: integer
+    NavigatorPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - settings
+        - rules
+        - computed_at
+        - complete
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigatorCard"
+        settings:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigatorSetting"
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigatorRule"
+        computed_at:
+          type: string
+        complete:
+          type: boolean
+    NavigatorDecision:
+      type: object
+      additionalProperties: false
+      required:
+        - action
+        - hours
+      properties:
+        action:
+          type: string
+          enum:
+            - hide
+            - snooze
+        hours:
+          type: integer
+    NavigatorDecisionResult:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - version
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+    NavigatorTaskView:
+      type: object
+      additionalProperties: false
+      required:
+        - visible
+      properties:
+        visible:
+          type: boolean
+    NavigatorAccepted:
+      type: object
+      additionalProperties: false
+      required:
+        - accepted
+      properties:
+        accepted:
+          type: boolean
     AnalyticsReportInput:
       type: object
       additionalProperties: false

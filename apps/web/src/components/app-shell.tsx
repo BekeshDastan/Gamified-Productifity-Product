@@ -28,12 +28,14 @@ import { Dialog } from "./ui/dialog";
 import { AccountThemeSelect, PersonalizationEffects } from "./personalization";
 import { useAuth } from "@/lib/auth/provider";
 import { AccountQueryProvider } from "@/lib/api/query-provider";
+import { TaskViewObserver } from "./task-view-observer";
 
 const planned = [
   { label: "Друзья", icon: Users },
   { label: "Уведомления", icon: Bell },
 ];
 const available = [
+  { href: "/app/navigator", label: "Навигатор", icon: Compass },
   { href: "/app/analytics", label: "Аналитика", icon: ChartNoAxesCombined },
   { href: "/app/seasons", label: "Сезоны", icon: Sprout },
   { href: "/app/challenges", label: "Испытания", icon: Trophy },
@@ -95,6 +97,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <AccountQueryProvider accountId={auth.session?.account.id ?? null}>
       <PersonalizationEffects />
+      <TaskViewObserver />
       <div className="app-shell">
         <a href="#main-content" className="skip-link">
           К содержимому

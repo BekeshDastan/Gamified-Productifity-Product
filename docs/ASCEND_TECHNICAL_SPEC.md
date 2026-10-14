@@ -2082,7 +2082,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Одинаковые входы дают одинаковые результаты; произвольный код в правиле отвергается.
   - **КОММИТ СЕЙЧАС:** `feat(rules): evaluate versioned deterministic recommendation rules`
 
-- [ ] **C146. Карточки объяснений**
+- [x] **C146. Карточки объяснений**
   - **Сделать:** Добавить условие, исходные числа, действие, скрытие, snooze и отключение конкретного правила.
   - **Проверить:** После opt-out правило не приходит повторно; карточка не раскрывает частный текст.
   - **КОММИТ СЕЙЧАС:** `feat(recommendations-ui): show evidence actions snooze and opt-out`
