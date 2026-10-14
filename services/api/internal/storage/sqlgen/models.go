@@ -900,6 +900,29 @@ type RecurrenceSeriesHistory struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type ReportPreview struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	Snapshot  []byte             `json:"snapshot"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type ReportSnapshot struct {
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	ID         pgtype.UUID        `json:"id"`
+	PreviewID  pgtype.UUID        `json:"preview_id"`
+	Request    []byte             `json:"request"`
+	Kind       string             `json:"kind"`
+	StartsOn   pgtype.Date        `json:"starts_on"`
+	EndsBefore pgtype.Date        `json:"ends_before"`
+	Timezone   string             `json:"timezone"`
+	Revision   int64              `json:"revision"`
+	Automatic  bool               `json:"automatic"`
+	Snapshot   []byte             `json:"snapshot"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type RewardEntitlement struct {
 	ID             pgtype.UUID        `json:"id"`
 	OwnerID        pgtype.UUID        `json:"owner_id"`

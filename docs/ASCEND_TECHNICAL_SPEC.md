@@ -2058,7 +2058,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Нет заданной цели — нет оценки; 0 target не вызывает деление на ноль.
   - **КОММИТ СЕЙЧАС:** `feat(analytics): add personal target radar without invented scores`
 
-- [ ] **C143. Отчёты и сравнения**
+- [x] **C143. Отчёты и сравнения**
   - **Сделать:** Добавить текстовые шаблоны, равные периоды, абсолютное сравнение нулевой базы и рекорды.
   - **Проверить:** Нулевая предыдущая неделя не даёт бесконечный рост; источники отчёта доступны.
   - **КОММИТ СЕЙЧАС:** `feat(reports): generate deterministic weekly and monthly summaries`

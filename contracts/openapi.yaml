@@ -6,6 +6,132 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/analytics/reports/preview:
+    post:
+      operationId: previewAnalyticsReport
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsReportInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsReportPreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics/reports:
+    get:
+      operationId: listAnalyticsReports
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsReportPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: saveAnalyticsReport
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsReportSave"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsReport"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics/reports/{id}:
+    get:
+      operationId: getAnalyticsReport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsReport"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
   /api/v1/analytics/balance:
     get:
       operationId: getAnalyticsBalance
@@ -8648,6 +8774,227 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    AnalyticsReportInput:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - starts_on
+        - timezone
+      properties:
+        kind:
+          type: string
+          enum:
+            - week
+            - month
+        starts_on:
+          type: string
+          format: date
+        timezone:
+          type: string
+    AnalyticsComparison:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - unit
+        - current
+        - current_observed
+        - previous
+        - delta
+        - percent
+      properties:
+        metric:
+          type: string
+        unit:
+          type: string
+        current:
+          type: number
+        current_observed:
+          type: boolean
+        previous:
+          anyOf:
+            - type: number
+            - type: "null"
+        delta:
+          anyOf:
+            - type: number
+            - type: "null"
+        percent:
+          anyOf:
+            - type: number
+            - type: "null"
+    AnalyticsReportSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - starts_on
+        - timezone
+        - from
+        - to
+        - previous_range
+        - version
+        - score_version
+        - source_revision
+        - computed_at
+        - observed_from
+        - current_observed
+        - previous_observed
+        - comparisons
+        - text
+        - days
+        - previous_days
+        - balance
+        - records
+      properties:
+        kind:
+          type: string
+          enum:
+            - week
+            - month
+        starts_on:
+          type: string
+        timezone:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        previous_range:
+          $ref: "#/components/schemas/AnalyticsRange"
+        version:
+          type: string
+        score_version:
+          type: string
+        source_revision:
+          type: integer
+        computed_at:
+          type: string
+        observed_from:
+          type: string
+        current_observed:
+          type: boolean
+        previous_observed:
+          type: boolean
+        comparisons:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsComparison"
+        text:
+          type: string
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDay"
+        previous_days:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDay"
+        balance:
+          $ref: "#/components/schemas/AnalyticsBalance"
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterRecord"
+    AnalyticsReportPreview:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - expires_at
+        - snapshot
+      properties:
+        id:
+          type: string
+        expires_at:
+          type: string
+        snapshot:
+          $ref: "#/components/schemas/AnalyticsReportSnapshot"
+    AnalyticsReportSave:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - preview_id
+        - confirm
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        preview_id:
+          type: string
+          format: uuid
+        confirm:
+          type: boolean
+    AnalyticsReport:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - revision
+        - automatic
+        - created_at
+        - snapshot
+      properties:
+        id:
+          type: string
+        revision:
+          type: integer
+        automatic:
+          type: boolean
+        created_at:
+          type: string
+        snapshot:
+          $ref: "#/components/schemas/AnalyticsReportSnapshot"
+    AnalyticsReportBrief:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - id
+        - kind
+        - timezone
+        - revision
+        - automatic
+        - created_at
+        - text
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+          enum:
+            - week
+            - month
+        timezone:
+          type: string
+        revision:
+          type: integer
+        automatic:
+          type: boolean
+        created_at:
+          type: string
+        text:
+          type: string
+    AnalyticsReportPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsReportBrief"
+        next:
+          type: string
     AnalyticsTargetInput:
       type: object
       additionalProperties: false

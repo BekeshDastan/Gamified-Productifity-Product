@@ -10,6 +10,7 @@ import { useChallengeAction } from "./challenges";
 import { AnalyticsChart } from "./analytics-charts";
 import { AnalyticsHeatmap } from "./analytics-heatmap";
 import { AnalyticsBalance } from "./analytics-balance";
+import { AnalyticsReports } from "./analytics-reports";
 import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Card } from "./ui/card";
@@ -258,6 +259,7 @@ function Workspace({ account, timezone }: { account: string; timezone: string })
         )}
       </Card>
       <AnalyticsBalance account={account} timezone={timezone} range={range} />
+      <AnalyticsReports account={account} timezone={timezone} openRange={applyRange} />
       <AnalyticsHeatmap
         account={account}
         timezone={timezone}

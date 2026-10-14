@@ -3,6 +3,7 @@ package analytics
 import (
 	"context"
 	"encoding/json"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/character"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
@@ -16,11 +17,15 @@ import (
 
 const ProjectionVersion = "analytics-v1"
 
-type Service struct{ *privateapi.Service }
+type Service struct {
+	*privateapi.Service
+	records *character.Service
+}
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
-	return &Service{privateapi.New(pool, clock)}
+	return &Service{Service: privateapi.New(pool, clock)}
 }
+func (s *Service) WithRecords(c *character.Service) *Service { s.records = c; return s }
 
 type Range struct {
 	From string `json:"from"`
@@ -237,7 +242,7 @@ func aggregateWeeks(days []Day) []Week {
 	return out
 }
 func (s *Service) Handlers() map[string]jobs.Handler {
-	return map[string]jobs.Handler{"analytics.changed": func(ctx context.Context, tx pgx.Tx, j jobs.Job) error {
+	return map[string]jobs.Handler{"analytics.reports_sweep": s.reportSweep, "analytics.reports_due": s.reportsDue, "analytics.changed": func(ctx context.Context, tx pgx.Tx, j jobs.Job) error {
 		var body map[string]json.RawMessage
 		if j.OwnerID == nil || !privateapi.UUID(*j.OwnerID) || json.Unmarshal(j.Payload, &body) != nil || body == nil || len(body) != 0 {
 			return jobs.ErrPermanent
@@ -270,6 +275,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		r.Use(protect)
 		s.mountTime(r)
 		s.mountBalance(r)
+		s.mountReports(r)
 		r.Get("/api/v1/analytics", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
 				return s.read(ctx, tx, owner, Range{r.URL.Query().Get("from"), r.URL.Query().Get("to")}, false)

@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/v1/analytics/reports/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewAnalyticsReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listAnalyticsReports"];
+        put?: never;
+        post: operations["saveAnalyticsReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAnalyticsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/analytics/balance": {
         parameters: {
             query?: never;
@@ -2923,6 +2971,79 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AnalyticsReportInput: {
+            /** @enum {string} */
+            kind: "week" | "month";
+            /** Format: date */
+            starts_on: string;
+            timezone: string;
+        };
+        AnalyticsComparison: {
+            metric: string;
+            unit: string;
+            current: number;
+            current_observed: boolean;
+            previous: number | null;
+            delta: number | null;
+            percent: number | null;
+        };
+        AnalyticsReportSnapshot: {
+            /** @enum {string} */
+            kind: "week" | "month";
+            starts_on: string;
+            timezone: string;
+            from: string;
+            to: string;
+            previous_range: components["schemas"]["AnalyticsRange"];
+            version: string;
+            score_version: string;
+            source_revision: number;
+            computed_at: string;
+            observed_from: string;
+            current_observed: boolean;
+            previous_observed: boolean;
+            comparisons: components["schemas"]["AnalyticsComparison"][];
+            text: string;
+            days: components["schemas"]["AnalyticsDay"][];
+            previous_days: components["schemas"]["AnalyticsDay"][];
+            balance: components["schemas"]["AnalyticsBalance"];
+            records: components["schemas"]["CharacterRecord"][];
+        };
+        AnalyticsReportPreview: {
+            id: string;
+            expires_at: string;
+            snapshot: components["schemas"]["AnalyticsReportSnapshot"];
+        };
+        AnalyticsReportSave: {
+            /** Format: uuid */
+            operation_id: string;
+            /** Format: uuid */
+            preview_id: string;
+            confirm: boolean;
+        };
+        AnalyticsReport: {
+            id: string;
+            revision: number;
+            automatic: boolean;
+            created_at: string;
+            snapshot: components["schemas"]["AnalyticsReportSnapshot"];
+        };
+        AnalyticsReportBrief: {
+            from: string;
+            to: string;
+            id: string;
+            /** @enum {string} */
+            kind: "week" | "month";
+            timezone: string;
+            revision: number;
+            automatic: boolean;
+            created_at: string;
+            text: string;
+        };
+        AnalyticsReportPage: {
+            items: components["schemas"]["AnalyticsReportBrief"][];
+            next: string;
+        };
         AnalyticsTargetInput: {
             /** Format: date */
             from: string;
@@ -5569,6 +5690,128 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    previewAnalyticsReport: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyticsReportInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsReportPreview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    listAnalyticsReports: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsReportPage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
+    saveAnalyticsReport: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyticsReportSave"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsReport"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getAnalyticsReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsReport"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
     getAnalyticsBalance: {
         parameters: {
             query: {

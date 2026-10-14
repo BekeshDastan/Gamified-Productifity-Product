@@ -61,7 +61,12 @@ func main() {
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	go calendar.NewService(pool, clock, quests.NewService(pool, clock).WithObserver(goals.NewService(pool, clock).QuestChanged).WithProgression(rewardService)).Run(ctx, logger)
 	handlers := sessions.MailHandlers(mailer)
-	for kind, handler := range analytics.NewService(pool, clock).Handlers() {
+	analyticsService := analytics.NewService(pool, clock).WithRecords(characterService)
+	if err := analyticsService.StartReportSchedule(ctx); err != nil {
+		logger.Error("report_schedule_failed")
+		os.Exit(1)
+	}
+	for kind, handler := range analyticsService.Handlers() {
 		handlers[kind] = handler
 	}
 	challengeService := challenges.NewService(pool, clock).WithProgression(rewardService)

@@ -1,4 +1,5 @@
 import { Analytics } from "@/components/analytics";
+import { Suspense } from "react";
 export default function AnalyticsPage() {
   return (
     <>
@@ -8,7 +9,9 @@ export default function AnalyticsPage() {
         Ваши действия, время и собственные планы. Показатели помогают увидеть ритм и выбрать
         посильное продолжение.
       </p>
-      <Analytics />
+      <Suspense fallback={<p role="status">Загружаем аналитику…</p>}>
+        <Analytics />
+      </Suspense>
     </>
   );
 }

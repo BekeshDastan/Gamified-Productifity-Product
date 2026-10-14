@@ -102,7 +102,7 @@ func main() {
 	planService := planning.NewService(pool, platform.RealClock{}, questService, calendarService)
 	seasons.NewService(pool, platform.RealClock{}).WithChallenges(challengeService).WithRecovery(questService, goalService).WithPlanning(planService, calendarService).WithHabits(habitService).Mount(router, sessions.Protect)
 	planService.Mount(router, sessions.Protect)
-	analyticsService := analytics.NewService(pool, platform.RealClock{})
+	analyticsService := analytics.NewService(pool, platform.RealClock{}).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
 	journal.NewService(pool, platform.RealClock{}).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	server := &http.Server{
