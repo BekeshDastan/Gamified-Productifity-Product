@@ -2097,7 +2097,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Устаревшая версия даёт 409; повтор apply не создаёт вторые блоки.
   - **КОММИТ СЕЙЧАС:** `feat(planning): atomically apply unexpired versioned schedule proposals`
 
-- [ ] **C149. Deadline Radar**
+- [x] **C149. Deadline Radar**
   - **Сделать:** Добавить группы сроков и дефицит оценочных минут относительно доступных окон.
   - **Проверить:** Просроченное и «меньше суток» не смешиваются; нет выдуманных вероятностей провала.
   - **КОММИТ СЕЙЧАС:** `feat(planning-ui): display deadline buckets and capacity warnings`

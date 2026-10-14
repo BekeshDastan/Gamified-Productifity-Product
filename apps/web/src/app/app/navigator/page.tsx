@@ -1,10 +1,12 @@
 import { NavigatorCards } from "@/components/navigator";
+import { SmartSchedule } from "@/components/smart-schedule";
 export default function NavigatorPage() {
   return (
     <>
       <h1 className="page-title">Навигатор</h1>
       <p className="page-intro">Понятные предложения по вашим записям. Решение остаётся за вами.</p>
       <NavigatorCards />
+      <SmartSchedule />
     </>
   );
 }

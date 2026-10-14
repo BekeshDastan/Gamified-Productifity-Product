@@ -294,6 +294,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
 		s.mountSchedule(r)
+		s.mountRadar(r)
 		s.mountCommitments(r)
 		s.mountBlocks(r)
 		s.mountRoutines(r)

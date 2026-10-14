@@ -6,6 +6,30 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/plans/deadline-radar:
+    get:
+      operationId: getDeadlineRadar
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DeadlineRadar"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/plans/schedule/preview:
     post:
       operationId: previewSmartSchedule
@@ -9026,6 +9050,87 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    DeadlineRadarTask:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - version
+        - deadline
+        - estimated_minutes
+        - url
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        version:
+          type: integer
+        deadline:
+          type: string
+          format: date-time
+        estimated_minutes:
+          anyOf:
+            - type: integer
+            - type: "null"
+        url:
+          type: string
+    DeadlineRadarBucket:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - before
+        - items
+        - required_minutes
+        - cumulative_minutes
+        - free_minutes
+        - deficit_minutes
+        - unknown_estimates
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        before:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeadlineRadarTask"
+        required_minutes:
+          type: integer
+        cumulative_minutes:
+          type: integer
+        free_minutes:
+          type: integer
+        deficit_minutes:
+          type: integer
+        unknown_estimates:
+          type: integer
+    DeadlineRadar:
+      type: object
+      additionalProperties: false
+      required:
+        - timezone
+        - computed_at
+        - buckets
+        - notice
+      properties:
+        timezone:
+          type: string
+        computed_at:
+          type: string
+          format: date-time
+        buckets:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeadlineRadarBucket"
+        notice:
+          type: string
     ScheduleTaskOption:
       type: object
       additionalProperties: false
