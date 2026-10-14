@@ -4,6 +4,134 @@
  */
 
 export interface paths {
+    "/api/v1/analytics/reports/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewAnalyticsReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listAnalyticsReports"];
+        put?: never;
+        post: operations["saveAnalyticsReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAnalyticsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAnalyticsBalance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/targets/{area_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setAnalyticsTarget"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAnalyticsTemplateSamples"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAnalytics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/analytics/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["rebuildAnalytics"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/recovery/status": {
         parameters: {
             query?: never;
@@ -2843,6 +2971,332 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AnalyticsReportInput: {
+            /** @enum {string} */
+            kind: "week" | "month";
+            /** Format: date */
+            starts_on: string;
+            timezone: string;
+        };
+        AnalyticsComparison: {
+            metric: string;
+            unit: string;
+            current: number;
+            current_observed: boolean;
+            previous: number | null;
+            delta: number | null;
+            percent: number | null;
+        };
+        AnalyticsReportSnapshot: {
+            /** @enum {string} */
+            kind: "week" | "month";
+            starts_on: string;
+            timezone: string;
+            from: string;
+            to: string;
+            previous_range: components["schemas"]["AnalyticsRange"];
+            version: string;
+            score_version: string;
+            source_revision: number;
+            computed_at: string;
+            observed_from: string;
+            current_observed: boolean;
+            previous_observed: boolean;
+            comparisons: components["schemas"]["AnalyticsComparison"][];
+            text: string;
+            days: components["schemas"]["AnalyticsDay"][];
+            previous_days: components["schemas"]["AnalyticsDay"][];
+            balance: components["schemas"]["AnalyticsBalance"];
+            records: components["schemas"]["CharacterRecord"][];
+            obligations: {
+                planned: number;
+                completed: number;
+                habit_due: number;
+                habit_success: number;
+            };
+            frequent_reason: {
+                text: string;
+                count: number;
+                sources: {
+                    /** Format: uuid */
+                    id: string;
+                    version: number;
+                    at: string;
+                    url: string;
+                }[];
+            } | null;
+            next_step: string;
+        };
+        AnalyticsReportPreview: {
+            id: string;
+            expires_at: string;
+            snapshot: components["schemas"]["AnalyticsReportSnapshot"];
+        };
+        AnalyticsReportSave: {
+            /** Format: uuid */
+            operation_id: string;
+            /** Format: uuid */
+            preview_id: string;
+            confirm: boolean;
+        };
+        AnalyticsReport: {
+            id: string;
+            revision: number;
+            automatic: boolean;
+            created_at: string;
+            snapshot: components["schemas"]["AnalyticsReportSnapshot"];
+        };
+        AnalyticsReportBrief: {
+            from: string;
+            to: string;
+            id: string;
+            /** @enum {string} */
+            kind: "week" | "month";
+            timezone: string;
+            revision: number;
+            automatic: boolean;
+            created_at: string;
+            text: string;
+        };
+        AnalyticsReportPage: {
+            items: components["schemas"]["AnalyticsReportBrief"][];
+            next: string;
+        };
+        AnalyticsTargetInput: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** @enum {string} */
+            metric: "tasks" | "focus_minutes" | "habit_norms";
+            target: number;
+            confirm: boolean;
+        };
+        AnalyticsTarget: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            area_id: string;
+            /** @enum {string} */
+            metric: "tasks" | "focus_minutes" | "habit_norms";
+            target: number;
+            version: number;
+            updated_at: string;
+        };
+        AnalyticsBalanceAxis: {
+            id: string;
+            name: string;
+            archived: boolean;
+            /** @enum {string} */
+            metric: "tasks" | "focus_minutes" | "habit_norms";
+            unit: string;
+            target: number | null;
+            actual: number | null;
+            percent: number | null;
+            version: number;
+            sources: components["schemas"]["AnalyticsSource"][];
+        };
+        AnalyticsBalance: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            timezone: string;
+            computed_at: string | null;
+            stale: boolean;
+            source_revision: number;
+            projected_revision: number;
+            axes: components["schemas"]["AnalyticsBalanceAxis"][];
+        };
+        AnalyticsTaskTime: {
+            id: string;
+            title: string;
+            url: string;
+            estimated_minutes: number | null;
+            actual_seconds: number | null;
+            focus_seconds: number;
+            manual_minutes: number | null;
+            mode: string;
+            confirmed_sessions: number;
+            completed_at: string;
+            template_id: string | null;
+            template_name: string | null;
+            template_version: number | null;
+            area_id: string | null;
+        };
+        AnalyticsTemplateSample: {
+            id: string;
+            name: string;
+            version: number;
+            count: number;
+            average_estimated_minutes: number | null;
+            average_actual_seconds: number | null;
+            factor: number | null;
+            sufficient: boolean;
+            quest_ids: string[];
+        };
+        AnalyticsTemplateSamples: {
+            from: string;
+            to: string;
+            timezone: string;
+            computed_at: string;
+            items: components["schemas"]["AnalyticsTemplateSample"][];
+        };
+        AnalyticsRollingScore: {
+            from: string;
+            to: string;
+            score: number | null;
+            active_days: number;
+            task_obligations: number;
+            habit_obligations: number;
+            dates: string[];
+            state: string;
+        };
+        AnalyticsScores: {
+            version: string;
+            state: string;
+            closed: boolean;
+            t: number | null;
+            h: number | null;
+            r: number | null;
+            daily: number | null;
+            discipline_day: number | null;
+            discipline: components["schemas"]["AnalyticsRollingScore"];
+        };
+        AnalyticsDefinition: {
+            id: string;
+            label: string;
+            numerator: string;
+            denominator: string;
+            basis: string;
+        };
+        AnalyticsPlanEvidence: {
+            confirmed: boolean;
+            timezone: string;
+            version: number;
+            input: components["schemas"]["PlanInput"];
+            snapshot: components["schemas"]["PlanSnapshot"] | null;
+        };
+        AnalyticsHabitOutcome: {
+            id: string;
+            period_id: string;
+            name: string;
+            unit: string;
+            url: string;
+            timezone: string;
+            start: string;
+            end: string;
+            amount: number;
+            target: number;
+            excluded: boolean;
+            closed: boolean;
+            area_id: string | null;
+        };
+        AnalyticsRange: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+        };
+        AnalyticsSource: {
+            kind: string;
+            id: string;
+            name: string;
+            url: string;
+            at: string;
+            value: number;
+            unit: string;
+            area_id: string | null;
+            version: number;
+            date: string;
+            qualifier: string;
+        };
+        AnalyticsDay: {
+            date: string;
+            completed: number;
+            focus_seconds: number;
+            xp_delta: number;
+            coins_delta: number;
+            sources: components["schemas"]["AnalyticsSource"][];
+            planned: number;
+            planned_completed: number;
+            planned_failed: number;
+            planned_skipped: number;
+            planned_pending: number;
+            on_time: number;
+            late: number;
+            no_deadline: number;
+            failed: number;
+            skipped: number;
+            postponed: number;
+            postponement_events: number;
+            habit_obligations: number;
+            habit_successes: number;
+            habit_missed: number;
+            habit_excluded: number;
+            goals_achieved: number;
+            goals_not_achieved: number;
+            goals_cancelled: number;
+            plan: components["schemas"]["AnalyticsPlanEvidence"] | null;
+            task_weight_total: number;
+            task_weight_completed: number;
+            habits_complete: boolean;
+            habits: components["schemas"]["AnalyticsHabitOutcome"][];
+            scores: components["schemas"]["AnalyticsScores"];
+            estimated_tasks: number;
+            actual_known_tasks: number;
+            comparable_tasks: number;
+            comparable_estimated_seconds: number;
+            comparable_actual_seconds: number;
+            task_times: components["schemas"]["AnalyticsTaskTime"][];
+        };
+        AnalyticsWeek: {
+            start: string;
+            end: string;
+            days: number;
+            completed: number;
+            focus_seconds: number;
+            xp_delta: number;
+            coins_delta: number;
+            planned: number;
+            planned_completed: number;
+            planned_failed: number;
+            planned_skipped: number;
+            planned_pending: number;
+            on_time: number;
+            late: number;
+            no_deadline: number;
+            failed: number;
+            skipped: number;
+            postponed: number;
+            postponement_events: number;
+            habit_obligations: number;
+            habit_successes: number;
+            habit_missed: number;
+            habit_excluded: number;
+            goals_achieved: number;
+            goals_not_achieved: number;
+            goals_cancelled: number;
+            estimated_tasks: number;
+            actual_known_tasks: number;
+            comparable_tasks: number;
+            comparable_estimated_seconds: number;
+            comparable_actual_seconds: number;
+        };
+        AnalyticsView: {
+            from: string;
+            to: string;
+            timezone: string;
+            projection_version: string;
+            source_revision: number;
+            projected_revision: number;
+            computed_at: string | null;
+            stale: boolean;
+            days: components["schemas"]["AnalyticsDay"][];
+            weeks: components["schemas"]["AnalyticsWeek"][];
+            definitions: components["schemas"]["AnalyticsDefinition"][];
+        };
         RecoveryHabit: {
             id: string;
             title: string;
@@ -5254,6 +5708,283 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    previewAnalyticsReport: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyticsReportInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsReportPreview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    listAnalyticsReports: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsReportPage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
+    saveAnalyticsReport: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyticsReportSave"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsReport"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getAnalyticsReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsReport"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
+    getAnalyticsBalance: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsBalance"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    setAnalyticsTarget: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                area_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyticsTargetInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsTarget"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getAnalyticsTemplateSamples: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsTemplateSamples"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getAnalytics: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsView"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    rebuildAnalytics: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyticsRange"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AnalyticsView"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
     getRecoveryStatus: {
         parameters: {
             query?: never;

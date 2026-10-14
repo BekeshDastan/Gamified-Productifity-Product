@@ -4,19 +4,20 @@
 пакетов. Версии верхнего уровня точные; транзитивные версии — в `package-lock.json`
 и `go.sum`. Установка web только через `npm ci` после первого `npm install`.
 
-| Компонент                   | Версия           | Причина                                               |
-| --------------------------- | ---------------- | ----------------------------------------------------- |
-| Node.js                     | 22.22.0          | Установленное совместимое LTS-окружение               |
-| npm                         | 10.9.4           | Lockfile v3 и npm workspaces                          |
-| Next.js                     | 16.4.0           | App Router, официальная стабильная версия             |
-| React / React DOM           | 19.3.0           | Совместимые peer dependencies Next.js                 |
-| TypeScript                  | 5.9.3            | Проверенный strict toolchain, минимум Next.js — 5.1   |
-| Go                          | 1.26.9           | Поддерживаемая ветка, совместима со Staticcheck 0.8.1 |
-| chi                         | 5.3.2            | net/http-совместимый роутер                           |
-| PostgreSQL                  | 17.11-bookworm   | Поддерживаемая major-версия; фиксированный образ      |
-| ESLint / eslint-config-next | 10.12.0 / 16.4.0 | Статический анализ React и TypeScript                 |
-| Prettier                    | 3.9.10           | Форматирование исходных файлов                        |
-| Staticcheck                 | 0.8.1            | Дополнительный анализ Go                              |
+| Компонент                   | Версия           | Причина                                                  |
+| --------------------------- | ---------------- | -------------------------------------------------------- |
+| Node.js                     | 22.22.0          | Установленное совместимое LTS-окружение                  |
+| npm                         | 10.9.4           | Lockfile v3 и npm workspaces                             |
+| Next.js                     | 16.4.0           | App Router, официальная стабильная версия                |
+| React / React DOM           | 19.3.0           | Совместимые peer dependencies Next.js                    |
+| TypeScript                  | 5.9.3            | Проверенный strict toolchain, минимум Next.js — 5.1      |
+| Go                          | 1.26.9           | Поддерживаемая ветка, совместима со Staticcheck 0.8.1    |
+| chi                         | 5.3.2            | net/http-совместимый роутер                              |
+| PostgreSQL                  | 17.11-bookworm   | Поддерживаемая major-версия; фиксированный образ         |
+| ESLint / eslint-config-next | 10.12.0 / 16.4.0 | Статический анализ React и TypeScript                    |
+| Prettier                    | 3.9.10           | Форматирование исходных файлов                           |
+| Staticcheck                 | 0.8.1            | Дополнительный анализ Go                                 |
+| Recharts                    | 3.10.1           | Графики с клавиатурным доступом и адаптивным контейнером |
 
 Go 1.27.2 проверялся при bootstrap, но текущий Staticcheck не читает его новый
 export format. До обновления линтера используется поддерживаемый Go 1.26.9.
@@ -45,6 +46,7 @@ OpenAPI types: openapi-typescript 7.13.0. Локальная почта: Mailpit
 - [Go: поддерживаемые загрузки](https://go.dev/dl/)
 - [PostgreSQL: сроки поддержки](https://www.postgresql.org/support/versioning/)
 - [Staticcheck: релизы](https://github.com/dominikh/go-tools/releases)
+- [Recharts: адаптивный контейнер](https://recharts.github.io/api/ResponsiveContainer/), [доступность графиков](https://recharts.github.io/en-US/api/BarChart/). Версия 3.10.1 проверена через npm registry 14 октября 2026 года; лицензия MIT, production audit без уязвимостей.
 
 ## Конфигурация
 

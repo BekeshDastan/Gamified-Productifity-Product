@@ -167,6 +167,11 @@ func (s *Service) UpdateSettings(r *http.Request, input Preferences) (Settings, 
 	}
 	var result Settings
 	err = storage.WithinTx(r.Context(), s.pool, func(tx pgx.Tx) error {
+		// Domain previews hold this lock while checking settings and source versions.
+		var locked string
+		if err := tx.QueryRow(r.Context(), "SELECT owner_id::text FROM profiles WHERE owner_id=$1 FOR UPDATE", id).Scan(&locked); err != nil {
+			return err
+		}
 		current, err := scanSettings(tx.QueryRow(r.Context(), `SELECT `+settingsColumns+` FROM user_settings WHERE owner_id=$1 FOR UPDATE`, id))
 		if err != nil {
 			return err

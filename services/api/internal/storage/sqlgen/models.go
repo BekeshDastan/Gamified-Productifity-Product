@@ -35,6 +35,16 @@ type AchievementDefinition struct {
 	Snapshot []byte `json:"snapshot"`
 }
 
+type AnalyticsProjectionState struct {
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	SourceRevision    int64              `json:"source_revision"`
+	ProjectedRevision int64              `json:"projected_revision"`
+	Timezone          string             `json:"timezone"`
+	RequestedFrom     pgtype.Date        `json:"requested_from"`
+	RequestedTo       pgtype.Date        `json:"requested_to"`
+	ComputedAt        pgtype.Timestamptz `json:"computed_at"`
+}
+
 type Attachment struct {
 	ID         pgtype.UUID        `json:"id"`
 	OwnerID    pgtype.UUID        `json:"owner_id"`
@@ -329,6 +339,16 @@ type CustomRewardVersion struct {
 	Version   int64              `json:"version"`
 	Snapshot  []byte             `json:"snapshot"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type DailyMetric struct {
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	LocalDate         pgtype.Date        `json:"local_date"`
+	Timezone          string             `json:"timezone"`
+	SourceRevision    int64              `json:"source_revision"`
+	ProjectionVersion string             `json:"projection_version"`
+	ComputedAt        pgtype.Timestamptz `json:"computed_at"`
+	Payload           []byte             `json:"payload"`
 }
 
 type DailyReview struct {
@@ -714,6 +734,28 @@ type OutboxEvent struct {
 	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
 }
 
+type PersonalAreaTarget struct {
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	AreaID     pgtype.UUID        `json:"area_id"`
+	StartsOn   pgtype.Date        `json:"starts_on"`
+	EndsBefore pgtype.Date        `json:"ends_before"`
+	Metric     string             `json:"metric"`
+	Target     pgtype.Numeric     `json:"target"`
+	Version    int64              `json:"version"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type PersonalAreaTargetEvent struct {
+	ID         int64              `json:"id"`
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	AreaID     pgtype.UUID        `json:"area_id"`
+	StartsOn   pgtype.Date        `json:"starts_on"`
+	EndsBefore pgtype.Date        `json:"ends_before"`
+	Version    int64              `json:"version"`
+	Snapshot   []byte             `json:"snapshot"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type PersonalSeason struct {
 	OwnerID       pgtype.UUID        `json:"owner_id"`
 	ID            pgtype.UUID        `json:"id"`
@@ -858,6 +900,29 @@ type RecurrenceSeriesHistory struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type ReportPreview struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	Snapshot  []byte             `json:"snapshot"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type ReportSnapshot struct {
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	ID         pgtype.UUID        `json:"id"`
+	PreviewID  pgtype.UUID        `json:"preview_id"`
+	Request    []byte             `json:"request"`
+	Kind       string             `json:"kind"`
+	StartsOn   pgtype.Date        `json:"starts_on"`
+	EndsBefore pgtype.Date        `json:"ends_before"`
+	Timezone   string             `json:"timezone"`
+	Revision   int64              `json:"revision"`
+	Automatic  bool               `json:"automatic"`
+	Snapshot   []byte             `json:"snapshot"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type RewardEntitlement struct {
 	ID             pgtype.UUID        `json:"id"`
 	OwnerID        pgtype.UUID        `json:"owner_id"`
@@ -960,6 +1025,11 @@ type RoutineTemplate struct {
 	Version int64       `json:"version"`
 }
 
+type ScoreVersion struct {
+	Version    string `json:"version"`
+	Definition []byte `json:"definition"`
+}
+
 type SeasonChallengeLink struct {
 	OwnerID  pgtype.UUID        `json:"owner_id"`
 	SeasonID pgtype.UUID        `json:"season_id"`
@@ -1012,6 +1082,16 @@ type TaskEvent struct {
 	Details      []byte             `json:"details"`
 }
 
+type TaskTemplateOrigin struct {
+	OwnerID         pgtype.UUID        `json:"owner_id"`
+	QuestID         pgtype.UUID        `json:"quest_id"`
+	TemplateID      pgtype.UUID        `json:"template_id"`
+	TemplateName    string             `json:"template_name"`
+	TemplateVersion int64              `json:"template_version"`
+	TemplateInput   []byte             `json:"template_input"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
 type User struct {
 	ID              pgtype.UUID        `json:"id"`
 	Email           string             `json:"email"`
@@ -1047,6 +1127,16 @@ type UserSetting struct {
 	Version     int64              `json:"version"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WeeklyMetric struct {
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	WeekStart         pgtype.Date        `json:"week_start"`
+	Timezone          string             `json:"timezone"`
+	SourceRevision    int64              `json:"source_revision"`
+	ProjectionVersion string             `json:"projection_version"`
+	ComputedAt        pgtype.Timestamptz `json:"computed_at"`
+	Payload           []byte             `json:"payload"`
 }
 
 type WeeklyReview struct {

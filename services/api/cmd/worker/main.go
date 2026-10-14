@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/analytics"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/challenges"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/seasons"
 	"log/slog"
@@ -60,6 +61,14 @@ func main() {
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	go calendar.NewService(pool, clock, quests.NewService(pool, clock).WithObserver(goals.NewService(pool, clock).QuestChanged).WithProgression(rewardService)).Run(ctx, logger)
 	handlers := sessions.MailHandlers(mailer)
+	analyticsService := analytics.NewService(pool, clock).WithRecords(characterService)
+	if err := analyticsService.StartReportSchedule(ctx); err != nil {
+		logger.Error("report_schedule_failed")
+		os.Exit(1)
+	}
+	for kind, handler := range analyticsService.Handlers() {
+		handlers[kind] = handler
+	}
 	challengeService := challenges.NewService(pool, clock).WithProgression(rewardService)
 	for kind, handler := range seasons.NewService(pool, clock).WithChallenges(challengeService).Handlers() {
 		handlers[kind] = handler

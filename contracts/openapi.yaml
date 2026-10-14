@@ -6,6 +6,315 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/analytics/reports/preview:
+    post:
+      operationId: previewAnalyticsReport
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsReportInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsReportPreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics/reports:
+    get:
+      operationId: listAnalyticsReports
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsReportPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: saveAnalyticsReport
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsReportSave"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsReport"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics/reports/{id}:
+    get:
+      operationId: getAnalyticsReport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsReport"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics/balance:
+    get:
+      operationId: getAnalyticsBalance
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsBalance"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics/targets/{area_id}:
+    put:
+      operationId: setAnalyticsTarget
+      parameters:
+        - name: area_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatchSingleton"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsTargetInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsTarget"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics/templates:
+    get:
+      operationId: getAnalyticsTemplateSamples
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsTemplateSamples"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics:
+    get:
+      operationId: getAnalytics
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsView"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics/rebuild:
+    post:
+      operationId: rebuildAnalytics
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsRange"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsView"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/recovery/status:
     get:
       operationId: getRecoveryStatus
@@ -8465,6 +8774,1033 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    AnalyticsReportInput:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - starts_on
+        - timezone
+      properties:
+        kind:
+          type: string
+          enum:
+            - week
+            - month
+        starts_on:
+          type: string
+          format: date
+        timezone:
+          type: string
+    AnalyticsComparison:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - unit
+        - current
+        - current_observed
+        - previous
+        - delta
+        - percent
+      properties:
+        metric:
+          type: string
+        unit:
+          type: string
+        current:
+          type: number
+        current_observed:
+          type: boolean
+        previous:
+          anyOf:
+            - type: number
+            - type: "null"
+        delta:
+          anyOf:
+            - type: number
+            - type: "null"
+        percent:
+          anyOf:
+            - type: number
+            - type: "null"
+    AnalyticsReportSnapshot:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - starts_on
+        - timezone
+        - from
+        - to
+        - previous_range
+        - version
+        - score_version
+        - source_revision
+        - computed_at
+        - observed_from
+        - current_observed
+        - previous_observed
+        - comparisons
+        - text
+        - days
+        - previous_days
+        - balance
+        - records
+        - obligations
+        - frequent_reason
+        - next_step
+      properties:
+        kind:
+          type: string
+          enum:
+            - week
+            - month
+        starts_on:
+          type: string
+        timezone:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        previous_range:
+          $ref: "#/components/schemas/AnalyticsRange"
+        version:
+          type: string
+        score_version:
+          type: string
+        source_revision:
+          type: integer
+        computed_at:
+          type: string
+        observed_from:
+          type: string
+        current_observed:
+          type: boolean
+        previous_observed:
+          type: boolean
+        comparisons:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsComparison"
+        text:
+          type: string
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDay"
+        previous_days:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDay"
+        balance:
+          $ref: "#/components/schemas/AnalyticsBalance"
+        records:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterRecord"
+        obligations:
+          type: object
+          additionalProperties: false
+          required:
+            - planned
+            - completed
+            - habit_due
+            - habit_success
+          properties:
+            planned:
+              type: integer
+            completed:
+              type: integer
+            habit_due:
+              type: integer
+            habit_success:
+              type: integer
+        frequent_reason:
+          anyOf:
+            - type: object
+              additionalProperties: false
+              required:
+                - text
+                - count
+                - sources
+              properties:
+                text:
+                  type: string
+                count:
+                  type: integer
+                sources:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - id
+                      - version
+                      - at
+                      - url
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      version:
+                        type: integer
+                      at:
+                        type: string
+                      url:
+                        type: string
+            - type: "null"
+        next_step:
+          type: string
+    AnalyticsReportPreview:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - expires_at
+        - snapshot
+      properties:
+        id:
+          type: string
+        expires_at:
+          type: string
+        snapshot:
+          $ref: "#/components/schemas/AnalyticsReportSnapshot"
+    AnalyticsReportSave:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - preview_id
+        - confirm
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        preview_id:
+          type: string
+          format: uuid
+        confirm:
+          type: boolean
+    AnalyticsReport:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - revision
+        - automatic
+        - created_at
+        - snapshot
+      properties:
+        id:
+          type: string
+        revision:
+          type: integer
+        automatic:
+          type: boolean
+        created_at:
+          type: string
+        snapshot:
+          $ref: "#/components/schemas/AnalyticsReportSnapshot"
+    AnalyticsReportBrief:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - id
+        - kind
+        - timezone
+        - revision
+        - automatic
+        - created_at
+        - text
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+          enum:
+            - week
+            - month
+        timezone:
+          type: string
+        revision:
+          type: integer
+        automatic:
+          type: boolean
+        created_at:
+          type: string
+        text:
+          type: string
+    AnalyticsReportPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsReportBrief"
+        next:
+          type: string
+    AnalyticsTargetInput:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - metric
+        - target
+        - confirm
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        metric:
+          type: string
+          enum:
+            - tasks
+            - focus_minutes
+            - habit_norms
+        target:
+          type: number
+          minimum: 0
+          maximum: 1000000
+          multipleOf: 0.001
+        confirm:
+          type: boolean
+    AnalyticsTarget:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - area_id
+        - metric
+        - target
+        - version
+        - updated_at
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        area_id:
+          type: string
+        metric:
+          type: string
+          enum:
+            - tasks
+            - focus_minutes
+            - habit_norms
+        target:
+          type: number
+        version:
+          type: integer
+        updated_at:
+          type: string
+    AnalyticsBalanceAxis:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - archived
+        - metric
+        - unit
+        - target
+        - actual
+        - percent
+        - version
+        - sources
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        archived:
+          type: boolean
+        metric:
+          type: string
+          enum:
+            - tasks
+            - focus_minutes
+            - habit_norms
+        unit:
+          type: string
+        target:
+          anyOf:
+            - type: number
+            - type: "null"
+        actual:
+          anyOf:
+            - type: number
+            - type: "null"
+        percent:
+          anyOf:
+            - type: number
+            - type: "null"
+        version:
+          type: integer
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsSource"
+    AnalyticsBalance:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - timezone
+        - computed_at
+        - stale
+        - source_revision
+        - projected_revision
+        - axes
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        timezone:
+          type: string
+        computed_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        stale:
+          type: boolean
+        source_revision:
+          type: integer
+        projected_revision:
+          type: integer
+        axes:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsBalanceAxis"
+    AnalyticsTaskTime:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - url
+        - estimated_minutes
+        - actual_seconds
+        - focus_seconds
+        - manual_minutes
+        - mode
+        - confirmed_sessions
+        - completed_at
+        - template_id
+        - template_name
+        - template_version
+        - area_id
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        estimated_minutes:
+          anyOf:
+            - type: integer
+            - type: "null"
+        actual_seconds:
+          anyOf:
+            - type: integer
+            - type: "null"
+        focus_seconds:
+          type: integer
+        manual_minutes:
+          anyOf:
+            - type: integer
+            - type: "null"
+        mode:
+          type: string
+        confirmed_sessions:
+          type: integer
+        completed_at:
+          type: string
+        template_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        template_name:
+          anyOf:
+            - type: string
+            - type: "null"
+        template_version:
+          anyOf:
+            - type: integer
+            - type: "null"
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
+    AnalyticsTemplateSample:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - version
+        - count
+        - average_estimated_minutes
+        - average_actual_seconds
+        - factor
+        - sufficient
+        - quest_ids
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+        count:
+          type: integer
+        average_estimated_minutes:
+          anyOf:
+            - type: number
+            - type: "null"
+        average_actual_seconds:
+          anyOf:
+            - type: number
+            - type: "null"
+        factor:
+          anyOf:
+            - type: number
+            - type: "null"
+        sufficient:
+          type: boolean
+        quest_ids:
+          type: array
+          items:
+            type: string
+    AnalyticsTemplateSamples:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - timezone
+        - computed_at
+        - items
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        timezone:
+          type: string
+        computed_at:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsTemplateSample"
+    AnalyticsRollingScore:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - score
+        - active_days
+        - task_obligations
+        - habit_obligations
+        - dates
+        - state
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        score:
+          anyOf:
+            - type: integer
+            - type: "null"
+        active_days:
+          type: integer
+        task_obligations:
+          type: integer
+        habit_obligations:
+          type: integer
+        dates:
+          type: array
+          items:
+            type: string
+        state:
+          type: string
+    AnalyticsScores:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - state
+        - closed
+        - t
+        - h
+        - r
+        - daily
+        - discipline_day
+        - discipline
+      properties:
+        version:
+          type: string
+        state:
+          type: string
+        closed:
+          type: boolean
+        t:
+          anyOf:
+            - type: number
+            - type: "null"
+        h:
+          anyOf:
+            - type: number
+            - type: "null"
+        r:
+          anyOf:
+            - type: number
+            - type: "null"
+        daily:
+          anyOf:
+            - type: integer
+            - type: "null"
+        discipline_day:
+          anyOf:
+            - type: number
+            - type: "null"
+        discipline:
+          $ref: "#/components/schemas/AnalyticsRollingScore"
+    AnalyticsDefinition:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - numerator
+        - denominator
+        - basis
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        numerator:
+          type: string
+        denominator:
+          type: string
+        basis:
+          type: string
+    AnalyticsPlanEvidence:
+      type: object
+      additionalProperties: false
+      required:
+        - confirmed
+        - timezone
+        - version
+        - input
+        - snapshot
+      properties:
+        confirmed:
+          type: boolean
+        timezone:
+          type: string
+        version:
+          type: integer
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        snapshot:
+          anyOf:
+            - $ref: "#/components/schemas/PlanSnapshot"
+            - type: "null"
+    AnalyticsHabitOutcome:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - period_id
+        - name
+        - unit
+        - url
+        - timezone
+        - start
+        - end
+        - amount
+        - target
+        - excluded
+        - closed
+        - area_id
+      properties:
+        id:
+          type: string
+        period_id:
+          type: string
+        name:
+          type: string
+        unit:
+          type: string
+        url:
+          type: string
+        timezone:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+        amount:
+          type: number
+        target:
+          type: number
+        excluded:
+          type: boolean
+        closed:
+          type: boolean
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
+    AnalyticsRange:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+    AnalyticsSource:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - id
+        - name
+        - url
+        - at
+        - value
+        - unit
+        - area_id
+        - version
+        - date
+        - qualifier
+      properties:
+        kind:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        at:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        version:
+          type: integer
+        date:
+          type: string
+        qualifier:
+          type: string
+    AnalyticsDay:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - completed
+        - focus_seconds
+        - xp_delta
+        - coins_delta
+        - sources
+        - planned
+        - planned_completed
+        - planned_failed
+        - planned_skipped
+        - planned_pending
+        - on_time
+        - late
+        - no_deadline
+        - failed
+        - skipped
+        - postponed
+        - postponement_events
+        - habit_obligations
+        - habit_successes
+        - habit_missed
+        - habit_excluded
+        - goals_achieved
+        - goals_not_achieved
+        - goals_cancelled
+        - plan
+        - task_weight_total
+        - task_weight_completed
+        - habits_complete
+        - habits
+        - scores
+        - estimated_tasks
+        - actual_known_tasks
+        - comparable_tasks
+        - comparable_estimated_seconds
+        - comparable_actual_seconds
+        - task_times
+      properties:
+        date:
+          type: string
+        completed:
+          type: integer
+        focus_seconds:
+          type: integer
+        xp_delta:
+          type: integer
+        coins_delta:
+          type: integer
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsSource"
+        planned:
+          type: integer
+        planned_completed:
+          type: integer
+        planned_failed:
+          type: integer
+        planned_skipped:
+          type: integer
+        planned_pending:
+          type: integer
+        on_time:
+          type: integer
+        late:
+          type: integer
+        no_deadline:
+          type: integer
+        failed:
+          type: integer
+        skipped:
+          type: integer
+        postponed:
+          type: integer
+        postponement_events:
+          type: integer
+        habit_obligations:
+          type: integer
+        habit_successes:
+          type: integer
+        habit_missed:
+          type: integer
+        habit_excluded:
+          type: integer
+        goals_achieved:
+          type: integer
+        goals_not_achieved:
+          type: integer
+        goals_cancelled:
+          type: integer
+        plan:
+          anyOf:
+            - $ref: "#/components/schemas/AnalyticsPlanEvidence"
+            - type: "null"
+        task_weight_total:
+          type: integer
+        task_weight_completed:
+          type: integer
+        habits_complete:
+          type: boolean
+        habits:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsHabitOutcome"
+        scores:
+          $ref: "#/components/schemas/AnalyticsScores"
+        estimated_tasks:
+          type: integer
+        actual_known_tasks:
+          type: integer
+        comparable_tasks:
+          type: integer
+        comparable_estimated_seconds:
+          type: integer
+        comparable_actual_seconds:
+          type: integer
+        task_times:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsTaskTime"
+    AnalyticsWeek:
+      type: object
+      additionalProperties: false
+      required:
+        - start
+        - end
+        - days
+        - completed
+        - focus_seconds
+        - xp_delta
+        - coins_delta
+        - planned
+        - planned_completed
+        - planned_failed
+        - planned_skipped
+        - planned_pending
+        - on_time
+        - late
+        - no_deadline
+        - failed
+        - skipped
+        - postponed
+        - postponement_events
+        - habit_obligations
+        - habit_successes
+        - habit_missed
+        - habit_excluded
+        - goals_achieved
+        - goals_not_achieved
+        - goals_cancelled
+        - estimated_tasks
+        - actual_known_tasks
+        - comparable_tasks
+        - comparable_estimated_seconds
+        - comparable_actual_seconds
+      properties:
+        start:
+          type: string
+        end:
+          type: string
+        days:
+          type: integer
+        completed:
+          type: integer
+        focus_seconds:
+          type: integer
+        xp_delta:
+          type: integer
+        coins_delta:
+          type: integer
+        planned:
+          type: integer
+        planned_completed:
+          type: integer
+        planned_failed:
+          type: integer
+        planned_skipped:
+          type: integer
+        planned_pending:
+          type: integer
+        on_time:
+          type: integer
+        late:
+          type: integer
+        no_deadline:
+          type: integer
+        failed:
+          type: integer
+        skipped:
+          type: integer
+        postponed:
+          type: integer
+        postponement_events:
+          type: integer
+        habit_obligations:
+          type: integer
+        habit_successes:
+          type: integer
+        habit_missed:
+          type: integer
+        habit_excluded:
+          type: integer
+        goals_achieved:
+          type: integer
+        goals_not_achieved:
+          type: integer
+        goals_cancelled:
+          type: integer
+        estimated_tasks:
+          type: integer
+        actual_known_tasks:
+          type: integer
+        comparable_tasks:
+          type: integer
+        comparable_estimated_seconds:
+          type: integer
+        comparable_actual_seconds:
+          type: integer
+    AnalyticsView:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - timezone
+        - projection_version
+        - source_revision
+        - projected_revision
+        - computed_at
+        - stale
+        - days
+        - weeks
+        - definitions
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        timezone:
+          type: string
+        projection_version:
+          type: string
+        source_revision:
+          type: integer
+        projected_revision:
+          type: integer
+        computed_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        stale:
+          type: boolean
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDay"
+        weeks:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsWeek"
+        definitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDefinition"
     RecoveryHabit:
       type: object
       additionalProperties: false
