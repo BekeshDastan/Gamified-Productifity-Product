@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/seasons"
 	"io"
 	"log/slog"
 	"net"
@@ -102,6 +103,7 @@ func TestBrowserAuth(t *testing.T) {
 	calendarService.Mount(router, sessions.Protect)
 	habits.NewService(pool, domainClock).WithProgression(rewardService).Mount(router, sessions.Protect)
 	challenges.NewService(pool, domainClock).WithSchedulingClock(clock).WithProgression(rewardService).WithQuests(questService).Mount(router, sessions.Protect)
+	seasons.NewService(pool, domainClock).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, domainClock, questService, calendarService)
 	planService.Mount(router, sessions.Protect)
 	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)

@@ -6,6 +6,149 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/seasons:
+    get:
+      operationId: listSeasons
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SeasonPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createSeason
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSeason"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PersonalSeason"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}:
+    get:
+      operationId: getSeason
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PersonalSeason"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}/activate:
+    post:
+      operationId: activateSeason
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeasonConfirmation"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PersonalSeason"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/challenges/runs/{id}/close:
     post:
       operationId: closeChallenge
@@ -7836,6 +7979,129 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    CreateSeason:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - theme
+        - desired_result
+        - starts_on
+        - ends_on
+        - primary
+        - operation_id
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        theme:
+          type: string
+          maxLength: 200
+        desired_result:
+          type: string
+          maxLength: 2000
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+        primary:
+          type: boolean
+        operation_id:
+          type: string
+          format: uuid
+    PersonalSeason:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - theme
+        - desired_result
+        - starts_on
+        - ends_on
+        - primary
+        - id
+        - timezone
+        - state
+        - version
+        - activated_at
+        - closed_at
+        - final_snapshot
+        - archived_at
+        - created_at
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        theme:
+          type: string
+          maxLength: 200
+        desired_result:
+          type: string
+          maxLength: 2000
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+        primary:
+          type: boolean
+        id:
+          type: string
+          format: uuid
+        timezone:
+          type: string
+        state:
+          type: string
+          enum:
+            - planned
+            - active
+            - completed
+            - cancelled
+        version:
+          type: integer
+        activated_at:
+          type:
+            - string
+            - "null"
+        closed_at:
+          type:
+            - string
+            - "null"
+        final_snapshot:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+        archived_at:
+          type:
+            - string
+            - "null"
+        created_at:
+          type: string
+    SeasonPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PersonalSeason"
+        next:
+          type: string
+    SeasonConfirmation:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+      properties:
+        confirm:
+          type: boolean
     ChallengeCloseInput:
       type: object
       additionalProperties: false

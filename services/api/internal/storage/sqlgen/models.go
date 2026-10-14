@@ -703,6 +703,35 @@ type OutboxEvent struct {
 	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
 }
 
+type PersonalSeason struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ID            pgtype.UUID        `json:"id"`
+	Request       []byte             `json:"request"`
+	Title         string             `json:"title"`
+	Theme         string             `json:"theme"`
+	DesiredResult string             `json:"desired_result"`
+	StartsOn      pgtype.Date        `json:"starts_on"`
+	EndsOn        pgtype.Date        `json:"ends_on"`
+	Timezone      string             `json:"timezone"`
+	IsPrimary     bool               `json:"is_primary"`
+	State         string             `json:"state"`
+	Version       int64              `json:"version"`
+	ActivatedAt   pgtype.Timestamptz `json:"activated_at"`
+	ClosedAt      pgtype.Timestamptz `json:"closed_at"`
+	FinalSnapshot []byte             `json:"final_snapshot"`
+	ArchivedAt    pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
+type PersonalSeasonEvent struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	SeasonID  pgtype.UUID        `json:"season_id"`
+	Version   int64              `json:"version"`
+	Kind      string             `json:"kind"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type PlanChange struct {
 	ID          int64              `json:"id"`
 	OwnerID     pgtype.UUID        `json:"owner_id"`
