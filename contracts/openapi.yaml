@@ -6,6 +6,57 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/navigator/goals/{id}/first-action:
+    post:
+      operationId: addGoalFirstAction
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalFirstActionInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/GoalFirstActionResult"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/plans/deadline-radar:
     get:
       operationId: getDeadlineRadar
@@ -181,6 +232,13 @@ paths:
           required: true
           schema:
             type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 200
       requestBody:
         required: true
         content:
@@ -229,6 +287,13 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 200
       requestBody:
         required: true
         content:
@@ -9050,6 +9115,28 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    GoalFirstActionInput:
+      type: object
+      additionalProperties: false
+      required:
+        - task
+        - confirm
+      properties:
+        task:
+          $ref: "#/components/schemas/QuestInput"
+        confirm:
+          type: boolean
+    GoalFirstActionResult:
+      type: object
+      additionalProperties: false
+      required:
+        - goal
+        - task
+      properties:
+        goal:
+          $ref: "#/components/schemas/GoalDTO"
+        task:
+          $ref: "#/components/schemas/QuestDTO"
     DeadlineRadarTask:
       type: object
       additionalProperties: false

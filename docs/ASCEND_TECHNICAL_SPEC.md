@@ -2102,7 +2102,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Просроченное и «меньше суток» не смешиваются; нет выдуманных вероятностей провала.
   - **КОММИТ СЕЙЧАС:** `feat(planning-ui): display deadline buckets and capacity warnings`
 
-- [ ] **C150. Навигатор цели**
+- [x] **C150. Навигатор цели**
   - **Сделать:** Сделать пошаговую форму выбора результата, этапов и первого действия на основе каталога.
   - **Проверить:** Любой созданный шаг виден в preview; сеть к AI-провайдерам не используется.
   - **КОММИТ СЕЙЧАС:** `feat(coach): guide goal breakdown through editable structured templates`

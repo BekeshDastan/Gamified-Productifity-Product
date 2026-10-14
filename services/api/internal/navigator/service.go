@@ -9,6 +9,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,10 +23,11 @@ type Service struct {
 	goals     *goals.Service
 	habits    *habits.Service
 	analytics *analytics.Service
+	quests    *quests.Service
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock, p *planning.Service, g *goals.Service, h *habits.Service, a *analytics.Service) *Service {
-	return &Service{privateapi.New(pool, clock), p, g, h, a}
+	return &Service{Service: privateapi.New(pool, clock), plans: p, goals: g, habits: h, analytics: a}
 }
 
 type Setting struct {
@@ -167,6 +169,7 @@ func actionURL(c Candidate) string {
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		s.mountGoalAction(r)
 		r.Get("/api/v1/navigator", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) { return s.page(ctx, tx, owner) })
 			s.Reply(w, r, out, e)
@@ -196,56 +199,60 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 			privateapi.Decode(s.Service, w, r, func(in struct {
 				Action string `json:"action"`
 				Hours  int    `json:"hours"`
-			}) (any, error) { return s.Mutate(r, in, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
-				id := chi.URLParam(r, "id")
-				if !privateapi.UUID(id) {
-					return nil, privateapi.Problem(404, "NOT_FOUND", "Подсказка не найдена")
-				}
-				var version int64
-				e := tx.QueryRow(ctx, `SELECT version FROM navigator_cards WHERE owner_id=$1 AND id=$2`, owner, id).Scan(&version)
-				if errors.Is(e, pgx.ErrNoRows) {
-					return nil, privateapi.Problem(404, "NOT_FOUND", "Подсказка не найдена")
-				}
-				if e != nil {
-					return nil, e
-				}
-				if e := privateapi.MatchVersion(r, version); e != nil {
-					return nil, e
-				}
-				if in.Action != "hide" && in.Action != "snooze" {
-					return nil, privateapi.Invalid("Выберите скрытие или отсрочку")
-				}
-				var until *time.Time
-				if in.Action == "snooze" {
-					if in.Hours != 24 && in.Hours != 168 {
-						return nil, privateapi.Invalid("Отложить на день или неделю")
+			}) (any, error) {
+				return s.Mutate(r, in, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
+					id := chi.URLParam(r, "id")
+					if !privateapi.UUID(id) {
+						return nil, privateapi.Problem(404, "NOT_FOUND", "Подсказка не найдена")
 					}
-					at := s.Clock.Now().Add(time.Duration(in.Hours) * time.Hour)
-					until = &at
-				}
-				_, e = tx.Exec(ctx, `UPDATE navigator_cards SET hidden=$3,snoozed_until=$4,version=version+1 WHERE owner_id=$1 AND id=$2`, owner, id, in.Action == "hide", until)
-				return map[string]any{"id": id, "version": version + 1}, e
-			}) })
+					var version int64
+					e := tx.QueryRow(ctx, `SELECT version FROM navigator_cards WHERE owner_id=$1 AND id=$2`, owner, id).Scan(&version)
+					if errors.Is(e, pgx.ErrNoRows) {
+						return nil, privateapi.Problem(404, "NOT_FOUND", "Подсказка не найдена")
+					}
+					if e != nil {
+						return nil, e
+					}
+					if e := privateapi.MatchVersion(r, version); e != nil {
+						return nil, e
+					}
+					if in.Action != "hide" && in.Action != "snooze" {
+						return nil, privateapi.Invalid("Выберите скрытие или отсрочку")
+					}
+					var until *time.Time
+					if in.Action == "snooze" {
+						if in.Hours != 24 && in.Hours != 168 {
+							return nil, privateapi.Invalid("Отложить на день или неделю")
+						}
+						at := s.Clock.Now().Add(time.Duration(in.Hours) * time.Hour)
+						until = &at
+					}
+					_, e = tx.Exec(ctx, `UPDATE navigator_cards SET hidden=$3,snoozed_until=$4,version=version+1 WHERE owner_id=$1 AND id=$2`, owner, id, in.Action == "hide", until)
+					return map[string]any{"id": id, "version": version + 1}, e
+				})
+			})
 		})
 		r.Post("/api/v1/navigator/task-view/{id}", func(w http.ResponseWriter, r *http.Request) {
 			privateapi.Decode(s.Service, w, r, func(in struct {
 				Visible bool `json:"visible"`
-			}) (any, error) { return s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
-				id := chi.URLParam(r, "id")
-				if !privateapi.UUID(id) {
-					return nil, privateapi.Invalid("Выберите задачу")
-				}
-				var own bool
-				e := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM quests WHERE owner_id=$1 AND id=$2 AND archived_at IS NULL AND status NOT IN('completed','failed','skipped'))`, owner, id).Scan(&own)
-				if e != nil {
-					return nil, e
-				}
-				if !own {
-					return nil, privateapi.Problem(404, "NOT_FOUND", "Задача недоступна")
-				}
-				_, e = tx.Exec(ctx, `INSERT INTO navigator_task_views(owner_id,quest_id,last_seen,visible) VALUES($1,$2,$3,$4) ON CONFLICT(owner_id,quest_id) DO UPDATE SET visible_seconds=navigator_task_views.visible_seconds+CASE WHEN navigator_task_views.visible AND excluded.visible AND excluded.last_seen-navigator_task_views.last_seen BETWEEN interval '0 seconds' AND interval '45 seconds' THEN LEAST(30,EXTRACT(EPOCH FROM excluded.last_seen-navigator_task_views.last_seen)::integer) ELSE 0 END,last_seen=excluded.last_seen,visible=excluded.visible`, owner, id, s.Clock.Now(), in.Visible)
-				return map[string]bool{"accepted": e == nil}, e
-			}) })
+			}) (any, error) {
+				return s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
+					id := chi.URLParam(r, "id")
+					if !privateapi.UUID(id) {
+						return nil, privateapi.Invalid("Выберите задачу")
+					}
+					var own bool
+					e := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM quests WHERE owner_id=$1 AND id=$2 AND archived_at IS NULL AND status NOT IN('completed','failed','skipped'))`, owner, id).Scan(&own)
+					if e != nil {
+						return nil, e
+					}
+					if !own {
+						return nil, privateapi.Problem(404, "NOT_FOUND", "Задача недоступна")
+					}
+					_, e = tx.Exec(ctx, `INSERT INTO navigator_task_views(owner_id,quest_id,last_seen,visible) VALUES($1,$2,$3,$4) ON CONFLICT(owner_id,quest_id) DO UPDATE SET visible_seconds=navigator_task_views.visible_seconds+CASE WHEN navigator_task_views.visible AND excluded.visible AND excluded.last_seen-navigator_task_views.last_seen BETWEEN interval '0 seconds' AND interval '45 seconds' THEN LEAST(30,EXTRACT(EPOCH FROM excluded.last_seen-navigator_task_views.last_seen)::integer) ELSE 0 END,last_seen=excluded.last_seen,visible=excluded.visible`, owner, id, s.Clock.Now(), in.Visible)
+					return map[string]bool{"accepted": e == nil}, e
+				})
+			})
 		})
 	})
 }

@@ -1,5 +1,6 @@
 import { NavigatorCards } from "@/components/navigator";
 import { SmartSchedule } from "@/components/smart-schedule";
+import { GoalWizard } from "@/components/goal-wizard";
 export default function NavigatorPage() {
   return (
     <>
@@ -7,6 +8,7 @@ export default function NavigatorPage() {
       <p className="page-intro">Понятные предложения по вашим записям. Решение остаётся за вами.</p>
       <NavigatorCards />
       <SmartSchedule />
+      <GoalWizard />
     </>
   );
 }

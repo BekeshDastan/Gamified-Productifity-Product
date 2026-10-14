@@ -83,6 +83,32 @@ test("navigator explanations opt-out and private sources work without external n
   await page.getByText("Настройки правил R01–R15", { exact: true }).click();
   await page.getByRole("button", { name: "Включить правило R14", exact: true }).click();
   await expect(page.getByRole("heading", { name: "R14 · Подсказка", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Личный проект", exact: true }).click();
+  await page.getByLabel("Название цели", { exact: true }).fill("Мой проверяемый проект");
+  await page.getByLabel("Начало плана", { exact: true }).fill("2026-10-13");
+  await page.getByRole("button", { name: "Далее по шагам цели", exact: true }).click();
+  await page.getByLabel("Этап 1", { exact: true }).fill("Описать небольшой результат");
+  await page.getByRole("button", { name: "Далее по шагам цели", exact: true }).click();
+  await page.getByLabel("Задача 1", { exact: true }).fill("Записать первый критерий");
+  await page.getByLabel("Оценка задачи 1, минут", { exact: true }).fill("15");
+  await page.getByRole("button", { name: "Показать план и даты", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Предпросмотр плана", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Этап 1: Описать небольшой результат", { exact: false }),
+  ).toBeVisible();
+  const beforeGoals = (await (await page.request.get("/api/v1/goals")).json()).data;
+  expect(beforeGoals.total).toBe(0);
+  const create = page.getByRole("button", { name: "Создать цель и задачи", exact: true });
+  await expect(create).toBeDisabled();
+  await page.getByLabel("Я проверил даты, задачи и нагрузку", { exact: true }).check();
+  await create.click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Цель и показанные шаги созданы" }),
+  ).toBeVisible();
+  const afterGoals = (await (await page.request.get("/api/v1/goals")).json()).data;
+  expect(afterGoals.total).toBe(1);
   await page.setViewportSize({ width: 390, height: 844 });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

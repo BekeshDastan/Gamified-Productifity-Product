@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/v1/navigator/goals/{id}/first-action": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["addGoalFirstAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plans/deadline-radar": {
         parameters: {
             query?: never;
@@ -3083,6 +3099,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        GoalFirstActionInput: {
+            task: components["schemas"]["QuestInput"];
+            confirm: boolean;
+        };
+        GoalFirstActionResult: {
+            goal: components["schemas"]["GoalDTO"];
+            task: components["schemas"]["QuestDTO"];
+        };
         DeadlineRadarTask: {
             id: string;
             title: string;
@@ -6002,6 +6026,45 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    addGoalFirstAction: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalFirstActionInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["GoalFirstActionResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
     getDeadlineRadar: {
         parameters: {
             query?: never;
@@ -6138,6 +6201,7 @@ export interface operations {
                 Origin: components["parameters"]["Origin"];
                 /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
                 "If-Match": components["parameters"]["IfMatchSingleton"];
+                "Idempotency-Key": string;
             };
             path: {
                 id: string;
@@ -6178,6 +6242,7 @@ export interface operations {
                 "X-CSRF-Token": components["parameters"]["CSRF"];
                 Origin: components["parameters"]["Origin"];
                 "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
             };
             path: {
                 id: string;

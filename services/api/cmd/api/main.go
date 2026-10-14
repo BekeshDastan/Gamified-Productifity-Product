@@ -105,7 +105,7 @@ func main() {
 	planService.Mount(router, sessions.Protect)
 	analyticsService := analytics.NewService(pool, platform.RealClock{}).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
-	navigator.NewService(pool, platform.RealClock{}, planService, goalService, habitService, analyticsService).Mount(router, sessions.Protect)
+	navigator.NewService(pool, platform.RealClock{}, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, platform.RealClock{}).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	server := &http.Server{
 		Addr:              cfg.Address,
