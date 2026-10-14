@@ -139,7 +139,7 @@ export function Quests({ id }: { id?: string }) {
             key={current.id + revision}
             current={current}
             labels={labels.data}
-            onSaved={() => void query.refetch()}
+            onSaved={() => query.refetch()}
           />
           <QuestFocusTime questId={current.id} />
           <QuickFocusStart key={current.id} quest={current} />
@@ -327,7 +327,7 @@ function QuestForm({
 }: {
   current?: Quest;
   labels: Labels;
-  onSaved: (q: Quest) => void;
+  onSaved: (q: Quest) => void | Promise<unknown>;
   initialParent?: string | null;
 }) {
   const cache = useQueryClient();
@@ -366,7 +366,7 @@ function QuestForm({
         record,
       );
       if (current) setRecord(q);
-      onSaved(q);
+      await onSaved(q);
       setSaved(true);
       void cache.invalidateQueries({ queryKey: ["account"] });
       return current ? formValues(q) : formValues(emptyQuest);

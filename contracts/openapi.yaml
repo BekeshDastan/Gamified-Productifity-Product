@@ -6,6 +6,377 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/analytics/future-self:
+    get:
+      operationId: getFutureSelf
+      parameters:
+        - name: weeks
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 104
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/FutureSelf"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/navigator/goals/{id}/first-action:
+    post:
+      operationId: addGoalFirstAction
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalFirstActionInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/GoalFirstActionResult"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/plans/deadline-radar:
+    get:
+      operationId: getDeadlineRadar
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DeadlineRadar"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/plans/schedule/preview:
+    post:
+      operationId: previewSmartSchedule
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SchedulePreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/plans/schedule/apply:
+    post:
+      operationId: applySmartSchedule
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleApply"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ScheduleResult"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/navigator:
+    get:
+      operationId: getNavigator
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NavigatorPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+  /api/v1/navigator/rules/{id}:
+    put:
+      operationId: setNavigatorRule
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NavigatorSetting"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatchSingleton"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NavigatorSetting"
+  /api/v1/navigator/cards/{id}/decision:
+    post:
+      operationId: decideNavigatorCard
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NavigatorDecisionResult"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NavigatorDecision"
+  /api/v1/navigator/task-view/{id}:
+    post:
+      operationId: trackNavigatorTaskView
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NavigatorAccepted"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NavigatorTaskView"
   /api/v1/analytics/reports/preview:
     post:
       operationId: previewAnalyticsReport
@@ -8774,6 +9145,627 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    FutureSelfWeek:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - observed
+        - focus_seconds
+        - sources
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        observed:
+          type: boolean
+        focus_seconds:
+          anyOf:
+            - type: integer
+            - type: "null"
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsSource"
+    FutureSelf:
+      type: object
+      additionalProperties: false
+      required:
+        - timezone
+        - computed_at
+        - horizon_weeks
+        - observed_weeks
+        - available
+        - average_weekly_hours
+        - projected_hours
+        - weeks
+        - text
+      properties:
+        timezone:
+          type: string
+        computed_at:
+          type: string
+        horizon_weeks:
+          type: integer
+        observed_weeks:
+          type: integer
+        available:
+          type: boolean
+        average_weekly_hours:
+          anyOf:
+            - type: number
+            - type: "null"
+        projected_hours:
+          anyOf:
+            - type: number
+            - type: "null"
+        weeks:
+          type: array
+          items:
+            $ref: "#/components/schemas/FutureSelfWeek"
+        text:
+          type: string
+    GoalFirstActionInput:
+      type: object
+      additionalProperties: false
+      required:
+        - task
+        - confirm
+      properties:
+        task:
+          $ref: "#/components/schemas/QuestInput"
+        confirm:
+          type: boolean
+    GoalFirstActionResult:
+      type: object
+      additionalProperties: false
+      required:
+        - goal
+        - task
+      properties:
+        goal:
+          $ref: "#/components/schemas/GoalDTO"
+        task:
+          $ref: "#/components/schemas/QuestDTO"
+    DeadlineRadarTask:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - version
+        - deadline
+        - estimated_minutes
+        - url
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        version:
+          type: integer
+        deadline:
+          type: string
+          format: date-time
+        estimated_minutes:
+          anyOf:
+            - type: integer
+            - type: "null"
+        url:
+          type: string
+    DeadlineRadarBucket:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - label
+        - before
+        - items
+        - required_minutes
+        - cumulative_minutes
+        - free_minutes
+        - deficit_minutes
+        - unknown_estimates
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        before:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeadlineRadarTask"
+        required_minutes:
+          type: integer
+        cumulative_minutes:
+          type: integer
+        free_minutes:
+          type: integer
+        deficit_minutes:
+          type: integer
+        unknown_estimates:
+          type: integer
+    DeadlineRadar:
+      type: object
+      additionalProperties: false
+      required:
+        - timezone
+        - computed_at
+        - buckets
+        - notice
+      properties:
+        timezone:
+          type: string
+        computed_at:
+          type: string
+          format: date-time
+        buckets:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeadlineRadarBucket"
+        notice:
+          type: string
+    ScheduleTaskOption:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - allow_split
+        - five_minute_start
+      properties:
+        id:
+          type: string
+        allow_split:
+          type: boolean
+        five_minute_start:
+          type: boolean
+    ScheduleInput:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - tasks
+        - breaks
+        - between_minutes
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleTaskOption"
+        breaks:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanInterval"
+        between_minutes:
+          type: integer
+    ScheduleInputVersion:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - id
+        - version
+      properties:
+        kind:
+          type: string
+        id:
+          type: string
+        version:
+          type: integer
+    ScheduleTask:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - version
+        - title
+        - minutes
+        - priority
+        - created_at
+        - deadline
+        - allow_split
+        - five_minute_start
+        - excluded_reason
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+        title:
+          type: string
+        minutes:
+          type: integer
+        priority:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        allow_split:
+          type: boolean
+        five_minute_start:
+          type: boolean
+        excluded_reason:
+          type: string
+    ScheduleDay:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - plan_version
+        - input
+        - timezone
+        - blocks
+      properties:
+        date:
+          type: string
+        plan_version:
+          type: integer
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        timezone:
+          type: string
+        blocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+    SchedulePlacement:
+      type: object
+      additionalProperties: false
+      required:
+        - task_id
+        - task_version
+        - title
+        - start
+        - end
+        - break_end
+        - minutes
+        - partial_start
+      properties:
+        task_id:
+          type: string
+        task_version:
+          type: integer
+        title:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        break_end:
+          type: string
+          format: date-time
+        minutes:
+          type: integer
+        partial_start:
+          type: boolean
+    ScheduleUnscheduled:
+      type: object
+      additionalProperties: false
+      required:
+        - task_id
+        - reason
+        - required_minutes
+        - free_minutes
+        - deficit_minutes
+      properties:
+        task_id:
+          type: string
+        reason:
+          type: string
+        required_minutes:
+          type: integer
+        free_minutes:
+          type: integer
+        deficit_minutes:
+          type: integer
+    SchedulePreview:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - input
+        - timezone
+        - created_at
+        - expires_at
+        - input_versions
+        - hash
+        - tasks
+        - days
+        - placements
+        - unscheduled
+        - warnings
+      properties:
+        id:
+          type: string
+        input:
+          $ref: "#/components/schemas/ScheduleInput"
+        timezone:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        input_versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleInputVersion"
+        hash:
+          type: string
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleTask"
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleDay"
+        placements:
+          type: array
+          items:
+            $ref: "#/components/schemas/SchedulePlacement"
+        unscheduled:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleUnscheduled"
+        warnings:
+          type: array
+          items:
+            type: string
+    ScheduleApply:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - preview_id
+        - confirm
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        preview_id:
+          type: string
+          format: uuid
+        confirm:
+          type: boolean
+    ScheduleResult:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - preview_id
+        - applied_at
+        - blocks
+        - plans
+      properties:
+        operation_id:
+          type: string
+        preview_id:
+          type: string
+        applied_at:
+          type: string
+          format: date-time
+        blocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/DayPlan"
+    NavigatorCondition:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - op
+        - value
+      properties:
+        metric:
+          type: string
+        op:
+          type: string
+          enum:
+            - gt
+            - gte
+            - eq
+            - lt
+        value:
+          type: number
+    NavigatorRule:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - version
+        - priority
+        - conditions
+        - template_key
+        - action_type
+        - cooldown_seconds
+        - enabled
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+        priority:
+          type: integer
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigatorCondition"
+        template_key:
+          type: string
+        action_type:
+          type: string
+        cooldown_seconds:
+          type: integer
+        enabled:
+          type: boolean
+    NavigatorEvidence:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - id
+        - version
+        - url
+      properties:
+        kind:
+          type: string
+        id:
+          type: string
+        version:
+          type: integer
+        url:
+          type: string
+    NavigatorFact:
+      type: object
+      additionalProperties: false
+      required:
+        - rule_id
+        - subject
+        - numbers
+        - sources
+      properties:
+        rule_id:
+          type: string
+        subject:
+          type: string
+        numbers:
+          type: object
+          additionalProperties:
+            type: number
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigatorEvidence"
+    NavigatorCard:
+      type: object
+      additionalProperties: false
+      required:
+        - rule
+        - fact
+        - id
+        - version
+        - created_at
+        - message
+        - action_url
+      properties:
+        rule:
+          $ref: "#/components/schemas/NavigatorRule"
+        fact:
+          $ref: "#/components/schemas/NavigatorFact"
+        id:
+          type: string
+        version:
+          type: integer
+        created_at:
+          type: string
+        message:
+          type: string
+        action_url:
+          type: string
+    NavigatorSetting:
+      type: object
+      additionalProperties: false
+      required:
+        - rule_id
+        - disabled
+        - version
+      properties:
+        rule_id:
+          type: string
+        disabled:
+          type: boolean
+        version:
+          type: integer
+    NavigatorPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - settings
+        - rules
+        - computed_at
+        - complete
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigatorCard"
+        settings:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigatorSetting"
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigatorRule"
+        computed_at:
+          type: string
+        complete:
+          type: boolean
+    NavigatorDecision:
+      type: object
+      additionalProperties: false
+      required:
+        - action
+        - hours
+      properties:
+        action:
+          type: string
+          enum:
+            - hide
+            - snooze
+        hours:
+          type: integer
+    NavigatorDecisionResult:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - version
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+    NavigatorTaskView:
+      type: object
+      additionalProperties: false
+      required:
+        - visible
+      properties:
+        visible:
+          type: boolean
+    NavigatorAccepted:
+      type: object
+      additionalProperties: false
+      required:
+        - accepted
+      properties:
+        accepted:
+          type: boolean
     AnalyticsReportInput:
       type: object
       additionalProperties: false

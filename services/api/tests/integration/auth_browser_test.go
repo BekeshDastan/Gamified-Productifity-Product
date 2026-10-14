@@ -28,6 +28,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/journal"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/navigator"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -111,6 +112,7 @@ func TestBrowserAuth(t *testing.T) {
 	planService.Mount(router, sessions.Protect)
 	analyticsService := analytics.NewService(pool, domainClock).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
+	navigator.NewService(pool, domainClock, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {

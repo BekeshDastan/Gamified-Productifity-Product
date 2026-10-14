@@ -1,4 +1,5 @@
 import { Analytics } from "@/components/analytics";
+import { FutureSelf } from "@/components/future-self";
 import { Suspense } from "react";
 export default function AnalyticsPage() {
   return (
@@ -12,6 +13,7 @@ export default function AnalyticsPage() {
       <Suspense fallback={<p role="status">Загружаем аналитику…</p>}>
         <Analytics />
       </Suspense>
+      <FutureSelf />
     </>
   );
 }

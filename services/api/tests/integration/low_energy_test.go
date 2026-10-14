@@ -72,6 +72,15 @@ func TestLowEnergyProtectsDeadlinesEventsAndOriginalScore(t *testing.T) {
 	if done.Result == nil || len(done.Result.QuestIDs) != 2 || len(done.Result.Snapshot.Items) != 3 || done.Result.Progress.Committed != 3 || done.Result.AvailableMinutes != 180 {
 		t.Fatal("original commitment rewritten", done)
 	}
+	energyAdvice := false
+	for _, card := range readNavigator(t, f.privateRequest(t, a, "GET", "/navigator", "", nil)).Items {
+		if card.Rule.ID == "R06" {
+			energyAdvice = card.Fact.Numbers["low_energy"] == 1 && card.ActionURL == "/app/seasons"
+		}
+	}
+	if !energyAdvice {
+		t.Fatal("explicit low energy not reflected in navigator")
+	}
 	var eventVersion int64
 	var cancelled bool
 	if e := f.pool.QueryRow(f.ctx, "SELECT version,cancelled FROM calendar_events WHERE owner_id=$1 AND id=$2", who.ID, event.ID).Scan(&eventVersion, &cancelled); e != nil {
