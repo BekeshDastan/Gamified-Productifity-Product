@@ -7,7 +7,9 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/seasons"
+	"sync"
 	"testing"
 	"time"
 )
@@ -53,6 +55,16 @@ func TestLowEnergyProtectsDeadlinesEventsAndOriginalScore(t *testing.T) {
 	}
 	apply := seasons.LowEnergyApply{Confirm: true, Reason: "Сегодня меньше энергии", OptionalIDs: []string{small.ID}}
 	applyPath := "/recovery/low-energy/" + v.ID + "/apply"
+	tooLarge := apply
+	tooLarge.OptionalIDs = []string{large.ID}
+	if r := f.privateRequest(t, a, "POST", applyPath, "", tooLarge); r.status != 422 {
+		t.Fatal("budget ignored", r.status)
+	}
+	protected := apply
+	protected.OptionalIDs = []string{urgent.ID}
+	if r := f.privateRequest(t, a, "POST", applyPath, "", protected); r.status != 422 {
+		t.Fatal("protected task treated as optional", r.status)
+	}
 	if r := f.privateRequest(t, b, "POST", applyPath, "", apply); r.status != 404 {
 		t.Fatal(r.status, string(r.body))
 	}
@@ -105,6 +117,17 @@ func TestLowEnergyStaleBusyDayExpiryAndUnknownEstimate(t *testing.T) {
 	if v.Candidates[0].Proposed || v.Candidates[0].Reason != "unknown_estimate" {
 		t.Fatal(v)
 	}
+	for _, bad := range []seasons.LowEnergyApply{
+		{Confirm: false, Reason: "Нет согласия", OptionalIDs: []string{}},
+		{Confirm: true, Reason: "", OptionalIDs: []string{}},
+		{Confirm: true, Reason: "bad\x00reason", OptionalIDs: []string{}},
+		{Confirm: true, Reason: "Повтор выбора", OptionalIDs: []string{q.ID, q.ID}, ConfirmUnknown: true},
+		{Confirm: true, Reason: "Чужой выбор", OptionalIDs: []string{"00000000-0000-4000-8000-000000000001"}},
+	} {
+		if r := f.privateRequest(t, a, "POST", path(v), "", bad); r.status != 422 {
+			t.Fatal("invalid choice accepted", r.status, string(r.body))
+		}
+	}
 	if r := f.privateRequest(t, a, "POST", path(v), "", in); r.status != 422 {
 		t.Fatal(r.status, string(r.body))
 	}
@@ -123,7 +146,82 @@ func TestLowEnergyStaleBusyDayExpiryAndUnknownEstimate(t *testing.T) {
 	}
 	v = preview()
 	readLowEnergy(t, f.privateRequest(t, a, "POST", path(v), "", in))
-	if r := f.privateRequest(t, a, "POST", "/recovery/low-energy/preview", "", seasons.LowEnergyInput{Date: "2026-10-11"}); r.status != 422 {
+	if r := f.privateRequest(t, a, "POST", "/recovery/low-energy/preview", "", seasons.LowEnergyInput{Date: "2026-10-11"}); r.status == 200 {
 		t.Fatal("past plan", r.status)
+	}
+}
+func TestLowEnergyFreezeTimezoneRollbackAndConcurrentApply(t *testing.T) {
+	limits := auth.DefaultLimits()
+	limits.UserRequests = 600
+	f := newAuthFixture(t, limits)
+	a, who := f.signedIn(t, "low-atomic@example.test")
+	date := "2026-10-12"
+	makeTask := func(title string, minutes int) quests.Quest {
+		in := questInput(title)
+		in.EstimatedMinutes = minutes
+		in.PlannedDate = &date
+		return readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", in))
+	}
+	fixed := makeTask("С фиксированным блоком", 60)
+	optional := makeTask("Гибкая", 10)
+	done := makeTask("Уже сделано", 20)
+	in := planning.Input{AvailableMinutes: 60, QuestIDs: []string{fixed.ID, optional.ID, done.ID}, TopIDs: []string{optional.ID}, Windows: []planning.Window{{Start: "09:00", End: "10:00"}}}
+	p := readPlan(t, f.privateRequest(t, a, "PUT", "/plans/day/"+date, `"0"`, in))
+	p = readPlan(t, f.privateRequest(t, a, "POST", "/plans/day/"+date+"/confirm", planVersion(p), struct{}{}))
+	readEvent(t, f.privateRequest(t, a, "POST", "/plans/day/"+date+"/blocks", planVersion(p), planning.Block{Move: planning.Move{QuestID: fixed.ID, QuestVersion: fixed.Version, Reason: "Выделено время"}, Start: "09:00", End: "10:00"}))
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+done.ID+"/complete", version(done), quests.Transition{}))
+	preview := func() seasons.LowEnergyPreview {
+		return readLowEnergy(t, f.privateRequest(t, a, "POST", "/recovery/low-energy/preview", "", seasons.LowEnergyInput{Date: date, MinimumMinutes: 10}))
+	}
+	v := preview()
+	if !v.Candidates[0].Required || v.Candidates[0].Reason != "fixed_commitment" || v.Candidates[2].Eligible {
+		t.Fatal(v)
+	}
+	if _, e := f.pool.Exec(f.ctx, "UPDATE user_settings SET preferences=jsonb_set(preferences,'{timezone}',to_jsonb('Asia/Almaty'::text)),version=version+1 WHERE owner_id=$1", who.ID); e != nil {
+		t.Fatal(e)
+	}
+	apply := seasons.LowEnergyApply{Confirm: true, Reason: "Нужен щадящий план", OptionalIDs: []string{optional.ID}}
+	path := func(id string) string { return "/recovery/low-energy/" + id + "/apply" }
+	if r := f.privateRequest(t, a, "POST", path(v.ID), "", apply); r.status != 409 {
+		t.Fatal("timezone update not detected", r.status)
+	}
+	v = preview()
+	if v.Timezone != "UTC" || v.Original.Timezone != "UTC" || len(v.Commitments) != 1 {
+		t.Fatal("existing plan zone reinterpreted", v)
+	}
+	get := readLowEnergy(t, f.privateRequest(t, a, "GET", "/recovery/low-energy/"+v.ID, "", nil))
+	if get.SourceHash != v.SourceHash {
+		t.Fatal("preview persisted incorrectly")
+	}
+	if _, e := f.pool.Exec(f.ctx, `CREATE FUNCTION reject_low_energy() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected final failure'; END $$; CREATE TRIGGER reject_low_energy BEFORE UPDATE ON low_energy_previews FOR EACH ROW EXECUTE FUNCTION reject_low_energy()`); e != nil {
+		t.Fatal(e)
+	}
+	before := readPlan(t, f.privateRequest(t, a, "GET", "/plans/day/"+date, "", nil))
+	if r := f.privateRequest(t, a, "POST", path(v.ID), "", apply); r.status != 500 {
+		t.Fatal(r.status, string(r.body))
+	}
+	after := readPlan(t, f.privateRequest(t, a, "GET", "/plans/day/"+date, "", nil))
+	if before.Version != after.Version || len(after.QuestIDs) != 3 {
+		t.Fatal("partial plan apply escaped rollback")
+	}
+	if _, e := f.pool.Exec(f.ctx, "DROP TRIGGER reject_low_energy ON low_energy_previews; DROP FUNCTION reject_low_energy()"); e != nil {
+		t.Fatal(e)
+	}
+	responses := make([]authResponse, 4)
+	var wg sync.WaitGroup
+	for i := range responses {
+		wg.Add(1)
+		go func(i int) { defer wg.Done(); responses[i] = f.privateRequest(t, a, "POST", path(v.ID), "", apply) }(i)
+	}
+	wg.Wait()
+	var resultVersion int64
+	for _, r := range responses {
+		result := readLowEnergy(t, r)
+		if resultVersion == 0 {
+			resultVersion = result.Result.Version
+		}
+		if result.Result.Version != resultVersion || len(result.Result.QuestIDs) != 2 || len(result.Result.Snapshot.Items) != 3 {
+			t.Fatal("concurrent apply duplicated or rewrote original", result)
+		}
 	}
 }

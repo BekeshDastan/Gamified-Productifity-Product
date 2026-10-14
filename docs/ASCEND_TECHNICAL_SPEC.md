@@ -2014,7 +2014,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Все кнопки меняют реальные сущности; игрок видит последствие досрочного завершения.
   - **КОММИТ СЕЙЧАС:** `feat(seasons-ui): add season overview archive and recovery controls`
 
-- [ ] **C136. Приёмка сезонов**
+- [x] **C136. Приёмка сезонов**
   - **Сделать:** Проверить конец сезона, новый запуск, повтор close и low-energy в перегруженный день.
   - **Проверить:** История сохранена; XP за пропуск не уменьшается; итоговая награда не дублируется.
   - **КОММИТ СЕЙЧАС:** `test(seasons): cover closures snapshots and non-punitive recovery`

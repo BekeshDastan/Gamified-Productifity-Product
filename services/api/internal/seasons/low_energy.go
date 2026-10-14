@@ -68,9 +68,19 @@ func (s *Service) lowEnergySource(ctx context.Context, tx pgx.Tx, owner string, 
 		return out, privateapi.Invalid("Дата и минимальный объём: 0–240 минут")
 	}
 	var settingsVersion int64
-	if e := tx.QueryRow(ctx, `SELECT COALESCE(preferences->>'timezone','UTC'),version FROM user_settings WHERE owner_id=$1`, owner).Scan(&out.Timezone, &settingsVersion); e != nil {
+	var settingsTimezone string
+	if e := tx.QueryRow(ctx, `SELECT COALESCE(preferences->>'timezone','UTC'),version FROM user_settings WHERE owner_id=$1`, owner).Scan(&settingsTimezone, &settingsVersion); e != nil {
 		return out, e
 	}
+	var e error
+	out.Original, e = s.planning.plans.ViewInTx(ctx, tx, owner, in.Date)
+	if e != nil {
+		return out, e
+	}
+	if out.Original.Version == 0 {
+		return out, privateapi.Problem(409, "PLAN_REQUIRED", "Сначала составьте план дня")
+	}
+	out.Timezone = out.Original.Timezone
 	zone, e := time.LoadLocation(out.Timezone)
 	if e != nil {
 		return out, e
@@ -78,13 +88,6 @@ func (s *Service) lowEnergySource(ctx context.Context, tx pgx.Tx, owner string, 
 	today := s.Clock.Now().In(zone).Format("2006-01-02")
 	if in.Date < today || in.Date > s.Clock.Now().In(zone).AddDate(1, 0, 0).Format("2006-01-02") {
 		return out, privateapi.Invalid("Облегчить можно сегодняшний или будущий день в пределах года")
-	}
-	out.Original, e = s.planning.plans.ViewInTx(ctx, tx, owner, in.Date)
-	if e != nil {
-		return out, e
-	}
-	if out.Original.Version == 0 {
-		return out, privateapi.Problem(409, "PLAN_REQUIRED", "Сначала составьте план дня")
 	}
 	out.Commitments, e = s.planning.calendar.DayCommitmentsInTx(ctx, tx, owner, in.Date, out.Timezone)
 	if e != nil {
@@ -147,7 +150,7 @@ func (s *Service) lowEnergySource(ctx context.Context, tx pgx.Tx, owner string, 
 			remaining -= c.EstimatedMinutes
 		}
 	}
-	out.SourceHash = hashSource([]any{out.Original.Version, out.Original.Timezone, settingsVersion, out.Timezone, versions, out.Commitments})
+	out.SourceHash = hashSource([]any{out.Original.Version, out.Original.Timezone, settingsVersion, settingsTimezone, versions, out.Commitments})
 	return out, nil
 }
 func (s *Service) lowEnergyPreview(ctx context.Context, tx pgx.Tx, owner string, in LowEnergyInput) (LowEnergyPreview, error) {

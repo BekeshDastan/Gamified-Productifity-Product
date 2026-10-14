@@ -2878,7 +2878,15 @@ export interface components {
             optional_ids: string[];
             confirm_unknown: boolean;
         };
-        LowEnergyCandidate: components["schemas"]["PlanItem"] & {
+        LowEnergyCandidate: {
+            id: string;
+            title: string;
+            version: number;
+            estimated_minutes: number;
+            weight: number;
+            status: string;
+            archived: boolean;
+            completed_at: string | null;
             required: boolean;
             proposed: boolean;
             eligible: boolean;

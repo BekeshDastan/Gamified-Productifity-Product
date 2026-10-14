@@ -8586,24 +8586,48 @@ components:
         confirm_unknown:
           type: boolean
     LowEnergyCandidate:
-      allOf:
-        - $ref: "#/components/schemas/PlanItem"
-        - type: object
-          additionalProperties: false
-          required:
-            - required
-            - proposed
-            - eligible
-            - reason
-          properties:
-            required:
-              type: boolean
-            proposed:
-              type: boolean
-            eligible:
-              type: boolean
-            reason:
-              type: string
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - version
+        - estimated_minutes
+        - weight
+        - status
+        - archived
+        - completed_at
+        - required
+        - proposed
+        - eligible
+        - reason
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        version:
+          type: integer
+        estimated_minutes:
+          type: integer
+        weight:
+          type: integer
+        status:
+          type: string
+        archived:
+          type: boolean
+        completed_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        required:
+          type: boolean
+        proposed:
+          type: boolean
+        eligible:
+          type: boolean
+        reason:
+          type: string
     LowEnergyPreview:
       type: object
       additionalProperties: false
@@ -9104,12 +9128,15 @@ components:
         title:
           type: string
           maxLength: 200
+          minLength: 1
         theme:
           type: string
           maxLength: 200
+          minLength: 1
         desired_result:
           type: string
           maxLength: 2000
+          minLength: 1
         starts_on:
           type: string
           format: date
