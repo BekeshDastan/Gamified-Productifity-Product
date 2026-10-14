@@ -6,6 +6,84 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/plans/schedule/preview:
+    post:
+      operationId: previewSmartSchedule
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SchedulePreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/plans/schedule/apply:
+    post:
+      operationId: applySmartSchedule
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleApply"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ScheduleResult"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/navigator:
     get:
       operationId: getNavigator
@@ -8948,6 +9026,267 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ScheduleTaskOption:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - allow_split
+        - five_minute_start
+      properties:
+        id:
+          type: string
+        allow_split:
+          type: boolean
+        five_minute_start:
+          type: boolean
+    ScheduleInput:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - tasks
+        - breaks
+        - between_minutes
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleTaskOption"
+        breaks:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanInterval"
+        between_minutes:
+          type: integer
+    ScheduleInputVersion:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - id
+        - version
+      properties:
+        kind:
+          type: string
+        id:
+          type: string
+        version:
+          type: integer
+    ScheduleTask:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - version
+        - title
+        - minutes
+        - priority
+        - created_at
+        - deadline
+        - allow_split
+        - five_minute_start
+        - excluded_reason
+      properties:
+        id:
+          type: string
+        version:
+          type: integer
+        title:
+          type: string
+        minutes:
+          type: integer
+        priority:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        deadline:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        allow_split:
+          type: boolean
+        five_minute_start:
+          type: boolean
+        excluded_reason:
+          type: string
+    ScheduleDay:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - plan_version
+        - input
+        - timezone
+        - blocks
+      properties:
+        date:
+          type: string
+        plan_version:
+          type: integer
+        input:
+          $ref: "#/components/schemas/PlanInput"
+        timezone:
+          type: string
+        blocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+    SchedulePlacement:
+      type: object
+      additionalProperties: false
+      required:
+        - task_id
+        - task_version
+        - title
+        - start
+        - end
+        - break_end
+        - minutes
+        - partial_start
+      properties:
+        task_id:
+          type: string
+        task_version:
+          type: integer
+        title:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        break_end:
+          type: string
+          format: date-time
+        minutes:
+          type: integer
+        partial_start:
+          type: boolean
+    ScheduleUnscheduled:
+      type: object
+      additionalProperties: false
+      required:
+        - task_id
+        - reason
+        - required_minutes
+        - free_minutes
+        - deficit_minutes
+      properties:
+        task_id:
+          type: string
+        reason:
+          type: string
+        required_minutes:
+          type: integer
+        free_minutes:
+          type: integer
+        deficit_minutes:
+          type: integer
+    SchedulePreview:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - input
+        - timezone
+        - created_at
+        - expires_at
+        - input_versions
+        - hash
+        - tasks
+        - days
+        - placements
+        - unscheduled
+        - warnings
+      properties:
+        id:
+          type: string
+        input:
+          $ref: "#/components/schemas/ScheduleInput"
+        timezone:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        input_versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleInputVersion"
+        hash:
+          type: string
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleTask"
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleDay"
+        placements:
+          type: array
+          items:
+            $ref: "#/components/schemas/SchedulePlacement"
+        unscheduled:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScheduleUnscheduled"
+        warnings:
+          type: array
+          items:
+            type: string
+    ScheduleApply:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - preview_id
+        - confirm
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        preview_id:
+          type: string
+          format: uuid
+        confirm:
+          type: boolean
+    ScheduleResult:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - preview_id
+        - applied_at
+        - blocks
+        - plans
+      properties:
+        operation_id:
+          type: string
+        preview_id:
+          type: string
+        applied_at:
+          type: string
+          format: date-time
+        blocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+        plans:
+          type: array
+          items:
+            $ref: "#/components/schemas/DayPlan"
     NavigatorCondition:
       type: object
       additionalProperties: false

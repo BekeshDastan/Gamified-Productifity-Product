@@ -40,7 +40,15 @@ func (s *Service) FreeWorkInTx(ctx context.Context, tx pgx.Tx, owner, date strin
 		}
 		busy = append(busy, Interval{a, z})
 	}
-	remaining := p.AvailableMinutes
+	busyInWindows := []Interval{}
+	for _, w := range windows {
+		for _, b := range busy {
+			if v, ok := intersection(w, b); ok {
+				busyInWindows = append(busyInWindows, v)
+			}
+		}
+	}
+	remaining := max(0, min(p.AvailableMinutes, minutes(windows))-minutes(busyInWindows))
 	for _, w := range subtract(windows, busy) {
 		if remaining <= 0 {
 			break

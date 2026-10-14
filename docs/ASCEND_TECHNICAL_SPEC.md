@@ -2092,7 +2092,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** В тестовом расписании нет пересечений, сохраняются фиксированные события и дедлайны.
   - **КОММИТ СЕЙЧАС:** `feat(planning): suggest feasible slots by deadline priority and duration`
 
-- [ ] **C148. Подтверждение предложения**
+- [x] **C148. Подтверждение предложения**
   - **Сделать:** Создать preview/apply с expiry 10 минут, input_versions и повторной проверкой занятости.
   - **Проверить:** Устаревшая версия даёт 409; повтор apply не создаёт вторые блоки.
   - **КОММИТ СЕЙЧАС:** `feat(planning): atomically apply unexpired versioned schedule proposals`

@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/v1/plans/schedule/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["previewSmartSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plans/schedule/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["applySmartSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/navigator": {
         parameters: {
             query?: never;
@@ -3035,6 +3067,94 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ScheduleTaskOption: {
+            id: string;
+            allow_split: boolean;
+            five_minute_start: boolean;
+        };
+        ScheduleInput: {
+            from: string;
+            to: string;
+            tasks: components["schemas"]["ScheduleTaskOption"][];
+            breaks: components["schemas"]["PlanInterval"][];
+            between_minutes: number;
+        };
+        ScheduleInputVersion: {
+            kind: string;
+            id: string;
+            version: number;
+        };
+        ScheduleTask: {
+            id: string;
+            version: number;
+            title: string;
+            minutes: number;
+            priority: string;
+            /** Format: date-time */
+            created_at: string;
+            deadline: string | null;
+            allow_split: boolean;
+            five_minute_start: boolean;
+            excluded_reason: string;
+        };
+        ScheduleDay: {
+            date: string;
+            plan_version: number;
+            input: components["schemas"]["PlanInput"];
+            timezone: string;
+            blocks: components["schemas"]["CalendarEventDTO"][];
+        };
+        SchedulePlacement: {
+            task_id: string;
+            task_version: number;
+            title: string;
+            /** Format: date-time */
+            start: string;
+            /** Format: date-time */
+            end: string;
+            /** Format: date-time */
+            break_end: string;
+            minutes: number;
+            partial_start: boolean;
+        };
+        ScheduleUnscheduled: {
+            task_id: string;
+            reason: string;
+            required_minutes: number;
+            free_minutes: number;
+            deficit_minutes: number;
+        };
+        SchedulePreview: {
+            id: string;
+            input: components["schemas"]["ScheduleInput"];
+            timezone: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            expires_at: string;
+            input_versions: components["schemas"]["ScheduleInputVersion"][];
+            hash: string;
+            tasks: components["schemas"]["ScheduleTask"][];
+            days: components["schemas"]["ScheduleDay"][];
+            placements: components["schemas"]["SchedulePlacement"][];
+            unscheduled: components["schemas"]["ScheduleUnscheduled"][];
+            warnings: string[];
+        };
+        ScheduleApply: {
+            /** Format: uuid */
+            operation_id: string;
+            /** Format: uuid */
+            preview_id: string;
+            confirm: boolean;
+        };
+        ScheduleResult: {
+            operation_id: string;
+            preview_id: string;
+            /** Format: date-time */
+            applied_at: string;
+            blocks: components["schemas"]["CalendarEventDTO"][];
+            plans: components["schemas"]["DayPlan"][];
+        };
         NavigatorCondition: {
             metric: string;
             /** @enum {string} */
@@ -5838,6 +5958,78 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    previewSmartSchedule: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SchedulePreview"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
+    applySmartSchedule: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleApply"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ScheduleResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            403: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            429: components["responses"]["Error"];
+        };
+    };
     getNavigator: {
         parameters: {
             query?: never;
