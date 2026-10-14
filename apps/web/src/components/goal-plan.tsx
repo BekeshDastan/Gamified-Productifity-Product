@@ -49,7 +49,7 @@ export function GoalPlanPanel({ goal, onChanged }: { goal: Goal; onChanged: () =
         </p>
         {plan.milestones.length === 0 && <p>Этапы пока не добавлены.</p>}
         {plan.milestones.map((m) => (
-          <div className="goal-plan-part" key={m.id}>
+          <div className="goal-plan-part" key={m.id} id={"milestone-" + m.id}>
             <h3>{m.title}</h3>
             <p>
               {m.required ? "Обязательный" : "Необязательный"} · вес {m.weight}

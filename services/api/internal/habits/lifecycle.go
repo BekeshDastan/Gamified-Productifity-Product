@@ -121,6 +121,35 @@ func (s *Service) preview(ctx context.Context, tx pgx.Tx, id string, h Habit, in
 	return SchedulePreview{HabitID: h.ID, Version: h.Version, EffectiveFrom: in.EffectiveFrom, Current: activeSchedule(h, in.EffectiveFrom).Schedule, Proposed: in.Schedule, FirstStart: a.UTC(), FirstEnd: b.UTC(), Reason: in.Reason}, nil
 }
 func (s *Service) mountHistory(r chi.Router) {
+	r.Get("/api/v1/habits/{id}/periods/{period}", func(w http.ResponseWriter, r *http.Request) {
+		id, e := owner(r.Context())
+		out := Period{}
+		periodID := chi.URLParam(r, "period")
+		if e == nil && !uuid(periodID) {
+			e = problem(404, "NOT_FOUND", "Период не найден")
+		}
+		if e == nil {
+			e = storage.WithinTx(r.Context(), s.pool, func(tx pgx.Tx) error {
+				if e := s.lock(r.Context(), tx, id); e != nil {
+					return e
+				}
+				h, e := s.get(r.Context(), tx, id, chi.URLParam(r, "id"))
+				if e != nil {
+					return e
+				}
+				items, e := s.periodsFor(r.Context(), tx, id, h, &periodID)
+				if e != nil {
+					return e
+				}
+				if len(items) == 0 {
+					return problem(404, "NOT_FOUND", "Период не найден")
+				}
+				out = items[0]
+				return nil
+			})
+		}
+		s.reply(w, r, out, e)
+	})
 	for _, action := range []string{"archive", "restore"} {
 		restore := action == "restore"
 		r.Post("/api/v1/habits/{id}/"+action, func(w http.ResponseWriter, r *http.Request) {

@@ -6,6 +6,846 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/challenges/runs/{id}/close:
+    post:
+      operationId: closeChallenge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeCloseInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeFinalization"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/final-sources:
+    get:
+      operationId: getChallengeFinalSources
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeSourcePage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/habits/{id}/periods/{period}:
+    get:
+      operationId: getHabitPeriodSource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: period
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/HabitPeriod"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/suggestions:
+    get:
+      operationId: getQuestSuggestions
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - daily
+              - weekly
+        - name: available_minutes
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 5
+            maximum: 240
+        - name: area_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/QuestSuggestions"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/suggestions/accept:
+    post:
+      operationId: acceptQuestSuggestion
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptQuestSuggestion"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - quest_id
+                    properties:
+                      quest_id:
+                        type: string
+                        format: uuid
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/check-ins:
+    get:
+      operationId: getChallengeCheckins
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeCheckinPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createChallengeCheckin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeCheckin"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeCheckinInput"
+  /api/v1/challenges/runs/{id}/check-ins/{checkin}:
+    patch:
+      operationId: correctChallengeCheckin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: checkin
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeCheckin"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeCheckinCorrection"
+  /api/v1/challenges/runs/{id}/check-ins/{checkin}/evidence:
+    get:
+      operationId: getChallengeEvidence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: checkin
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChallengeEvidence"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/check-ins/{checkin}/evidence/{file}:
+    put:
+      operationId: setChallengeEvidence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: checkin
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: file
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/IfMatchSingleton"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeEvidence"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeEvidenceInput"
+  /api/v1/challenges/runs/{id}/progress:
+    get:
+      operationId: getChallengeProgress
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeMember"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/sources:
+    get:
+      operationId: getChallengeSources
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeSourcePage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/membership:
+    get:
+      operationId: getChallengeMembership
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeMembership"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/join:
+    post:
+      operationId: joinChallenge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeJoin"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeMember"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/leave:
+    post:
+      operationId: leaveChallenge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeLeave"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeMember"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/cancel:
+    post:
+      operationId: cancelChallenge
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeLeave"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeRun"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs:
+    get:
+      operationId: listChallengeRuns
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeRunPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createChallengeRun
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChallengeCreate"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeRun"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}:
+    get:
+      operationId: getChallengeRun
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeRun"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/runs/{id}/rules:
+    put:
+      operationId: rejectChallengeRuleChanges
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      responses:
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+  /api/v1/challenges/catalog:
+    get:
+      operationId: getChallengeCatalog
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ChallengeCatalog"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/routine-runs/templates/{kind}:
     get:
       operationId: getJournalTemplate
@@ -6996,6 +7836,989 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    ChallengeCloseInput:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+        - reason
+      properties:
+        confirm:
+          type: boolean
+        reason:
+          type: string
+          maxLength: 1000
+    ChallengeFinalization:
+      type: object
+      additionalProperties: false
+      required:
+        - run
+        - member
+        - reward
+      properties:
+        run:
+          $ref: "#/components/schemas/ChallengeRun"
+        member:
+          anyOf:
+            - $ref: "#/components/schemas/ChallengeMember"
+            - type: "null"
+        reward:
+          anyOf:
+            - $ref: "#/components/schemas/RewardDTO"
+            - type: "null"
+    QuestSuggestions:
+      type: object
+      additionalProperties: false
+      required:
+        - period
+        - starts_on
+        - timezone
+        - available_minutes
+        - area_id
+        - items
+      properties:
+        period:
+          type: string
+          enum:
+            - daily
+            - weekly
+        starts_on:
+          type: string
+          format: date
+        timezone:
+          type: string
+        available_minutes:
+          type: integer
+        area_id:
+          type:
+            - string
+            - "null"
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - template
+              - quest_id
+              - reason
+            properties:
+              template:
+                $ref: "#/components/schemas/ChallengeQuestTemplate"
+              quest_id:
+                type:
+                  - string
+                  - "null"
+              reason:
+                type: string
+    AcceptQuestSuggestion:
+      type: object
+      additionalProperties: false
+      required:
+        - period
+        - starts_on
+        - template_id
+        - available_minutes
+        - area_id
+      properties:
+        period:
+          type: string
+          enum:
+            - daily
+            - weekly
+        starts_on:
+          type: string
+          format: date
+        template_id:
+          type: string
+        available_minutes:
+          type: integer
+          minimum: 5
+          maximum: 240
+        area_id:
+          type:
+            - string
+            - "null"
+    ChallengeCheckinInput:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - unit
+        - amount
+        - note
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        unit:
+          type: string
+          enum:
+            - count
+            - pages
+            - minutes
+        amount:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        note:
+          type: string
+          maxLength: 2000
+    ChallengeCheckinCorrection:
+      type: object
+      additionalProperties: false
+      required:
+        - amount
+        - note
+      properties:
+        amount:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        note:
+          type: string
+          maxLength: 2000
+    ChallengeCheckin:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - participant_id
+        - date
+        - unit
+        - initial_amount
+        - amount
+        - note
+        - version
+        - created_at
+        - updated_at
+        - confirmation
+      properties:
+        id:
+          type: string
+        participant_id:
+          type: string
+        date:
+          type: string
+          format: date
+        unit:
+          type: string
+        initial_amount:
+          type: integer
+        amount:
+          type: integer
+        note:
+          type: string
+        version:
+          type: integer
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        confirmation:
+          type: string
+          enum:
+            - self_report
+    ChallengeCheckinPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengeCheckin"
+        next:
+          type: string
+    ChallengeEvidenceInput:
+      type: object
+      additionalProperties: false
+      required:
+        - visibility
+        - consent
+      properties:
+        visibility:
+          type: string
+          enum:
+            - private
+            - participants
+        consent:
+          type: boolean
+    ChallengeEvidence:
+      type: object
+      additionalProperties: false
+      required:
+        - attachment_id
+        - name
+        - url
+        - visibility
+        - consent_at
+        - version
+        - available
+        - confirmation
+      properties:
+        attachment_id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        visibility:
+          type: string
+          enum:
+            - private
+            - participants
+        consent_at:
+          type:
+            - string
+            - "null"
+        version:
+          type: integer
+        available:
+          type: boolean
+        confirmation:
+          type: string
+          enum:
+            - self_report
+    ChallengeProgress:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - current
+        - target
+        - unit
+        - percent
+        - target_met
+        - source_count
+        - periods
+      properties:
+        version:
+          type: string
+        current:
+          type: number
+        target:
+          type: number
+        unit:
+          type: string
+        percent:
+          type: number
+        target_met:
+          type: boolean
+        source_count:
+          type: integer
+        periods:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengePeriod"
+    ChallengePeriod:
+      type: object
+      additionalProperties: false
+      required:
+        - start
+        - end
+        - current
+        - target
+        - state
+      properties:
+        start:
+          type: string
+        end:
+          type: string
+        current:
+          type: number
+        target:
+          type: number
+        state:
+          type: string
+          enum:
+            - open
+            - met
+            - future
+            - missed
+    ChallengeSource:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - key
+        - title
+        - url
+        - amount
+        - at
+        - version
+        - confidence
+      properties:
+        kind:
+          type: string
+          enum:
+            - task
+            - habit
+            - focus
+            - review
+            - stage
+            - manual
+        key:
+          type: string
+          format: uuid
+        title:
+          type: string
+        url:
+          type: string
+        amount:
+          type: number
+        at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+        confidence:
+          type: string
+          enum:
+            - recorded
+            - self_report
+    ChallengeSourcePage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+        - total
+        - unit
+        - timezone
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengeSource"
+        next:
+          type: string
+        total:
+          type: integer
+        unit:
+          type: string
+        timezone:
+          type: string
+    ChallengeMember:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - run_id
+        - rules_hash
+        - state
+        - version
+        - first_joined_at
+        - left_at
+        - leave_reason
+        - updated_at
+        - progress
+        - computed_at
+        - result
+        - final_snapshot
+        - closed_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        run_id:
+          type: string
+          format: uuid
+        rules_hash:
+          type: string
+        state:
+          type: string
+          enum:
+            - joined
+            - left
+            - finished
+        version:
+          type: integer
+        first_joined_at:
+          type: string
+        left_at:
+          type:
+            - string
+            - "null"
+        leave_reason:
+          type: string
+        updated_at:
+          type: string
+        progress:
+          anyOf:
+            - $ref: "#/components/schemas/ChallengeProgress"
+            - type: "null"
+        computed_at:
+          type:
+            - string
+            - "null"
+        result:
+          type:
+            - string
+            - "null"
+          enum:
+            - achieved
+            - not_achieved
+            - left
+            - null
+        final_snapshot:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+        closed_at:
+          type:
+            - string
+            - "null"
+        reward:
+          $ref: "#/components/schemas/RewardDTO"
+    ChallengeMembership:
+      type: object
+      additionalProperties: false
+      required:
+        - member
+      properties:
+        member:
+          anyOf:
+            - $ref: "#/components/schemas/ChallengeMember"
+            - type: "null"
+    ChallengeJoin:
+      type: object
+      additionalProperties: false
+      required:
+        - rules_hash
+        - accept_rules
+        - membership_version
+      properties:
+        rules_hash:
+          type: string
+        accept_rules:
+          type: boolean
+        membership_version:
+          type: integer
+          minimum: 0
+    ChallengeLeave:
+      type: object
+      additionalProperties: false
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          maxLength: 1000
+    ChallengeRuleInput:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - unit
+        - kind
+        - period
+        - target
+        - period_target
+        - days
+        - daily_cap
+        - allowed_misses
+        - name
+        - starts_on
+        - ends_on
+        - area_id
+        - goal_id
+        - habit_id
+        - rejoin
+      properties:
+        metric:
+          type: string
+          enum:
+            - tasks
+            - habits
+            - focus
+            - reviews
+            - manual
+            - stages
+        unit:
+          type: string
+          enum:
+            - tasks
+            - periods
+            - minutes
+            - reviews
+            - count
+            - pages
+            - stages
+        kind:
+          type: string
+          enum:
+            - cumulative
+            - periodic
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        period_target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        days:
+          type: integer
+          minimum: 1
+          maximum: 365
+        daily_cap:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        allowed_misses:
+          type: integer
+          minimum: 0
+          maximum: 365
+        name:
+          type: string
+          maxLength: 200
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+        area_id:
+          type:
+            - string
+            - "null"
+        goal_id:
+          type:
+            - string
+            - "null"
+        habit_id:
+          type:
+            - string
+            - "null"
+        rejoin:
+          type: boolean
+    ChallengeRules:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - unit
+        - kind
+        - period
+        - target
+        - period_target
+        - days
+        - daily_cap
+        - allowed_misses
+        - name
+        - starts_on
+        - ends_on
+        - area_id
+        - goal_id
+        - habit_id
+        - rejoin
+        - timezone
+        - visibility
+        - confirmation
+        - scoring_version
+        - source_policy
+        - economy_version
+        - reward_xp
+      properties:
+        metric:
+          type: string
+          enum:
+            - tasks
+            - habits
+            - focus
+            - reviews
+            - manual
+            - stages
+        unit:
+          type: string
+          enum:
+            - tasks
+            - periods
+            - minutes
+            - reviews
+            - count
+            - pages
+            - stages
+        kind:
+          type: string
+          enum:
+            - cumulative
+            - periodic
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        period_target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        days:
+          type: integer
+          minimum: 1
+          maximum: 365
+        daily_cap:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        allowed_misses:
+          type: integer
+          minimum: 0
+          maximum: 365
+        name:
+          type: string
+          maxLength: 200
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+        area_id:
+          type:
+            - string
+            - "null"
+        goal_id:
+          type:
+            - string
+            - "null"
+        habit_id:
+          type:
+            - string
+            - "null"
+        rejoin:
+          type: boolean
+        timezone:
+          type: string
+        visibility:
+          type: string
+          enum:
+            - private
+        confirmation:
+          type: string
+          enum:
+            - automatic
+            - self_report
+        scoring_version:
+          type: string
+        source_policy:
+          type: string
+        economy_version:
+          type: string
+        reward_xp:
+          type: integer
+    ChallengeCreate:
+      type: object
+      additionalProperties: false
+      required:
+        - operation_id
+        - template_id
+        - input
+      properties:
+        operation_id:
+          type: string
+          format: uuid
+        template_id:
+          type:
+            - string
+            - "null"
+        input:
+          $ref: "#/components/schemas/ChallengeRuleInput"
+    ChallengeRun:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - rules
+        - rules_hash
+        - catalog_id
+        - catalog_version
+        - state
+        - version
+        - starts_at
+        - ends_at
+        - created_at
+        - finalized_at
+        - final_snapshot
+      properties:
+        id:
+          type: string
+          format: uuid
+        rules:
+          $ref: "#/components/schemas/ChallengeRules"
+        rules_hash:
+          type: string
+        catalog_id:
+          type:
+            - string
+            - "null"
+        catalog_version:
+          type: string
+        state:
+          type: string
+          enum:
+            - open
+            - closed
+        version:
+          type: integer
+        starts_at:
+          type: string
+        ends_at:
+          type: string
+        created_at:
+          type: string
+        finalized_at:
+          type:
+            - string
+            - "null"
+        final_snapshot:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+    ChallengeRunPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengeRun"
+        next:
+          type: string
+    ChallengeConfig:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - unit
+        - kind
+        - period
+        - target
+        - period_target
+        - days
+        - daily_cap
+        - allowed_misses
+      properties:
+        metric:
+          type: string
+          enum:
+            - tasks
+            - habits
+            - focus
+            - reviews
+            - manual
+            - stages
+        unit:
+          type: string
+          enum:
+            - tasks
+            - periods
+            - minutes
+            - reviews
+            - count
+            - pages
+            - stages
+        kind:
+          type: string
+          enum:
+            - cumulative
+            - periodic
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        period_target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        days:
+          type: integer
+          minimum: 1
+          maximum: 365
+        daily_cap:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        allowed_misses:
+          type: integer
+          minimum: 0
+          maximum: 365
+    ChallengeTemplate:
+      type: object
+      additionalProperties: false
+      required:
+        - metric
+        - unit
+        - kind
+        - period
+        - target
+        - period_target
+        - days
+        - daily_cap
+        - allowed_misses
+        - id
+        - name
+        - description
+        - audience
+        - area_hint
+        - conditions
+        - safe_norm
+      properties:
+        metric:
+          type: string
+          enum:
+            - tasks
+            - habits
+            - focus
+            - reviews
+            - manual
+            - stages
+        unit:
+          type: string
+          enum:
+            - tasks
+            - periods
+            - minutes
+            - reviews
+            - count
+            - pages
+            - stages
+        kind:
+          type: string
+          enum:
+            - cumulative
+            - periodic
+        period:
+          type: string
+          enum:
+            - day
+            - week
+        target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        period_target:
+          type: integer
+          minimum: 1
+          maximum: 100000
+        days:
+          type: integer
+          minimum: 1
+          maximum: 365
+        daily_cap:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        allowed_misses:
+          type: integer
+          minimum: 0
+          maximum: 365
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        audience:
+          type: string
+        area_hint:
+          type: string
+        conditions:
+          type: string
+        safe_norm:
+          type: string
+    ChallengeQuestTemplate:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - description
+        - audience
+        - area_hint
+        - conditions
+        - safe_norm
+        - estimated_minutes
+        - difficulty
+        - metric
+        - unit
+        - target
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        audience:
+          type: string
+        area_hint:
+          type: string
+        conditions:
+          type: string
+        safe_norm:
+          type: string
+        estimated_minutes:
+          type: integer
+          minimum: 5
+          maximum: 45
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 2
+        metric:
+          type: string
+          enum:
+            - tasks
+            - stages
+        unit:
+          type: string
+          enum:
+            - tasks
+            - stages
+        target:
+          type: integer
+          const: 1
+    ChallengeCatalog:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - challenges
+        - quests
+      properties:
+        version:
+          type: string
+        challenges:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengeTemplate"
+        quests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChallengeQuestTemplate"
     JournalTemplate:
       type: object
       additionalProperties: false

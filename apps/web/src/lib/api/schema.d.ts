@@ -4,6 +4,310 @@
  */
 
 export interface paths {
+    "/api/v1/challenges/runs/{id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["closeChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/final-sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeFinalSources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/habits/{id}/periods/{period}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getHabitPeriodSource"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getQuestSuggestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/suggestions/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["acceptQuestSuggestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/check-ins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeCheckins"];
+        put?: never;
+        post: operations["createChallengeCheckin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/check-ins/{checkin}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["correctChallengeCheckin"];
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/check-ins/{checkin}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeEvidence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/check-ins/{checkin}/evidence/{file}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["setChallengeEvidence"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeProgress"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeSources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/membership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeMembership"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["joinChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["leaveChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancelChallenge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listChallengeRuns"];
+        put?: never;
+        post: operations["createChallengeRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeRun"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/runs/{id}/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["rejectChallengeRuleChanges"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/challenges/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getChallengeCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/routine-runs/templates/{kind}": {
         parameters: {
             query?: never;
@@ -2283,6 +2587,303 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ChallengeCloseInput: {
+            confirm: boolean;
+            reason: string;
+        };
+        ChallengeFinalization: {
+            run: components["schemas"]["ChallengeRun"];
+            member: components["schemas"]["ChallengeMember"] | null;
+            reward: components["schemas"]["RewardDTO"] | null;
+        };
+        QuestSuggestions: {
+            /** @enum {string} */
+            period: "daily" | "weekly";
+            /** Format: date */
+            starts_on: string;
+            timezone: string;
+            available_minutes: number;
+            area_id: string | null;
+            items: {
+                template: components["schemas"]["ChallengeQuestTemplate"];
+                quest_id: string | null;
+                reason: string;
+            }[];
+        };
+        AcceptQuestSuggestion: {
+            /** @enum {string} */
+            period: "daily" | "weekly";
+            /** Format: date */
+            starts_on: string;
+            template_id: string;
+            available_minutes: number;
+            area_id: string | null;
+        };
+        ChallengeCheckinInput: {
+            /** Format: uuid */
+            operation_id: string;
+            /** @enum {string} */
+            unit: "count" | "pages" | "minutes";
+            amount: number;
+            note: string;
+        };
+        ChallengeCheckinCorrection: {
+            amount: number;
+            note: string;
+        };
+        ChallengeCheckin: {
+            id: string;
+            participant_id: string;
+            /** Format: date */
+            date: string;
+            unit: string;
+            initial_amount: number;
+            amount: number;
+            note: string;
+            version: number;
+            created_at: string;
+            updated_at: string;
+            /** @enum {string} */
+            confirmation: "self_report";
+        };
+        ChallengeCheckinPage: {
+            items: components["schemas"]["ChallengeCheckin"][];
+            next: string;
+        };
+        ChallengeEvidenceInput: {
+            /** @enum {string} */
+            visibility: "private" | "participants";
+            consent: boolean;
+        };
+        ChallengeEvidence: {
+            attachment_id: string;
+            name: string;
+            url: string;
+            /** @enum {string} */
+            visibility: "private" | "participants";
+            consent_at: string | null;
+            version: number;
+            available: boolean;
+            /** @enum {string} */
+            confirmation: "self_report";
+        };
+        ChallengeProgress: {
+            version: string;
+            current: number;
+            target: number;
+            unit: string;
+            percent: number;
+            target_met: boolean;
+            source_count: number;
+            periods: components["schemas"]["ChallengePeriod"][];
+        };
+        ChallengePeriod: {
+            start: string;
+            end: string;
+            current: number;
+            target: number;
+            /** @enum {string} */
+            state: "open" | "met" | "future" | "missed";
+        };
+        ChallengeSource: {
+            /** @enum {string} */
+            kind: "task" | "habit" | "focus" | "review" | "stage" | "manual";
+            /** Format: uuid */
+            key: string;
+            title: string;
+            url: string;
+            amount: number;
+            /** Format: date-time */
+            at: string;
+            version: number;
+            /** @enum {string} */
+            confidence: "recorded" | "self_report";
+        };
+        ChallengeSourcePage: {
+            items: components["schemas"]["ChallengeSource"][];
+            next: string;
+            total: number;
+            unit: string;
+            timezone: string;
+        };
+        ChallengeMember: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            run_id: string;
+            rules_hash: string;
+            /** @enum {string} */
+            state: "joined" | "left" | "finished";
+            version: number;
+            first_joined_at: string;
+            left_at: string | null;
+            leave_reason: string;
+            updated_at: string;
+            progress: components["schemas"]["ChallengeProgress"] | null;
+            computed_at: string | null;
+            /** @enum {string|null} */
+            result: "achieved" | "not_achieved" | "left" | null;
+            final_snapshot: {
+                [key: string]: unknown;
+            } | null;
+            closed_at: string | null;
+            reward?: components["schemas"]["RewardDTO"];
+        };
+        ChallengeMembership: {
+            member: components["schemas"]["ChallengeMember"] | null;
+        };
+        ChallengeJoin: {
+            rules_hash: string;
+            accept_rules: boolean;
+            membership_version: number;
+        };
+        ChallengeLeave: {
+            reason: string;
+        };
+        ChallengeRuleInput: {
+            /** @enum {string} */
+            metric: "tasks" | "habits" | "focus" | "reviews" | "manual" | "stages";
+            /** @enum {string} */
+            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages" | "stages";
+            /** @enum {string} */
+            kind: "cumulative" | "periodic";
+            /** @enum {string} */
+            period: "day" | "week";
+            target: number;
+            period_target: number;
+            days: number;
+            daily_cap: number;
+            allowed_misses: number;
+            name: string;
+            /** Format: date */
+            starts_on: string;
+            /** Format: date */
+            ends_on: string;
+            area_id: string | null;
+            goal_id: string | null;
+            habit_id: string | null;
+            rejoin: boolean;
+        };
+        ChallengeRules: {
+            /** @enum {string} */
+            metric: "tasks" | "habits" | "focus" | "reviews" | "manual" | "stages";
+            /** @enum {string} */
+            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages" | "stages";
+            /** @enum {string} */
+            kind: "cumulative" | "periodic";
+            /** @enum {string} */
+            period: "day" | "week";
+            target: number;
+            period_target: number;
+            days: number;
+            daily_cap: number;
+            allowed_misses: number;
+            name: string;
+            /** Format: date */
+            starts_on: string;
+            /** Format: date */
+            ends_on: string;
+            area_id: string | null;
+            goal_id: string | null;
+            habit_id: string | null;
+            rejoin: boolean;
+            timezone: string;
+            /** @enum {string} */
+            visibility: "private";
+            /** @enum {string} */
+            confirmation: "automatic" | "self_report";
+            scoring_version: string;
+            source_policy: string;
+            economy_version: string;
+            reward_xp: number;
+        };
+        ChallengeCreate: {
+            /** Format: uuid */
+            operation_id: string;
+            template_id: string | null;
+            input: components["schemas"]["ChallengeRuleInput"];
+        };
+        ChallengeRun: {
+            /** Format: uuid */
+            id: string;
+            rules: components["schemas"]["ChallengeRules"];
+            rules_hash: string;
+            catalog_id: string | null;
+            catalog_version: string;
+            /** @enum {string} */
+            state: "open" | "closed";
+            version: number;
+            starts_at: string;
+            ends_at: string;
+            created_at: string;
+            finalized_at: string | null;
+            final_snapshot: {
+                [key: string]: unknown;
+            } | null;
+        };
+        ChallengeRunPage: {
+            items: components["schemas"]["ChallengeRun"][];
+            next: string;
+        };
+        ChallengeConfig: {
+            /** @enum {string} */
+            metric: "tasks" | "habits" | "focus" | "reviews" | "manual" | "stages";
+            /** @enum {string} */
+            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages" | "stages";
+            /** @enum {string} */
+            kind: "cumulative" | "periodic";
+            /** @enum {string} */
+            period: "day" | "week";
+            target: number;
+            period_target: number;
+            days: number;
+            daily_cap: number;
+            allowed_misses: number;
+        };
+        ChallengeTemplate: {
+            /** @enum {string} */
+            metric: "tasks" | "habits" | "focus" | "reviews" | "manual" | "stages";
+            /** @enum {string} */
+            unit: "tasks" | "periods" | "minutes" | "reviews" | "count" | "pages" | "stages";
+            /** @enum {string} */
+            kind: "cumulative" | "periodic";
+            /** @enum {string} */
+            period: "day" | "week";
+            target: number;
+            period_target: number;
+            days: number;
+            daily_cap: number;
+            allowed_misses: number;
+            id: string;
+            name: string;
+            description: string;
+            audience: string;
+            area_hint: string;
+            conditions: string;
+            safe_norm: string;
+        };
+        ChallengeQuestTemplate: {
+            id: string;
+            name: string;
+            description: string;
+            audience: string;
+            area_hint: string;
+            conditions: string;
+            safe_norm: string;
+            estimated_minutes: number;
+            difficulty: number;
+            /** @enum {string} */
+            metric: "tasks" | "stages";
+            /** @enum {string} */
+            unit: "tasks" | "stages";
+            /** @constant */
+            target: 1;
+        };
+        ChallengeCatalog: {
+            version: string;
+            challenges: components["schemas"]["ChallengeTemplate"][];
+            quests: components["schemas"]["ChallengeQuestTemplate"][];
+        };
         JournalTemplate: {
             /** @enum {string} */
             kind: "morning" | "evening";
@@ -4162,6 +4763,687 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    closeChallenge: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeCloseInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeFinalization"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getChallengeFinalSources: {
+        parameters: {
+            query?: {
+                before?: string;
+                date?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeSourcePage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getHabitPeriodSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                period: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["HabitPeriod"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
+    getQuestSuggestions: {
+        parameters: {
+            query: {
+                period: "daily" | "weekly";
+                available_minutes: number;
+                area_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestSuggestions"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    acceptQuestSuggestion: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptQuestSuggestion"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            /** Format: uuid */
+                            quest_id: string;
+                        };
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            503: components["responses"]["Error"];
+        };
+    };
+    getChallengeCheckins: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeCheckinPage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    createChallengeCheckin: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeCheckinInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeCheckin"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    correctChallengeCheckin: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+                checkin: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeCheckinCorrection"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeCheckin"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getChallengeEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                checkin: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeEvidence"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    setChallengeEvidence: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+                /** @description Версия записи; 0 только для первого создания записи на дату или вида шаблона. */
+                "If-Match": components["parameters"]["IfMatchSingleton"];
+            };
+            path: {
+                id: string;
+                checkin: string;
+                file: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeEvidenceInput"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeEvidence"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getChallengeProgress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeMember"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            503: components["responses"]["Error"];
+        };
+    };
+    getChallengeSources: {
+        parameters: {
+            query?: {
+                before?: string;
+                date?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeSourcePage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+            503: components["responses"]["Error"];
+        };
+    };
+    getChallengeMembership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeMembership"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+        };
+    };
+    joinChallenge: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeJoin"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeMember"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    leaveChallenge: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeLeave"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeMember"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    cancelChallenge: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "If-Match": components["parameters"]["IfMatch"];
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeLeave"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeRun"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    listChallengeRuns: {
+        parameters: {
+            query?: {
+                before?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeRunPage"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    createChallengeRun: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeCreate"];
+            };
+        };
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeRun"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    getChallengeRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeRun"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
+    rejectChallengeRuleChanges: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            401: components["responses"]["Error"];
+            404: components["responses"]["Error"];
+            409: components["responses"]["Error"];
+        };
+    };
+    getChallengeCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Личные данные владельца */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ChallengeCatalog"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["Error"];
+            422: components["responses"]["Error"];
+        };
+    };
     getJournalTemplate: {
         parameters: {
             query?: never;

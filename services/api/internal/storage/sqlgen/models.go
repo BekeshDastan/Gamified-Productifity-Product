@@ -8,6 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AcceptedQuestSuggestion struct {
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	Period         string             `json:"period"`
+	StartsOn       pgtype.Date        `json:"starts_on"`
+	TemplateID     string             `json:"template_id"`
+	CatalogVersion string             `json:"catalog_version"`
+	Request        []byte             `json:"request"`
+	QuestID        pgtype.UUID        `json:"quest_id"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
 type AchievementChange struct {
 	ID                int64              `json:"id"`
 	OwnerID           pgtype.UUID        `json:"owner_id"`
@@ -130,6 +141,131 @@ type CalendarEventHistory struct {
 	AfterState  []byte             `json:"after_state"`
 	Reason      string             `json:"reason"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type ChallengeCheckin struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ID            pgtype.UUID        `json:"id"`
+	ParticipantID pgtype.UUID        `json:"participant_id"`
+	Request       []byte             `json:"request"`
+	LocalDate     pgtype.Date        `json:"local_date"`
+	Unit          string             `json:"unit"`
+	InitialAmount int64              `json:"initial_amount"`
+	Amount        int64              `json:"amount"`
+	Note          string             `json:"note"`
+	Version       int64              `json:"version"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ChallengeCheckinEvent struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	CheckinID pgtype.UUID        `json:"checkin_id"`
+	Version   int64              `json:"version"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type ChallengeEvidence struct {
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	CheckinID    pgtype.UUID        `json:"checkin_id"`
+	AttachmentID pgtype.UUID        `json:"attachment_id"`
+	Visibility   string             `json:"visibility"`
+	ConsentAt    pgtype.Timestamptz `json:"consent_at"`
+	Version      int64              `json:"version"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ChallengeEvidenceEvent struct {
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	CheckinID    pgtype.UUID        `json:"checkin_id"`
+	AttachmentID pgtype.UUID        `json:"attachment_id"`
+	Version      int64              `json:"version"`
+	Snapshot     []byte             `json:"snapshot"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
+type ChallengeFinalSource struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ParticipantID pgtype.UUID        `json:"participant_id"`
+	SourceKind    string             `json:"source_kind"`
+	SourceKey     pgtype.UUID        `json:"source_key"`
+	Title         string             `json:"title"`
+	SourceUrl     string             `json:"source_url"`
+	Amount        int64              `json:"amount"`
+	SourceTime    pgtype.Timestamptz `json:"source_time"`
+	SourceStart   pgtype.Timestamptz `json:"source_start"`
+	SourceVersion int64              `json:"source_version"`
+	Active        bool               `json:"active"`
+	CapturedAt    pgtype.Timestamptz `json:"captured_at"`
+}
+
+type ChallengeMembershipWindow struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ParticipantID pgtype.UUID        `json:"participant_id"`
+	Sequence      int32              `json:"sequence"`
+	JoinedAt      pgtype.Timestamptz `json:"joined_at"`
+	LeftAt        pgtype.Timestamptz `json:"left_at"`
+}
+
+type ChallengeParticipant struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ID            pgtype.UUID        `json:"id"`
+	RunOwnerID    pgtype.UUID        `json:"run_owner_id"`
+	RunID         pgtype.UUID        `json:"run_id"`
+	RulesHash     string             `json:"rules_hash"`
+	State         string             `json:"state"`
+	Version       int64              `json:"version"`
+	FirstJoinedAt pgtype.Timestamptz `json:"first_joined_at"`
+	LeftAt        pgtype.Timestamptz `json:"left_at"`
+	LeaveReason   string             `json:"leave_reason"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	Progress      []byte             `json:"progress"`
+	ComputedAt    pgtype.Timestamptz `json:"computed_at"`
+	Result        pgtype.Text        `json:"result"`
+	FinalSnapshot []byte             `json:"final_snapshot"`
+	ClosedAt      pgtype.Timestamptz `json:"closed_at"`
+}
+
+type ChallengeParticipantEvent struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ParticipantID pgtype.UUID        `json:"participant_id"`
+	Version       int64              `json:"version"`
+	Kind          string             `json:"kind"`
+	Snapshot      []byte             `json:"snapshot"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
+type ChallengeRun struct {
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	ID             pgtype.UUID        `json:"id"`
+	Request        []byte             `json:"request"`
+	Rules          []byte             `json:"rules"`
+	RulesHash      string             `json:"rules_hash"`
+	CatalogID      pgtype.Text        `json:"catalog_id"`
+	CatalogVersion string             `json:"catalog_version"`
+	State          string             `json:"state"`
+	Version        int64              `json:"version"`
+	StartsAt       pgtype.Timestamptz `json:"starts_at"`
+	EndsAt         pgtype.Timestamptz `json:"ends_at"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	FinalizedAt    pgtype.Timestamptz `json:"finalized_at"`
+	FinalSnapshot  []byte             `json:"final_snapshot"`
+}
+
+type ChallengeSourceCredit struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ParticipantID pgtype.UUID        `json:"participant_id"`
+	SourceKind    string             `json:"source_kind"`
+	SourceKey     pgtype.UUID        `json:"source_key"`
+	Title         string             `json:"title"`
+	SourceUrl     string             `json:"source_url"`
+	Amount        int64              `json:"amount"`
+	SourceTime    pgtype.Timestamptz `json:"source_time"`
+	SourceStart   pgtype.Timestamptz `json:"source_start"`
+	SourceVersion int64              `json:"source_version"`
+	Active        bool               `json:"active"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 }
 
 type CharacterInventory struct {
@@ -490,15 +626,18 @@ type LifeArea struct {
 }
 
 type Milestone struct {
-	ID        pgtype.UUID        `json:"id"`
-	OwnerID   pgtype.UUID        `json:"owner_id"`
-	GoalID    pgtype.UUID        `json:"goal_id"`
-	Title     string             `json:"title"`
-	Required  bool               `json:"required"`
-	Weight    pgtype.Numeric     `json:"weight"`
-	Completed bool               `json:"completed"`
-	Version   int64              `json:"version"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID                        pgtype.UUID        `json:"id"`
+	OwnerID                   pgtype.UUID        `json:"owner_id"`
+	GoalID                    pgtype.UUID        `json:"goal_id"`
+	Title                     string             `json:"title"`
+	Required                  bool               `json:"required"`
+	Weight                    pgtype.Numeric     `json:"weight"`
+	Completed                 bool               `json:"completed"`
+	Version                   int64              `json:"version"`
+	CreatedAt                 pgtype.Timestamptz `json:"created_at"`
+	ChallengeFirstQualifiedAt pgtype.Timestamptz `json:"challenge_first_qualified_at"`
+	ChallengeCompleted        bool               `json:"challenge_completed"`
+	ChallengeLegacyCompleted  bool               `json:"challenge_legacy_completed"`
 }
 
 type MonthlyBoss struct {

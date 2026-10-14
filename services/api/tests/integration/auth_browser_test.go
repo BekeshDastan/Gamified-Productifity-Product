@@ -20,6 +20,7 @@ import (
 
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/calendar"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/challenges"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/character"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/focus"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/goals"
@@ -79,7 +80,7 @@ func TestBrowserAuth(t *testing.T) {
 	if err := sessions.Mount(router, limits); err != nil {
 		t.Fatal(err)
 	}
-	domainClock := testkit.NewClock(time.Date(2026, 10, 12, 12, 0, 0, 0, time.UTC))
+	domainClock := testkit.NewAdvancingClock(time.Date(2026, 10, 12, 12, 0, 0, 0, time.UTC), 60)
 	profile.NewService(pool, domainClock).Mount(router, sessions.Protect)
 	goalService := goals.NewService(pool, domainClock)
 	goalService.Mount(router, sessions.Protect)
@@ -94,12 +95,13 @@ func TestBrowserAuth(t *testing.T) {
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	characterService.Mount(router, sessions.Protect)
 	rewards.NewService(pool, domainClock, rewardService, characterService).Mount(router, sessions.Protect)
-	focus.NewService(pool, testkit.NewAdvancingClock(domainClock.Now(), 60), rewardService).Mount(router, sessions.Protect)
+	focus.NewService(pool, domainClock, rewardService).Mount(router, sessions.Protect)
 	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, domainClock, questService)
 	calendarService.Mount(router, sessions.Protect)
 	habits.NewService(pool, domainClock).WithProgression(rewardService).Mount(router, sessions.Protect)
+	challenges.NewService(pool, domainClock).WithSchedulingClock(clock).WithProgression(rewardService).WithQuests(questService).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, domainClock, questService, calendarService)
 	planService.Mount(router, sessions.Protect)
 	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
@@ -122,6 +124,9 @@ func TestBrowserAuth(t *testing.T) {
 	go func() {
 		defer worker.Done()
 		handlers := sessions.MailHandlers(mailer)
+		for kind, handler := range challenges.NewService(pool, domainClock).WithProgression(rewardService).Handlers() {
+			handlers[kind] = handler
+		}
 		for kind, handler := range characterService.Handlers() {
 			handlers[kind] = handler
 		}
@@ -150,7 +155,7 @@ func TestBrowserAuth(t *testing.T) {
 	deadline := time.Now().Add(30 * time.Second)
 	for {
 		var pending int
-		e := pool.QueryRow(ctx, "SELECT (SELECT count(*) FROM outbox_events WHERE kind IN('character.changed','progression.reward_changed') AND dispatched_at IS NULL)+(SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed') AND state IN('pending','running','retry_wait'))").Scan(&pending)
+		e := pool.QueryRow(ctx, "SELECT (SELECT count(*) FROM outbox_events WHERE kind IN('character.changed','progression.reward_changed','challenges.changed') AND dispatched_at IS NULL)+(SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed','challenges.changed') AND state IN('pending','running','retry_wait'))").Scan(&pending)
 		if e != nil {
 			t.Fatal(e)
 		}
@@ -167,10 +172,10 @@ func TestBrowserAuth(t *testing.T) {
 		}
 	}
 	var dead int
-	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
+	if e := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE kind IN('character.changed','progression.reward_changed','challenges.changed') AND state='dead'").Scan(&dead); e != nil || dead != 0 {
 		t.Fatal("derived-profile outbox handler failure", dead, e)
 	}
-	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token=", "JOURNAL_PRIVATE_SENTINEL_C120"} {
+	for _, secret := range []string{`"password":`, `"cookie":`, `"authorization":`, "browser test password phrase", "browser password phrase", "new browser password phrase", "ascend_access=", "ascend_refresh=", "#token=", "JOURNAL_PRIVATE_SENTINEL_C120", "CHALLENGE_PRIVATE_SENTINEL_C128"} {
 		if strings.Contains(logs.String(), secret) {
 			t.Fatal("sensitive authentication data in API logs")
 		}

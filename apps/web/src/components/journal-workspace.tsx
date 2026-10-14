@@ -14,8 +14,18 @@ const sections = {
   week: "Weekly Reset",
   templates: "Чек-листы и история",
 };
-export function JournalWorkspace() {
-  const [section, setSection] = useState<keyof typeof sections>("entries"),
+export function JournalWorkspace({
+  initialSection,
+  reviewDate,
+}: {
+  initialSection?: string;
+  reviewDate?: string;
+}) {
+  const [section, setSection] = useState<keyof typeof sections>(
+      initialSection && Object.hasOwn(sections, initialSection)
+        ? (initialSection as keyof typeof sections)
+        : "entries",
+    ),
     discard = useConfirmDiscard();
   return (
     <div className="journal-layout">
@@ -38,7 +48,7 @@ export function JournalWorkspace() {
       ) : section === "morning" ? (
         <MorningRoutine />
       ) : section === "evening" ? (
-        <EveningReview />
+        <EveningReview initialDate={reviewDate} />
       ) : section === "week" ? (
         <WeeklyReset />
       ) : (
