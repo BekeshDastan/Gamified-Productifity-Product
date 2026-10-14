@@ -15,6 +15,8 @@ import { Card, Progress } from "./ui/card";
 import { Input, Select } from "./ui/field";
 import { CheckinList } from "./challenge-checkins";
 import { useRewardNotice } from "./progression";
+import { ChoiceChips, EmptyScene } from "./ui/experience";
+import { Compass, Clock3, ArrowUpRight } from "lucide-react";
 const metrics = {
   tasks: "Выполненные задачи",
   habits: "Полные нормы привычки",
@@ -833,63 +835,80 @@ function QuestSuggestions({ account }: { account: string }) {
       enabled: minutes >= 5 && minutes <= 240,
     });
   return (
-    <Card>
+    <Card className="suggestions-panel">
       <h2>Квесты на день и неделю</h2>
       <p>
         Необязательные предложения из каталога. Принятие создаёт одну задачу в «Идеях»; в план её
         можно включить отдельно.
       </p>
-      <Select
-        label="Период предложений"
-        value={period}
-        onChange={(e) => setPeriod(e.target.value as "daily" | "weekly")}
-      >
-        <option value="daily">На день</option>
-        <option value="weekly">На неделю</option>
-      </Select>
-      <Input
-        label="Доступное время, минут"
-        type="number"
-        min={5}
-        max={240}
+      <ChoiceChips
+        label="Быстрый выбор длительности квеста"
         value={minutes}
-        onChange={(e) => setMinutes(e.target.valueAsNumber)}
+        options={[5, 15, 30, 60].map((value) => ({ value, label: `${value} мин` }))}
+        onChange={setMinutes}
       />
-      <Select
-        label="Направление предложений"
-        value={area}
-        onChange={(e) => setArea(e.target.value)}
-      >
-        <option value="">Мои активные направления</option>
-        {labels.data?.areas
-          .filter((a) => !a.archived)
-          .map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-      </Select>
+      <div className="suggestion-controls">
+        <Select
+          label="Период предложений"
+          value={period}
+          onChange={(e) => setPeriod(e.target.value as "daily" | "weekly")}
+        >
+          <option value="daily">На день</option>
+          <option value="weekly">На неделю</option>
+        </Select>
+        <Input
+          label="Доступное время, минут"
+          type="number"
+          min={5}
+          max={240}
+          value={minutes}
+          onChange={(e) => setMinutes(e.target.valueAsNumber)}
+        />
+        <Select
+          label="Направление предложений"
+          value={area}
+          onChange={(e) => setArea(e.target.value)}
+        >
+          <option value="">Мои активные направления</option>
+          {labels.data?.areas
+            .filter((a) => !a.archived)
+            .map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+        </Select>
+      </div>
       {q.isError && (
         <p role="alert">
           Не удалось загрузить предложения.{" "}
           <Button onClick={() => void q.refetch()}>Повторить</Button>
         </p>
       )}
-      <ul>
+      <ul className="suggestion-grid">
         {q.data?.items.map((v) => (
           <li key={v.template.id}>
+            <div className="suggestion-symbol" aria-hidden="true">
+              <Compass size={28} />
+            </div>
+            <span className="task-time-chip">
+              <Clock3 size={13} aria-hidden="true" />
+              {v.template.estimated_minutes} мин
+            </span>
             <h3>{v.template.name}</h3>
-            <p>
-              {v.template.description} · около {v.template.estimated_minutes} мин.
-            </p>
-            <p className="ui-hint">
-              {v.reason}. {v.template.safe_norm}
-            </p>
+            <p>{v.template.description}</p>
+            <details className="quiet-details">
+              <summary>Почему этот шаг</summary>
+              <p className="ui-hint">
+                {v.reason}. {v.template.safe_norm}
+              </p>
+            </details>
             {v.quest_id ? (
               <SafeLink href={"/app/quests/" + v.quest_id}>Открыть принятую задачу</SafeLink>
             ) : (
               <Button
                 variant="secondary"
+                aria-label={`Принять «${v.template.name}»`}
                 disabled={action.pending}
                 onClick={() =>
                   void action.run(async () => {
@@ -907,13 +926,18 @@ function QuestSuggestions({ account }: { account: string }) {
                   })
                 }
               >
-                Принять «{v.template.name}»
+                Добавить в идеи <ArrowUpRight size={16} aria-hidden="true" />
               </Button>
             )}
           </li>
         ))}
       </ul>
-      {q.data?.items.length === 0 && <p>Для выбранного времени пока нет предложений.</p>}
+      {q.data?.items.length === 0 && (
+        <EmptyScene
+          title="Попробуйте другой ритм"
+          description="Для выбранного времени пока нет предложений."
+        />
+      )}
       {action.error && <p role="alert">{action.error}</p>}
     </Card>
   );

@@ -84,7 +84,7 @@ export function Rewards() {
   }
   return (
     <>
-      <Card>
+      <Card className="wallet-banner">
         <h2>Ваш баланс: {data.balance.available_coins} монет</h2>
         {data.balance.coin_correction > 0 && (
           <p>

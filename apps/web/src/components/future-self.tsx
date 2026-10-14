@@ -10,6 +10,8 @@ import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Card } from "./ui/card";
 import { Select } from "./ui/field";
 import { Button } from "./ui/button";
+import { StatTile, ChoiceChips } from "./ui/experience";
+import { Rocket, Timer } from "lucide-react";
 const text = z.string(),
   integer = z.number().int();
 const schema = z.object({
@@ -49,23 +51,32 @@ export function FutureSelf() {
     });
   if (!account) return null;
   return (
-    <Card>
+    <Card className="future-panel">
       <h2>Future Self: объём практики</h2>
-      <p>
-        Среднее подтверждённых рабочих часов за последние четыре полные недели, включая нулевые. Для
-        расчёта нужны минимум две полные недели наблюдений. Текущая неделя исключена.
-      </p>
-      <Select
-        label="Горизонт Future Self"
+      <ChoiceChips
+        label="Быстрый горизонт практики"
         value={weeks}
-        onChange={(e) => setWeeks(Number(e.target.value))}
-      >
-        {[4, 12, 26, 52, 104].map((w) => (
-          <option key={w} value={w}>
-            {w} недель
-          </option>
-        ))}
-      </Select>
+        options={[4, 12, 26, 52, 104].map((value) => ({ value, label: `${value} нед` }))}
+        onChange={setWeeks}
+      />
+      <details className="quiet-details">
+        <summary>Период и метод расчёта</summary>
+        <p>
+          Среднее подтверждённых рабочих часов за последние четыре полные недели, включая нулевые.
+          Для расчёта нужны минимум две полные недели наблюдений. Текущая неделя исключена.
+        </p>
+        <Select
+          label="Горизонт Future Self"
+          value={weeks}
+          onChange={(e) => setWeeks(Number(e.target.value))}
+        >
+          {[4, 12, 26, 52, 104].map((w) => (
+            <option key={w} value={w}>
+              {w} недель
+            </option>
+          ))}
+        </Select>
+      </details>
       {data.isPending && <p role="status">Считаем подтверждённые часы…</p>}
       {data.isError && (
         <p role="alert">
@@ -79,14 +90,21 @@ export function FutureSelf() {
             Полных наблюдавшихся недель: {data.data.observed_weeks}. Зона: {data.data.timezone}.
           </p>
           {data.data.available && (
-            <p>
-              Средний темп:{" "}
-              {data.data.average_weekly_hours?.toLocaleString("ru-RU", {
-                maximumFractionDigits: 2,
-              })}{" "}
-              ч/неделю × {data.data.horizon_weeks} ={" "}
-              {data.data.projected_hours?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ч.
-            </p>
+            <div className="stat-grid">
+              <StatTile
+                label="Средний темп"
+                value={`${data.data.average_weekly_hours?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ч`}
+                detail="В неделю по подтверждённым сессиям"
+                icon={<Timer />}
+                tone="blue"
+              />
+              <StatTile
+                label={`Через ${data.data.horizon_weeks} недель при том же темпе`}
+                value={`${data.data.projected_hours?.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ч`}
+                detail="Расчёт объёма практики"
+                icon={<Rocket />}
+              />
+            </div>
           )}
           <details>
             <summary>Недели и источники Future Self</summary>

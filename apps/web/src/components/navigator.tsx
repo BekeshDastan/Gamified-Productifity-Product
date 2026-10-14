@@ -6,6 +6,25 @@ import * as api from "@/lib/navigator";
 import { useChallengeAction } from "./challenges";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { EmptyScene } from "./ui/experience";
+import { Compass } from "lucide-react";
+const ruleTitles: Record<string, string> = {
+  R01: "Первый шаг без откладывания",
+  R02: "Посильный план",
+  R03: "Время до дедлайна",
+  R04: "Комфортный ритм привычки",
+  R05: "Мягкое возвращение",
+  R06: "План по силам",
+  R07: "Начать с пяти минут",
+  R08: "Взгляд на прошедшую неделю",
+  R09: "Точнее оценивать время",
+  R10: "Следующий шаг к цели",
+  R11: "Семь периодов подряд",
+  R12: "Место в календаре",
+  R13: "Пересмотреть срок цели",
+  R14: "Главная цель месяца",
+  R15: "Подвести итог фокуса",
+};
 export const factNames: Record<string, string> = {
   postponements: "Переносов",
   window_days: "Дней в окне",
@@ -56,100 +75,114 @@ export function NavigatorCards() {
     );
   return (
     <>
-      <Card>
+      <Card className="navigator-insights">
         <h2>Подсказки по вашим записям</h2>
-        <p>
-          Правила используют числа и состояния задач. Открытие действия само по себе ничего не
-          меняет. Одновременно показываем до трёх подсказок.
-        </p>
+        <details className="quiet-details">
+          <summary>Откуда берутся подсказки</summary>
+          <p>
+            Правила используют числа и состояния задач. Открытие действия само по себе ничего не
+            меняет. Одновременно показываем до трёх подсказок.
+          </p>
+        </details>
         {!data.data.complete && (
           <p role="status">
             Часть истории ещё обновляется. Подсказки по неполным данным появятся после пересчёта.
           </p>
         )}
-        {!data.data.items.length && <p>Сейчас подходящих подсказок нет.</p>}
-        {data.data.items.map((c) => (
-          <article key={c.id} style={{ marginBlock: "1rem" }}>
-            <h3>{c.rule.id} · Подсказка</h3>
-            <p>{c.message}</p>
-            <details>
-              <summary>Почему появилась эта подсказка</summary>
-              <dl>
-                {Object.entries(c.fact.numbers).map(([key, value]) => (
-                  <div key={key}>
-                    <dt>{factNames[key] ?? key}</dt>
-                    <dd>{value.toLocaleString("ru-RU", { maximumFractionDigits: 2 })}</dd>
-                  </div>
-                ))}
-              </dl>
-              <p>
-                Версия правила: {c.rule.version}. Интервал повторения:{" "}
-                {c.rule.cooldown_seconds / 86400} дней.
-              </p>
-              <ul>
-                {c.fact.sources.map((s, i) => (
-                  <li key={i}>
-                    <SafeLink href={s.url}>Открыть исходную запись {i + 1}</SafeLink>
-                    {s.version > 0 ? ` · версия ${s.version}` : ""}
-                  </li>
-                ))}
-              </ul>
-            </details>
-            <div className="button-row">
-              <SafeLink href={c.action_url}>Перейти к действию</SafeLink>
-              <Button
-                variant="secondary"
-                disabled={action.pending}
-                onClick={() =>
-                  void action.run(async () => {
-                    await api.decideCard(c, "hide");
-                    await changed();
-                  })
-                }
-              >
-                Скрыть {c.rule.id}
-              </Button>
-              <Button
-                variant="secondary"
-                disabled={action.pending}
-                onClick={() =>
-                  void action.run(async () => {
-                    await api.decideCard(c, "snooze");
-                    await changed();
-                  })
-                }
-              >
-                Отложить {c.rule.id} на день
-              </Button>
-              <Button
-                variant="secondary"
-                disabled={action.pending}
-                onClick={() =>
-                  void action.run(async () => {
-                    const s = data.data!.settings.find((s) => s.rule_id === c.rule.id);
-                    await api.setRule(c.rule.id, true, s?.version ?? 0);
-                    await changed();
-                  })
-                }
-              >
-                Отключить {c.rule.id}
-              </Button>
-            </div>
-          </article>
-        ))}
+        {!data.data.items.length && (
+          <EmptyScene
+            title="Вы выбираете направление"
+            description="Сейчас подходящих подсказок нет. Продолжайте в своём темпе."
+          />
+        )}
+        <div className="navigator-card-grid">
+          {data.data.items.map((c) => (
+            <article key={c.id} className="navigator-card">
+              <Compass size={28} aria-hidden="true" />
+              <h3>{ruleTitles[c.rule.id] ?? "Следующий шаг"}</h3>
+              <p>{c.message}</p>
+              <details>
+                <summary>Почему появилась эта подсказка</summary>
+                <dl>
+                  {Object.entries(c.fact.numbers).map(([key, value]) => (
+                    <div key={key}>
+                      <dt>{factNames[key] ?? key}</dt>
+                      <dd>{value.toLocaleString("ru-RU", { maximumFractionDigits: 2 })}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <p>
+                  Повторяем такую подсказку не чаще раза в {c.rule.cooldown_seconds / 86400} дней.
+                </p>
+                <ul>
+                  {c.fact.sources.map((s, i) => (
+                    <li key={i}>
+                      <SafeLink href={s.url}>Открыть исходную запись {i + 1}</SafeLink>
+                      {s.version > 0 ? ` · версия ${s.version}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+              <div className="button-row">
+                <SafeLink href={c.action_url}>Перейти к действию</SafeLink>
+                <Button
+                  variant="secondary"
+                  aria-label={`Скрыть подсказку: ${ruleTitles[c.rule.id] ?? "Следующий шаг"}`}
+                  disabled={action.pending}
+                  onClick={() =>
+                    void action.run(async () => {
+                      await api.decideCard(c, "hide");
+                      await changed();
+                    })
+                  }
+                >
+                  Скрыть
+                </Button>
+                <Button
+                  variant="secondary"
+                  aria-label={`Отложить на день: ${ruleTitles[c.rule.id] ?? "Следующий шаг"}`}
+                  disabled={action.pending}
+                  onClick={() =>
+                    void action.run(async () => {
+                      await api.decideCard(c, "snooze");
+                      await changed();
+                    })
+                  }
+                >
+                  Завтра
+                </Button>
+                <Button
+                  variant="secondary"
+                  aria-label={`Отключить подсказки: ${ruleTitles[c.rule.id] ?? "Следующий шаг"}`}
+                  disabled={action.pending}
+                  onClick={() =>
+                    void action.run(async () => {
+                      const s = data.data!.settings.find((s) => s.rule_id === c.rule.id);
+                      await api.setRule(c.rule.id, true, s?.version ?? 0);
+                      await changed();
+                    })
+                  }
+                >
+                  Не показывать
+                </Button>
+              </div>
+            </article>
+          ))}
+        </div>
         {action.error && <p role="alert">{action.error}</p>}
       </Card>
       <Card>
         <details>
-          <summary>Настройки правил R01–R15</summary>
+          <summary>Какие подсказки показывать</summary>
           <p>Отключённые правила перестают показывать подсказки. Можно включить их снова.</p>
           {data.data.rules.map((r) => {
             const s = data.data!.settings.find((s) => s.rule_id === r.id);
             return (
               <p key={r.id}>
-                {r.id} · {s?.disabled ? "Отключено" : "Включено"}{" "}
+                {ruleTitles[r.id] ?? "Другие подсказки"} · {s?.disabled ? "Отключено" : "Включено"}{" "}
                 <Button
                   variant="secondary"
+                  aria-label={`${s?.disabled ? "Включить" : "Отключить"} подсказки: ${ruleTitles[r.id] ?? "Другие подсказки"}`}
                   disabled={action.pending}
                   onClick={() =>
                     void action.run(async () => {
@@ -158,7 +191,7 @@ export function NavigatorCards() {
                     })
                   }
                 >
-                  {s?.disabled ? "Включить" : "Отключить"} правило {r.id}
+                  {s?.disabled ? "Включить" : "Отключить"}
                 </Button>
               </p>
             );

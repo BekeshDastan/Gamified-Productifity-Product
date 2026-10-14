@@ -8,6 +8,8 @@ import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { useToast } from "./ui/toast";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
+import { StatTile, EmptyScene } from "./ui/experience";
+import { Coins, Sparkles, Trophy, ArrowUpRight } from "lucide-react";
 const signed = (v: number) => (v >= 0 ? "+" : "") + v;
 export function useRewardNotice() {
   const toast = useToast(),
@@ -51,22 +53,37 @@ export function ProgressionSummary({ compact = false }: { compact?: boolean }) {
     );
   const d = data.data;
   return (
-    <div className="progression-summary">
-      <h2>Уровень {d.level.number}</h2>
-      <p>
-        Всего: <strong>{d.total_xp} XP</strong>
-      </p>
-      <progress
-        aria-label="Опыт до следующего уровня"
-        value={d.level.inside}
-        max={d.level.inside + d.level.to_next}
-      />
-      <p>
-        {d.level.inside} XP на этом уровне · до следующего {d.level.to_next} XP
-      </p>
-      <p>
-        Доступно: <strong>{d.available_coins} монет</strong>
-      </p>
+    <div className={`progression-summary${compact ? "" : " progression-full"}`}>
+      {!compact && (
+        <div className="level-crest" aria-hidden="true">
+          <i />
+          <i />
+          <Trophy size={50} />
+          <span>{d.level.number}</span>
+        </div>
+      )}
+      <div className="level-content">
+        {!compact && <p className="eyebrow">КАЖДЫЙ ШАГ ИМЕЕТ ЗНАЧЕНИЕ</p>}
+        <h2>Уровень {d.level.number}</h2>
+        {compact && (
+          <p>
+            Всего: <strong>{d.total_xp} XP</strong>
+          </p>
+        )}
+        <progress
+          aria-label="Опыт до следующего уровня"
+          value={d.level.inside}
+          max={d.level.inside + d.level.to_next}
+        />
+        <p>
+          {d.level.inside} XP на этом уровне · до следующего {d.level.to_next} XP
+        </p>
+        {compact && (
+          <p>
+            Доступно: <strong>{d.available_coins} монет</strong>
+          </p>
+        )}
+      </div>
       {d.coin_correction > 0 && (
         <p>
           Корректировка: {d.coin_correction} виртуальных монет. Новые монеты сначала покрывают
@@ -74,11 +91,51 @@ export function ProgressionSummary({ compact = false }: { compact?: boolean }) {
         </p>
       )}
       {!compact && (
-        <p className="ui-hint">
-          За скользящие 24 часа: задачи {d.quota.task_used} / {d.quota.task_cap} XP · привычки{" "}
-          {d.quota.habit_used} / {d.quota.habit_cap} XP. Общая квота {d.quota.total_used} /{" "}
-          {d.quota.total_cap} XP.
-        </p>
+        <div className="stat-grid progression-stats">
+          <StatTile
+            label="Накопленный опыт"
+            value={d.total_xp}
+            detail="XP за ваши действия"
+            icon={<Sparkles />}
+          />
+          <StatTile
+            label="Кошелёк"
+            value={d.available_coins}
+            detail="Монеты для личных наград"
+            tone="gold"
+            icon={<Coins />}
+          />
+          <StatTile
+            label="До следующего уровня"
+            value={d.level.to_next}
+            detail="XP до нового открытия"
+            tone="mint"
+            icon={<Trophy />}
+          />
+        </div>
+      )}
+      {!compact && (
+        <div className="progression-shortcuts">
+          <SafeLink href="/app/quests">
+            Сделать следующий шаг <ArrowUpRight size={17} />
+          </SafeLink>
+          <SafeLink href="/app/rewards">
+            Выбрать награду <ArrowUpRight size={17} />
+          </SafeLink>
+          <SafeLink href="/app/character">
+            Мой персонаж <ArrowUpRight size={17} />
+          </SafeLink>
+        </div>
+      )}
+      {!compact && (
+        <details className="quiet-details">
+          <summary>Лимиты опыта за 24 часа</summary>
+          <p className="ui-hint">
+            За скользящие 24 часа: задачи {d.quota.task_used} / {d.quota.task_cap} XP · привычки{" "}
+            {d.quota.habit_used} / {d.quota.habit_cap} XP. Общая квота {d.quota.total_used} /{" "}
+            {d.quota.total_cap} XP.
+          </p>
+        </details>
       )}
       {compact ? (
         <SafeLink href="/app/progress">История и правила наград</SafeLink>
@@ -126,7 +183,7 @@ export function Progression() {
   });
   return (
     <>
-      <Card>
+      <Card className="progression-hero">
         <ProgressionSummary />
       </Card>
       <Card>
@@ -141,10 +198,13 @@ export function Progression() {
           </p>
         )}
         {history.data?.pages[0]?.items.length === 0 && (
-          <p>
-            Пока нет начислений. Завершите одну листовую задачу или полную норму текущего периода
-            привычки.
-          </p>
+          <EmptyScene
+            title="Первая награда впереди"
+            description="Завершите задачу или выполните норму привычки — здесь появится история вашего прогресса."
+            tone="gold"
+          >
+            <SafeLink href="/app/quests">К моим задачам</SafeLink>
+          </EmptyScene>
         )}
         <ol className="progression-history">
           {history.data?.pages

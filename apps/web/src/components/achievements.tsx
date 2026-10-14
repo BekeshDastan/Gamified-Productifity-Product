@@ -6,6 +6,8 @@ import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Select } from "./ui/field";
+import { Award, LockKeyhole } from "lucide-react";
+import { ChoiceChips } from "./ui/experience";
 export function Achievements() {
   const auth = useAuth(),
     query = useAchievements(),
@@ -39,16 +41,30 @@ export function Achievements() {
         Получено: {query.data.filter((a) => a.active).length} из {query.data.length}
       </p>
       <div className="auth-actions">
-        <Select
-          label="Показать достижения"
+        <ChoiceChips
+          label="Категория достижений"
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        >
-          <option value="all">Все</option>
-          <option value="earned">Полученные</option>
-          <option value="locked">Ещё не полученные</option>
-          <option value="corrected">После исправления</option>
-        </Select>
+          options={[
+            { value: "all", label: "Все" },
+            { value: "earned", label: "Полученные" },
+            { value: "locked", label: "Впереди" },
+            { value: "corrected", label: "Исправленные" },
+          ]}
+          onChange={setFilter}
+        />
+        <details className="quiet-details">
+          <summary>Выбор списка</summary>
+          <Select
+            label="Показать достижения"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          >
+            <option value="all">Все</option>
+            <option value="earned">Полученные</option>
+            <option value="locked">Ещё не полученные</option>
+            <option value="corrected">После исправления</option>
+          </Select>
+        </details>
         <Button variant="secondary" onClick={() => void query.refetch()}>
           Обновить достижения
         </Button>
@@ -59,7 +75,10 @@ export function Achievements() {
       </p>
       <div className="achievement-grid">
         {data.map((a) => (
-          <Card key={a.id}>
+          <Card key={a.id} className="achievement-card" data-earned={a.active}>
+            <div className="achievement-medal" aria-hidden="true">
+              {a.active ? <Award size={38} /> : <LockKeyhole size={31} />}
+            </div>
             <h2>{a.name}</h2>
             <p>{a.description}</p>
             <p>

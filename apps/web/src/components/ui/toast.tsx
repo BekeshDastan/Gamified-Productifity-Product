@@ -1,6 +1,13 @@
 "use client";
 import { Toast as Primitive } from "radix-ui";
-import { createContext, useContext, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useRef,
+  useState,
+  type ReactNode,
+  type CSSProperties,
+} from "react";
 import { X } from "lucide-react";
 import { Button } from "./button";
 type Notice = { title: string; description?: string; tone?: "success" | "error" };
@@ -38,6 +45,13 @@ export function ToastProvider({
                 if (!open) setNotices((items) => items.filter((item) => item.id !== notice.id));
               }}
             >
+              {notice.tone === "success" && (
+                <span className="success-confetti" aria-hidden="true">
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <i key={i} style={{ "--i": i } as CSSProperties} />
+                  ))}
+                </span>
+              )}
               <div>
                 <Primitive.Title>
                   {notice.tone === "success" ? "✓ " : notice.tone === "error" ? "! " : ""}

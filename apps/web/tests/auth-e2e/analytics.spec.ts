@@ -1,4 +1,4 @@
-import { revealControl } from "./disclosure";
+import { revealControl, expand } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function account(page: Page) {
@@ -176,6 +176,7 @@ test("analytics charts tables heatmap and exact source links agree in both theme
   await expect(page.getByLabel("Начало аналитики", { exact: true })).toHaveValue("2026-10-06");
   await page.locator('.recharts-bar-rectangle path[fill="var(--warning)"]').last().click();
   await expect(page.getByLabel("Фильтр источников", { exact: true })).toHaveValue("late");
+  await expand(page, "Таблица-альтернатива графика");
   await page.getByRole("button", { name: "Источники 2026-10-12", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Источники за 2026-10-12", exact: true }),
@@ -199,6 +200,7 @@ test("analytics charts tables heatmap and exact source links agree in both theme
       .getByRole("row")
       .filter({ has: page.getByRole("rowheader", { name: "2026-10-12", exact: true }) }),
   ).toContainText("1");
+  await revealControl(page.getByLabel("Показатель графика", { exact: true }));
   await page.getByLabel("Показатель графика", { exact: true }).selectOption("scores");
   await expect(
     table
@@ -213,6 +215,8 @@ test("analytics charts tables heatmap and exact source links agree in both theme
   await expect(page.getByLabel("Конец аналитики включительно", { exact: true })).toHaveValue(
     "2026-10-12",
   );
+  await expect(table.getByRole("row")).toHaveCount(2);
+  await expect(page.getByRole("group", { name: "График: Оценка дня", exact: true })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Источники 2026-10-12", exact: true }),
   ).toBeVisible();

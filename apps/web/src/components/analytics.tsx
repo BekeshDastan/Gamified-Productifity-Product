@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DateTime } from "luxon";
 import { useAuth } from "@/lib/auth/provider";
 import { useSettings } from "@/lib/settings";
@@ -14,6 +14,8 @@ import { AnalyticsReports } from "./analytics-reports";
 import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Card } from "./ui/card";
+import { FilterPanel, StatTile } from "./ui/experience";
+import { CircleCheck, Timer, Sprout, Sparkles, ChartNoAxesCombined } from "lucide-react";
 export function Analytics() {
   const auth = useAuth(),
     settings = useSettings();
@@ -44,6 +46,7 @@ function Workspace({ account, timezone }: { account: string; timezone: string })
     q = useQuery({
       queryKey: key,
       queryFn: ({ signal }) => api.getAnalytics(range, signal),
+      placeholderData: keepPreviousData,
       refetchInterval: 10000,
     }),
     samples = useQuery({
@@ -66,13 +69,28 @@ function Workspace({ account, timezone }: { account: string; timezone: string })
   const selected = q.data?.days.find((d) => d.date === date) ?? q.data?.days.at(-1);
   return (
     <div className="journal-layout analytics-workspace">
-      <Card>
-        <h2>Период наблюдения</h2>
-        <div className="button-row">
+      <Card className="analytics-range">
+        <div className="panel-heading">
+          <span className="panel-icon">
+            <ChartNoAxesCombined aria-hidden="true" />
+          </span>
+          <div>
+            <p className="eyebrow">КАРТИНА ВАШЕГО РОСТА</p>
+            <h2>Период наблюдения</h2>
+          </div>
+        </div>
+        <div className="choice-chips" role="group" aria-label="Период аналитики">
           {[7, 30, 90, 365].map((n) => (
             <Button
               key={n}
               variant="secondary"
+              aria-pressed={
+                range.from ===
+                  DateTime.fromISO(today)
+                    .minus({ days: n - 1 })
+                    .toISODate() &&
+                range.to === DateTime.fromISO(today).plus({ days: 1 }).toISODate()
+              }
               onClick={() =>
                 applyRange({
                   from: DateTime.fromISO(today)
@@ -86,35 +104,37 @@ function Workspace({ account, timezone }: { account: string; timezone: string })
             </Button>
           ))}
         </div>
-        <form
-          className="form-grid"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void action.run(async () => {
-              const a = DateTime.fromISO(from),
-                b = DateTime.fromISO(to);
-              if (!a.isValid || !b.isValid || b < a || b.diff(a, "days").days > 365)
-                throw Error("Выберите от 1 до 366 календарных дней.");
-              applyRange({ from, to: b.plus({ days: 1 }).toISODate()! });
-            });
-          }}
-        >
-          <Input
-            type="date"
-            label="Начало аналитики"
-            value={from}
-            required
-            onChange={(e) => setFrom(e.target.value)}
-          />
-          <Input
-            type="date"
-            label="Конец аналитики включительно"
-            value={to}
-            required
-            onChange={(e) => setTo(e.target.value)}
-          />
-          <Button type="submit">Показать период</Button>
-        </form>
+        <FilterPanel title="Свой период">
+          <form
+            className="form-grid"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void action.run(async () => {
+                const a = DateTime.fromISO(from),
+                  b = DateTime.fromISO(to);
+                if (!a.isValid || !b.isValid || b < a || b.diff(a, "days").days > 365)
+                  throw Error("Выберите от 1 до 366 календарных дней.");
+                applyRange({ from, to: b.plus({ days: 1 }).toISODate()! });
+              });
+            }}
+          >
+            <Input
+              type="date"
+              label="Начало аналитики"
+              value={from}
+              required
+              onChange={(e) => setFrom(e.target.value)}
+            />
+            <Input
+              type="date"
+              label="Конец аналитики включительно"
+              value={to}
+              required
+              onChange={(e) => setTo(e.target.value)}
+            />
+            <Button type="submit">Показать период</Button>
+          </form>
+        </FilterPanel>
         <Button
           variant="secondary"
           disabled={action.pending}
@@ -137,10 +157,12 @@ function Workspace({ account, timezone }: { account: string; timezone: string })
           <p role="alert">Не удалось загрузить аналитику. Повторите пересчёт.</p>
         ) : (
           q.data && (
-            <p role="status">
-              {q.data.stale
-                ? "Есть изменения: сводка пересчитывается. Пока показан предыдущий результат."
-                : "Сводка актуальна."}{" "}
+            <p role="status" className="analytics-freshness">
+              {q.isPlaceholderData
+                ? "Обновляем выбранный период. Пока показаны предыдущие данные."
+                : q.data.stale
+                  ? "Есть изменения: сводка пересчитывается. Пока показан предыдущий результат."
+                  : "Сводка актуальна."}{" "}
               {q.data.computed_at
                 ? `Пересчитано ${DateTime.fromISO(q.data.computed_at).setZone(timezone).toFormat("dd.LL.yyyy HH:mm:ss")}.`
                 : "Пересчёт ещё не выполнен."}{" "}
@@ -151,54 +173,112 @@ function Workspace({ account, timezone }: { account: string; timezone: string })
       </Card>
       {q.data && (
         <>
+          <div className="stat-grid">
+            <StatTile
+              label="Завершено задач"
+              value={q.data.days.reduce((s, d) => s + d.completed, 0)}
+              tone="mint"
+              icon={<CircleCheck />}
+            />
+            <StatTile
+              label="Минут фокуса"
+              value={Math.round(q.data.days.reduce((s, d) => s + d.focus_seconds, 0) / 60)}
+              tone="blue"
+              icon={<Timer />}
+            />
+            <StatTile
+              label="Полные нормы"
+              value={q.data.days.reduce((s, d) => s + d.habit_successes, 0)}
+              tone="coral"
+              icon={<Sprout />}
+            />
+            <StatTile
+              label="Изменение опыта"
+              value={q.data.days.reduce((s, d) => s + d.xp_delta, 0)}
+              icon={<Sparkles />}
+            />
+          </div>
           <AnalyticsChart days={q.data.days} choose={choose} />
-          <Card>
+          <Card className="analytics-weekly">
             <h2>Недельные итоги</h2>
-            <p>
-              Недели начинаются в понедельник. Крайние недели могут содержать только часть
-              выбранного диапазона.
-            </p>
-            <div
-              className="analytics-table-scroll"
-              role="region"
-              aria-label="Недельные итоги аналитики"
-              tabIndex={0}
-            >
-              <table className="analytics-table">
-                <caption>Суммы дневных записей с отдельными единицами</caption>
-                <thead>
-                  <tr>
-                    <th>Неделя</th>
-                    <th>Дней</th>
-                    <th>Завершено задач</th>
-                    <th>Обязательства плана</th>
-                    <th>Выполнено в свой день</th>
-                    <th>Полные нормы</th>
-                    <th>Фокус, минут</th>
-                    <th>XP</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {q.data.weeks.map((w) => (
-                    <tr key={w.start}>
-                      <th scope="row">{w.start}</th>
-                      <td>{w.days}</td>
-                      <td>{w.completed}</td>
-                      <td>{w.planned}</td>
-                      <td>{w.planned_completed}</td>
-                      <td>
-                        {w.habit_successes} / {w.habit_obligations}
-                      </td>
-                      <td>
-                        {(w.focus_seconds / 60).toLocaleString("ru-RU", {
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
-                      <td>{w.xp_delta}</td>
+            <details className="quiet-details">
+              <summary>Все недели в таблице</summary>
+              <p>
+                Недели начинаются в понедельник. Крайние недели могут содержать только часть
+                выбранного диапазона.
+              </p>
+              <div
+                className="analytics-table-scroll"
+                role="region"
+                aria-label="Недельные итоги аналитики"
+                tabIndex={0}
+              >
+                <table className="analytics-table">
+                  <caption>Суммы дневных записей с отдельными единицами</caption>
+                  <thead>
+                    <tr>
+                      <th>Неделя</th>
+                      <th>Дней</th>
+                      <th>Завершено задач</th>
+                      <th>Обязательства плана</th>
+                      <th>Выполнено в свой день</th>
+                      <th>Полные нормы</th>
+                      <th>Фокус, минут</th>
+                      <th>XP</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {q.data.weeks.map((w) => (
+                      <tr key={w.start}>
+                        <th scope="row">{w.start}</th>
+                        <td>{w.days}</td>
+                        <td>{w.completed}</td>
+                        <td>{w.planned}</td>
+                        <td>{w.planned_completed}</td>
+                        <td>
+                          {w.habit_successes} / {w.habit_obligations}
+                        </td>
+                        <td>
+                          {(w.focus_seconds / 60).toLocaleString("ru-RU", {
+                            maximumFractionDigits: 2,
+                          })}
+                        </td>
+                        <td>{w.xp_delta}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+            <div className="weekly-summary-cards">
+              {q.data.weeks.map((w) => (
+                <button
+                  type="button"
+                  key={w.start}
+                  onClick={() =>
+                    applyRange({
+                      from: w.start,
+                      to: DateTime.fromISO(w.start).plus({ days: 7 }).toISODate()!,
+                    })
+                  }
+                >
+                  <span>Неделя {DateTime.fromISO(w.start).setLocale("ru").toFormat("d MMM")}</span>
+                  <strong>
+                    {w.completed}
+                    <small> задач</small>
+                  </strong>
+                  <span>
+                    {Math.round(w.focus_seconds / 60)} мин фокуса · {w.xp_delta} XP
+                  </span>
+                  <span className="mini-progress">
+                    <i
+                      style={{
+                        width: `${w.planned ? Math.min(100, (w.planned_completed / w.planned) * 100) : 0}%`,
+                      }}
+                    />
+                  </span>
+                </button>
+              ))}
             </div>
           </Card>
           {selected && (
@@ -297,24 +377,38 @@ function DaySources({
       <h2 id="analytics-sources" tabIndex={-1}>
         Источники за {d.date}
       </h2>
-      <p>
-        {api.scoreStates[d.scores.state] ?? "Нет оценки"} · оценка дня: {d.scores.daily ?? "—"}.
-      </p>
-      <p>
-        Компоненты собственного плана: задачи T — {fraction(d.scores.t)}, нормы H —{" "}
-        {fraction(d.scores.h)}, выполнимость объёма R — {fraction(d.scores.r)}. Неактивные
-        компоненты исключены из формулы.
-      </p>
-      <p>
-        Регулярность: {d.scores.discipline.score ?? "Недостаточно данных"}; завершённых активных
-        дней: {d.scores.discipline.active_days}; обязательств по задачам:{" "}
-        {d.scores.discipline.task_obligations}; периодов привычек:{" "}
-        {d.scores.discipline.habit_obligations}.
-      </p>
-      <p>
-        Это выполнение собственных планов. Балл не оценивает человека и не используется для
-        публичного рейтинга.
-      </p>
+      <div className="stat-grid day-source-stats">
+        <StatTile
+          label="Оценка выбранного дня"
+          value={d.scores.daily ?? "—"}
+          detail={api.scoreStates[d.scores.state] ?? "Нет оценки"}
+          icon={<CircleCheck />}
+          tone="mint"
+        />
+        <StatTile
+          label="Регулярность"
+          value={d.scores.discipline.score ?? "—"}
+          detail={`${d.scores.discipline.active_days} завершённых активных дней`}
+          icon={<ChartNoAxesCombined />}
+          tone="blue"
+        />
+      </div>
+      <details className="quiet-details">
+        <summary>Как складываются эти показатели</summary>
+        <p>
+          Компоненты собственного плана: задачи T — {fraction(d.scores.t)}, нормы H —{" "}
+          {fraction(d.scores.h)}, выполнимость объёма R — {fraction(d.scores.r)}. Неактивные
+          компоненты исключены из формулы.
+        </p>
+        <p>
+          Обязательств по задачам: {d.scores.discipline.task_obligations}; периодов привычек:{" "}
+          {d.scores.discipline.habit_obligations}.
+        </p>
+        <p>
+          Это выполнение собственных планов. Балл не оценивает человека и не используется для
+          публичного рейтинга.
+        </p>
+      </details>
       <Button
         variant="secondary"
         onClick={() => chooseRange({ from: d.scores.discipline.from, to: d.scores.discipline.to })}

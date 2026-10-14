@@ -23,6 +23,8 @@ import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
+import { Swords } from "lucide-react";
+import { EmptyScene } from "./ui/experience";
 export function Bosses() {
   const auth = useAuth(),
     query = useBosses(),
@@ -74,7 +76,10 @@ export function Bosses() {
       </Card>
       <div className="reward-grid">
         {query.data.map((b) => (
-          <Card key={b.id} id={"boss-" + b.id}>
+          <Card key={b.id} id={"boss-" + b.id} className="boss-card">
+            <div className="boss-emblem" aria-hidden="true">
+              <Swords size={38} />
+            </div>
             <BossStatus boss={b} />
             <ol>
               {b.stages.map((s) => (
@@ -119,7 +124,11 @@ export function Bosses() {
       </div>
       {query.data.length === 0 && (
         <Card>
-          <p>Боссов пока нет. Выберите существующую цель.</p>
+          <EmptyScene
+            title="Большая цель — маленькие шаги"
+            description="Боссов пока нет. Выберите существующую цель и двигайтесь по её этапам."
+            tone="gold"
+          />
         </Card>
       )}
       <BossHistory />

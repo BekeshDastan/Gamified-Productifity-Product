@@ -289,8 +289,11 @@ function SeasonDetail({
       changed();
     });
   return (
-    <Card>
-      <h2>{v.title}</h2>
+    <Card className="season-detail">
+      <div className="season-banner">
+        <span className="eyebrow">ВАША НОВАЯ ГЛАВА</span>
+        <h2>{v.title}</h2>
+      </div>
       <p>
         {v.theme} · {states[v.state]} · {v.starts_on} — {v.ends_on} ({v.timezone})
       </p>
@@ -305,7 +308,7 @@ function SeasonDetail({
       )}
       <h3>{closed ? "Источники на момент завершения" : "Цели и испытания"}</h3>
       {[...value.goals, ...value.challenges].map((s) => (
-        <div key={s.id}>
+        <div key={s.id} className="season-source">
           <SafeLink href={s.url}>{s.name || "Источник недоступен"}</SafeLink>
           {value.main_goal_id === s.id ? " · Главная цель" : ""}
           <p>
@@ -321,6 +324,13 @@ function SeasonDetail({
                   ? "Нет данных участия"
                   : `${Math.round(s.percent)}%`}
           </p>
+          {s.percent !== null && (
+            <progress
+              aria-label={`Прогресс: ${s.name}`}
+              value={Math.min(100, Math.max(0, s.percent))}
+              max={100}
+            />
+          )}
           {s.stages_total > 0 && (
             <p>
               Этапы: {s.stages_completed} / {s.stages_total}

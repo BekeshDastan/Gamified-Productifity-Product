@@ -126,7 +126,11 @@ test("focus restores across two tabs and confirmed task time has one source", as
   await second.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(timing.locator("strong")).toHaveText(actual);
   await second.goto("/app/progress");
-  await expect(second.getByText("Всего: 0 XP", { exact: true })).toBeVisible();
+  await expect(
+    second
+      .getByRole("group", { name: "Накопленный опыт", exact: true })
+      .getByText("0", { exact: true }),
+  ).toBeVisible();
   await second.close();
   await accessible(page, "focus-history", info);
 });
@@ -181,11 +185,11 @@ test("quick start and Pomodoro boundaries exclude breaks and respect muted sound
   ).toBe(0);
   await page.getByRole("button", { name: "Завершить и подвести итог", exact: true }).click();
   await confirm(page, "rest");
-  await expect(page.getByRole("list", { name: "Итоги фокуса" })).toContainText(
-    "Подтверждённая работа: 5:00",
-  );
-  await expect(page.getByRole("list", { name: "Итоги фокуса" })).toContainText(
-    "Отмечено отдыхом: 5:00",
+  await expect(
+    page.getByRole("group", { name: "Подтверждённая работа", exact: true }),
+  ).toContainText("5:00");
+  await expect(page.getByRole("group", { name: "Отмечено отдыхом", exact: true })).toContainText(
+    "5:00",
   );
   await accessible(page, "focus-pomodoro", info);
 });

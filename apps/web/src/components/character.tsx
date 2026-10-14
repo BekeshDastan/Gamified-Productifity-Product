@@ -82,7 +82,7 @@ function CharacterEquipment({ profile: p }: { profile: CharacterProfile }) {
   }
   return (
     <div className="character-layout">
-      <Card>
+      <Card className="character-stage">
         <h2>Ваш образ · уровень {p.level.number}</h2>
         <p>Титул: {p.title}</p>
         <div

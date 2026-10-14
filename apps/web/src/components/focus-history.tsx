@@ -18,6 +18,8 @@ import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Card } from "./ui/card";
 import { Input, Select, DatePicker } from "./ui/field";
 import { Button } from "./ui/button";
+import { ChoiceChips, EmptyScene, FilterPanel, StatTile } from "./ui/experience";
+import { Timer, CheckCheck, Hourglass, Coffee } from "lucide-react";
 const states: Record<string, string> = {
   running: "Идёт",
   paused: "На паузе",
@@ -102,93 +104,160 @@ export function FocusHistory({ serverNow }: { serverNow: string }) {
           <SafeLink href="/app/focus">Вернуться к общей истории</SafeLink>
         </Card>
       )}
-      <Card>
-        <h2>История фокуса</h2>
-        <p>
-          День — дата старта в часовом поясе сессии. Паузы и перерывы исключены из рабочего времени.
-        </p>
-        <div className="quest-grid">
-          <DatePicker
-            label="Фокус с даты"
-            value={filters.from}
-            onChange={(e) => setFilters((v) => ({ ...v, from: e.target.value }))}
-          />
-          <DatePicker
-            label="Фокус по дату"
-            value={filters.to}
-            onChange={(e) => setFilters((v) => ({ ...v, to: e.target.value }))}
+      <Card className="focus-history-panel">
+        <div className="panel-heading">
+          <span className="panel-icon">
+            <Timer aria-hidden="true" />
+          </span>
+          <div>
+            <p className="eyebrow">ВАШ РИТМ</p>
+            <h2>История фокуса</h2>
+          </div>
+        </div>
+        {summary && (
+          <div className="stat-grid" role="group" aria-label="Итоги фокуса">
+            <StatTile
+              label="Сессии"
+              value={summary.summary.sessions}
+              detail={`Рабочие интервалы: ${duration(summary.summary.work_seconds)}`}
+              icon={<Timer />}
+            />
+            <StatTile
+              label="Подтверждённая работа"
+              value={duration(summary.summary.confirmed_seconds)}
+              tone="mint"
+              icon={<CheckCheck />}
+            />
+            <StatTile
+              label="Без подтверждения"
+              value={duration(summary.summary.pending_seconds)}
+              tone="gold"
+              icon={<Hourglass />}
+            />
+            <StatTile
+              label="Отмечено отдыхом"
+              value={duration(summary.summary.rest_seconds)}
+              detail={`В отменённых сессиях: ${duration(summary.summary.cancelled_seconds)}`}
+              tone="blue"
+              icon={<Coffee />}
+            />
+          </div>
+        )}
+        <div className="section-toolbar">
+          <ChoiceChips
+            label="Период истории фокуса"
+            value={
+              filters.to !== today.toISODate()
+                ? 0
+                : filters.from === today.toISODate()
+                  ? 1
+                  : filters.from === today.minus({ days: 6 }).toISODate()
+                    ? 7
+                    : filters.from === today.startOf("month").toISODate()
+                      ? 30
+                      : 0
+            }
+            options={[
+              { value: 1, label: "Сегодня" },
+              { value: 7, label: "7 дней" },
+              { value: 30, label: "Месяц" },
+            ]}
+            onChange={(days) =>
+              setFilters((v) => ({
+                ...v,
+                from:
+                  days === 30
+                    ? today.startOf("month").toISODate()!
+                    : today.minus({ days: days - 1 }).toISODate()!,
+                to: today.toISODate()!,
+              }))
+            }
           />
         </div>
-        <Input
-          label="Поиск задачи в истории фокуса"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-        />
-        <label>
-          <input
-            type="checkbox"
-            checked={archivedTasks}
+        <FilterPanel>
+          <div className="quest-grid">
+            <DatePicker
+              label="Фокус с даты"
+              value={filters.from}
+              onChange={(e) => setFilters((v) => ({ ...v, from: e.target.value }))}
+            />
+            <DatePicker
+              label="Фокус по дату"
+              value={filters.to}
+              onChange={(e) => setFilters((v) => ({ ...v, to: e.target.value }))}
+            />
+          </div>
+          <Input
+            label="Поиск задачи в истории фокуса"
+            value={search}
             onChange={(e) => {
-              setArchivedTasks(e.target.checked);
+              setSearch(e.target.value);
               setPage(1);
             }}
-          />{" "}
-          Искать архивные задачи в истории
-        </label>
-        <Select
-          label="Задача в истории фокуса"
-          value={filters.quest_id ?? ""}
-          onChange={(e) => update("quest_id", e.target.value)}
-        >
-          <option value="">Все задачи</option>
-          {filters.quest_id && !tasks.data?.items.some((t) => t.id === filters.quest_id) && (
-            <option value={filters.quest_id}>Ранее выбранная задача</option>
-          )}
-          {tasks.data?.items.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.title}
-            </option>
-          ))}
-        </Select>
-        <div className="auth-actions">
-          <Button disabled={page === 1} onClick={() => setPage((v) => v - 1)}>
-            Предыдущие задачи для фильтра
-          </Button>
-          <Button
-            disabled={!tasks.data || page * 25 >= tasks.data.total}
-            onClick={() => setPage((v) => v + 1)}
+          />
+          <label>
+            <input
+              type="checkbox"
+              checked={archivedTasks}
+              onChange={(e) => {
+                setArchivedTasks(e.target.checked);
+                setPage(1);
+              }}
+            />{" "}
+            Искать архивные задачи в истории
+          </label>
+          <Select
+            label="Задача в истории фокуса"
+            value={filters.quest_id ?? ""}
+            onChange={(e) => update("quest_id", e.target.value)}
           >
-            Следующие задачи для фильтра
-          </Button>
-        </div>
-        <Select
-          label="Направление в истории фокуса"
-          value={filters.area_id ?? ""}
-          onChange={(e) => update("area_id", e.target.value)}
-        >
-          <option value="">Все направления</option>
-          {labels.data?.areas.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-              {a.archived ? " · архив" : ""}
-            </option>
-          ))}
-        </Select>
-        <Select
-          label="Состояние в истории фокуса"
-          value={filters.state ?? ""}
-          onChange={(e) => update("state", e.target.value)}
-        >
-          <option value="">Все состояния</option>
-          {Object.entries(states).map(([v, label]) => (
-            <option key={v} value={v}>
-              {label}
-            </option>
-          ))}
-        </Select>
+            <option value="">Все задачи</option>
+            {filters.quest_id && !tasks.data?.items.some((t) => t.id === filters.quest_id) && (
+              <option value={filters.quest_id}>Ранее выбранная задача</option>
+            )}
+            {tasks.data?.items.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.title}
+              </option>
+            ))}
+          </Select>
+          <div className="auth-actions">
+            <Button disabled={page === 1} onClick={() => setPage((v) => v - 1)}>
+              Предыдущие задачи для фильтра
+            </Button>
+            <Button
+              disabled={!tasks.data || page * 25 >= tasks.data.total}
+              onClick={() => setPage((v) => v + 1)}
+            >
+              Следующие задачи для фильтра
+            </Button>
+          </div>
+          <Select
+            label="Направление в истории фокуса"
+            value={filters.area_id ?? ""}
+            onChange={(e) => update("area_id", e.target.value)}
+          >
+            <option value="">Все направления</option>
+            {labels.data?.areas.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+                {a.archived ? " · архив" : ""}
+              </option>
+            ))}
+          </Select>
+          <Select
+            label="Состояние в истории фокуса"
+            value={filters.state ?? ""}
+            onChange={(e) => update("state", e.target.value)}
+          >
+            <option value="">Все состояния</option>
+            {Object.entries(states).map(([v, label]) => (
+              <option key={v} value={v}>
+                {label}
+              </option>
+            ))}
+          </Select>
+        </FilterPanel>
         {!valid && <p role="alert">Укажите диапазон от 1 до 366 дней.</p>}
         {(tasks.isError || labels.isError) && (
           <p role="alert">
@@ -212,16 +281,6 @@ export function FocusHistory({ serverNow }: { serverNow: string }) {
         {valid && !q.data && !q.isError && <p role="status">Загружаем историю фокуса…</p>}
         {summary && (
           <>
-            <p>
-              По фильтрам: {summary.summary.sessions} сессий. Рабочие интервалы:{" "}
-              {duration(summary.summary.work_seconds)}.
-            </p>
-            <ul aria-label="Итоги фокуса">
-              <li>Подтверждённая работа: {duration(summary.summary.confirmed_seconds)}</li>
-              <li>Без подтверждения: {duration(summary.summary.pending_seconds)}</li>
-              <li>В отменённых сессиях: {duration(summary.summary.cancelled_seconds)}</li>
-              <li>Отмечено отдыхом: {duration(summary.summary.rest_seconds)}</li>
-            </ul>
             <p className="ui-hint">
               Итоги на{" "}
               {formatMoment(
@@ -232,11 +291,18 @@ export function FocusHistory({ serverNow }: { serverNow: string }) {
             </p>
           </>
         )}
-        {valid && summary?.items.length === 0 && <p>В этом диапазоне сессий пока нет.</p>}
+        {valid && summary?.items.length === 0 && (
+          <EmptyScene
+            title="Здесь появится ваш ритм"
+            description="В этом диапазоне сессий пока нет. Начните с пяти минут фокуса."
+          />
+        )}
         <div className="focus-history">
           {Array.from(groups, ([day, sessions]) => (
             <section key={day}>
-              <h3>{day}</h3>
+              <h3 className="timeline-date">
+                {DateTime.fromISO(day).setLocale("ru").toFormat("d MMMM, cccc")}
+              </h3>
               {sessions.map((s) => (
                 <article key={s.id} id={"session-" + s.id}>
                   <h4>{s.title}</h4>
@@ -271,13 +337,16 @@ function SessionDetails({ session: s }: { session: FocusSession }) {
           : "Итог не подтверждён";
   return (
     <>
-      <p>
-        {states[s.state]} · {result}
-      </p>
-      <p>
+      <div className="session-badges">
+        <span className="state-badge" data-state={s.state}>
+          {states[s.state]}
+        </span>
+        <span>{result}</span>
+      </div>
+      <p className="session-duration">
         Рабочие интервалы: {duration(s.active_seconds)} · перерывы: {duration(s.break_seconds)}.
       </p>
-      <p>
+      <p className="ui-hint">
         {formatMoment(s.started_at, p)} · {s.timezone}
       </p>
       {s.comment && <p className="quest-description">{s.comment}</p>}
@@ -287,7 +356,7 @@ function SessionDetails({ session: s }: { session: FocusSession }) {
       {s.goal_id && <SafeLink href={"/app/goals/" + s.goal_id}>Связанная цель</SafeLink>}
       <details>
         <summary>Интервалы сессии</summary>
-        <ol>
+        <ol className="session-segments">
           {s.segments.map((seg) => (
             <li key={seg.id}>
               {seg.kind === "work" ? "Работа" : "Перерыв"}: {duration(seg.seconds)} ·{" "}

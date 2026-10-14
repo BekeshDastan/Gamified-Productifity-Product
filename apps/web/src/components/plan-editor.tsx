@@ -21,6 +21,8 @@ import { Card } from "./ui/card";
 import { useTabDraft, TabDraftRecovery } from "@/lib/forms/tab-draft";
 import type { RoutineTemplate } from "@/lib/journal";
 import { RoutineChecklist } from "./routine-templates";
+import { ChoiceChips, EmptyScene } from "./ui/experience";
+import { Clock3, ListChecks, Sparkles, Sun, Coffee } from "lucide-react";
 const editorSchema = planInput.extend({
   reason: z.string().max(1000),
   checked: z.array(z.string()).max(20),
@@ -97,12 +99,16 @@ export function PlanEditor({
     }
   }
   return (
-    <Card>
-      <h2>{title ?? (plan.confirmed_at ? "Изменить текущий план" : "Черновик плана")}</h2>
-      <p className="ui-hint">
-        Выбор задач не переносит их плановую дату автоматически. Для переноса используйте отдельное
-        действие ниже. Подтверждение сохраняет исходный план.
-      </p>
+    <Card className="plan-composer">
+      <div className="panel-heading">
+        <span className="panel-icon">
+          <Sun aria-hidden="true" />
+        </span>
+        <div>
+          <p className="eyebrow">СОБЕРИТЕ СВОЙ ДЕНЬ</p>
+          <h2>{title ?? (plan.confirmed_at ? "Изменить текущий план" : "Черновик плана")}</h2>
+        </div>
+      </div>
       <Form saving={saving} error={error} onSubmit={onSubmit}>
         {draftStorageKey && <TabDraftRecovery draft={draft} />}
         {checklist && (
@@ -112,78 +118,154 @@ export function PlanEditor({
             onChange={(value) => form.setValue("checked", value, { shouldDirty: true })}
           />
         )}
-        <Input
-          label="Доступно минут"
-          type="number"
-          min={0}
-          max={1440}
-          {...form.register("available_minutes", { valueAsNumber: true })}
-          error={form.formState.errors.available_minutes?.message}
-        />
-        <label className="check-row">
-          <input
-            type="checkbox"
-            {...form.register("rest", {
-              onChange: (e) => {
-                if (e.target.checked) {
-                  form.setValue("available_minutes", 0, { shouldDirty: true });
-                  form.setValue("windows", [], { shouldDirty: true });
-                  set("quest_ids", []);
-                  set("top_ids", []);
-                }
-              },
-            })}
-          />
-          День отдыха без оценки
-        </label>
-        <fieldset disabled={form.watch("rest")} className="ui-form-fields">
-          <legend>Рабочие окна</legend>
-          {windows.map((w, i) => (
-            <div className="plan-window" key={i}>
-              <Input
-                label={`Начало окна ${i + 1}`}
-                type="time"
-                {...form.register(`windows.${i}.start`)}
-              />
-              <Input
-                label={`Конец окна ${i + 1}`}
-                hint="Можно 24:00 для конца дня"
-                {...form.register(`windows.${i}.end`)}
-              />
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  form.setValue(
-                    "windows",
-                    windows.filter((_, n) => n !== i),
-                    { shouldDirty: true },
-                  )
-                }
-              >
-                Убрать окно {i + 1}
-              </Button>
-            </div>
-          ))}
-          <Button
-            variant="secondary"
-            disabled={windows.length >= 8}
-            onClick={() =>
-              form.setValue("windows", [...windows, { start: "09:00", end: "18:00" }], {
-                shouldDirty: true,
-              })
+        <section className="time-budget">
+          <div className="step-heading">
+            <span>01</span>
+            <h3>Сколько времени у вас есть?</h3>
+            <Clock3 size={20} aria-hidden="true" />
+          </div>
+          <ChoiceChips
+            label="Быстрый выбор доступного времени"
+            value={form.watch("available_minutes")}
+            options={[30, 60, 120, 240].map((value) => ({
+              value,
+              label: value < 60 ? `${value} мин` : `${value / 60} ч`,
+            }))}
+            onChange={(value) =>
+              form.setValue("available_minutes", value, { shouldDirty: true, shouldValidate: true })
             }
-          >
-            Добавить рабочее окно
-          </Button>
-          <QuestPicker label="Задача в план" value={selected} onChange={setSelected} />
-          <Button
-            variant="secondary"
-            onClick={() => void add()}
-            disabled={!selected || ids.includes(selected) || ids.length >= 100}
-          >
-            Добавить выбранную задачу
-          </Button>
-          <p>Главных задач: {top.length} из 3</p>
+            disabled={form.watch("rest")}
+          />
+          <div className="budget-controls">
+            <input
+              type="range"
+              aria-label="Запас времени на день"
+              min={0}
+              max={1440}
+              step={15}
+              value={form.watch("available_minutes") || 0}
+              disabled={form.watch("rest")}
+              onChange={(e) =>
+                form.setValue("available_minutes", Number(e.target.value), {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
+            />
+            <Input
+              label="Доступно минут"
+              type="number"
+              readOnly={form.watch("rest")}
+              min={0}
+              max={1440}
+              {...form.register("available_minutes", { valueAsNumber: true })}
+              error={form.formState.errors.available_minutes?.message}
+            />
+          </div>
+          <label className="check-row rest-toggle">
+            <input
+              type="checkbox"
+              {...form.register("rest", {
+                onChange: (e) => {
+                  if (e.target.checked) {
+                    form.setValue("available_minutes", 0, { shouldDirty: true });
+                    form.setValue("windows", [], { shouldDirty: true });
+                    set("quest_ids", []);
+                    set("top_ids", []);
+                  }
+                },
+              })}
+            />
+            <Coffee size={19} aria-hidden="true" /> День отдыха без оценки
+          </label>
+        </section>
+        <fieldset disabled={form.watch("rest")} className="ui-form-fields plan-composer-body">
+          <legend className="sr-only">Задачи и рабочие окна</legend>
+          <section className="plan-windows-panel">
+            <div className="step-heading">
+              <span>02</span>
+              <h3>Рабочие окна</h3>
+              <Sun size={20} aria-hidden="true" />
+            </div>
+            <div className="day-ribbon" aria-label="Рабочие окна на шкале дня">
+              {[0, 6, 12, 18, 24].map((hour) => (
+                <span key={hour} style={{ left: `${(hour / 24) * 100}%` }}>
+                  {hour}:00
+                </span>
+              ))}
+              {windows.map((w, i) => {
+                const minute = (v: string) => {
+                  const [h = NaN, m = NaN] = v.split(":").map(Number);
+                  return h * 60 + m;
+                };
+                const a = minute(w.start),
+                  b = minute(w.end);
+                return Number.isFinite(a) && Number.isFinite(b) && b > a && a >= 0 && b <= 1440 ? (
+                  <i
+                    key={i}
+                    title={`${w.start} — ${w.end}`}
+                    style={{ left: `${(a / 1440) * 100}%`, width: `${((b - a) / 1440) * 100}%` }}
+                  />
+                ) : null;
+              })}
+            </div>
+            {windows.map((w, i) => (
+              <div className="plan-window" key={i}>
+                <Input
+                  label={`Начало окна ${i + 1}`}
+                  type="time"
+                  {...form.register(`windows.${i}.start`)}
+                />
+                <Input
+                  label={`Конец окна ${i + 1}`}
+                  hint="Можно 24:00 для конца дня"
+                  {...form.register(`windows.${i}.end`)}
+                />
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    form.setValue(
+                      "windows",
+                      windows.filter((_, n) => n !== i),
+                      { shouldDirty: true },
+                    )
+                  }
+                >
+                  Убрать окно {i + 1}
+                </Button>
+              </div>
+            ))}
+            <Button
+              variant="secondary"
+              disabled={windows.length >= 8}
+              onClick={() =>
+                form.setValue("windows", [...windows, { start: "09:00", end: "18:00" }], {
+                  shouldDirty: true,
+                })
+              }
+            >
+              Добавить рабочее окно
+            </Button>
+          </section>
+          <section className="plan-queue-panel">
+            <div className="step-heading">
+              <span>03</span>
+              <h3>Что важно сделать?</h3>
+              <ListChecks size={20} aria-hidden="true" />
+            </div>
+            <QuestPicker label="Задача в план" value={selected} onChange={setSelected} />
+            <Button
+              variant="secondary"
+              onClick={() => void add()}
+              disabled={!selected || ids.includes(selected) || ids.length >= 100}
+            >
+              <Sparkles size={16} aria-hidden="true" /> Добавить выбранную задачу
+            </Button>
+          </section>
+          <div className="plan-selected-heading">
+            <h3>Ваш план</h3>
+            <span className="count-badge">Главных задач: {top.length} из 3</span>
+          </div>
           {form.formState.errors.top_ids?.message && (
             <p role="alert">{form.formState.errors.top_ids.message}</p>
           )}
@@ -228,7 +310,21 @@ export function PlanEditor({
               </li>
             ))}
           </ul>
+          {!ids.length && (
+            <EmptyScene
+              title="Оставьте место для главного"
+              description="Выберите задачи выше и отметьте до трёх главных."
+              tone="mint"
+            />
+          )}
         </fieldset>
+        <details className="quiet-details">
+          <summary>Как сохраняется план</summary>
+          <p className="ui-hint">
+            Выбор задач не переносит их плановую дату. Перенос и блоки времени доступны после
+            сохранения. Подтверждение фиксирует исходный план.
+          </p>
+        </details>
         {plan.confirmed_at && (
           <Input label="Причина изменения плана" {...form.register("reason")} />
         )}

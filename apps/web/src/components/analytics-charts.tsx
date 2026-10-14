@@ -17,6 +17,7 @@ import { scoreStates } from "@/lib/analytics";
 import { Button } from "./ui/button";
 import { Select } from "./ui/field";
 import { Card } from "./ui/card";
+import { ChoiceChips, useMotionAllowed } from "./ui/experience";
 const modes = {
   tasks: "Завершение и сроки",
   outcomes: "Провалы, пропуски, переносы",
@@ -35,6 +36,7 @@ export function AnalyticsChart({
   days: AnalyticsDay[];
   choose: (date: string, filter?: string) => void;
 }) {
+  const motion = useMotionAllowed();
   const [mode, setMode] = useState<Mode>("tasks"),
     rows = days.map((d) => ({
       ...d,
@@ -132,38 +134,47 @@ export function AnalyticsChart({
                     ]
                   : [];
   return (
-    <Card>
+    <Card className="analytics-chart-card">
       <h2>Динамика по дням</h2>
-      <Select
-        label="Показатель графика"
+      <ChoiceChips
+        label="Быстрый выбор показателя"
         value={mode}
-        onChange={(e) => setMode(e.target.value as Mode)}
-      >
-        {Object.entries(modes).map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
-      </Select>
-      <p>Единица: {metric}. Нажмите на день графика или откройте его источники в таблице ниже.</p>
-      {mode === "tasks" && (
-        <p>
-          Вовремя + поздно + без срока = все завершённые листовые задачи. Просрочка и провал
-          считаются отдельно.
-        </p>
-      )}
-      {mode === "time" && (
-        <p>
-          Сравниваются только завершённые задачи с известной оценкой и фактом. Длительность
-          относится к завершённой задаче; рабочий фокус по календарным дням показан отдельно.
-        </p>
-      )}
-      {mode === "scores" && (
-        <p>
-          Разрыв линии означает отдых или отсутствие оценки. Открытый день предварителен;
-          невыполненный план может иметь реальный нулевой балл.
-        </p>
-      )}
+        options={Object.entries(modes).map(([value, label]) => ({ value: value as Mode, label }))}
+        onChange={setMode}
+      />
+      <details className="quiet-details">
+        <summary>Показатель и пояснение графика</summary>
+        <Select
+          label="Показатель графика"
+          value={mode}
+          onChange={(e) => setMode(e.target.value as Mode)}
+        >
+          {Object.entries(modes).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </Select>
+        <p>Единица: {metric}. Нажмите на день графика или откройте его источники в таблице ниже.</p>
+        {mode === "tasks" && (
+          <p>
+            Вовремя + поздно + без срока = все завершённые листовые задачи. Просрочка и провал
+            считаются отдельно.
+          </p>
+        )}
+        {mode === "time" && (
+          <p>
+            Сравниваются только завершённые задачи с известной оценкой и фактом. Длительность
+            относится к завершённой задаче; рабочий фокус по календарным дням показан отдельно.
+          </p>
+        )}
+        {mode === "scores" && (
+          <p>
+            Разрыв линии означает отдых или отсутствие оценки. Открытый день предварителен;
+            невыполненный план может иметь реальный нулевой балл.
+          </p>
+        )}
+      </details>
       <div className="analytics-chart" role="group" aria-label={`График: ${modes[mode]}`}>
         <ResponsiveContainer
           width="100%"
@@ -216,7 +227,8 @@ export function AnalyticsChart({
                 strokeWidth={2}
                 type="linear"
                 connectNulls={false}
-                isAnimationActive={false}
+                isAnimationActive={motion}
+                animationDuration={600}
                 dot={{ r: 3 }}
               />
             ) : (
@@ -226,7 +238,8 @@ export function AnalyticsChart({
                   dataKey={s.key}
                   name={s.name}
                   fill={s.color}
-                  isAnimationActive={false}
+                  isAnimationActive={motion}
+                  animationDuration={600}
                   maxBarSize={32}
                   onClick={(item, _index, event) => {
                     event.stopPropagation();
@@ -239,7 +252,7 @@ export function AnalyticsChart({
           </ComposedChart>
         </ResponsiveContainer>
       </div>
-      <details open>
+      <details className="quiet-details">
         <summary>Таблица-альтернатива графика</summary>
         <div
           className="analytics-table-scroll"

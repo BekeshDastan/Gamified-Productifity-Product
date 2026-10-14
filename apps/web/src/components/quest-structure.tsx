@@ -11,6 +11,7 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
+import { Circle, CircleCheck, Clock3 } from "lucide-react";
 export function QuestPicker({
   label,
   value,
@@ -30,35 +31,63 @@ export function QuestPicker({
     queryFn: ({ signal }) => listQuests(page, signal, { ...emptyFilters, search, sort: "title" }),
   });
   return (
-    <div>
-      <Input
-        label={"Поиск: " + label}
-        value={search}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-      />
-      <Select label={label} value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">Не выбрано</option>
-        {value && !options.data?.items.some((q) => q.id === value) && (
-          <option value={value}>Текущая задача</option>
-        )}
+    <div className="quest-picker">
+      <div className="quest-pick-cards" role="group" aria-label={"Быстрый выбор: " + label}>
         {options.data?.items
           .filter((q) => q.id !== exclude)
+          .slice(0, 6)
           .map((q) => (
-            <option key={q.id} value={q.id}>
-              {q.title}
-            </option>
+            <button
+              type="button"
+              key={q.id}
+              aria-pressed={value === q.id}
+              onClick={() => onChange(value === q.id ? "" : q.id)}
+            >
+              {value === q.id ? (
+                <CircleCheck size={21} aria-hidden="true" />
+              ) : (
+                <Circle size={21} aria-hidden="true" />
+              )}
+              <span>
+                <strong>{q.title}</strong>
+                <small>
+                  <Clock3 size={12} aria-hidden="true" />
+                  {q.estimated_minutes ? `${q.estimated_minutes} мин` : "В своём темпе"}
+                </small>
+              </span>
+            </button>
           ))}
-      </Select>
+      </div>
+      <div className="picker-fields">
+        <Input
+          label={"Поиск: " + label}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+        />
+        <Select label={label} value={value} onChange={(e) => onChange(e.target.value)}>
+          <option value="">Не выбрано</option>
+          {value && !options.data?.items.some((q) => q.id === value) && (
+            <option value={value}>Текущая задача</option>
+          )}
+          {options.data?.items
+            .filter((q) => q.id !== exclude)
+            .map((q) => (
+              <option key={q.id} value={q.id}>
+                {q.title}
+              </option>
+            ))}
+        </Select>
+      </div>
       {options.isError && (
         <p role="alert">
           Не удалось загрузить варианты.{" "}
           <Button onClick={() => void options.refetch()}>Повторить</Button>
         </p>
       )}
-      <div className="button-row">
+      <div className="button-row picker-pagination">
         <Button
           variant="ghost"
           aria-label={"Предыдущие варианты: " + label}

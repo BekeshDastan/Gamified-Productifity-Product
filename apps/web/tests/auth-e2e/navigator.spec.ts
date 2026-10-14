@@ -28,7 +28,9 @@ test("navigator explanations opt-out and private sources work without external n
     .getByRole("navigation", { name: "Разделы приложения" })
     .getByRole("link", { name: "Навигатор", exact: true })
     .click();
-  await expect(page.getByRole("heading", { name: "R14 · Подсказка", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Главная цель месяца", exact: true }),
+  ).toBeVisible();
   await page.goto("/app/planning?date=2026-10-13");
   await page.getByLabel("Доступно минут", { exact: true }).fill("60");
   await page.getByRole("button", { name: "Добавить рабочее окно", exact: true }).click();
@@ -79,13 +81,23 @@ test("navigator explanations opt-out and private sources work without external n
   await expect(page.getByRole("heading", { name: "Deadline Radar", exact: true })).toBeVisible();
   await page.getByText("Почему появилась эта подсказка", { exact: true }).click();
   await expect(page.getByText("Босс месяца не выбран", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Отключить R14", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "R14 · Подсказка", exact: true })).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Отключить подсказки: Главная цель месяца", exact: true })
+    .click();
+  await expect(page.getByRole("heading", { name: "Главная цель месяца", exact: true })).toHaveCount(
+    0,
+  );
   await page.reload();
-  await expect(page.getByRole("heading", { name: "R14 · Подсказка", exact: true })).toHaveCount(0);
-  await page.getByText("Настройки правил R01–R15", { exact: true }).click();
-  await page.getByRole("button", { name: "Включить правило R14", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "R14 · Подсказка", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Главная цель месяца", exact: true })).toHaveCount(
+    0,
+  );
+  await page.getByText("Какие подсказки показывать", { exact: true }).click();
+  await page
+    .getByRole("button", { name: "Включить подсказки: Главная цель месяца", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Главная цель месяца", exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Личный проект", exact: true }).click();
   await page.getByLabel("Название цели", { exact: true }).fill("Мой проверяемый проект");
   await page.getByLabel("Начало плана", { exact: true }).fill("2026-10-13");
@@ -119,7 +131,7 @@ test("navigator explanations opt-out and private sources work without external n
     page.getByText(/Недостаточно данных: нужны минимум две полные наблюдавшиеся недели/),
   ).toBeVisible();
   const response = page.waitForResponse((r) => r.url().includes("/analytics/future-self?weeks=26"));
-  await page.getByLabel("Горизонт Future Self", { exact: true }).selectOption("26");
+  await page.getByRole("button", { name: "26 нед", exact: true }).click();
   expect((await (await response).json()).data.projected_hours).toBeNull();
   await page.setViewportSize({ width: 390, height: 844 });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

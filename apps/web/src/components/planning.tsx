@@ -13,6 +13,8 @@ import { PlanRoutines } from "./plan-routines";
 import { Button } from "./ui/button";
 import { Input, Select } from "./ui/field";
 import { Card } from "./ui/card";
+import { WeekStrip, StatTile } from "./ui/experience";
+import { Clock3, CalendarClock, ListChecks, TriangleAlert } from "lucide-react";
 export function Planning() {
   const auth = useAuth(),
     settings = useSettings();
@@ -107,6 +109,7 @@ function Workspace({ account, preferences }: { account: string; preferences: Pre
   const showEditor = editing || (!!p && !p.id);
   return (
     <div className="planning-workspace">
+      <WeekStrip date={date} onChange={select} weekStart={preferences.week_start} />
       <div className="plan-controls">
         <Input
           label="Дата плана"
@@ -177,39 +180,41 @@ function Workspace({ account, preferences }: { account: string; preferences: Pre
       )}
       {p && initial && (
         <>
-          <Card>
-            <h2>
-              {p.date} ·{" "}
-              {p.rest ? "Отдых" : p.confirmed_at ? "Подтверждённый день" : "Черновик дня"}
-            </h2>
-            <p className="ui-hint">
-              Пояс плана: {p.timezone}. Сводка относится к последнему сохранению. Черновик не
-              считается обязательством.
-            </p>
-            <div className="button-row">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  if (discard()) setEditing(!showEditor);
-                }}
-              >
-                {showEditor ? "Закрыть редактор" : "Изменить план"}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  if (discard()) {
-                    setEditing(false);
-                    void data.refetch();
-                  }
-                }}
-              >
-                Загрузить свежую версию
-              </Button>
-              <SafeLink href="/app/quests">Задачи</SafeLink>
-              <SafeLink href="/app/calendar">Календарь</SafeLink>
-            </div>
-          </Card>
+          {p.id && (
+            <Card className="plan-day-summary">
+              <h2>
+                {p.date} ·{" "}
+                {p.rest ? "Отдых" : p.confirmed_at ? "Подтверждённый день" : "Черновик дня"}
+              </h2>
+              <p className="ui-hint">
+                Пояс плана: {p.timezone}. Сводка относится к последнему сохранению. Черновик не
+                считается обязательством.
+              </p>
+              <div className="button-row">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    if (discard()) setEditing(!showEditor);
+                  }}
+                >
+                  {showEditor ? "Закрыть редактор" : "Изменить план"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    if (discard()) {
+                      setEditing(false);
+                      void data.refetch();
+                    }
+                  }}
+                >
+                  Загрузить свежую версию
+                </Button>
+                <SafeLink href="/app/quests">Задачи</SafeLink>
+                <SafeLink href="/app/calendar">Календарь</SafeLink>
+              </div>
+            </Card>
+          )}
           {showEditor ? (
             <PlanEditor key={p.date + ":" + p.version} plan={initial} onChanged={changed} />
           ) : (
@@ -327,20 +332,37 @@ export function PlanCapacity({ plan }: { plan: DayPlan }) {
   const task = (id: string) => plan.items.find((q) => q.id === id)?.title ?? id;
   const time = (v: string) => DateTime.fromISO(v).setZone(plan.timezone).toFormat("dd.LL HH:mm");
   return (
-    <Card>
+    <Card className="plan-capacity">
       <h2>Ёмкость и занятость</h2>
-      <p>
-        Лимит дня: {plan.available_minutes} мин · Оценка задач: {a.planned_minutes} мин
-      </p>
-      <p>
-        Уже назначено задачам: {a.scheduled_minutes} мин · Осталось работы: {a.remaining_minutes}{" "}
-        мин
-      </p>
-      <p>
-        Свободно в окнах: {a.free_minutes} мин · Ёмкость для оставшейся работы:{" "}
-        {a.remaining_capacity} мин
-      </p>
-      <p>Дефицит времени: {a.deficit_minutes} мин</p>
+      <div className="stat-grid">
+        <StatTile
+          label="Лимит дня"
+          value={plan.available_minutes}
+          detail="минут для ваших планов"
+          icon={<Clock3 />}
+          tone="blue"
+        />
+        <StatTile
+          label="Оценка задач"
+          value={a.planned_minutes}
+          detail={`Осталось: ${a.remaining_minutes} мин`}
+          icon={<ListChecks />}
+        />
+        <StatTile
+          label="Свободно в окнах"
+          value={a.free_minutes}
+          detail={`Ёмкость для работы: ${a.remaining_capacity} мин`}
+          icon={<CalendarClock />}
+          tone="mint"
+        />
+        <StatTile
+          label="Дефицит времени"
+          value={a.deficit_minutes}
+          detail={`Уже назначено: ${a.scheduled_minutes} мин`}
+          icon={<TriangleAlert />}
+          tone={a.deficit_minutes ? "coral" : "mint"}
+        />
+      </div>
       {!plan.windows.length && (
         <p className="ui-hint">
           Рабочие окна не заданы: интервалы рассчитаны в пределах всего местного дня. Лимит минут

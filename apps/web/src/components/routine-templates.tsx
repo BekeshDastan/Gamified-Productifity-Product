@@ -23,8 +23,13 @@ export function RoutineChecklist({
   onChange: (v: string[]) => void;
 }) {
   return (
-    <fieldset>
+    <fieldset className="routine-checklist">
       <legend>Мой чек-лист {template.kind === "morning" ? "утра" : "вечера"}</legend>
+      <progress
+        aria-label="Прогресс чек-листа"
+        value={template.steps.filter((s) => checked.includes(s.id)).length}
+        max={Math.max(1, template.steps.length)}
+      />
       {template.steps.map((step) => (
         <label className="check-row" key={step.id}>
           <input

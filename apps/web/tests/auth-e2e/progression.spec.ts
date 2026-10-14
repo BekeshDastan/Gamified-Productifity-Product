@@ -51,7 +51,11 @@ test("progression UI shows actual rewards restorations level and partial quota",
   test.setTimeout(120000);
   await account(page);
   await page.goto("/app/progress");
-  await expect(page.getByText("Всего: 0 XP", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole("group", { name: "Накопленный опыт", exact: true })
+      .getByText("0", { exact: true }),
+  ).toBeVisible();
   const first = await task(page, "Исходная награда", 3);
   await action(page, "Завершить", "completed");
   await expect(page.getByRole("region", { name: "Уведомления (F8)" })).toContainText("+25 XP");
@@ -68,7 +72,11 @@ test("progression UI shows actual rewards restorations level and partial quota",
   await expect(notices).toContainText("+25 XP");
   await expect(notices).not.toContainText("+100 XP");
   await page.goto("/app/progress");
-  await expect(page.getByText("Всего: 25 XP", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole("group", { name: "Накопленный опыт", exact: true })
+      .getByText("25", { exact: true }),
+  ).toBeVisible();
   await expect(page.locator(".progression-history > li")).toHaveCount(3);
   await expect(page.locator(".progression-history")).toContainText("Корректировка");
   await page.getByText("Исходное право на награду", { exact: true }).first().click();
@@ -79,7 +87,11 @@ test("progression UI shows actual rewards restorations level and partial quota",
   await action(page, "Завершить", "completed");
   await expect(page.getByRole("region", { name: "Уведомления (F8)" })).toContainText("Уровень 2");
   await page.goto("/app/progress");
-  await expect(page.getByText("Всего: 125 XP", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole("group", { name: "Накопленный опыт", exact: true })
+      .getByText("125", { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole("progressbar", { name: "Опыт до следующего уровня" }),
   ).toHaveAttribute("value", "25");
@@ -89,11 +101,21 @@ test("progression UI shows actual rewards restorations level and partial quota",
     "+75 XP · +15 монет",
   );
   await page.goto("/app/progress");
-  await expect(page.getByText("Всего: 200 XP", { exact: true })).toBeVisible();
-  await expect(page.getByText("Доступно: 40 монет", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole("group", { name: "Накопленный опыт", exact: true })
+      .getByText("200", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("group", { name: "Кошелёк", exact: true }).getByText("40", { exact: true }),
+  ).toBeVisible();
   await expect(page.locator(".progression-summary")).toContainText("задачи 200 / 200 XP");
   await page.reload();
-  await expect(page.getByText("Всего: 200 XP", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole("group", { name: "Накопленный опыт", exact: true })
+      .getByText("200", { exact: true }),
+  ).toBeVisible();
   await page.setViewportSize({ width: 360, height: 800 });
   for (const theme of ["light", "dark"]) {
     await page.getByLabel("Тема оформления").selectOption(theme);
@@ -142,7 +164,11 @@ test("progression account switch clears reward notices and private balances", as
   await expect(page).toHaveURL("/app");
   await page.getByText("Игровой прогресс", { exact: true }).click();
   await page.getByRole("link", { name: "Опыт и награды", exact: true }).click();
-  await expect(page.getByText("Всего: 0 XP", { exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole("group", { name: "Накопленный опыт", exact: true })
+      .getByText("0", { exact: true }),
+  ).toBeVisible();
   await expect(page.locator(".progression-history > li")).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Уведомления (F8)" })).not.toContainText("+25 XP");
 });

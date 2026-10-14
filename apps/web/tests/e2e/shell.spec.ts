@@ -5,6 +5,32 @@ const ready = {
   data: { status: "ok" },
   meta: { request_id: "e2e-health", server_time: "2026-10-12T00:00:00Z" },
 };
+
+test("forms wait for client handlers before accepting input on a slow connection", async ({
+  page,
+}) => {
+  let release!: () => void;
+  const scripts = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/_next/static/**/*.js", async (route) => {
+    await scripts;
+    await route.continue();
+  });
+  await page.goto("/auth/register", { waitUntil: "commit" });
+  try {
+    await expect(page.getByLabel("Email", { exact: true })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Создать аккаунт", exact: true })).toBeDisabled();
+  } finally {
+    release();
+  }
+  await expect(page.getByLabel("Email", { exact: true })).toBeEnabled();
+  await page.getByLabel("Email", { exact: true }).fill("slow-connection@example.test");
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByLabel("Email", { exact: true })).toHaveValue(
+    "slow-connection@example.test",
+  );
+});
 // UI response fixtures only. Real PostgreSQL/API behavior has a separate integration suite.
 test.beforeEach(async ({ page }) => {
   await page.route("**/health/ready", (route) => route.fulfill({ json: ready }));

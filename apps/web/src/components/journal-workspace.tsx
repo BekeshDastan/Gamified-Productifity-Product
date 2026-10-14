@@ -7,6 +7,14 @@ import { EveningReview } from "./evening-review";
 import { WeeklyReset } from "./weekly-reset";
 import { RoutineTemplates } from "./routine-templates";
 import { Button } from "./ui/button";
+import { BookOpen, Sunrise, Moon, CalendarRange, ListChecks } from "lucide-react";
+const sectionIcons = {
+  entries: BookOpen,
+  morning: Sunrise,
+  evening: Moon,
+  week: CalendarRange,
+  templates: ListChecks,
+};
 const sections = {
   entries: "Мои записи",
   morning: "Утро",
@@ -29,7 +37,7 @@ export function JournalWorkspace({
     discard = useConfirmDiscard();
   return (
     <div className="journal-layout">
-      <nav aria-label="Разделы дневника" className="form-actions">
+      <nav aria-label="Разделы дневника" className="form-actions journal-tabs">
         {Object.entries(sections).map(([value, label]) => (
           <Button
             key={value}
@@ -39,6 +47,10 @@ export function JournalWorkspace({
               if (value !== section && discard()) setSection(value as keyof typeof sections);
             }}
           >
+            {(() => {
+              const Icon = sectionIcons[value as keyof typeof sectionIcons];
+              return <Icon size={19} aria-hidden="true" />;
+            })()}
             {label}
           </Button>
         ))}

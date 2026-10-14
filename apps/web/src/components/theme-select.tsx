@@ -15,6 +15,7 @@ export function ThemeSelect() {
       <span className="sr-only">Тема оформления</span>
       <select
         aria-label="Тема оформления"
+        disabled={!mounted}
         value={mounted ? theme : "system"}
         onChange={(event) => setTheme(event.target.value)}
       >

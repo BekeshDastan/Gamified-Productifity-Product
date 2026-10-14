@@ -23,6 +23,8 @@ import { Select } from "./ui/field";
 import { useTabDraft, TabDraftRecovery } from "@/lib/forms/tab-draft";
 import { draftKey } from "@/lib/private-drafts";
 import { RoutineChecklist } from "./routine-templates";
+import { ChoiceChips, StatTile } from "./ui/experience";
+import { CircleCheck, CalendarCheck, ArrowRight, Moon, Battery, Smile } from "lucide-react";
 import { Form } from "./ui/form";
 const obstacles = {
   none: "Не было",
@@ -178,16 +180,31 @@ function ReviewEditor({
       ),
   });
   return (
-    <Card>
+    <Card className="evening-studio">
       <h2>Что получилось за день</h2>
-      <ul>
-        <li>В плане: {review.stats.planned}</li>
-        <li>Из плана выполнено в этот день: {review.stats.completed}</li>
-        <li>Всего выполнено в этот день: {review.stats.completed_today}</li>
-        <li>Перенесено: {review.stats.postponed}</li>
-        <li>Не достигнуто: {review.stats.failed}</li>
-        <li>Пропущено: {review.stats.skipped}</li>
-      </ul>
+      <div className="stat-grid">
+        <StatTile label="В плане" value={review.stats.planned} icon={<CalendarCheck />} />
+        <StatTile
+          label="Выполнено сегодня"
+          value={review.stats.completed_today}
+          detail={`Из плана: ${review.stats.completed}`}
+          tone="mint"
+          icon={<CircleCheck />}
+        />
+        <StatTile
+          label="Перенесено"
+          value={review.stats.postponed}
+          tone="gold"
+          icon={<ArrowRight />}
+        />
+        <StatTile
+          label="Без завершения"
+          value={review.stats.failed + review.stats.skipped}
+          detail={`Не достигнуто: ${review.stats.failed} · Пропущено: ${review.stats.skipped}`}
+          tone="blue"
+          icon={<Moon />}
+        />
+      </div>
       <details>
         <summary>Исходные задачи</summary>
         {review.stats.items.length === 0 ? (
@@ -239,23 +256,28 @@ function ReviewEditor({
         />
         {form.formState.errors.conclusion && <p role="alert">Запишите хотя бы один вывод.</p>}
         {(["energy", "mood"] as const).map((field) => (
-          <Select
-            key={field}
-            label={field === "energy" ? "Энергия (необязательно)" : "Настроение (необязательно)"}
-            value={form.watch(field) ?? ""}
-            onChange={(e) =>
-              form.setValue(field, e.target.value ? Number(e.target.value) : null, {
-                shouldDirty: true,
-              })
-            }
-          >
-            <option value="">Без отметки</option>
-            {[1, 2, 3, 4, 5].map((v) => (
-              <option key={v} value={v}>
-                {v}
-              </option>
-            ))}
-          </Select>
+          <section className="feeling-picker" key={field} data-kind={field}>
+            <h3>
+              {field === "energy" ? (
+                <Battery size={21} aria-hidden="true" />
+              ) : (
+                <Smile size={21} aria-hidden="true" />
+              )}
+              {field === "energy" ? "Сколько осталось энергии?" : "Как вы себя чувствуете?"}
+            </h3>
+            <ChoiceChips
+              label={field === "energy" ? "Энергия (необязательно)" : "Настроение (необязательно)"}
+              value={form.watch(field) ?? 0}
+              options={[
+                { value: 0, label: "Без отметки" },
+                ...(field === "energy"
+                  ? ["На нуле", "Немного", "Средне", "Хорошо", "Полон сил"]
+                  : ["Тяжело", "Не очень", "Нейтрально", "Хорошо", "Отлично"]
+                ).map((label, i) => ({ value: i + 1, label })),
+              ]}
+              onChange={(value) => form.setValue(field, value || null, { shouldDirty: true })}
+            />
+          </section>
         ))}
         <Button type="submit">Сохранить вечерний разбор</Button>
       </Form>
