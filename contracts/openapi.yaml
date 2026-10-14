@@ -6,6 +6,72 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/analytics:
+    get:
+      operationId: getAnalytics
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsView"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/analytics/rebuild:
+    post:
+      operationId: rebuildAnalytics
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsRange"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AnalyticsView"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/recovery/status:
     get:
       operationId: getRecoveryStatus
@@ -8465,6 +8531,145 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    AnalyticsRange:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+      properties:
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+    AnalyticsSource:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - id
+        - name
+        - url
+        - at
+        - value
+        - unit
+        - area_id
+        - version
+      properties:
+        kind:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+        at:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+        area_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        version:
+          type: integer
+    AnalyticsDay:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - completed
+        - focus_seconds
+        - xp_delta
+        - coins_delta
+        - sources
+      properties:
+        date:
+          type: string
+        completed:
+          type: integer
+        focus_seconds:
+          type: integer
+        xp_delta:
+          type: integer
+        coins_delta:
+          type: integer
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsSource"
+    AnalyticsWeek:
+      type: object
+      additionalProperties: false
+      required:
+        - start
+        - end
+        - days
+        - completed
+        - focus_seconds
+        - xp_delta
+        - coins_delta
+      properties:
+        start:
+          type: string
+        end:
+          type: string
+        days:
+          type: integer
+        completed:
+          type: integer
+        focus_seconds:
+          type: integer
+        xp_delta:
+          type: integer
+        coins_delta:
+          type: integer
+    AnalyticsView:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - to
+        - timezone
+        - projection_version
+        - source_revision
+        - projected_revision
+        - computed_at
+        - stale
+        - days
+        - weeks
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        timezone:
+          type: string
+        projection_version:
+          type: string
+        source_revision:
+          type: integer
+        projected_revision:
+          type: integer
+        computed_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        stale:
+          type: boolean
+        days:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsDay"
+        weeks:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnalyticsWeek"
     RecoveryHabit:
       type: object
       additionalProperties: false

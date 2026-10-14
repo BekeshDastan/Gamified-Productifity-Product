@@ -35,6 +35,16 @@ type AchievementDefinition struct {
 	Snapshot []byte `json:"snapshot"`
 }
 
+type AnalyticsProjectionState struct {
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	SourceRevision    int64              `json:"source_revision"`
+	ProjectedRevision int64              `json:"projected_revision"`
+	Timezone          string             `json:"timezone"`
+	RequestedFrom     pgtype.Date        `json:"requested_from"`
+	RequestedTo       pgtype.Date        `json:"requested_to"`
+	ComputedAt        pgtype.Timestamptz `json:"computed_at"`
+}
+
 type Attachment struct {
 	ID         pgtype.UUID        `json:"id"`
 	OwnerID    pgtype.UUID        `json:"owner_id"`
@@ -329,6 +339,16 @@ type CustomRewardVersion struct {
 	Version   int64              `json:"version"`
 	Snapshot  []byte             `json:"snapshot"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type DailyMetric struct {
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	LocalDate         pgtype.Date        `json:"local_date"`
+	Timezone          string             `json:"timezone"`
+	SourceRevision    int64              `json:"source_revision"`
+	ProjectionVersion string             `json:"projection_version"`
+	ComputedAt        pgtype.Timestamptz `json:"computed_at"`
+	Payload           []byte             `json:"payload"`
 }
 
 type DailyReview struct {
@@ -1047,6 +1067,16 @@ type UserSetting struct {
 	Version     int64              `json:"version"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WeeklyMetric struct {
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	WeekStart         pgtype.Date        `json:"week_start"`
+	Timezone          string             `json:"timezone"`
+	SourceRevision    int64              `json:"source_revision"`
+	ProjectionVersion string             `json:"projection_version"`
+	ComputedAt        pgtype.Timestamptz `json:"computed_at"`
+	Payload           []byte             `json:"payload"`
 }
 
 type WeeklyReview struct {

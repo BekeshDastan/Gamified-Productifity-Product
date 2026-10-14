@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/analytics"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/seasons"
 	"io"
 	"log/slog"
@@ -88,6 +89,8 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	planService := planning.NewService(pool, clock, questService, calendarService)
 	seasons.NewService(pool, clock).WithChallenges(challengeService).WithRecovery(questService, goalService).WithPlanning(planService, calendarService).WithHabits(habitService).Mount(router, sessions.Protect)
 	planService.Mount(router, sessions.Protect)
+	analyticsService := analytics.NewService(pool, clock)
+	analyticsService.Mount(router, sessions.Protect)
 	journal.NewService(pool, clock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)
