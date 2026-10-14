@@ -23,13 +23,18 @@ const MaxActiveSeconds int64 = 4 * 60 * 60
 const MaxElapsedSeconds int64 = 8 * 60 * 60
 
 type Service struct {
-	pool     *pgxpool.Pool
-	clock    platform.Clock
-	progress *progression.Service
+	pool           *pgxpool.Pool
+	clock          platform.Clock
+	progress       *progression.Service
+	resultObserver func(context.Context, pgx.Tx, string, string, int64, bool) error
 }
 
 func NewService(p *pgxpool.Pool, c platform.Clock, r *progression.Service) *Service {
-	return &Service{p, c, r}
+	return &Service{pool: p, clock: c, progress: r}
+}
+func (s *Service) WithResultObserver(f func(context.Context, pgx.Tx, string, string, int64, bool) error) *Service {
+	s.resultObserver = f
+	return s
 }
 func problem(status int, code, message string) *platform.APIError {
 	return &platform.APIError{Status: status, Code: code, Message: message}
@@ -150,6 +155,9 @@ func (s *Service) event(ctx context.Context, tx pgx.Tx, owner, kind string, f Se
 		return e
 	}
 	_, e = tx.Exec(ctx, "INSERT INTO focus_events(owner_id,session_id,kind,snapshot,created_at) VALUES($1,$2,$3,$4,$5)", owner, f.ID, kind, b, s.now())
+	if e == nil && s.resultObserver != nil {
+		e = s.resultObserver(ctx, tx, owner, f.ID, f.Version, f.State == "awaiting_confirmation")
+	}
 	return e
 }
 func (s *Service) current(ctx context.Context, tx pgx.Tx, owner string) (Current, error) {

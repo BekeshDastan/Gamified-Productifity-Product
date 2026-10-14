@@ -157,7 +157,7 @@ func (s *Service) notificationCurrent(ctx context.Context, tx pgx.Tx, owner stri
 		source, valid, e := s.currentReminderSource(ctx, tx, owner, r, p)
 		return valid && source.Revision == n.SourceRevision && source.Due.Equal(r.SourceDueAt), e
 	}
-	return false, nil
+	return s.eventCurrent(ctx, tx, owner, n)
 }
 
 // deliveryTransaction uses an independent connection so the sending marker is

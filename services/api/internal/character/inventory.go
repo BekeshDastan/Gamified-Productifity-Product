@@ -14,13 +14,18 @@ import (
 )
 
 type Service struct {
-	pool     *pgxpool.Pool
-	clock    platform.Clock
-	progress *progression.Service
+	pool                *pgxpool.Pool
+	clock               platform.Clock
+	progress            *progression.Service
+	achievementObserver func(context.Context, pgx.Tx, string, string, int64, bool) error
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock, p *progression.Service) *Service {
-	return &Service{pool, clock, p}
+	return &Service{pool: pool, clock: clock, progress: p}
+}
+func (s *Service) WithAchievementObserver(f func(context.Context, pgx.Tx, string, string, int64, bool) error) *Service {
+	s.achievementObserver = f
+	return s
 }
 
 type InventoryItem struct {

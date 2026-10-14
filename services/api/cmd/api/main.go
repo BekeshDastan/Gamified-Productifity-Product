@@ -95,7 +95,7 @@ func main() {
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	characterService.Mount(router, sessions.Protect)
 	rewards.NewService(pool, platform.RealClock{}, rewardService, characterService).Mount(router, sessions.Protect)
-	focus.NewService(pool, platform.RealClock{}, rewardService).Mount(router, sessions.Protect)
+
 	questService := quests.NewService(pool, platform.RealClock{}).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, scanner)
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, platform.RealClock{}, questService)
@@ -110,6 +110,9 @@ func main() {
 	analyticsService := analytics.NewService(pool, platform.RealClock{}).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
 	notificationService := notifications.NewService(pool, platform.RealClock{}).WithHabits(habitService)
+	characterService.WithAchievementObserver(notificationService.AchievementChanged)
+	analyticsService.WithReportObserver(notificationService.ReportCreated)
+
 	publicKey, privateKey := os.Getenv("PUSH_VAPID_PUBLIC_KEY"), os.Getenv("PUSH_VAPID_PRIVATE_KEY")
 	if publicKey != "" && privateKey != "" {
 		raw, e := base64.RawURLEncoding.DecodeString(privateKey)
@@ -130,6 +133,7 @@ func main() {
 		os.Exit(1)
 	}
 	notificationService.Mount(router, sessions.Protect)
+	focus.NewService(pool, platform.RealClock{}, rewardService).WithResultObserver(notificationService.FocusChanged).Mount(router, sessions.Protect)
 	navigator.NewService(pool, platform.RealClock{}, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, platform.RealClock{}).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	server := &http.Server{

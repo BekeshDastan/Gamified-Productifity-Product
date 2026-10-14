@@ -235,6 +235,11 @@ func (s *Service) saveReport(ctx context.Context, tx pgx.Tx, owner string, in Sa
 		return out, e
 	}
 	out.Snapshot = v
+	if s.reportObserver != nil {
+		if e = s.reportObserver(ctx, tx, owner, out.ID, out.Revision); e != nil {
+			return out, e
+		}
+	}
 	return out, nil
 }
 func (s *Service) listReports(r *http.Request, tx pgx.Tx, owner string) (ReportPage, error) {

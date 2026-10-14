@@ -75,6 +75,9 @@ func main() {
 		os.Exit(1)
 	}
 	notificationService := notifications.NewService(pool, clock).WithHabits(habits.NewService(pool, clock).WithProgression(rewardService))
+	characterService.WithAchievementObserver(notificationService.AchievementChanged)
+	analyticsService.WithReportObserver(notificationService.ReportCreated)
+
 	publicKey, privateKey := os.Getenv("PUSH_VAPID_PUBLIC_KEY"), os.Getenv("PUSH_VAPID_PRIVATE_KEY")
 	if publicKey != "" && privateKey != "" {
 		raw, e := base64.RawURLEncoding.DecodeString(privateKey)

@@ -134,8 +134,18 @@ func (s *Service) reportsDue(ctx context.Context, tx pgx.Tx, j jobs.Job) error {
 		if e != nil {
 			return e
 		}
-		if _, e = tx.Exec(ctx, `INSERT INTO report_snapshots(owner_id,id,kind,starts_on,ends_before,timezone,revision,automatic,snapshot,created_at) SELECT $1,gen_random_uuid(),$2,$3::text::date,$4::text::date,$5,COALESCE(max(revision),0)+1,true,$6,$7 FROM report_snapshots WHERE owner_id=$1 AND kind=$2 AND starts_on=$3::text::date AND timezone=$5 ON CONFLICT DO NOTHING`, owner, in.Kind, snapshot.From, snapshot.To, timezone, b, s.Clock.Now()); e != nil {
+		var reportID string
+		var revision int64
+		if e = tx.QueryRow(ctx, `INSERT INTO report_snapshots(owner_id,id,kind,starts_on,ends_before,timezone,revision,automatic,snapshot,created_at) SELECT $1,gen_random_uuid(),$2,$3::text::date,$4::text::date,$5,COALESCE(max(revision),0)+1,true,$6,$7 FROM report_snapshots WHERE owner_id=$1 AND kind=$2 AND starts_on=$3::text::date AND timezone=$5 ON CONFLICT DO NOTHING RETURNING id::text,revision`, owner, in.Kind, snapshot.From, snapshot.To, timezone, b, s.Clock.Now()).Scan(&reportID, &revision); e != nil {
+			if errors.Is(e, pgx.ErrNoRows) {
+				continue
+			}
 			return e
+		}
+		if s.reportObserver != nil {
+			if e = s.reportObserver(ctx, tx, owner, reportID, revision); e != nil {
+				return e
+			}
 		}
 	}
 	return nil

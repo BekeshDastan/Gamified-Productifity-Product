@@ -789,6 +789,15 @@ type NotificationDeliveryAttempt struct {
 	ErrorCode  string             `json:"error_code"`
 }
 
+type NotificationInviteSource struct {
+	RecipientID pgtype.UUID        `json:"recipient_id"`
+	ID          pgtype.UUID        `json:"id"`
+	Revision    int64              `json:"revision"`
+	Active      bool               `json:"active"`
+	ExpiresAt   pgtype.Timestamptz `json:"expires_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type NotificationPreference struct {
 	OwnerID   pgtype.UUID        `json:"owner_id"`
 	Payload   []byte             `json:"payload"`

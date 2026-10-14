@@ -7,6 +7,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/analytics"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/character"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/notifications"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
@@ -71,6 +72,19 @@ func TestAnalyticsReportSnapshotZeroBaseRaceCorrectionAndPermanentReplay(t *test
 	}
 	wg.Wait()
 	saved := readReport(t, responses[0])
+	page := readNotifications(t, f.privateRequest(t, a, "GET", "/notifications", "", nil))
+	reportNotifications := 0
+	for _, n := range page.Items {
+		if n.Kind == "report" && n.SourceID == saved.ID {
+			reportNotifications++
+			if strings.Contains(n.Message, "Недостаточно времени") {
+				t.Fatal("private report reason leaked")
+			}
+		}
+	}
+	if reportNotifications != 1 {
+		t.Fatal("report callback dedupe", reportNotifications)
+	}
 	for _, r := range responses {
 		if readReport(t, r).ID != saved.ID {
 			t.Fatal("duplicate report")
@@ -145,7 +159,7 @@ func TestAnalyticsScheduledReportsUseRealLeasesAndDoNotDuplicate(t *testing.T) {
 	_, who := f.signedIn(t, "report-scheduled@example.test")
 	f.clock.Advance(63 * 24 * time.Hour)
 	progress := progression.NewService(f.pool, f.clock)
-	service := analytics.NewService(f.pool, f.clock).WithRecords(character.NewService(f.pool, f.clock, progress))
+	service := analytics.NewService(f.pool, f.clock).WithRecords(character.NewService(f.pool, f.clock, progress)).WithReportObserver(notifications.NewService(f.pool, f.clock).ReportCreated)
 	if e := service.StartReportSchedule(f.ctx); e != nil {
 		t.Fatal(e)
 	}
@@ -170,6 +184,9 @@ func TestAnalyticsScheduledReportsUseRealLeasesAndDoNotDuplicate(t *testing.T) {
 	var n int
 	if e = f.pool.QueryRow(f.ctx, "SELECT count(*) FROM report_snapshots WHERE owner_id=$1 AND automatic", who.ID).Scan(&n); e != nil || n != 2 {
 		t.Fatal("missing automatic week/month", n, e)
+	}
+	if e = f.pool.QueryRow(f.ctx, `SELECT count(*) FROM notifications WHERE owner_id=$1 AND kind='report'`, who.ID).Scan(&n); e != nil || n != 2 {
+		t.Fatal("missing automatic report notifications", n, e)
 	}
 	if e = service.StartReportSchedule(f.ctx); e != nil {
 		t.Fatal(e)

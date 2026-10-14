@@ -2151,7 +2151,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Разрешение запрашивается по нажатию; отказ не блокирует основной интерфейс.
   - **КОММИТ СЕЙЧАС:** `feat(notifications): add consent-based browser push subscriptions`
 
-- [ ] **C158. События и отчёты**
+- [x] **C158. События и отчёты**
   - **Сделать:** Подключить достижения, итоги, приглашения и недельные/месячные отчёты по правилам согласия.
   - **Проверить:** Секретные поля и дневник не появляются в push/email партнёру.
   - **КОММИТ СЕЙЧАС:** `feat(notifications): notify achievements invites and scheduled summaries`

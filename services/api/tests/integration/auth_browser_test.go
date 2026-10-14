@@ -99,7 +99,7 @@ func TestBrowserAuth(t *testing.T) {
 	rewardService.WithProjectionObserver(characterService.EvaluateInTx)
 	characterService.Mount(router, sessions.Protect)
 	rewards.NewService(pool, domainClock, rewardService, characterService).Mount(router, sessions.Protect)
-	focus.NewService(pool, domainClock, rewardService).Mount(router, sessions.Protect)
+
 	questService := quests.NewService(pool, domainClock).WithObserver(goalService.QuestChanged).WithProgression(rewardService).WithFiles(files, blob.UnavailableScanner{})
 	questService.Mount(router, sessions.Protect)
 	calendarService := calendar.NewService(pool, domainClock, questService)
@@ -114,10 +114,14 @@ func TestBrowserAuth(t *testing.T) {
 	analyticsService := analytics.NewService(pool, domainClock).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
 	notificationService := notifications.NewService(pool, domainClock).WithHabits(habitService).WithSchedulingClock(clock)
+	characterService.WithAchievementObserver(notificationService.AchievementChanged)
+	analyticsService.WithReportObserver(notificationService.ReportCreated)
+
 	if err := notificationService.ConfigureDelivery("http://127.0.0.1:3100", key, nil); err != nil {
 		t.Fatal(err)
 	}
 	notificationService.Mount(router, sessions.Protect)
+	focus.NewService(pool, domainClock, rewardService).WithResultObserver(notificationService.FocusChanged).Mount(router, sessions.Protect)
 	navigator.NewService(pool, domainClock, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")

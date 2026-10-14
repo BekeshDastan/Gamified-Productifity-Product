@@ -19,13 +19,18 @@ const ProjectionVersion = "analytics-v1"
 
 type Service struct {
 	*privateapi.Service
-	records *character.Service
+	records        *character.Service
+	reportObserver func(context.Context, pgx.Tx, string, string, int64) error
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
 	return &Service{Service: privateapi.New(pool, clock)}
 }
 func (s *Service) WithRecords(c *character.Service) *Service { s.records = c; return s }
+func (s *Service) WithReportObserver(f func(context.Context, pgx.Tx, string, string, int64) error) *Service {
+	s.reportObserver = f
+	return s
+}
 
 type Range struct {
 	From string `json:"from"`
