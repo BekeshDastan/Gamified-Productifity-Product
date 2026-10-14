@@ -8,7 +8,7 @@ async function signIn(page: Page, email: string, value = password) {
   await page.getByLabel("Пароль", { exact: true }).fill(value);
   await page.getByRole("button", { name: "Войти", exact: true }).click();
   await expect(page).toHaveURL("/app");
-  await expect(page.getByRole("heading", { name: email, exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: `Аккаунт: ${email}`, exact: true })).toBeVisible();
 }
 async function newAccount(page: Page) {
   const email = `profile-${crypto.randomUUID()}@example.test`;
@@ -34,6 +34,7 @@ test("new account setup resumes, preferences survive another device and password
   test.setTimeout(150_000);
   const email = await newAccount(page);
   await page.goto("/app/onboarding");
+  await page.getByText("Подробная настройка — по желанию", { exact: true }).click();
   await expect(page.getByRole("heading", { name: "Как к вам обращаться" })).toBeVisible();
   await page.getByLabel("Имя", { exact: true }).fill("Дастан");
   await page.getByLabel("Ник", { exact: true }).fill(`user_${crypto.randomUUID().slice(0, 8)}`);

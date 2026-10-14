@@ -59,7 +59,7 @@ async function login(page: Page, email: string, value = password, next = "") {
   await page.getByLabel("Запомнить меня на 30 дней").check();
   await page.getByRole("button", { name: "Войти", exact: true }).click();
   await expect(page).toHaveURL("/app");
-  await expect(page.getByRole("heading", { name: email, exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: `Аккаунт: ${email}`, exact: true })).toBeVisible();
 }
 
 test("real registration, SMTP verification, login, recovery and session invalidation", async ({
@@ -74,12 +74,14 @@ test("real registration, SMTP verification, login, recovery and session invalida
   await register(page, email);
   const verification = await mailLink(request, email, "verify-email");
   await login(page, email, password, "?next=https://foreign.example/app");
+  await page.getByRole("link", { name: `Аккаунт: ${email}`, exact: true }).click();
   await expect(page.getByText("Почта ещё не подтверждена.", { exact: false })).toBeVisible();
   await page.goto(verification);
   await expect(page).toHaveURL(/\/auth\/verify-email$/);
   await page.getByRole("button", { name: "Подтвердить почту", exact: true }).click();
   await expect(page.getByRole("status")).toHaveText("Почта подтверждена. Можно продолжать!");
   await page.goto("/app");
+  await page.getByRole("link", { name: `Аккаунт: ${email}`, exact: true }).click();
   await expect(page.getByText("Почта подтверждена", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Устройства и входы" }).click();
   await expect(page.getByText("Это устройство", { exact: true })).toBeVisible();
@@ -116,7 +118,7 @@ test("real registration, SMTP verification, login, recovery and session invalida
     await page.getByLabel("Запомнить меня на 30 дней").check();
     await page.getByRole("button", { name: "Войти", exact: true }).click();
     await expect(page).toHaveURL("/app");
-    await expect(page.getByRole("heading", { name: email, exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: `Аккаунт: ${email}`, exact: true })).toBeVisible();
   } finally {
     await device.close();
   }

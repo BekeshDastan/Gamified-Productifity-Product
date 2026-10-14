@@ -1,5 +1,6 @@
 "use client";
 import { useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { AlertTriangle, FileQuestion, Inbox, LockKeyhole, RefreshCw } from "lucide-react";
 import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { ApiError } from "@/lib/api/client";
@@ -37,13 +38,18 @@ export function EmptyState({
   );
 }
 export function UnauthorizedState() {
+  const pathname = usePathname() ?? "/app";
   return (
     <div className="page-state" role="alert">
       <LockKeyhole size={32} aria-hidden="true" />
       <h2>Нужен вход в аккаунт</h2>
       <p className="ui-hint">Войдите, чтобы открыть свои личные данные.</p>
       <Button asChild>
-        <Link href="/auth/login">Перейти ко входу</Link>
+        <Link
+          href={`/auth/login?next=${encodeURIComponent(pathname.startsWith("/app") ? pathname : "/app")}`}
+        >
+          Перейти ко входу
+        </Link>
       </Button>
     </div>
   );

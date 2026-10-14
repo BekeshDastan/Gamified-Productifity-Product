@@ -1,3 +1,4 @@
+import { expand, revealControl } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function account(page: Page) {
@@ -66,7 +67,9 @@ test("shop insufficient balance cancel refund and claim have real durable states
   await page.getByRole("dialog").getByRole("button", { name: "Закрыть", exact: true }).click();
   await page.goto("/app/quests");
   await page.getByRole("button", { name: "Создать задачу", exact: true }).click();
+  await revealControl(page.getByLabel("Название задачи"));
   await page.getByLabel("Название задачи").fill("Заработать награду");
+  await revealControl(page.getByLabel("Сложность (1–5)"));
   await page.getByLabel("Сложность (1–5)").fill("3");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "Задача сохранена" }).getByRole("link").click();
@@ -149,6 +152,7 @@ test("boss victory correction monthly dashboard and free surprise persist", asyn
   await expect(page.getByText("Победа подтверждена", { exact: true })).toBeVisible();
   await accessible(page, "boss", info);
   await page.goto("/app");
+  await expand(page, "Босс месяца и подробности дня");
   await expect(
     page.getByRole("progressbar", { name: "HP босса Главный результат", exact: true }),
   ).toHaveAttribute("value", "0");

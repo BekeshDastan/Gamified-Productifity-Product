@@ -1,3 +1,5 @@
+import { expand } from "./disclosure";
+import { revealControl } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 function card(page: Page, name: string) {
@@ -21,7 +23,9 @@ async function account(page: Page) {
 async function create(page: Page, title: string, deadline?: string) {
   await page.goto("/app/quests");
   await page.getByRole("button", { name: "Создать задачу", exact: true }).click();
+  await revealControl(page.getByLabel("Название задачи"));
   await page.getByLabel("Название задачи").fill(title);
+  if (deadline) await revealControl(page.getByLabel("Дедлайн с часовым поясом", { exact: true }));
   if (deadline) await page.getByLabel("Дедлайн с часовым поясом", { exact: true }).fill(deadline);
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   const savedLink = page
@@ -61,12 +65,14 @@ test("lifecycle history and private quarantine work through the real UI", async 
   await action(page, "Завершить", "completed");
   await page.reload();
   await expect(page.getByLabel("Статус", { exact: true })).toHaveValue("completed");
+  await expand(page, "История, связи и файлы");
   const history = card(page, "История задачи");
   await expect(history).toContainText("Встреча заняла время");
   await expect(history).toContainText("Пересмотр приоритета");
   await expect(history).toContainText("Потребовалась помощь");
   const events = (await (await page.request.get("/api/v1/quests/" + id + "/history")).json()).data;
   expect(events.filter((e: { kind: string }) => e.kind === "complete")).toHaveLength(1);
+  await revealControl(page.getByLabel("Файл для задачи"));
   await page.getByLabel("Файл для задачи").setInputFiles({
     name: "notes.txt",
     mimeType: "text/plain",
@@ -83,6 +89,7 @@ test("lifecycle history and private quarantine work through the real UI", async 
   ).toBe(409);
   await page.getByRole("button", { name: "Повторить проверку", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "остаётся закрытым" })).toBeVisible();
+  await revealControl(page.getByLabel("Файл для задачи"));
   await page.getByLabel("Файл для задачи").setInputFiles({
     name: "fake.png",
     mimeType: "image/png",
@@ -94,6 +101,7 @@ test("lifecycle history and private quarantine work through the real UI", async 
   ).toBeVisible();
   await page.getByRole("button", { name: "Удалить notes.txt", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Файл удалён." })).toBeVisible();
+  await revealControl(page.getByLabel("Файл для задачи"));
   await page.getByLabel("Файл для задачи").setInputFiles({
     name: "limit.txt",
     mimeType: "text/plain",
@@ -103,6 +111,7 @@ test("lifecycle history and private quarantine work through the real UI", async 
   await expect(page.getByRole("status").filter({ hasText: "ожидает проверки" })).toBeVisible();
   await page.getByRole("button", { name: "Удалить limit.txt", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Файл удалён." })).toBeVisible();
+  await revealControl(page.getByLabel("Название задачи"));
   await page.getByLabel("Название задачи").fill("После собственных действий");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Сохранено." })).toBeVisible();
@@ -121,8 +130,10 @@ test("subtasks roll up and templates filters Kanban and bulk archive preserve ou
   test.setTimeout(150_000);
   await account(page);
   const parent = await create(page, "План недели");
+  await expand(page, "История, связи и файлы");
   await page.getByRole("button", { name: "Добавить подзадачу", exact: true }).click();
   const form = card(page, "Новая задача");
+  await revealControl(form.getByLabel("Название задачи"));
   await form.getByLabel("Название задачи").fill("Обязательная глава");
   await form.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   const childLink = page
@@ -138,25 +149,31 @@ test("subtasks roll up and templates filters Kanban and bulk archive preserve ou
   await action(page, "Завершить", "completed");
   await page.goto("/app/quests/" + parent);
   await expect(page.getByLabel("Статус", { exact: true })).toHaveValue("completed");
+  await expand(page, "История, связи и файлы");
   await expect(card(page, "Подзадачи и блокировки")).toContainText("1 из 1");
   await page.goto("/app/quests/" + child);
+  await revealControl(page.getByLabel("Название нового шаблона"));
   await page.getByLabel("Название нового шаблона").fill("Чтение");
   await page.getByRole("button", { name: "Сохранить как шаблон", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Шаблон сохранён." })).toBeVisible();
+  await revealControl(page.getByLabel("Выберите шаблон"));
   await page.getByLabel("Выберите шаблон").selectOption({ label: "Чтение" });
   await page.getByRole("button", { name: "Предпросмотр задачи", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Будет создана одна задача" })).toBeVisible();
   await page.getByRole("button", { name: "Создать из шаблона", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Задача сохранена" })).toBeVisible();
   await page.goto("/app/quests");
+  await revealControl(page.getByLabel("Поиск задач"));
   await page.getByLabel("Поиск задач").fill("Обязательная");
   await page.getByRole("button", { name: "Применить фильтры", exact: true }).click();
   await expect(page.getByLabel("Поиск задач")).toHaveValue("Обязательная");
   await expect(page.locator(".quest-list a")).toHaveCount(2);
+  await revealControl(page.getByLabel("Название представления"));
   await page.getByLabel("Название представления").fill("Главы");
   await page.getByRole("button", { name: "Сохранить представление", exact: true }).click();
   await expect(page.getByRole("button", { name: "Главы", exact: true })).toBeVisible();
   await page.reload();
+  await expand(page, "Поиск и фильтры");
   await page.getByRole("button", { name: "Главы", exact: true }).click();
   await expect(page.locator(".quest-list a")).toHaveCount(2);
   const list = await page
@@ -167,6 +184,7 @@ test("subtasks roll up and templates filters Kanban and bulk archive preserve ou
     .locator(".quest-kanban a")
     .evaluateAll((a) => a.map((x) => x.getAttribute("href")).sort());
   expect(board).toEqual(list);
+  await expand(page, "Действия с несколькими задачами");
   for (const checkbox of await page
     .getByRole("checkbox", { name: "Выбрать: Обязательная глава", exact: true })
     .all())
@@ -175,13 +193,16 @@ test("subtasks roll up and templates filters Kanban and bulk archive preserve ou
   await expect(page.getByRole("heading", { name: "Изменится задач: 2" })).toBeVisible();
   await page.getByRole("button", { name: "Применить ко всем выбранным", exact: true }).click();
   await expect(page.locator(".quest-kanban a")).toHaveCount(0);
+  await revealControl(page.getByLabel("Показать архив"));
   await page.getByLabel("Показать архив").check();
   await page.getByRole("button", { name: "Применить фильтры", exact: true }).click();
   await expect(page.locator(".quest-kanban a")).toHaveCount(2);
+  await expand(page, "Действия с несколькими задачами");
   for (const checkbox of await page
     .getByRole("checkbox", { name: "Выбрать: Обязательная глава", exact: true })
     .all())
     await checkbox.check();
+  await revealControl(page.getByLabel("Пакетное действие"));
   await page.getByLabel("Пакетное действие").selectOption("restore");
   await page.getByRole("button", { name: "Предпросмотр изменений (2)", exact: true }).click();
   await page.getByRole("button", { name: "Применить ко всем выбранным", exact: true }).click();
@@ -189,6 +210,7 @@ test("subtasks roll up and templates filters Kanban and bulk archive preserve ou
   const saved = (await (await page.request.get("/api/v1/quests/" + child)).json()).data;
   expect(saved.status).toBe("completed");
   expect(saved.archived_at).toBeNull();
+  await expand(page, "Поиск и фильтры");
   await page.getByRole("button", { name: "Сбросить", exact: true }).click();
   await page.getByRole("button", { name: "Список", exact: true }).click();
   await expect(page.locator(".quest-list a")).toHaveCount(3);

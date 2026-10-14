@@ -10,6 +10,7 @@ import { connectPush } from "@/lib/notification-push";
 import { useChallengeAction } from "./challenges";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { LoadingState, UnauthorizedState } from "./ui/states";
 const names: Record<string, string> = {
   deadline: "Сроки задач",
   habit: "Привычки",
@@ -301,12 +302,15 @@ function DeliveryRow({
   );
 }
 export function NotificationSettings() {
+  const auth = useAuth();
   const { id, key } = useNotificationsScope();
   const q = useQuery({
     queryKey: [...key, "preferences"],
     queryFn: ({ signal }) => api.preferences(signal),
     enabled: !!id,
   });
+  if (auth.session === undefined) return <LoadingState label="Проверяем вход…" />;
+  if (!id) return <UnauthorizedState />;
   return (
     <>
       <h1 className="page-title">Каналы уведомлений</h1>

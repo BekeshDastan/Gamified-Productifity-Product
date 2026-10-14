@@ -11,7 +11,7 @@ const sections = {
   entries: "Мои записи",
   morning: "Утро",
   evening: "Вечер",
-  week: "Weekly Reset",
+  week: "Обзор недели",
   templates: "Чек-листы и история",
 };
 export function JournalWorkspace({

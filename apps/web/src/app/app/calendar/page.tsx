@@ -4,7 +4,9 @@ export default function CalendarPage() {
     <>
       <p className="eyebrow">ВРЕМЯ ДЛЯ ВАЖНОГО</p>
       <h1 className="page-title">Календарь</h1>
-      <p className="page-intro">Планы задач и блоки работы в одном месте.</p>
+      <p className="page-intro">
+        Выделите время для дел: выберите день и создайте событие или рабочий блок.
+      </p>
       <Calendar />
     </>
   );

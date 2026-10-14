@@ -1,3 +1,4 @@
+import { revealControl } from "./disclosure";
 import { test, expect, type APIRequestContext } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function mail(request: APIRequestContext, email: string, needle: string) {
@@ -79,9 +80,11 @@ test("notifications consent inbox snooze unsubscribe and denied push keep person
   const now = (await (await page.request.get("/api/v1/notifications")).json()).data.computed_at;
   await page.goto("/app/quests");
   await page.getByRole("button", { name: "Создать задачу", exact: true }).click();
+  await revealControl(page.getByLabel("Название задачи", { exact: true }));
   await page
     .getByLabel("Название задачи", { exact: true })
     .fill("NOTIFICATION_PRIVATE_SENTINEL_C160");
+  await revealControl(page.getByLabel("Дедлайн с часовым поясом", { exact: true }));
   await page
     .getByLabel("Дедлайн с часовым поясом", { exact: true })
     .fill(new Date(Date.parse(now) + 30 * 60000).toISOString());

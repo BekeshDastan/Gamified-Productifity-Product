@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { ArrowRight, ArrowUpRight, Compass, Footprints, LockKeyhole, Sprout } from "lucide-react";
 import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { ThemeSelect } from "@/components/theme-select";
@@ -30,7 +29,7 @@ export default function Home() {
         <section className="hero" aria-labelledby="intro-title">
           <div className="hero-copy">
             <p className="release-label">
-              <span aria-hidden="true">↗</span> ПУТЬ К ВАШЕЙ ЛУЧШЕЙ ВЕРСИИ
+              <span aria-hidden="true">↗</span> ЗАДАЧИ · ПРИВЫЧКИ · ВАШ РИТМ
             </p>
             <h1 id="intro-title">
               Большие перемены.
@@ -41,13 +40,13 @@ export default function Home() {
               </span>
             </h1>
             <p className="description">
-              Место для ваших целей, привычек и ежедневного прогресса. Без штрафов за отдых. В вашем
-              ритме.
+              Запишите дела на сегодня, отмечайте привычки и замечайте, как маленькие действия
+              складываются в результат. Игровой опыт — за выполненное, отдых — без штрафов.
             </p>
             <div className="hero-actions">
               <Button asChild>
-                <Link href="/app">
-                  Открыть пространство <ArrowRight size={17} aria-hidden="true" />
+                <Link href="/auth/register">
+                  Начать с одной задачи <ArrowRight size={17} aria-hidden="true" />
                 </Link>
               </Button>
               <Link href="#how-it-works" className="text-link">
@@ -59,16 +58,33 @@ export default function Home() {
               личные уведомления. Совместные функции находятся в разработке.
             </p>
           </div>
-          <div className="hero-art">
-            <Image src="/ascend-path.svg" width={560} height={560} alt="" priority />
-            <div className="art-caption">
-              <span>01 — НАЧНИТЕ С МАЛОГО</span>
-              <p>
-                Ваш следующий шаг
-                <br />
-                важнее идеального плана.
-              </p>
+          <div className="product-preview" aria-label="Как устроен ваш день">
+            <p className="eyebrow">ТРИ ПРОСТЫХ ШАГА</p>
+            <h2>От мысли к сделанному.</h2>
+            <div className="preview-step">
+              <span>01</span>
+              <div>
+                <h3>Запишите одно дело</h3>
+                <p>Достаточно названия. Сроки и подробности добавите, когда понадобятся.</p>
+              </div>
             </div>
+            <div className="preview-step">
+              <span>02</span>
+              <div>
+                <h3>Выделите время</h3>
+                <p>Работайте в своём темпе или включите таймер фокуса.</p>
+              </div>
+            </div>
+            <div className="preview-step">
+              <span>03</span>
+              <div>
+                <h3>Отметьте результат</h3>
+                <p>Галочка сохраняет выполнение. Опыт и история показывают ваш путь.</p>
+              </div>
+            </div>
+            <Link href="/app" className="text-link">
+              Открыть пространство <ArrowRight size={16} aria-hidden="true" />
+            </Link>
           </div>
         </section>
         <section id="how-it-works" className="approach" aria-labelledby="approach-title">
@@ -88,7 +104,7 @@ export default function Home() {
               <p className="feature-number">01 / НАПРАВЛЕНИЕ</p>
               <h3>Знайте, куда идёте</h3>
               <p className="ui-hint">
-                Цели станут понятными шагами, а задачи и привычки — частью одного плана.
+                Разбивайте цели на понятные шаги, и включайте задачи и привычки в свой план.
               </p>
             </article>
             <article>
@@ -98,7 +114,7 @@ export default function Home() {
               <p className="feature-number">02 / ДЕЙСТВИЕ</p>
               <h3>Замечайте небольшие победы</h3>
               <p className="ui-hint">
-                Прогресс будет опираться на выполненные действия и прозрачную историю.
+                Прогресс опирается на выполненные действия и прозрачную историю.
               </p>
             </article>
             <article>
@@ -108,7 +124,7 @@ export default function Home() {
               <p className="feature-number">03 / БАЛАНС</p>
               <h3>Оставляйте место отдыху</h3>
               <p className="ui-hint">
-                Пропуски не отнимут заработанный опыт. Вернуться можно будет с небольшого шага.
+                Пропуски не отнимают заработанный опыт. Вернуться можно с небольшого шага.
               </p>
             </article>
           </div>

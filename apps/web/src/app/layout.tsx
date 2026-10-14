@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Providers } from "@/components/providers";
 import "./globals.css";
+import "./product.css";
 
 export const metadata: Metadata = {
   title: "ASCEND — Level Up Your Life",

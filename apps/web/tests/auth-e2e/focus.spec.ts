@@ -1,3 +1,5 @@
+import { expand } from "./disclosure";
+import { revealControl } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function account(page: Page) {
@@ -34,6 +36,7 @@ function card(page: Page, title: string) {
 async function task(page: Page, title: string) {
   await page.goto("/app/quests");
   await page.getByRole("button", { name: "Создать задачу", exact: true }).click();
+  await revealControl(page.getByLabel("Название задачи"));
   await page.getByLabel("Название задачи").fill(title);
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "Задача сохранена" }).getByRole("link").click();
@@ -96,21 +99,26 @@ test("focus restores across two tabs and confirmed task time has one source", as
   await page.getByRole("button", { name: "Завершить и подвести итог", exact: true }).click();
   await expect(page.getByLabel("Результат фокус-сессии")).toBeVisible();
   await second.goto(taskURL);
+  await expand(second, "История, связи и файлы");
   await expect(card(second, "Фактическое время задачи")).toContainText("Сохранённый фокус: 0:00");
   await confirm(page);
   await expect(page.locator(".focus-history article")).toHaveCount(1);
   await expect(page.locator(".focus-history")).toContainText("Подтверждена");
   await second.reload();
+  if (new URL(second.url()).pathname.startsWith("/app/quests/"))
+    await expand(second, "История, связи и файлы");
   const timing = card(second, "Фактическое время задачи");
   await expect(timing).toContainText("подтверждённые фокус-сессии");
   const actual = await timing.locator("strong").innerText();
   expect(actual).not.toBe("0:00");
   await expect(second.getByLabel("Статус", { exact: true })).toHaveValue("todo");
+  await revealControl(second.getByLabel("Фактически, минут", { exact: true }));
   await second.getByLabel("Фактически, минут", { exact: true }).fill("7");
   await expect(second.getByLabel("Источник фактического времени")).toHaveValue("manual_override");
   await second.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(timing.locator("strong")).toHaveText("7:00");
   await expect(timing).toContainText("ручной итог заменяет сумму фокуса");
+  await revealControl(second.getByLabel("Источник фактического времени"));
   await second.getByLabel("Источник фактического времени").selectOption("from_focus");
   await second.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(timing.locator("strong")).toHaveText(actual);
@@ -140,6 +148,7 @@ test("quick start and Pomodoro boundaries exclude breaks and respect muted sound
   await confirm(page);
   await page.goto(taskURL);
   await expect(page.getByLabel("Статус", { exact: true })).toHaveValue("todo");
+  await expand(page, "История, связи и файлы");
   await expect(card(page, "Фактическое время задачи").locator("strong")).toHaveText("5:00");
   await page.goto("/app/focus");
   await page.getByLabel("Режим фокуса", { exact: true }).selectOption("pomodoro");

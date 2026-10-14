@@ -4,7 +4,9 @@ export default function AchievementsPage() {
     <>
       <p className="eyebrow">ВАШ ПУТЬ</p>
       <h1 className="page-title">Достижения</h1>
-      <p className="page-intro">Понятные условия, ваши результаты и история их исправлений.</p>
+      <p className="page-intro">
+        Посмотрите условия достижений. Они открываются по вашим реальным действиям.
+      </p>
       <Achievements />
     </>
   );

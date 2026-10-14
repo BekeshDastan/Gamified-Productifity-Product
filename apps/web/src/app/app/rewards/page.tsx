@@ -4,7 +4,10 @@ export default function RewardsPage() {
     <>
       <p className="eyebrow">ВАШИ НАГРАДЫ</p>
       <h1 className="page-title">Магазин и личные награды</h1>
-      <p className="page-intro">Осознанный выбор за виртуальные монеты.</p>
+      <p className="page-intro">
+        Обменивайте заработанные монеты на оформление и личные награды. Перед покупкой вы увидите её
+        стоимость.
+      </p>
       <Rewards />
     </>
   );

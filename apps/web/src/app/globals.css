@@ -114,31 +114,31 @@
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --font-sans: "Segoe UI", Arial, Helvetica, sans-serif;
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
 }
 :root {
   color-scheme: light;
-  --background: #f7f8fc;
-  --foreground: #192039;
+  --background: #f6f5f0;
+  --foreground: #252a26;
   --card: #ffffff;
-  --muted: #edf0f7;
-  --muted-foreground: #536079;
-  --primary: #6840d8;
+  --muted: #eaece5;
+  --muted-foreground: #60685f;
+  --primary: #286047;
   --primary-foreground: #ffffff;
-  --accent: #5732b9;
-  --border: #d9dfea;
-  --input: #8792aa;
-  --ring: #6840d8;
+  --accent: #21523c;
+  --border: #dce0d7;
+  --input: #849181;
+  --ring: #286047;
   --destructive: #b42338;
   --success: #17623e;
   --warning: #7c5100;
   --info: #2558a5;
-  --shadow-card: 0 8px 32px #19203908;
+  --shadow-card: none;
   --shadow-overlay: 0 24px 80px #0c0e1640;
-  --space-page: clamp(1.25rem, 4vw, 3rem);
+  --space-page: clamp(1rem, 3vw, 2.5rem);
   --text-display: clamp(2.75rem, 6vw, 5.25rem);
   --text-heading: clamp(1.65rem, 3vw, 2.5rem);
   --text-body: 1rem;
@@ -146,22 +146,22 @@
 }
 .dark {
   color-scheme: dark;
-  --background: #0d1019;
-  --foreground: #f0f2fa;
-  --card: #161b29;
-  --muted: #202738;
-  --muted-foreground: #a4afc6;
-  --primary: #b49aff;
-  --primary-foreground: #20143b;
-  --accent: #c6b2ff;
-  --border: #30394d;
-  --input: #65728c;
-  --ring: #b49aff;
+  --background: #181c19;
+  --foreground: #edf0e9;
+  --card: #202621;
+  --muted: #2a332c;
+  --muted-foreground: #b0bcaf;
+  --primary: #a5d2ad;
+  --primary-foreground: #163523;
+  --accent: #bcdfbf;
+  --border: #3d493f;
+  --input: #758977;
+  --ring: #a5d2ad;
   --destructive: #ff9cab;
   --success: #76d6a6;
   --warning: #edc477;
   --info: #9dbfff;
-  --shadow-card: 0 8px 32px #00000020;
+  --shadow-card: none;
   --shadow-overlay: 0 24px 80px #00000060;
 }
 @layer base {
@@ -409,7 +409,6 @@
   inset: 0;
   z-index: 50;
   background: #0009;
-  backdrop-filter: blur(4px);
 }
 .ui-dialog {
   position: fixed;

@@ -1,3 +1,4 @@
+import { revealControl } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function account(page: Page) {
@@ -27,7 +28,9 @@ test("planning morning flow freezes commitments and updates dashboard calendar a
   await page.getByRole("link", { name: "Исходная задача", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/quests\/[a-f0-9-]+$/);
   const taskURL = page.url();
+  await revealControl(page.getByLabel("Оценка, минут"));
   await page.getByLabel("Оценка, минут").fill("60");
+  await revealControl(page.getByLabel("Дедлайн с часовым поясом"));
   await page.getByLabel("Дедлайн с часовым поясом").fill("2026-10-14T18:00:00Z");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Сохранено." })).toBeVisible();

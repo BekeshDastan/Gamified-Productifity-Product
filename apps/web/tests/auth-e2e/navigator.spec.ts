@@ -1,3 +1,4 @@
+import { revealControl } from "./disclosure";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 test("navigator explanations opt-out and private sources work without external network", async ({
@@ -39,7 +40,9 @@ test("navigator explanations opt-out and private sources work without external n
   ).toBeVisible();
   await page.goto("/app/quests");
   await page.getByRole("button", { name: "Создать задачу", exact: true }).click();
+  await revealControl(page.getByLabel("Название задачи", { exact: true }));
   await page.getByLabel("Название задачи", { exact: true }).fill("Шаг для расписания");
+  await revealControl(page.getByLabel("Оценка, минут", { exact: true }));
   await page.getByLabel("Оценка, минут", { exact: true }).fill("45");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Задача сохранена" })).toBeVisible();

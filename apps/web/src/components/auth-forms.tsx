@@ -172,7 +172,7 @@ export function RegisterForm() {
             Проверьте почту: мы отправили ссылку подтверждения. Она действует 24 часа.
           </p>
           <Button asChild>
-            <Link href="/auth/login">Перейти ко входу</Link>
+            <Link href="/auth/login?next=/app/onboarding">Добавить первую задачу</Link>
           </Button>
           <p className="ui-hint">Если письмо не пришло, после входа можно отправить его ещё раз.</p>
         </>

@@ -17,6 +17,7 @@ import {
   type Quest,
   type QuestInput,
 } from "@/lib/quests";
+import { DeadlineField } from "./deadline-field";
 import { useSettings, formatMoment } from "@/lib/settings";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -111,9 +112,9 @@ export function Quests({ id }: { id?: string }) {
           key={newParent ?? "new"}
           initialParent={newParent}
           labels={labels.data}
-          onSaved={(q) => {
+          onSaved={async (q) => {
+            await query.refetch();
             setCreated(q);
-            void query.refetch();
           }}
         />
       )}
@@ -135,13 +136,6 @@ export function Quests({ id }: { id?: string }) {
               {current.description || "Описание пока не добавлено."}
             </p>
           </Card>
-          <QuestForm
-            key={current.id + revision}
-            current={current}
-            labels={labels.data}
-            onSaved={() => query.refetch()}
-          />
-          <QuestFocusTime questId={current.id} />
           <QuickFocusStart key={current.id} quest={current} />
           <QuestActions
             quest={current}
@@ -149,58 +143,90 @@ export function Quests({ id }: { id?: string }) {
               void query.refetch().then(() => setRevision((v) => v + 1));
             }}
           />
-          <QuestHistory quest={current} />
-          <QuestGoalLink id={current.id} />
-          <QuestArchive
-            quest={current}
-            onChanged={() => {
-              void query.refetch().then(() => setRevision((v) => v + 1));
-            }}
-          />
-          <QuestTemplates
-            quest={current}
-            onCreated={(q) => {
-              setCreated(q);
-              void query.refetch();
-            }}
-          />
-          <QuestFiles
-            quest={current}
-            onChanged={() => {
-              void query.refetch().then(() => setRevision((v) => v + 1));
-            }}
-          />
-          <QuestStructure
-            quest={current}
-            onChanged={() => {
-              void query.refetch().then(() => setRevision((v) => v + 1));
-            }}
-            onAddChild={() => {
-              if (confirmDiscard()) {
-                setNewParent(current.id);
-                setEditing(true);
-              }
-            }}
-          />
+          <details className="section-disclosure">
+            <summary>Изменить задачу</summary>
+            <div className="disclosure-content">
+              <QuestForm
+                key={current.id + revision}
+                current={current}
+                labels={labels.data}
+                onSaved={() => query.refetch()}
+              />
+            </div>
+          </details>
+          <details className="section-disclosure">
+            <summary>История, связи и файлы</summary>
+            <div className="disclosure-content">
+              <QuestFocusTime questId={current.id} />
+              <QuestHistory quest={current} />
+              <QuestGoalLink id={current.id} />
+              <QuestArchive
+                quest={current}
+                onChanged={() => {
+                  void query.refetch().then(() => setRevision((v) => v + 1));
+                }}
+              />
+              <QuestTemplates
+                quest={current}
+                onCreated={(q) => {
+                  setCreated(q);
+                  void query.refetch();
+                }}
+              />
+              <QuestFiles
+                quest={current}
+                onChanged={() => {
+                  void query.refetch().then(() => setRevision((v) => v + 1));
+                }}
+              />
+              <QuestStructure
+                quest={current}
+                onChanged={() => {
+                  void query.refetch().then(() => setRevision((v) => v + 1));
+                }}
+                onAddChild={() => {
+                  if (confirmDiscard()) {
+                    setNewParent(current.id);
+                    setEditing(true);
+                  }
+                }}
+              />
+            </div>
+          </details>
         </>
       )}
       {collection && (
         <>
-          <QuestTemplates
-            onCreated={(q) => {
-              setCreated(q);
-              void query.refetch();
-            }}
-          />
-          <QuestFiltersPanel
-            filters={filters}
-            labels={labels.data}
-            onApply={(f) => {
-              setFilters(f);
-              setPage(1);
-            }}
-          />
-          <QuestBatchPanel items={collection.items} onChanged={() => void query.refetch()} />
+          <details className="section-disclosure">
+            <summary>Шаблоны задач</summary>
+            <div className="disclosure-content">
+              <QuestTemplates
+                onCreated={(q) => {
+                  setCreated(q);
+                  void query.refetch();
+                }}
+              />
+            </div>
+          </details>
+          <details className="section-disclosure">
+            <summary>Поиск и фильтры</summary>
+            <div className="disclosure-content">
+              <QuestFiltersPanel
+                filters={filters}
+                labels={labels.data}
+                onApply={(f) => {
+                  setFilters(f);
+                  setPage(1);
+                }}
+              />
+            </div>
+          </details>
+          <details className="section-disclosure">
+            <summary>Действия с несколькими задачами</summary>
+            <div className="disclosure-content">
+              <QuestBatchPanel items={collection.items} onChanged={() => void query.refetch()} />
+            </div>
+          </details>
           <div className="button-row">
             <Button
               variant={board ? "secondary" : "primary"}
@@ -271,8 +297,30 @@ export function Quests({ id }: { id?: string }) {
           )}
           {collection.total === 0 && (
             <Card>
-              <h2>Начните с одного шага</h2>
-              <p>Создайте задачу, выберите направление и подходящий срок.</p>
+              <h2>
+                {JSON.stringify(filters) === JSON.stringify(emptyFilters)
+                  ? "Начните с одного шага"
+                  : "По этим условиям задач нет"}
+              </h2>
+              <p>Запишите конкретное дело. Направление, описание и срок можно добавить позже.</p>
+              <div className="button-row">
+                <Button
+                  onClick={() => {
+                    if (confirmDiscard()) setEditing(true);
+                  }}
+                >
+                  Добавить первую задачу
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setFilters(emptyFilters);
+                    setPage(1);
+                  }}
+                >
+                  Сбросить фильтры
+                </Button>
+              </div>
             </Card>
           )}
           <div className="button-row">
@@ -330,7 +378,8 @@ function QuestForm({
   onSaved: (q: Quest) => void | Promise<unknown>;
   initialParent?: string | null;
 }) {
-  const cache = useQueryClient();
+  const cache = useQueryClient(),
+    settings = useSettings();
   const confirmDiscard = useConfirmDiscard();
   const [saved, setSaved] = useState(false);
   const [record, setRecord] = useState(current);
@@ -384,118 +433,124 @@ function QuestForm({
           error={errors.title?.message}
           {...f.register("title")}
         />
-        <label className="ui-field">
-          Описание
-          <textarea
-            className="ui-input"
-            rows={4}
-            maxLength={10000}
-            {...f.register("description")}
-          />
-        </label>
-        <Select label="Направление" error={errors.area_id?.message} {...f.register("area_id")}>
-          <option value="">Без направления</option>
-          {labels.areas
-            .filter((a) => !a.archived || a.id === record?.area_id)
-            .map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name}
-                {a.archived ? " (архив)" : ""}
-              </option>
-            ))}
-        </Select>
-        <QuestPicker
-          label="Родительская задача"
-          value={f.watch("parent_id")}
-          onChange={(id) => f.setValue("parent_id", id, { shouldDirty: true })}
-          exclude={current?.id}
-        />
-        {errors.parent_id && (
-          <p role="alert" className="ui-error">
-            {errors.parent_id.message}
-          </p>
-        )}
-        <label className="check-row">
-          <input type="checkbox" {...f.register("required")} />
-          Обязательная подзадача
-        </label>
-        <div className="quest-grid">
-          <Select label="Приоритет" {...f.register("priority")}>
-            <option value="low">Низкий</option>
-            <option value="normal">Обычный</option>
-            <option value="high">Высокий</option>
-          </Select>
-          <Input
-            label="Сложность (1–5)"
-            type="number"
-            min={1}
-            max={5}
-            error={errors.difficulty?.message}
-            {...f.register("difficulty", { valueAsNumber: true })}
-          />
-        </div>
-        <Select label="Статус" disabled={!!current} {...f.register("status")}>
-          {Object.entries(statuses)
-            .filter(([key]) => current || key === "backlog" || key === "todo")
-            .map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-        </Select>
         <DatePicker
           label="Плановая дата"
           error={errors.planned_date?.message}
           {...f.register("planned_date")}
         />
         <Input
-          label="Дедлайн с часовым поясом"
-          placeholder="2026-10-12T18:00:00+05:00"
-          hint="Необязательно. Укажите время и смещение UTC. Плановая дата хранится отдельно."
-          error={errors.deadline?.message}
-          {...f.register("deadline")}
+          label="Оценка, минут"
+          type="number"
+          min={0}
+          max={525600}
+          error={errors.estimated_minutes?.message}
+          {...f.register("estimated_minutes", { valueAsNumber: true })}
         />
-        <Select label="Источник фактического времени" {...f.register("actual_time_mode")}>
-          <option value="from_focus">Из подтверждённых фокус-сессий</option>
-          <option value="manual_override">Ручной итог вместо фокуса</option>
-        </Select>
-        <div className="quest-grid">
-          <Input
-            label="Оценка, минут"
-            type="number"
-            min={0}
-            max={525600}
-            error={errors.estimated_minutes?.message}
-            {...f.register("estimated_minutes", { valueAsNumber: true })}
-          />
-          <Input
-            label="Фактически, минут"
-            hint="Ручной ввод заменяет сумму фокуса. Переключитесь обратно на фокус, чтобы использовать подтверждённые сессии."
-            type="number"
-            min={0}
-            max={525600}
-            error={errors.actual_minutes?.message}
-            {...f.register("actual_minutes", { valueAsNumber: true })}
-            onChange={(e) => {
-              void f.register("actual_minutes", { valueAsNumber: true }).onChange(e);
-              f.setValue("actual_time_mode", "manual_override", { shouldDirty: true });
-            }}
-          />
-        </div>
-        <fieldset>
-          <legend>Теги</legend>
-          {labels.tags
-            .filter((t) => !t.archived || record?.tags.includes(t.id))
-            .map((t) => (
-              <label className="check-row" key={t.id}>
-                <input type="checkbox" value={t.id} {...f.register("tags")} />
-                {t.name}
-              </label>
-            ))}
-          {labels.tags.length === 0 && (
-            <p className="ui-hint">Добавьте теги в настройках направлений.</p>
-          )}
-        </fieldset>
+        <details className="form-disclosure">
+          <summary>Дополнительные параметры</summary>
+          <div className="disclosure-content">
+            <label className="ui-field">
+              Описание
+              <textarea
+                className="ui-input"
+                rows={4}
+                maxLength={10000}
+                {...f.register("description")}
+              />
+            </label>
+            <Select label="Направление" error={errors.area_id?.message} {...f.register("area_id")}>
+              <option value="">Без направления</option>
+              {labels.areas
+                .filter((a) => !a.archived || a.id === record?.area_id)
+                .map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                    {a.archived ? " (архив)" : ""}
+                  </option>
+                ))}
+            </Select>
+            <QuestPicker
+              label="Родительская задача"
+              value={f.watch("parent_id")}
+              onChange={(id) => f.setValue("parent_id", id, { shouldDirty: true })}
+              exclude={current?.id}
+            />
+            {errors.parent_id && (
+              <p role="alert" className="ui-error">
+                {errors.parent_id.message}
+              </p>
+            )}
+            <label className="check-row">
+              <input type="checkbox" {...f.register("required")} />
+              Обязательная подзадача
+            </label>
+            <div className="quest-grid">
+              <Select label="Приоритет" {...f.register("priority")}>
+                <option value="low">Низкий</option>
+                <option value="normal">Обычный</option>
+                <option value="high">Высокий</option>
+              </Select>
+              <Input
+                label="Сложность (1–5)"
+                type="number"
+                min={1}
+                max={5}
+                error={errors.difficulty?.message}
+                {...f.register("difficulty", { valueAsNumber: true })}
+              />
+            </div>
+            <Select label="Статус" disabled={!!current} {...f.register("status")}>
+              {Object.entries(statuses)
+                .filter(([key]) => current || key === "backlog" || key === "todo")
+                .map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+            </Select>
+            <DeadlineField
+              value={f.watch("deadline")}
+              zone={settings.data?.timezone ?? "UTC"}
+              error={errors.deadline?.message}
+              onChange={(value) =>
+                f.setValue("deadline", value, { shouldDirty: true, shouldValidate: true })
+              }
+            />
+            <Select label="Источник фактического времени" {...f.register("actual_time_mode")}>
+              <option value="from_focus">Из подтверждённых фокус-сессий</option>
+              <option value="manual_override">Ручной итог вместо фокуса</option>
+            </Select>
+            <div className="quest-grid">
+              <Input
+                label="Фактически, минут"
+                hint="Ручной ввод заменяет сумму фокуса. Переключитесь обратно на фокус, чтобы использовать подтверждённые сессии."
+                type="number"
+                min={0}
+                max={525600}
+                error={errors.actual_minutes?.message}
+                {...f.register("actual_minutes", { valueAsNumber: true })}
+                onChange={(e) => {
+                  void f.register("actual_minutes", { valueAsNumber: true }).onChange(e);
+                  f.setValue("actual_time_mode", "manual_override", { shouldDirty: true });
+                }}
+              />
+            </div>
+            <fieldset>
+              <legend>Теги</legend>
+              {labels.tags
+                .filter((t) => !t.archived || record?.tags.includes(t.id))
+                .map((t) => (
+                  <label className="check-row" key={t.id}>
+                    <input type="checkbox" value={t.id} {...f.register("tags")} />
+                    {t.name}
+                  </label>
+                ))}
+              {labels.tags.length === 0 && (
+                <p className="ui-hint">Добавьте теги в настройках направлений.</p>
+              )}
+            </fieldset>
+          </div>
+        </details>
         <Button type="submit" disabled={!!record?.archived_at}>
           Сохранить задачу
         </Button>

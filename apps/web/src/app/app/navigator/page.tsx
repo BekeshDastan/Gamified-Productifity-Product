@@ -6,7 +6,10 @@ export default function NavigatorPage() {
   return (
     <>
       <h1 className="page-title">Навигатор</h1>
-      <p className="page-intro">Понятные предложения по вашим записям. Решение остаётся за вами.</p>
+      <p className="page-intro">
+        Выберите подходящее предложение, проверьте его и примените. Любое изменение требует вашего
+        решения.
+      </p>
       <NavigatorCards />
       <SmartSchedule />
       <GoalWizard />

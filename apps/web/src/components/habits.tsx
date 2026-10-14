@@ -50,6 +50,7 @@ function useRequestKey() {
   };
 }
 export function Habits() {
+  const [creating, setCreating] = useState(false);
   const [archived, setArchived] = useState(false),
     discard = useConfirmDiscard();
   const auth = useAuth();
@@ -62,6 +63,17 @@ export function Habits() {
   const data = useHabits(archived),
     settings = useSettings(),
     changed = useHabitChanged();
+  if (auth.session === undefined) return <p role="status">Проверяем вход…</p>;
+  if (!auth.session)
+    return (
+      <p>
+        Чтобы отмечать привычки,{" "}
+        <SafeLink className="text-link" href="/auth/login?next=/app/habits">
+          войдите в аккаунт
+        </SafeLink>
+        .
+      </p>
+    );
   if (data.isPending || !settings.data)
     return (
       <Card>
@@ -82,18 +94,27 @@ export function Habits() {
     );
   return (
     <>
-      <Button variant="secondary" onClick={() => void data.refetch()}>
-        Обновить привычки
-      </Button>
-      <Button
-        variant="secondary"
-        onClick={() => {
-          if (discard()) setArchived(!archived);
-        }}
-      >
-        {archived ? "Показать активные" : "Показать архив"}
-      </Button>
-      {!archived && (
+      <div className="workspace-toolbar">
+        <Button
+          onClick={() => {
+            if (discard()) setCreating(!creating);
+          }}
+        >
+          {creating ? "Закрыть создание привычки" : "Создать привычку"}
+        </Button>
+        <Button variant="secondary" onClick={() => void data.refetch()}>
+          Обновить привычки
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            if (discard()) setArchived(!archived);
+          }}
+        >
+          {archived ? "Показать активные" : "Показать архив"}
+        </Button>
+      </div>
+      {!archived && creating && (
         <Card>
           <h2>Новая привычка</h2>
           {suggestion.data && !starter && (
@@ -129,7 +150,13 @@ export function Habits() {
       {data.data?.length === 0 && (
         <Card>
           <h2>{archived ? "Архив пуст" : "Начните с малого"}</h2>
-          <p>Добавьте одну привычку и удобную норму. Незапланированные дни не разрывают серию.</p>
+          <p>
+            Например, читать 10 страниц в день. Выберите посильную норму — в дни отдыха серия
+            сохраняется.
+          </p>
+          {!archived && !creating && (
+            <Button onClick={() => setCreating(true)}>Создать первую привычку</Button>
+          )}
         </Card>
       )}
       <div className="habit-grid">

@@ -1,5 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { QuickTask } from "./quick-task";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { useAuth } from "@/lib/auth/provider";
@@ -38,7 +40,7 @@ const names = [
   "Первая привычка",
   "Всё готово",
 ];
-export function Onboarding() {
+export function useOnboarding() {
   const auth = useAuth();
   const id = auth.session?.account.id;
   const query = useQuery({
@@ -50,6 +52,12 @@ export function Onboarding() {
       return schema.parse(r.data?.data);
     },
   });
+  return query;
+}
+export function Onboarding() {
+  const auth = useAuth(),
+    id = auth.session?.account.id,
+    query = useOnboarding();
   if (auth.session === undefined || (id && query.isPending))
     return <p role="status">Загружаем настройку…</p>;
   if (!id)
@@ -65,7 +73,135 @@ export function Onboarding() {
         <Button onClick={() => void query.refetch()}>Повторить</Button>
       </Card>
     );
-  return <Setup initial={query.data} ownerId={id} />;
+  return (
+    <>
+      <FirstAction initial={query.data} />
+      <OptionalSetup key={id} initial={query.data} ownerId={id} />
+    </>
+  );
+}
+function OptionalSetup({ initial, ownerId }: { initial: State; ownerId: string }) {
+  const [open, setOpen] = useState(initial.step > 0 && !initial.completed_at);
+  return (
+    <details
+      className="section-disclosure"
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary>Подробная настройка — по желанию</summary>
+      <div className="disclosure-content">
+        <Setup initial={initial} ownerId={ownerId} />
+      </div>
+    </details>
+  );
+}
+async function finishSetup(state: State) {
+  await requireAccount();
+  return withAuthLock(async () => {
+    const api = await authClient();
+    const result = await api.POST("/api/v1/me/onboarding/complete", {
+      params: { header: { ...authParams().header, "If-Match": `"${state.version}"` } },
+      body: {},
+    });
+    return schema.parse(result.data?.data);
+  });
+}
+export function StartHint() {
+  const query = useOnboarding();
+  if (!query.data || query.data.completed_at) return null;
+  return (
+    <aside className="next-step">
+      <div>
+        <h2>Начните с одного небольшого дела</h2>
+        <p>
+          Нажмите «Добавить задачу». Когда закончите дело, отметьте его галочкой — результат
+          сохранится.
+        </p>
+      </div>
+      <SafeLink className="text-link" href="/app/onboarding">
+        Первые шаги
+      </SafeLink>
+    </aside>
+  );
+}
+function FirstAction({ initial }: { initial: State }) {
+  const router = useRouter(),
+    cache = useQueryClient(),
+    auth = useAuth(),
+    discard = useConfirmDiscard();
+  const [created, setCreated] = useState(false),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  const lock = useRef(false);
+  async function finish() {
+    if (lock.current || !discard()) return;
+    lock.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const next = await finishSetup(initial);
+      cache.setQueryData(["account", auth.session?.account.id, "onboarding"], next);
+      router.push("/app");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Не удалось сохранить настройку. Попробуйте снова.",
+      );
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  }
+  return (
+    <Card className="first-action">
+      <p className="eyebrow">ЗАПИСАТЬ → СДЕЛАТЬ → ЗАМЕТИТЬ РЕЗУЛЬТАТ</p>
+      <h2>
+        {initial.completed_at
+          ? "Вы уже готовы к работе"
+          : created
+            ? "Первый шаг уже в вашем списке"
+            : "Что хотите сделать сегодня?"}
+      </h2>
+      <p>
+        {initial.completed_at
+          ? "Задачи, привычки и план доступны в меню. Подробную настройку можно открыть ниже."
+          : "Выберите небольшое дело: прочитать несколько страниц, написать письмо или выйти на прогулку. Всё остальное можно настроить позже."}
+      </p>
+      {!initial.completed_at && <QuickTask first onCreated={() => setCreated(true)} />}
+      {created && (
+        <p>Откройте «Сегодня» и отметьте задачу, когда выполните. Опыт начисляется за результат.</p>
+      )}
+      <div className="button-row">
+        {initial.completed_at ? (
+          <Button asChild>
+            <SafeLink href="/app">Перейти к моему дню</SafeLink>
+          </Button>
+        ) : (
+          <Button
+            disabled={busy}
+            variant={created ? "primary" : "secondary"}
+            onClick={() => void finish()}
+          >
+            {busy ? "Сохраняем…" : created ? "Перейти к моему дню" : "Пропустить знакомство"}
+          </Button>
+        )}
+      </div>
+      {error && (
+        <p role="alert" className="ui-error">
+          {error}{" "}
+          <Button
+            variant="ghost"
+            onClick={() =>
+              void cache.invalidateQueries({
+                queryKey: ["account", auth.session?.account.id, "onboarding"],
+              })
+            }
+          >
+            Обновить прогресс
+          </Button>
+        </p>
+      )}
+    </Card>
+  );
 }
 function Setup({ initial, ownerId }: { initial: State; ownerId: string }) {
   const cache = useQueryClient();

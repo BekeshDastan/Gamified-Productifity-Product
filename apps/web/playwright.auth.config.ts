@@ -9,7 +9,12 @@ export default defineConfig({
   reporter: [["list"]],
   timeout: 60_000,
   expect: { timeout: 10_000 },
-  use: { baseURL: "http://127.0.0.1:3100", trace: "off", screenshot: "only-on-failure" },
+  use: {
+    baseURL: "http://127.0.0.1:3100",
+    actionTimeout: 15000,
+    trace: "off",
+    screenshot: "only-on-failure",
+  },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command: "npm run start",

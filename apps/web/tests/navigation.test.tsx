@@ -7,12 +7,13 @@ vi.mock("../src/lib/auth/provider", () => ({ useAuth: () => ({ session: null }) 
 describe("application navigation", () => {
   it("does not link unfinished modules to fake screens", () => {
     render(<AppShell>Содержание</AppShell>);
-    expect(screen.getByRole("link", { name: "Задачи" })).toHaveAttribute("href", "/app/quests");
+    for (const link of screen.getAllByRole("link", { name: "Задачи" }))
+      expect(link).toHaveAttribute("href", "/app/quests");
     for (const link of screen.getAllByRole("link", { name: "Календарь" }))
       expect(link).toHaveAttribute("href", "/app/calendar");
-    expect(screen.getByRole("link", { name: "Оформление" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Настройки" })).toHaveAttribute(
       "href",
-      "/app/settings/appearance",
+      "/app/settings",
     );
   });
   it("opens and closes the mobile menu with keyboard", async () => {

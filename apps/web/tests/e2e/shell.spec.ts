@@ -39,17 +39,15 @@ for (const width of [360, 768, 1280, 1440]) {
         await page.screenshot({ path: info.outputPath("landing.png"), fullPage: true });
       await page.getByRole("link", { name: "Открыть пространство" }).click();
       await expect(page).toHaveURL("/app");
-      await expect(page.getByRole("heading", { name: "Ваш день. В вашем ритме." })).toBeVisible();
-      if (width >= 768)
-        await expect(page.getByRole("link", { name: "Задачи", exact: true })).toHaveAttribute(
-          "href",
-          "/app/quests",
-        );
-      else await expect(page.getByRole("link", { name: "Задачи", exact: true })).toHaveCount(0);
-      await expect(page.getByRole("link", { name: "Календарь", exact: true })).toHaveAttribute(
-        "href",
-        "/app/calendar",
-      );
+      await expect(
+        page.getByRole("heading", { name: "Меньше держать в голове. Больше делать." }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: "Задачи", exact: true }).filter({ visible: true }),
+      ).toHaveAttribute("href", "/app/quests");
+      await expect(
+        page.getByRole("link", { name: "Календарь", exact: true }).filter({ visible: true }),
+      ).toHaveAttribute("href", "/app/calendar");
       expect(
         await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
       ).toBe(true);
@@ -91,9 +89,9 @@ test("mobile menu traps keyboard focus and returns it to either opener", async (
     await expect(trigger).toBeFocused();
   }
   await page.getByRole("button", { name: "Ещё — открыть меню" }).click();
-  await page.getByRole("dialog").getByRole("link", { name: "Оформление" }).focus();
+  await page.getByRole("dialog").getByRole("link", { name: "Настройки", exact: true }).focus();
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL("/app/settings/appearance");
+  await expect(page).toHaveURL("/app/settings");
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
@@ -105,8 +103,10 @@ test("keyboard navigation, persisted theme and system theme", async ({ page }) =
   await expect(page.getByRole("link", { name: "К содержимому" })).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("#main-content")).toBeFocused();
-  await page.getByRole("link", { name: "Оформление", exact: true }).focus();
+  await page.getByRole("link", { name: "Настройки", exact: true }).focus();
   await page.keyboard.press("Enter");
+  await expect(page).toHaveURL("/app/settings");
+  await page.getByRole("link", { name: /Оформление Тема/ }).click();
   await expect(page).toHaveURL("/app/settings/appearance");
   await page.getByRole("combobox", { name: "Тема оформления" }).last().selectOption("light");
   await page.reload();

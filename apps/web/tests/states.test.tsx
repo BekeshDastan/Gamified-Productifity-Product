@@ -19,7 +19,7 @@ describe("page states", () => {
     render(<ErrorState error={new ApiError(401, "UNAUTHORIZED", "error")} retry={vi.fn()} />);
     expect(screen.getByRole("link", { name: "Перейти ко входу" })).toHaveAttribute(
       "href",
-      "/auth/login",
+      "/auth/login?next=%2Fapp",
     );
   });
   it("keeps conflict open when reload fails", async () => {

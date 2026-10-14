@@ -1,3 +1,4 @@
+import { revealControl } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function account(page: Page) {
@@ -158,6 +159,7 @@ test("analytics charts tables heatmap and exact source links agree in both theme
   await page.getByLabel("Быстро добавить задачу").fill("Источник графика");
   await page.getByRole("button", { name: "Добавить на сегодня", exact: true }).click();
   await page.getByRole("link", { name: "Источник графика", exact: true }).click();
+  await revealControl(page.getByLabel("Дедлайн с часовым поясом"));
   await page.getByLabel("Дедлайн с часовым поясом").fill("2026-10-12T10:00:00Z");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Сохранено." })).toBeVisible();

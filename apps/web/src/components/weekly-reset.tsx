@@ -72,7 +72,7 @@ function Weekly({
   return (
     <div className="journal-layout">
       <Card>
-        <h2>Weekly Reset</h2>
+        <h2>Обзор недели</h2>
         <p>
           Сначала разберите незавершённое. Просрочки не удаляются автоматически, исходные даты и
           дедлайны сохраняются в предпросмотре.
@@ -120,7 +120,7 @@ function Weekly({
             }
           }}
         >
-          Подготовить Weekly Reset
+          Подготовить обзор недели
         </Button>
       </Card>
       {last.success && (
@@ -143,7 +143,7 @@ function Weekly({
           account={account}
           saved={() => {
             setPreview(null);
-            setNotice("Weekly Reset применён. Выбранные изменения сохранены.");
+            setNotice("План недели применён. Выбранные изменения сохранены.");
             void q.refetch();
           }}
         />

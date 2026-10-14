@@ -1,3 +1,4 @@
+import { revealControl } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function account(page: Page) {
@@ -20,7 +21,9 @@ async function account(page: Page) {
 async function task(page: Page, title: string, difficulty: number) {
   await page.goto("/app/quests");
   await page.getByRole("button", { name: "Создать задачу", exact: true }).click();
+  await revealControl(page.getByLabel("Название задачи"));
   await page.getByLabel("Название задачи").fill(title);
+  await revealControl(page.getByLabel("Сложность (1–5)"));
   await page.getByLabel("Сложность (1–5)").fill(String(difficulty));
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "Задача сохранена" }).getByRole("link").click();
@@ -56,6 +59,7 @@ test("progression UI shows actual rewards restorations level and partial quota",
   await action(page, "Открыть снова", "todo");
   await expect(page.getByRole("region", { name: "Уведомления (F8)" })).toContainText("-25 XP");
   await closeNotices(page);
+  await revealControl(page.getByLabel("Сложность (1–5)"));
   await page.getByLabel("Сложность (1–5)").fill("5");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Сохранено." })).toBeVisible();
@@ -123,8 +127,11 @@ test("progression account switch clears reward notices and private balances", as
   await action(page, "Завершить", "completed");
   await expect(page.getByRole("region", { name: "Уведомления (F8)" })).toContainText("+25 XP");
   await page.getByRole("link", { name: "Сегодня", exact: true }).first().click();
-  await expect(page.getByRole("button", { name: "Выйти", exact: true })).toBeVisible();
+
+  await page.goto("/app/settings/security");
   await page.getByRole("button", { name: "Выйти", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Аккаунт и вход", exact: true })).toBeVisible();
+  await page.goto("/app");
   await expect(page.getByText("Ваш личный аккаунт", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Войти", exact: true }).click();
   await expect(page).toHaveURL(/\/auth\/login/);
@@ -133,6 +140,7 @@ test("progression account switch clears reward notices and private balances", as
   await page.getByLabel("Пароль", { exact: true }).fill(second.password);
   await page.getByRole("button", { name: "Войти", exact: true }).click();
   await expect(page).toHaveURL("/app");
+  await page.getByText("Игровой прогресс", { exact: true }).click();
   await page.getByRole("link", { name: "Опыт и награды", exact: true }).click();
   await expect(page.getByText("Всего: 0 XP", { exact: true })).toBeVisible();
   await expect(page.locator(".progression-history > li")).toHaveCount(0);

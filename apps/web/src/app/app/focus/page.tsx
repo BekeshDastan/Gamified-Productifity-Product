@@ -4,8 +4,10 @@ export default function FocusPage() {
   return (
     <>
       <p className="eyebrow">ОДИН ШАГ</p>
-      <h1 className="page-title">Концентрация</h1>
-      <p className="page-intro">Свой ритм, честное время и право на паузу.</p>
+      <h1 className="page-title">Фокус</h1>
+      <p className="page-intro">
+        Выберите задачу, включите таймер и подтвердите результат после работы.
+      </p>
       <Suspense fallback={<p>Загружаем концентрацию…</p>}>
         <Focus />
       </Suspense>

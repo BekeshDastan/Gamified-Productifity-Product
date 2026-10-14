@@ -9,7 +9,9 @@ export default async function JournalPage({
     <>
       <p className="eyebrow">СВОИ МЫСЛИ</p>
       <h1 className="page-title">Дневник и ритуалы</h1>
-      <p className="page-intro">Замечать важное, разбирать день и выбирать следующий шаг.</p>
+      <p className="page-intro">
+        Запишите наблюдение или выберите утренний, вечерний или недельный обзор.
+      </p>
       <JournalWorkspace initialSection={params.section} reviewDate={params.review_date} />
     </>
   );

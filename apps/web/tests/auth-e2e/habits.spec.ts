@@ -28,6 +28,7 @@ test("habits quantitative progress corrections future norm archive and dashboard
   test.setTimeout(120000);
   await account(page);
   await page.goto("/app/onboarding");
+  await page.getByText("Подробная настройка — по желанию", { exact: true }).click();
   for (const name of [
     "Ваше время",
     "Направления",
@@ -44,6 +45,7 @@ test("habits quantitative progress corrections future norm archive and dashboard
     page.getByRole("heading", { name: "Ваше пространство готово", exact: true }),
   ).toBeVisible();
   await page.goto("/app/habits");
+  await page.getByRole("button", { name: "Создать привычку", exact: true }).click();
   await expect(habit(page, "Читать двадцать страниц")).toHaveCount(0);
   await page.getByRole("button", { name: "Настроить стартовую привычку", exact: true }).click();
   await expect(page.getByLabel("Название привычки")).toHaveValue("Читать двадцать страниц");
@@ -115,6 +117,7 @@ test("habits quantitative progress corrections future norm archive and dashboard
   await quick.getByRole("button", { name: "Добавить отметку", exact: true }).click();
   await expect(quick.getByRole("progressbar")).toHaveAttribute("value", "100");
   await page.goto("/app/habits");
+  await page.getByRole("button", { name: "Создать привычку", exact: true }).click();
   await page.setViewportSize({ width: 360, height: 800 });
   for (const theme of ["light", "dark"]) {
     await page.getByLabel("Тема оформления").selectOption(theme);
@@ -180,6 +183,7 @@ test("habits core goal task calendar flow and weekly norm", async ({ page }) => 
     /^33\.33/,
   );
   await page.goto("/app/habits");
+  await page.getByRole("button", { name: "Создать привычку", exact: true }).click();
   await page.getByLabel("Название привычки").fill("Учебная практика трижды в неделю");
   await page.getByLabel("Тип привычки").selectOption("binary");
   await page.getByLabel("Период нормы", { exact: true }).selectOption("weekly");

@@ -1,3 +1,4 @@
+import { revealControl } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function account(page: Page) {
@@ -38,9 +39,13 @@ test("character achievement unlock equip title and repeated login are accessible
   await expect(page.getByRole("status").filter({ hasText: "Запись сохранена." })).toBeVisible();
   await page.goto("/app/quests");
   await page.getByRole("button", { name: "Создать задачу", exact: true }).click();
+  await revealControl(page.getByLabel("Название задачи"));
   await page.getByLabel("Название задачи").fill("Первый шаг к своему образу");
+  await revealControl(page.getByLabel("Сложность (1–5)"));
   await page.getByLabel("Сложность (1–5)").fill("5");
+  await revealControl(page.getByLabel("Направление", { exact: true }));
   await page.getByLabel("Направление", { exact: true }).selectOption({ label: "Учёба" });
+  await revealControl(page.getByLabel("Приоритет", { exact: true }));
   await page.getByLabel("Приоритет", { exact: true }).selectOption("high");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "Задача сохранена" }).getByRole("link").click();
@@ -80,7 +85,10 @@ test("character achievement unlock equip title and repeated login are accessible
     page.getByRole("link", { name: "Первый шаг к своему образу", exact: true }),
   ).toHaveAttribute("href", new URL(taskURL).pathname);
   await page.goto("/app");
+  await page.goto("/app/settings/security");
   await page.getByRole("button", { name: "Выйти", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Аккаунт и вход", exact: true })).toBeVisible();
+  await page.goto("/app");
   await expect(page.getByText("Ваш личный аккаунт", { exact: true })).toBeVisible();
   await login(page, user.email, user.password);
   await page.goto("/app/character");

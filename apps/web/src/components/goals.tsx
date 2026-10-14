@@ -218,6 +218,13 @@ export function Goals({ id }: { id?: string }) {
           {collection.items.length === 0 && (
             <Card>
               <p>Здесь пока нет целей. Создайте свою или измените фильтры.</p>
+              <Button
+                onClick={() => {
+                  if (discard()) setEditing(true);
+                }}
+              >
+                Добавить первую цель
+              </Button>
             </Card>
           )}
           <div className="button-row">

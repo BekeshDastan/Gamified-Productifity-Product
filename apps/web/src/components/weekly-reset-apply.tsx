@@ -163,7 +163,7 @@ export function WeeklyResetApply({
   }
   return (
     <Card>
-      <h2>Выбрать изменения Weekly Reset</h2>
+      <h2>Выбрать изменения на новую неделю</h2>
       <TabDraftRecovery draft={draft} />
       <p>
         Без выбора задача остаётся как есть. Перенос меняет плановую дату; дедлайн и фиксированные
@@ -320,7 +320,7 @@ export function WeeklyResetApply({
       </label>
       <div className="form-actions">
         <Button disabled={busy || !confirm} onClick={() => void apply()}>
-          Применить Weekly Reset
+          Применить план недели
         </Button>
       </div>
     </Card>

@@ -1,28 +1,15 @@
 "use client";
 import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { usePathname } from "next/navigation";
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode, type MouseEvent } from "react";
+import { House, CalendarDays, ListTodo, Menu, Plus, ArrowUpRight, UserRound } from "lucide-react";
 import {
-  House,
-  CalendarDays,
-  ListTodo,
-  Flag,
-  Repeat2,
-  Timer,
-  Trophy,
-  Sprout,
-  UserRound,
-  ChartNoAxesCombined,
-  NotebookPen,
-  Users,
-  Settings,
-  Bell,
-  Menu,
-  Plus,
-  ArrowUpRight,
-  Compass,
-  LockKeyhole,
-} from "lucide-react";
+  allNavigation,
+  navigationGroups,
+  utilityNavigation,
+  settingNavigation,
+  routeIsActive,
+} from "@/lib/navigation";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
 import { AccountThemeSelect, PersonalizationEffects } from "./personalization";
@@ -30,72 +17,71 @@ import { useAuth } from "@/lib/auth/provider";
 import { AccountQueryProvider } from "@/lib/api/query-provider";
 import { TaskViewObserver } from "./task-view-observer";
 import { NotificationBell } from "./notifications";
-
-const planned = [{ label: "Друзья", icon: Users }];
-const available = [
-  { href: "/app/notifications", label: "Уведомления", icon: Bell },
-  { href: "/app/settings/notifications", label: "Каналы уведомлений", icon: Bell },
-  { href: "/app/navigator", label: "Навигатор", icon: Compass },
-  { href: "/app/analytics", label: "Аналитика", icon: ChartNoAxesCombined },
-  { href: "/app/seasons", label: "Сезоны", icon: Sprout },
-  { href: "/app/challenges", label: "Испытания", icon: Trophy },
-  { href: "/app/journal", label: "Дневник и ритуалы", icon: NotebookPen },
-  { href: "/app/focus", label: "Фокус", icon: Timer },
-  { href: "/app/bosses", label: "Боссы по целям", icon: Flag },
-  { href: "/app/rewards", label: "Магазин и награды", icon: Trophy },
-  { href: "/app/achievements", label: "Достижения", icon: Trophy },
-  { href: "/app/character", label: "Персонаж и навыки", icon: UserRound },
-  { href: "/app/progress", label: "Опыт и награды", icon: ChartNoAxesCombined },
-  { href: "/app/habits", label: "Привычки", icon: Repeat2 },
-  { href: "/app/planning", label: "План дня и недели", icon: ListTodo },
-  { href: "/app/calendar", label: "Календарь", icon: CalendarDays },
-  { href: "/app/goals", label: "Цели", icon: Flag },
-  { href: "/app/quests", label: "Задачи", icon: ListTodo },
-  { href: "/app/settings/privacy", label: "Приватность", icon: LockKeyhole },
-  { href: "/app/settings/security", label: "Безопасность", icon: LockKeyhole },
-  { href: "/app/onboarding", label: "Первые шаги", icon: Compass },
-  { href: "/app/settings/areas", label: "Направления и теги", icon: Sprout },
-  { href: "/app/settings/schedule", label: "Расписание", icon: CalendarDays },
-  { href: "/app/settings/profile", label: "Профиль", icon: UserRound },
-  { href: "/app", label: "Сегодня", icon: House },
-  { href: "/app/guide", label: "О приложении", icon: Compass },
-  { href: "/app/settings/appearance", label: "Оформление", icon: Settings },
-];
+import { QuickTask } from "./quick-task";
+import { LoadingState, UnauthorizedState } from "./ui/states";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const auth = useAuth();
-  const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuTrigger = useRef<HTMLButtonElement | null>(null);
+  return (
+    <AccountQueryProvider accountId={auth.session?.account.id ?? null}>
+      <ShellContent key={auth.session?.account.id ?? "guest"}>{children}</ShellContent>
+    </AccountQueryProvider>
+  );
+}
+function ShellContent({ children }: { children: ReactNode }) {
+  const auth = useAuth(),
+    pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false),
+    [adding, setAdding] = useState(false),
+    [quickState, setQuickState] = useState({ dirty: false, saving: false });
+  const menuTrigger = useRef<HTMLButtonElement | null>(null),
+    addTrigger = useRef<HTMLButtonElement | null>(null);
+  const current = allNavigation.find((item) => routeIsActive(pathname, item.href));
+  function navItems(items: typeof utilityNavigation) {
+    return items.map(({ href, label, icon: Icon }) => (
+      <Link
+        key={href}
+        className="nav-item"
+        href={href}
+        aria-current={routeIsActive(pathname, href) ? "page" : undefined}
+        onNavigate={() => setMenuOpen(false)}
+      >
+        <Icon size={18} aria-hidden="true" />
+        {label}
+      </Link>
+    ));
+  }
   function navigation() {
     return (
       <nav aria-label="Разделы приложения">
-        <p className="nav-caption">ВАШЕ ПРОСТРАНСТВО</p>
-        {available.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            className="nav-item"
-            href={href}
-            aria-current={pathname === href ? "page" : undefined}
-            onNavigate={() => setMenuOpen(false)}
-          >
-            <Icon size={19} aria-hidden="true" />
-            {label}
-          </Link>
-        ))}
-        <p className="nav-caption">В РАЗРАБОТКЕ</p>
-        {planned.map(({ label, icon: Icon }) => (
-          <span key={label} className="nav-item nav-planned" aria-disabled="true">
-            <Icon size={18} aria-hidden="true" />
-            <span>{label}</span>
-            <span className="nav-soon">Скоро</span>
-          </span>
-        ))}
+        {navigationGroups.map((group, index) =>
+          index < 2 ? (
+            <div className="nav-group" key={group.label}>
+              <p className="nav-caption">{group.label}</p>
+              {navItems(group.items)}
+            </div>
+          ) : (
+            <details
+              className="nav-group nav-disclosure"
+              key={group.label + pathname}
+              open={group.items.some((item) => routeIsActive(pathname, item.href))}
+            >
+              <summary>{group.label}</summary>
+              {navItems(group.items)}
+            </details>
+          ),
+        )}
+        <div className="nav-utilities">{navItems(utilityNavigation)}</div>
       </nav>
     );
   }
+  function openAdd(event: MouseEvent<HTMLButtonElement>) {
+    addTrigger.current = event.currentTarget;
+    setQuickState({ dirty: false, saving: false });
+    setAdding(true);
+  }
   return (
-    <AccountQueryProvider accountId={auth.session?.account.id ?? null}>
+    <>
       <PersonalizationEffects />
       <TaskViewObserver />
       <div className="app-shell">
@@ -103,18 +89,16 @@ export function AppShell({ children }: { children: ReactNode }) {
           К содержимому
         </a>
         <aside className="app-sidebar">
-          <Link className="wordmark" href="/" aria-label="ASCEND, главная">
+          <Link className="wordmark" href="/app" aria-label="ASCEND, мой день">
             <ArrowUpRight aria-hidden="true" />
             ASCEND
           </Link>
+          <Button className="sidebar-add" onClick={openAdd}>
+            <Plus size={18} aria-hidden="true" />
+            Добавить задачу
+          </Button>
           {navigation()}
-          <div className="sidebar-note">
-            <LockKeyhole size={17} aria-hidden="true" />
-            <span>
-              Приватно по умолчанию.
-              <br />В вашем ритме.
-            </span>
-          </div>
+          <p className="sidebar-note">Один шаг. Каждый день.</p>
         </aside>
         <div className="app-workspace">
           <header className="app-header">
@@ -122,7 +106,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="mobile-only">
                 <Dialog
                   title="Разделы"
-                  description="Личный кабинет находится в разработке."
+                  description="Ежедневные дела, цели и ваш прогресс."
                   open={menuOpen}
                   onOpenChange={setMenuOpen}
                   onCloseAutoFocus={(event) => {
@@ -148,21 +132,53 @@ export function AppShell({ children }: { children: ReactNode }) {
                   {navigation()}
                 </Dialog>
               </span>
-              <span>{available.find((item) => item.href === pathname)?.label ?? "ASCEND"}</span>
+              <span>{current?.label ?? "ASCEND"}</span>
             </div>
             <AccountThemeSelect />
             <NotificationBell />
-            <span className="account-state">
-              <LockKeyhole size={14} aria-hidden="true" />
-              {auth.session
-                ? "Личный аккаунт"
-                : auth.session === undefined
-                  ? "Проверяем вход…"
-                  : "Гостевой режим"}
-            </span>
+            <Link
+              className="account-link"
+              href="/app/settings/security"
+              aria-label={
+                auth.session ? `Аккаунт: ${auth.session.account.email}` : "Аккаунт и вход"
+              }
+            >
+              <UserRound size={19} aria-hidden="true" />
+              <span>Аккаунт</span>
+            </Link>
           </header>
           <main id="main-content" tabIndex={-1} className="app-main">
-            {children}
+            {pathname.startsWith("/app/settings/") && (
+              <nav className="settings-nav" aria-label="Настройки аккаунта">
+                <Link href="/app/settings" className="text-link">
+                  Все настройки
+                </Link>
+                {settingNavigation
+                  .filter((item) => item.href.startsWith("/app/settings/"))
+                  .map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      aria-current={pathname === item.href ? "page" : undefined}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+              </nav>
+            )}
+            {pathname !== "/app" &&
+            pathname !== "/app/guide" &&
+            !pathname.startsWith("/app/settings") &&
+            pathname !== "/app/onboarding" &&
+            !auth.session ? (
+              auth.session === undefined ? (
+                <LoadingState label="Проверяем вход…" />
+              ) : (
+                <UnauthorizedState />
+              )
+            ) : (
+              children
+            )}
           </main>
           <nav className="bottom-nav" aria-label="Быстрая навигация">
             <Link href="/app" aria-current={pathname === "/app" ? "page" : undefined}>
@@ -170,22 +186,22 @@ export function AppShell({ children }: { children: ReactNode }) {
               Сегодня
             </Link>
             <Link
+              href="/app/quests"
+              aria-current={routeIsActive(pathname, "/app/quests") ? "page" : undefined}
+            >
+              <ListTodo size={21} aria-hidden="true" />
+              Задачи
+            </Link>
+            <Button variant="ghost" aria-label="Добавить задачу" onClick={openAdd}>
+              <Plus size={23} aria-hidden="true" />
+              Добавить
+            </Button>
+            <Link
               href="/app/calendar"
               aria-current={pathname === "/app/calendar" ? "page" : undefined}
             >
               <CalendarDays size={21} aria-hidden="true" />
               Календарь
-            </Link>
-            <span aria-disabled="true">
-              <Plus size={23} aria-hidden="true" />
-              Добавить<span className="sr-only"> — скоро</span>
-            </span>
-            <Link
-              href="/app/progress"
-              aria-current={pathname === "/app/progress" ? "page" : undefined}
-            >
-              <ChartNoAxesCombined size={21} aria-hidden="true" />
-              Прогресс
             </Link>
             <Button
               variant="ghost"
@@ -201,6 +217,28 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
         </div>
       </div>
-    </AccountQueryProvider>
+      <Dialog
+        title="Добавить задачу"
+        description="Запишите один конкретный шаг. Он появится в вашем сегодняшнем списке."
+        open={adding}
+        onOpenChange={(open) => {
+          if (open) setAdding(true);
+          else if (
+            !quickState.saving &&
+            (!quickState.dirty ||
+              window.confirm("Задача ещё не сохранена. Закрыть и потерять введённый текст?"))
+          )
+            setAdding(false);
+        }}
+        onCloseAutoFocus={(event) => {
+          if (addTrigger.current) {
+            event.preventDefault();
+            addTrigger.current.focus();
+          }
+        }}
+      >
+        <QuickTask onStateChange={setQuickState} />
+      </Dialog>
+    </>
   );
 }

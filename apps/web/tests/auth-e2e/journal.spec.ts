@@ -1,3 +1,4 @@
+import { revealControl } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function account(page: Page) {
@@ -72,7 +73,10 @@ test("journal restores private drafts escapes Markdown and clears drafts on logo
   await page.getByLabel("Текст записи", { exact: true }).fill("Только текущий аккаунт");
   page.once("dialog", (dialog) => dialog.accept());
   await page.goto("/app");
+  await page.goto("/app/settings/security");
   await page.getByRole("button", { name: "Выйти", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Аккаунт и вход", exact: true })).toBeVisible();
+  await page.goto("/app");
   await expect
     .poll(() =>
       page.evaluate(
@@ -107,8 +111,10 @@ test("journal rituals keep snapshots and Weekly Reset applies chosen changes onc
   await account(page);
   await page.goto("/app/quests");
   await page.getByRole("button", { name: "Создать задачу", exact: true }).click();
+  await revealControl(page.getByLabel("Название задачи", { exact: true }));
   await page.getByLabel("Название задачи", { exact: true }).fill("Задача ритуала");
   await page.getByLabel("Плановая дата", { exact: true }).fill("2026-10-12");
+  await revealControl(page.getByLabel("Дедлайн с часовым поясом", { exact: true }));
   await page.getByLabel("Дедлайн с часовым поясом", { exact: true }).fill("2026-10-14T18:00:00Z");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "Задача сохранена" }).getByRole("link").click();
@@ -182,10 +188,10 @@ test("journal rituals keep snapshots and Weekly Reset applies chosen changes onc
         event.snapshot.payload.template.steps[0]?.label === "Оценить доступное время",
     ),
   ).toBe(true);
-  await page.getByRole("button", { name: "Weekly Reset", exact: true }).click();
-  await page.getByRole("button", { name: "Подготовить Weekly Reset", exact: true }).click();
+  await page.getByRole("button", { name: "Обзор недели", exact: true }).click();
+  await page.getByRole("button", { name: "Подготовить обзор недели", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Выбрать изменения Weekly Reset", exact: true }),
+    page.getByRole("heading", { name: "Выбрать изменения на новую неделю", exact: true }),
   ).toBeVisible();
   console.info("journal acceptance: reset preview ready");
   await page.getByLabel("Действие для «Задача ритуала»", { exact: true }).selectOption("move");
@@ -198,8 +204,8 @@ test("journal rituals keep snapshots and Weekly Reset applies chosen changes onc
     .getByLabel("Вывод и причина недельного решения", { exact: true })
     .fill("Сохраню реалистичный план");
   await page.getByLabel("Подтверждаю выбранные переносы, архив и планы", { exact: true }).check();
-  await page.getByRole("button", { name: "Применить Weekly Reset", exact: true }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Weekly Reset применён" })).toBeVisible();
+  await page.getByRole("button", { name: "Применить план недели", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: "План недели применён" })).toBeVisible();
   const moved = await data(page, "/quests/" + taskId);
   expect(moved.planned_date).toBe("2026-10-19");
   expect(moved.deadline).toBe("2026-10-14T18:00:00Z");

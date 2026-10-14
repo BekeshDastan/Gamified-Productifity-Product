@@ -4,7 +4,9 @@ export default function HabitsPage() {
     <>
       <p className="eyebrow">МАЛЕНЬКИЕ ШАГИ</p>
       <h1 className="page-title">Привычки</h1>
-      <p className="page-intro">Посильная норма, честная история и место для отдыха.</p>
+      <p className="page-intro">
+        Выберите посильную норму и отмечайте выполнение. Дни отдыха не прерывают серию.
+      </p>
       <Habits />
     </>
   );

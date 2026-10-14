@@ -10,7 +10,7 @@ async function account(page: Page) {
   await page.getByLabel("Повторите пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Создать аккаунт", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Аккаунт создан" })).toBeVisible();
-  await page.getByRole("link", { name: "Перейти ко входу" }).click();
+  await page.goto("/auth/login");
   await signIn(page, email);
   return email;
 }
@@ -19,7 +19,7 @@ async function signIn(page: Page, email: string) {
   await page.getByLabel("Пароль", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Войти", exact: true }).click();
   await expect(page).toHaveURL("/app");
-  await expect(page.getByRole("heading", { name: email, exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: `Аккаунт: ${email}`, exact: true })).toBeVisible();
 }
 
 test("two tabs share one refresh and logout clears the other tab immediately", async ({
@@ -29,7 +29,7 @@ test("two tabs share one refresh and logout clears the other tab immediately", a
   const email = await account(page);
   const other = await context.newPage();
   await other.goto("/app");
-  await expect(other.getByRole("heading", { name: email, exact: true })).toBeVisible();
+  await expect(other.getByRole("link", { name: `Аккаунт: ${email}`, exact: true })).toBeVisible();
   let refreshes = 0;
   context.on("request", (request) => {
     if (request.method() === "POST" && new URL(request.url()).pathname === "/api/v1/auth/refresh")
@@ -39,13 +39,16 @@ test("two tabs share one refresh and logout clears the other tab immediately", a
   // obtained exclusively through the login form.
   await context.clearCookies({ name: "ascend_access" });
   await Promise.all([page.reload(), other.reload()]);
-  await expect(page.getByRole("heading", { name: email, exact: true })).toBeVisible();
-  await expect(other.getByRole("heading", { name: email, exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: `Аккаунт: ${email}`, exact: true })).toBeVisible();
+  await expect(other.getByRole("link", { name: `Аккаунт: ${email}`, exact: true })).toBeVisible();
   expect(refreshes).toBe(1);
+  await page.getByRole("link", { name: `Аккаунт: ${email}`, exact: true }).click();
   await page.getByRole("button", { name: "Выйти", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Аккаунт и вход", exact: true })).toBeVisible();
+  await page.goto("/app");
   await expect(page.getByRole("heading", { name: "Ваш личный аккаунт" })).toBeVisible();
   await expect(other.getByRole("heading", { name: "Ваш личный аккаунт" })).toBeVisible();
-  await expect(other.getByRole("heading", { name: email, exact: true })).toHaveCount(0);
+  await expect(other.getByRole("link", { name: `Аккаунт: ${email}`, exact: true })).toHaveCount(0);
   await other.close();
 });
 

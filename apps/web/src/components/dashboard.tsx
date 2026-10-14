@@ -1,13 +1,16 @@
 "use client";
 import { useRef, useState } from "react";
-import { z } from "zod";
+import { Check, Star } from "lucide-react";
+import { QuickTask } from "./quick-task";
+import { StartHint } from "./onboarding";
+import { AccountPanel } from "./account-panel";
+import { ErrorState, LoadingState } from "./ui/states";
 import { DateTime } from "luxon";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth/provider";
 import { useSettings } from "@/lib/settings";
 import { getDashboard } from "@/lib/dashboard";
-import { actOnQuest, emptyQuest, saveQuest, type Quest } from "@/lib/quests";
-import { useValidatedForm } from "@/lib/forms/use-validated-form";
+import { actOnQuest, type Quest } from "@/lib/quests";
 import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
@@ -15,9 +18,6 @@ import { FocusSummary } from "./focus";
 import { DashboardHabits } from "./habits";
 import { MonthlyBossSummary } from "./bosses";
 import { ProgressionSummary, useRewardNotice } from "./progression";
-import { Input } from "./ui/field";
-import { Form } from "./ui/form";
-const quick = z.object({ title: z.string().trim().min(1, "Укажите название").max(200) });
 export function Dashboard() {
   const auth = useAuth(),
     settings = useSettings(),
@@ -30,21 +30,31 @@ export function Dashboard() {
     queryFn: ({ signal }) => getDashboard(signal),
     refetchInterval: 30000,
   });
-  if (!id) return null;
-  if (!data.data || !settings.data)
+  if (auth.session === undefined) return <LoadingState label="Готовим ваш день…" />;
+  if (!id)
     return (
-      <Card>
-        <p role={data.isError ? "alert" : "status"}>
-          {data.isError ? "Не удалось загрузить сводку." : "Загружаем ваш день…"}
+      <>
+        <h1 className="page-title">Меньше держать в голове. Больше делать.</h1>
+        <p className="page-intro">
+          Соберите задачи на сегодня, отмечайте привычки и замечайте свой прогресс.
         </p>
-        <Button onClick={() => void data.refetch()}>Повторить</Button>
-      </Card>
+        <AccountPanel />
+      </>
     );
+  if ((data.isError || settings.isError) && (!data.data || !settings.data))
+    return (
+      <ErrorState
+        error={data.error ?? settings.error}
+        retry={() => {
+          void data.refetch();
+          void settings.refetch();
+        }}
+      />
+    );
+  if (!data.data || !settings.data) return <LoadingState label="Загружаем ваш день…" />;
   const d = data.data,
     p = settings.data;
-  const changed = () => {
-    void cache.invalidateQueries({ queryKey: ["account", id] });
-  };
+  const changed = () => cache.invalidateQueries({ queryKey: ["account", id] });
   const time = (v: string) =>
     DateTime.fromISO(v)
       .setZone(d.timezone)
@@ -59,32 +69,46 @@ export function Dashboard() {
   const widgets = {
     today: (
       <>
-        <h2>Сегодня · {d.date}</h2>
+        <div className="section-heading-row">
+          <h2>Задачи на сегодня</h2>
+          <SafeLink className="text-link" href="/app/quests">
+            Все задачи
+          </SafeLink>
+        </div>
         <p>
           {d.plan.confirmed_at
             ? d.plan.rest
               ? "День отдыха"
               : `План: ${d.plan.progress.completed} из ${d.plan.progress.committed} · ${d.plan.progress.score === null ? "без оценки" : `${d.plan.progress.score}%`}`
-            : "План пока не подтверждён"}
+            : "Выберите посильный объём дня. Начать можно с одной задачи."}
         </p>
-        <SafeLink href={`/app/planning?date=${d.date}`}>Открыть план дня</SafeLink>
-        <QuickTask date={d.date} changed={changed} />
+        <SafeLink className="text-link" href={`/app/planning?date=${d.date}`}>
+          {d.plan.confirmed_at ? "Открыть план дня" : "Составить план дня"}
+        </SafeLink>
+        <QuickTask date={d.date} />
         <TaskList tasks={d.tasks} top={d.plan.top_ids} changed={changed} notify={setNotice} />
         {d.more_tasks && <p>Показаны первые 100 задач. Полный список доступен в разделе задач.</p>}
-        <h3>Сроки и просрочки</h3>
-        {d.deadlines.length === 0 ? (
-          <p className="ui-hint">Нет открытых задач со сроком в ближайшие семь дней или раньше.</p>
-        ) : (
-          <ul>
-            {d.deadlines.map((q) => (
-              <li key={q.id}>
-                <SafeLink href={`/app/quests/${q.id}`}>{q.title}</SafeLink> ·{" "}
-                {q.deadline && time(q.deadline)}
-              </li>
-            ))}
-          </ul>
-        )}
-        {d.more_deadlines && <SafeLink href="/app/quests">Все сроки</SafeLink>}
+        <details className="form-disclosure">
+          <summary>
+            Сроки и просрочки · {d.deadlines.length}
+            {d.more_deadlines ? "+" : ""}
+          </summary>
+          {d.deadlines.length === 0 ? (
+            <p className="ui-hint">
+              Нет открытых задач со сроком в ближайшие семь дней или раньше.
+            </p>
+          ) : (
+            <ul>
+              {d.deadlines.map((q) => (
+                <li key={q.id}>
+                  <SafeLink href={`/app/quests/${q.id}`}>{q.title}</SafeLink> ·{" "}
+                  {q.deadline && time(q.deadline)}
+                </li>
+              ))}
+            </ul>
+          )}
+          {d.more_deadlines && <SafeLink href="/app/quests">Все сроки</SafeLink>}
+        </details>
       </>
     ),
     calendar: (
@@ -110,62 +134,68 @@ export function Dashboard() {
     progress: (
       <>
         <ProgressionSummary compact />
-        <MonthlyBossSummary />
-        <h2>Прогресс дня</h2>
-        {d.plan.confirmed_at ? (
-          <p>
-            {d.plan.rest
-              ? "Отдых без оценки."
-              : d.plan.progress.score === null
-                ? "Нет задач для расчёта."
-                : `Выполнено ${d.plan.progress.completed_weight} из ${d.plan.progress.total_weight} весовых единиц исходного плана.`}
-          </p>
-        ) : (
-          <p className="ui-hint">Подтвердите план, чтобы сохранить исходный объём дня.</p>
-        )}
-        <SafeLink href="/app/goals">Мои цели</SafeLink>
+        <details className="form-disclosure">
+          <summary>Босс месяца и подробности дня</summary>
+          <MonthlyBossSummary />
+          <h2>Прогресс дня</h2>
+          {d.plan.confirmed_at ? (
+            <p>
+              {d.plan.rest
+                ? "Отдых без оценки."
+                : d.plan.progress.score === null
+                  ? "Нет задач для расчёта."
+                  : `Выполнено ${d.plan.progress.completed} из ${d.plan.progress.committed} задач плана.`}
+            </p>
+          ) : (
+            <p className="ui-hint">Подтвердите план, чтобы сохранить исходный объём дня.</p>
+          )}
+          <SafeLink href="/app/goals">Мои цели</SafeLink>
+        </details>
       </>
     ),
   };
   return (
     <section aria-label="Сводка дня">
-      <div className="form-actions">
-        <Button onClick={() => void data.refetch()}>Обновить сводку</Button>
-        <SafeLink href="/app/settings/appearance">Настроить виджеты</SafeLink>
+      <div className="today-heading">
+        <div>
+          <time dateTime={d.date}>
+            {DateTime.fromISO(d.date).setLocale(p.language).toFormat("cccc, d MMMM")}
+          </time>
+          <h1 className="page-title">Сегодня</h1>
+          <p className="page-intro">Один следующий шаг — и день уже движется.</p>
+        </div>
+        <div className="button-row">
+          <Button asChild variant="secondary">
+            <SafeLink href="/app/focus">Начать фокус</SafeLink>
+          </Button>
+        </div>
       </div>
+      <StartHint />
+      {data.isError && (
+        <p role="alert" className="ui-error">
+          Не удалось обновить день. Показаны последние загруженные данные.{" "}
+          <Button variant="ghost" onClick={() => void data.refetch()}>
+            Повторить обновление
+          </Button>
+        </p>
+      )}
       {notice && <p role="status">{notice}</p>}
       <div className="dashboard-grid">
         {p.personalization.widget_order
           .filter((w) => !p.personalization.hidden_widgets?.includes(w))
           .map((w) => (
-            <Card key={w} className="dashboard-widget">
+            <Card key={w} className="dashboard-widget" data-widget={w}>
               {widgets[w]}
             </Card>
           ))}
       </div>
+      <div className="form-actions">
+        <Button variant="ghost" onClick={() => void data.refetch()}>
+          Обновить сводку
+        </Button>
+        <SafeLink href="/app/settings/appearance">Настроить виджеты</SafeLink>
+      </div>
     </section>
-  );
-}
-function QuickTask({ date, changed }: { date: string; changed: () => void }) {
-  const flow = useValidatedForm({
-    schema: quick,
-    defaultValues: { title: "" },
-    fields: ["title"],
-    save: async (v) => {
-      await saveQuest({ ...emptyQuest, title: v.title, planned_date: date });
-      changed();
-      return { title: "" };
-    },
-  });
-  return (
-    <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
-      <Input
-        label="Быстро добавить задачу"
-        {...flow.form.register("title")}
-        error={flow.form.formState.errors.title?.message}
-      />
-      <Button type="submit">Добавить на сегодня</Button>
-    </Form>
   );
 }
 function TaskList({
@@ -176,22 +206,24 @@ function TaskList({
 }: {
   tasks: Quest[];
   top: string[];
-  changed: () => void;
+  changed: () => Promise<void>;
   notify: (v: string) => void;
 }) {
   return tasks.length === 0 ? (
     <p className="ui-hint">На сегодня нет задач. Добавьте первый небольшой шаг.</p>
   ) : (
-    <ul>
+    <ul className="day-tasks">
       {[...tasks]
         .sort((a, b) => Number(top.includes(b.id)) - Number(top.includes(a.id)))
         .map((q) => (
           <li key={q.id}>
-            <SafeLink href={`/app/quests/${q.id}`}>
-              {top.includes(q.id) ? "★ " : ""}
-              {q.title}
-            </SafeLink>{" "}
-            · {q.estimated_minutes ? `${q.estimated_minutes} мин` : "без оценки"}
+            <div className="day-task-copy">
+              <SafeLink href={`/app/quests/${q.id}`}>
+                {top.includes(q.id) && <Star size={14} aria-label="Важное на сегодня" />}
+                {q.title}
+              </SafeLink>{" "}
+              <small>{q.estimated_minutes ? `${q.estimated_minutes} мин` : "В своём темпе"}</small>
+            </div>
             {["todo", "in_progress", "postponed"].includes(q.status) ? (
               <CompleteTask q={q} changed={changed} notify={notify} />
             ) : (
@@ -216,7 +248,7 @@ function CompleteTask({
   notify,
 }: {
   q: Quest;
-  changed: () => void;
+  changed: () => Promise<void>;
   notify: (v: string) => void;
 }) {
   const rewardNotice = useRewardNotice();
@@ -225,6 +257,8 @@ function CompleteTask({
   return (
     <Button
       variant="ghost"
+      className="complete-task"
+      aria-label={`Завершить ${q.title}`}
       disabled={busy}
       onClick={async () => {
         setBusy(true);
@@ -243,8 +277,8 @@ function CompleteTask({
           );
           rewardNotice(saved.reward);
           key.current = crypto.randomUUID();
+          await changed();
           notify(`Выполнено: ${q.title}`);
-          changed();
         } catch (e) {
           notify(e instanceof Error ? e.message : "Не удалось завершить задачу. Обновите сводку.");
         } finally {
@@ -252,7 +286,7 @@ function CompleteTask({
         }
       }}
     >
-      Завершить {q.title}
+      <Check size={19} aria-hidden="true" />
     </Button>
   );
 }

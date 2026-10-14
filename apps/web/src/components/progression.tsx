@@ -73,11 +73,13 @@ export function ProgressionSummary({ compact = false }: { compact?: boolean }) {
           корректировку.
         </p>
       )}
-      <p className="ui-hint">
-        За скользящие 24 часа: задачи {d.quota.task_used} / {d.quota.task_cap} XP · привычки{" "}
-        {d.quota.habit_used} / {d.quota.habit_cap} XP. Общая квота {d.quota.total_used} /{" "}
-        {d.quota.total_cap} XP.
-      </p>
+      {!compact && (
+        <p className="ui-hint">
+          За скользящие 24 часа: задачи {d.quota.task_used} / {d.quota.task_cap} XP · привычки{" "}
+          {d.quota.habit_used} / {d.quota.habit_cap} XP. Общая квота {d.quota.total_used} /{" "}
+          {d.quota.total_cap} XP.
+        </p>
+      )}
       {compact ? (
         <SafeLink href="/app/progress">История и правила наград</SafeLink>
       ) : (

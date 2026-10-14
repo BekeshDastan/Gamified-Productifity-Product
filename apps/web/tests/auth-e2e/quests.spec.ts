@@ -1,3 +1,4 @@
+import { revealControl } from "./disclosure";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 test("quest fields persist after reload and stale editor keeps local input", async ({
@@ -19,12 +20,18 @@ test("quest fields persist after reload and stale editor keeps local input", asy
   await expect(page).toHaveURL("/app");
   await page.goto("/app/quests");
   await page.getByRole("button", { name: "Создать задачу", exact: true }).click();
+  await revealControl(page.getByLabel("Название задачи"));
   await page.getByLabel("Название задачи").fill("Прочитать главу");
+  await revealControl(page.getByLabel("Описание", { exact: true }));
   await page.getByLabel("Описание", { exact: true }).fill("Заметки к первой главе");
+  await revealControl(page.getByLabel("Приоритет", { exact: true }));
   await page.getByLabel("Приоритет", { exact: true }).selectOption("high");
+  await revealControl(page.getByLabel("Сложность (1–5)"));
   await page.getByLabel("Сложность (1–5)").fill("3");
   await page.getByLabel("Плановая дата", { exact: true }).fill("2026-10-13");
+  await revealControl(page.getByLabel("Дедлайн с часовым поясом"));
   await page.getByLabel("Дедлайн с часовым поясом").fill("2026-10-14T18:00:00+05:00");
+  await revealControl(page.getByLabel("Оценка, минут"));
   await page.getByLabel("Оценка, минут").fill("30");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Задача сохранена" })).toBeVisible();
@@ -39,9 +46,11 @@ test("quest fields persist after reload and stale editor keeps local input", asy
   const stale = await context.newPage();
   await stale.goto(page.url());
   await expect(stale.getByLabel("Название задачи")).toHaveValue("Прочитать главу");
+  await revealControl(page.getByLabel("Название задачи"));
   await page.getByLabel("Название задачи").fill("Сохранено из первого окна");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Сохранено." })).toBeVisible();
+  await revealControl(stale.getByLabel("Название задачи"));
   await stale.getByLabel("Название задачи").fill("Мои несохранённые изменения");
   await stale.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(stale.getByRole("alert").filter({ hasText: "Запись изменилась" })).toBeVisible();

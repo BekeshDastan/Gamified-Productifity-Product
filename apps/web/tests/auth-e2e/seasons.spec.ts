@@ -1,3 +1,4 @@
+import { revealControl } from "./disclosure";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function account(page: Page) {
@@ -29,6 +30,7 @@ test("seasons preserve closure history and low energy commitments with accessibl
   await page.getByLabel("Быстро добавить задачу").fill("Маленькая задача сезона");
   await page.getByRole("button", { name: "Добавить на сегодня", exact: true }).click();
   await page.getByRole("link", { name: "Маленькая задача сезона", exact: true }).click();
+  await revealControl(page.getByLabel("Оценка, минут"));
   await page.getByLabel("Оценка, минут").fill("10");
   await page.getByRole("button", { name: "Сохранить задачу", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Сохранено." })).toBeVisible();
