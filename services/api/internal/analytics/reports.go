@@ -24,6 +24,9 @@ type ReportSnapshot struct {
 	CurrentObserved  bool               `json:"current_observed"`
 	PreviousObserved bool               `json:"previous_observed"`
 	Comparisons      []Comparison       `json:"comparisons"`
+	Obligations      ReportObligations  `json:"obligations"`
+	FrequentReason   *ReportReason      `json:"frequent_reason"`
+	NextStep         string             `json:"next_step"`
 	Text             string             `json:"text"`
 	Days             []Day              `json:"days"`
 	PreviousDays     []Day              `json:"previous_days"`
@@ -116,7 +119,14 @@ func (s *Service) reportSnapshot(ctx context.Context, tx pgx.Tx, owner string, i
 		}
 	}
 	out.Comparisons = reportComparisons(out.Days, out.PreviousDays, out.CurrentObserved, out.PreviousObserved)
+	out.Obligations = reportObligations(out.Days)
+	out.FrequentReason, e = reportReason(ctx, tx, owner, current, zone)
+	if e != nil {
+		return out, e
+	}
+	out.NextStep = "Выберите приоритет следующего периода."
 	out.Text = reportText(in.Kind, current, previous, out.Comparisons, out.CurrentObserved, out.PreviousObserved)
+	out.Text += reportPlanText(out.Obligations, out.FrequentReason) + " " + out.NextStep
 	at := out.ComputedAt
 	view := View{Range: current, Timezone: timezone, ComputedAt: &at, SourceRevision: state.Revision, ProjectedRevision: state.Revision, Days: out.Days}
 	out.Balance, e = s.balanceFrom(ctx, tx, owner, view)

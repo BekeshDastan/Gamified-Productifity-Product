@@ -68,6 +68,7 @@ type taskFact struct {
 	Version             int64
 	AreaID              *string
 	Leaf                bool
+	Archived            bool
 	UpdatedAt           time.Time
 }
 
@@ -83,18 +84,18 @@ func (s *Service) outcomes(ctx context.Context, tx pgx.Tx, owner string, in Rang
 	}
 	tasks := map[string]taskFact{}
 	scheduled := map[string][]string{}
-	rows, e := tx.Query(ctx, `SELECT q.id::text,q.payload->>'title',q.status,q.planned_date::text,q.deadline,q.completed_at,q.version,q.area_id::text,q.updated_at,NOT EXISTS(SELECT 1 FROM quests c WHERE c.owner_id=q.owner_id AND c.parent_id=q.id) FROM quests q WHERE q.owner_id=$1 ORDER BY q.id`, owner)
+	rows, e := tx.Query(ctx, `SELECT q.id::text,q.payload->>'title',q.status,q.planned_date::text,q.deadline,q.completed_at,q.version,q.area_id::text,q.updated_at,NOT EXISTS(SELECT 1 FROM quests c WHERE c.owner_id=q.owner_id AND c.parent_id=q.id),q.archived_at IS NOT NULL FROM quests q WHERE q.owner_id=$1 ORDER BY q.id`, owner)
 	if e != nil {
 		return e
 	}
 	for rows.Next() {
 		var q taskFact
-		if e = rows.Scan(&q.ID, &q.Title, &q.Status, &q.Planned, &q.Deadline, &q.Completed, &q.Version, &q.AreaID, &q.UpdatedAt, &q.Leaf); e != nil {
+		if e = rows.Scan(&q.ID, &q.Title, &q.Status, &q.Planned, &q.Deadline, &q.Completed, &q.Version, &q.AreaID, &q.UpdatedAt, &q.Leaf, &q.Archived); e != nil {
 			rows.Close()
 			return e
 		}
 		tasks[q.ID] = q
-		if q.Leaf && q.Planned != nil {
+		if q.Leaf && !q.Archived && q.Planned != nil {
 			scheduled[*q.Planned] = append(scheduled[*q.Planned], q.ID)
 		}
 		if q.Leaf && q.Status == "completed" && q.Completed != nil {
@@ -196,7 +197,7 @@ func (s *Service) outcomes(ctx context.Context, tx pgx.Tx, owner string, in Rang
 				continue
 			}
 			if d.Plan == nil || !d.Plan.Confirmed {
-				if !q.Leaf {
+				if !q.Leaf || q.Archived {
 					continue
 				}
 			}
@@ -218,7 +219,13 @@ func (s *Service) outcomes(ctx context.Context, tx pgx.Tx, owner string, in Rang
 			if d.Plan == nil || !d.Plan.Confirmed {
 				at = q.UpdatedAt
 			}
-			add(Source{Date: d.Date, Kind: "planned", ID: id, Name: q.Title, URL: "/app/quests/" + id, At: at, Value: 1, Unit: "tasks", AreaID: q.AreaID, Version: q.Version})
+			qualifier := "pending"
+			if completedHere {
+				qualifier = "completed_in_day"
+			} else if q.Status == "failed" || q.Status == "skipped" {
+				qualifier = q.Status
+			}
+			add(Source{Date: d.Date, Kind: "planned", Qualifier: qualifier, ID: id, Name: q.Title, URL: "/app/quests/" + id, At: at, Value: 1, Unit: "tasks", AreaID: q.AreaID, Version: q.Version})
 		}
 	}
 	// Postponements count distinct tasks per day; repeated postponements remain a separate count.

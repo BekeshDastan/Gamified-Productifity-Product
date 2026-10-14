@@ -8847,6 +8847,9 @@ components:
         - previous_days
         - balance
         - records
+        - obligations
+        - frequent_reason
+        - next_step
       properties:
         kind:
           type: string
@@ -8897,6 +8900,59 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CharacterRecord"
+        obligations:
+          type: object
+          additionalProperties: false
+          required:
+            - planned
+            - completed
+            - habit_due
+            - habit_success
+          properties:
+            planned:
+              type: integer
+            completed:
+              type: integer
+            habit_due:
+              type: integer
+            habit_success:
+              type: integer
+        frequent_reason:
+          anyOf:
+            - type: object
+              additionalProperties: false
+              required:
+                - text
+                - count
+                - sources
+              properties:
+                text:
+                  type: string
+                count:
+                  type: integer
+                sources:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - id
+                      - version
+                      - at
+                      - url
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      version:
+                        type: integer
+                      at:
+                        type: string
+                      url:
+                        type: string
+            - type: "null"
+        next_step:
+          type: string
     AnalyticsReportPreview:
       type: object
       additionalProperties: false

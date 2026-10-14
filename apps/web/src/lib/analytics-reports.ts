@@ -34,6 +34,20 @@ export const reportSnapshot = z.object({
   current_observed: bool,
   previous_observed: bool,
   comparisons: z.array(comparison),
+  obligations: z.object({
+    planned: integer,
+    completed: integer,
+    habit_due: integer,
+    habit_success: integer,
+  }),
+  frequent_reason: z
+    .object({
+      text,
+      count: integer,
+      sources: z.array(z.object({ id: text, version: integer, at: text, url: text })),
+    })
+    .nullable(),
+  next_step: text,
   text,
   days: z.array(analyticsDay),
   previous_days: z.array(analyticsDay),

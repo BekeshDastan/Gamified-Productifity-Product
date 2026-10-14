@@ -151,7 +151,7 @@ func (s *Service) read(ctx context.Context, tx pgx.Tx, owner string, in Range, r
 		if !d.HabitsComplete {
 			versionMismatch = true
 		}
-		versionMismatch = versionMismatch || projectionVersion != ProjectionVersion
+		versionMismatch = versionMismatch || projectionVersion != ProjectionVersion || rev != state.Revision
 		out.ProjectedRevision = min(out.ProjectedRevision, rev)
 		if out.ComputedAt == nil || at.Before(*out.ComputedAt) {
 			out.ComputedAt = &at

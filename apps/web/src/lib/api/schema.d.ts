@@ -3008,6 +3008,24 @@ export interface components {
             previous_days: components["schemas"]["AnalyticsDay"][];
             balance: components["schemas"]["AnalyticsBalance"];
             records: components["schemas"]["CharacterRecord"][];
+            obligations: {
+                planned: number;
+                completed: number;
+                habit_due: number;
+                habit_success: number;
+            };
+            frequent_reason: {
+                text: string;
+                count: number;
+                sources: {
+                    /** Format: uuid */
+                    id: string;
+                    version: number;
+                    at: string;
+                    url: string;
+                }[];
+            } | null;
+            next_step: string;
         };
         AnalyticsReportPreview: {
             id: string;

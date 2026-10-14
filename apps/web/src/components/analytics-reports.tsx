@@ -70,8 +70,9 @@ function ReportsWorkspace({
       <h2>Недельные и месячные отчёты</h2>
       <p>
         Отчёт составляется по числам и готовому текстовому шаблону. Фоновый обработчик сохраняет
-        итоги полных наблюдавшихся периодов. Для ручного снимка сначала просмотрите записи; заметки
-        дневника и свободные комментарии не входят в отчёт.
+        итоги полных наблюдавшихся периодов. Для ручного снимка сначала просмотрите записи. Отчёт
+        включает указанную вами причину переноса; заметки дневника и комментарии к целям не входят в
+        отчёт.
       </p>
       <Select
         label="Период отчёта"
@@ -253,9 +254,76 @@ function SnapshotView({
   value: api.Snapshot;
   openRange: (range: AnalyticsRange) => void;
 }) {
+  const [evidence, setEvidence] = useState<{
+    metric: string;
+    period: "current" | "previous" | "both";
+  } | null>(null);
+  function number(
+    value: number,
+    unit: string,
+    metric: string,
+    period: "current" | "previous" | "both",
+    label: string,
+  ) {
+    return (
+      <Button
+        variant="secondary"
+        aria-label={`Источники: ${names[metric] ?? metric}, ${label}`}
+        onClick={() => setEvidence({ metric, period })}
+      >
+        {format(value, unit)}
+      </Button>
+    );
+  }
+  const savedDays =
+    evidence?.period === "previous"
+      ? v.previous_days
+      : evidence?.period === "both"
+        ? [...v.previous_days, ...v.days]
+        : v.days;
+  const kinds: Record<string, string> = {
+    tasks: "task",
+    focus: "focus",
+    xp: "xp",
+    coins: "coins",
+    goals: "goal_achieved",
+    planned: "planned",
+    completed: "planned",
+  };
+  const sources = savedDays
+    .flatMap((d) => d.sources)
+    .filter(
+      (s) =>
+        s.kind === kinds[evidence?.metric ?? ""] &&
+        (evidence?.metric !== "completed" || s.qualifier === "completed_in_day"),
+    );
+  const norms = savedDays
+    .flatMap((d) => d.habits)
+    .filter((h) => !h.excluded && (evidence?.metric === "habit_due" || h.amount >= h.target));
   return (
     <>
-      <p>{v.text}</p>
+      <p style={{ overflowWrap: "anywhere" }}>{v.text}</p>
+      <p>
+        Плановые обязательства:{" "}
+        {number(v.obligations.completed, "tasks", "completed", "current", "текущий период")} из{" "}
+        {number(v.obligations.planned, "tasks", "planned", "current", "текущий период")}. Привычки:{" "}
+        {number(v.obligations.habit_success, "periods", "habit_norms", "current", "текущий период")}{" "}
+        из {number(v.obligations.habit_due, "periods", "habit_due", "current", "текущий период")}.
+      </p>
+      {v.frequent_reason && (
+        <details>
+          <summary>Причина переноса: {v.frequent_reason.count} событий</summary>
+          <p style={{ overflowWrap: "anywhere" }}>{v.frequent_reason.text}</p>
+          <ul>
+            {v.frequent_reason.sources.map((s, i) => (
+              <li key={i}>
+                <SafeLink href={s.url}>Задача · версия {s.version}</SafeLink> ·{" "}
+                {DateTime.fromISO(s.at).setZone(v.timezone).toFormat("dd.LL.yyyy HH:mm")}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
       <p>
         Снимок данных:{" "}
         {DateTime.fromISO(v.computed_at).setZone(v.timezone).toFormat("dd.LL.yyyy HH:mm:ss")} (
@@ -293,27 +361,76 @@ function SnapshotView({
               <tr key={c.metric}>
                 <th scope="row">{names[c.metric] ?? c.metric}</th>
                 <td>
-                  {format(c.current, c.unit)}
+                  {number(c.current, c.unit, c.metric, "current", "текущий период")}
                   {!c.current_observed ? " · неполные наблюдения" : ""}
                 </td>
                 <td>
-                  {c.previous === null ? "Нет полных наблюдений" : format(c.previous, c.unit)}
+                  {c.previous === null
+                    ? "Нет полных наблюдений"
+                    : number(c.previous, c.unit, c.metric, "previous", "предыдущий период")}
                 </td>
                 <td>
-                  {c.delta === null ? "—" : `${c.delta > 0 ? "+" : ""}${format(c.delta, c.unit)}`}
+                  {c.delta === null ? "—" : number(c.delta, c.unit, c.metric, "both", "разница")}
                 </td>
                 <td>
-                  {c.percent === null
-                    ? c.previous === 0 && c.current_observed
-                      ? "Только абсолютная разница"
-                      : "—"
-                    : c.percent.toLocaleString("ru-RU", { maximumFractionDigits: 1 }) + "%"}
+                  {c.percent === null ? (
+                    c.previous === 0 && c.current_observed ? (
+                      "Только абсолютная разница"
+                    ) : (
+                      "—"
+                    )
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      aria-label={`Источники: ${names[c.metric] ?? c.metric}, изменение`}
+                      onClick={() => setEvidence({ metric: c.metric, period: "both" })}
+                    >
+                      {c.percent.toLocaleString("ru-RU", { maximumFractionDigits: 1 }) + "%"}
+                    </Button>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {evidence && (
+        <section aria-label="Источники числа в снимке" tabIndex={0}>
+          <h4>Сохранённые источники: {names[evidence.metric] ?? evidence.metric}</h4>
+          <p>
+            Период:{" "}
+            {evidence.period === "both"
+              ? "оба сравниваемых периода"
+              : evidence.period === "previous"
+                ? "предыдущий"
+                : "текущий"}
+            . Ссылки открывают запись; значения ниже зафиксированы при создании отчёта.
+          </p>
+          <ul>
+            {sources.map((s, i) => (
+              <li key={i}>
+                <SafeLink href={s.url}>
+                  {s.kind === "xp" || s.kind === "coins" ? "История наград" : s.name}
+                </SafeLink>{" "}
+                · {s.date} · {format(s.value, s.unit)} · версия {s.version}
+              </li>
+            ))}
+            {(evidence.metric === "habit_norms" || evidence.metric === "habit_due") &&
+              norms.map((h, i) => (
+                <li key={i}>
+                  <SafeLink href={h.url}>{h.name}</SafeLink> · {h.start} — {h.end} · {h.amount} /{" "}
+                  {h.target} {h.unit}
+                </li>
+              ))}
+          </ul>
+          {!sources.length &&
+            (!(evidence.metric === "habit_norms" || evidence.metric === "habit_due") ||
+              !norms.length) && <p>В снимке нет записей для этого числа.</p>}
+          <Button variant="secondary" onClick={() => setEvidence(null)}>
+            Закрыть источники
+          </Button>
+        </section>
+      )}
       <div className="button-row">
         <Button variant="secondary" onClick={() => openRange({ from: v.from, to: v.to })}>
           Открыть текущие записи периода

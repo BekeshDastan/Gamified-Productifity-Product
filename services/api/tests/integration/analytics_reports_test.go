@@ -42,6 +42,10 @@ func TestAnalyticsReportSnapshotZeroBaseRaceCorrectionAndPermanentReplay(t *test
 	f.clock.Advance(14 * 24 * time.Hour)
 	f.loginAs(t, a, "report-snapshot@example.test")
 	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Результат недели")))
+	date := "2026-10-26"
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/postpone", version(q), quests.Transition{Reason: "Недостаточно времени", PlannedDate: &date}))
+	date = "2026-10-27"
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/postpone", version(q), quests.Transition{Reason: "Недостаточно времени", PlannedDate: &date}))
 	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), quests.Transition{}))
 	f.clock.Advance(7 * 24 * time.Hour)
 	f.loginAs(t, a, "report-snapshot@example.test")
@@ -49,6 +53,9 @@ func TestAnalyticsReportSnapshotZeroBaseRaceCorrectionAndPermanentReplay(t *test
 	input := analytics.ReportInput{Kind: "week", StartsOn: "2026-10-26", Timezone: "UTC"}
 	preview := readReportPreview(t, f.privateRequest(t, a, "POST", "/analytics/reports/preview", "", input))
 	snapshot := preview.Snapshot
+	if snapshot.FrequentReason == nil || snapshot.FrequentReason.Count != 2 || len(snapshot.FrequentReason.Sources) != 2 || snapshot.FrequentReason.Sources[0].ID != q.ID || !strings.Contains(snapshot.Text, "Недостаточно времени") || snapshot.NextStep == "" || snapshot.Obligations.Planned != 1 {
+		t.Fatal("missing report template evidence", snapshot)
+	}
 	if !snapshot.CurrentObserved || !snapshot.PreviousObserved || snapshot.Comparisons[0].Current != 1 || snapshot.Comparisons[0].Previous == nil || *snapshot.Comparisons[0].Previous != 0 || snapshot.Comparisons[0].Percent != nil || *snapshot.Comparisons[0].Delta != 1 || len(snapshot.Records) != 4 {
 		t.Fatal(snapshot)
 	}

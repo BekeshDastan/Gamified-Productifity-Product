@@ -2063,7 +2063,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Нулевая предыдущая неделя не даёт бесконечный рост; источники отчёта доступны.
   - **КОММИТ СЕЙЧАС:** `feat(reports): generate deterministic weekly and monthly summaries`
 
-- [ ] **C144. Приёмка аналитики**
+- [x] **C144. Приёмка аналитики**
   - **Сделать:** Проверить вручную рассчитанные fixtures, коррекции истории, смену зоны и delayed projection.
   - **Проверить:** API, таблица и график согласованы; UI показывает актуальность пересчёта.
   - **КОММИТ СЕЙЧАС:** `test(analytics): verify formulas timezone boundaries and chart totals`

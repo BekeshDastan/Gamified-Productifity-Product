@@ -31,6 +31,12 @@ test("analytics reports preview disclose incomplete observations and save immuta
     exact: true,
   });
   await expect(compare.getByText("Нет полных наблюдений", { exact: true })).toHaveCount(6);
+  await compare
+    .getByRole("button", { name: "Источники: Завершённые задачи, текущий период", exact: true })
+    .click();
+  await expect(page.getByRole("region", { name: "Источники числа в снимке" })).toContainText(
+    "В снимке нет записей для этого числа.",
+  );
   const save = page.getByRole("button", { name: "Сохранить снимок отчёта", exact: true });
   await expect(save).toBeDisabled();
   await page
@@ -140,6 +146,9 @@ test("analytics personal targets require consent preserve units and protect loca
     .getByRole("heading", { name: "Баланс по собственным ориентирам", exact: true })
     .scrollIntoViewIfNeeded();
   await page.screenshot({ path: info.outputPath("personal-target-radar-mobile.png") });
+  await page
+    .getByRole("group", { name: "Диаграмма выполнения личных ориентиров", exact: true })
+    .screenshot({ path: info.outputPath("personal-target-radar-chart.png") });
 });
 test("analytics charts tables heatmap and exact source links agree in both themes", async ({
   page,
