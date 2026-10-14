@@ -94,6 +94,7 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	analyticsService := analytics.NewService(pool, clock).WithRecords(characterService)
 	analyticsService.Mount(router, sessions.Protect)
 	notificationService := notifications.NewService(pool, clock).WithHabits(habitService)
+	notificationService.ConfigurePush("test-public-key", nil)
 	if err := notificationService.ConfigureDelivery("http://localhost:3000", bytes.Repeat([]byte{12}, 32), nil); err != nil {
 		t.Fatal(err)
 	}

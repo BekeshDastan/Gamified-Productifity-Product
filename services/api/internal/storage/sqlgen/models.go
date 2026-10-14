@@ -803,6 +803,20 @@ type NotificationPreferenceEvent struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type NotificationPushSubscription struct {
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	ID           pgtype.UUID        `json:"id"`
+	Endpoint     string             `json:"endpoint"`
+	EndpointHash string             `json:"endpoint_hash"`
+	P256dh       string             `json:"p256dh"`
+	Auth         string             `json:"auth"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
+	RevokedAt    pgtype.Timestamptz `json:"revoked_at"`
+	Version      int64              `json:"version"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Onboarding struct {
 	OwnerID     pgtype.UUID        `json:"owner_id"`
 	Step        int32              `json:"step"`

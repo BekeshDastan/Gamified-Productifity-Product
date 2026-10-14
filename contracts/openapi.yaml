@@ -6,6 +6,137 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/notifications/push:
+    get:
+      operationId: getPushDevices
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PushDevices"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: registerPushDevice
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PushInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PushDevice"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/notifications/push/{id}/revoke:
+    post:
+      operationId: revokePushDevice
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - confirm
+              properties:
+                confirm:
+                  type: boolean
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - revoked
+                    properties:
+                      revoked:
+                        type: boolean
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/notifications/{id}/deliveries:
     get:
       operationId: getNotificationDeliveries
@@ -9636,6 +9767,63 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    PushInput:
+      type: object
+      additionalProperties: false
+      required:
+        - endpoint
+        - p256dh
+        - auth
+        - confirm
+      properties:
+        endpoint:
+          type: string
+        p256dh:
+          type: string
+        auth:
+          type: string
+        confirm:
+          type: boolean
+    PushDevice:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - provider
+        - version
+        - expires_at
+        - revoked_at
+      properties:
+        id:
+          type: string
+        provider:
+          type: string
+        version:
+          type: integer
+        expires_at:
+          type: string
+          format: date-time
+        revoked_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+    PushDevices:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - public_key
+        - configured
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PushDevice"
+        public_key:
+          type: string
+        configured:
+          type: boolean
     NotificationDelivery:
       type: object
       additionalProperties: false

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { clearPrivateDrafts } from "@/lib/private-drafts";
+import { revokeCurrentPush } from "@/lib/notification-push";
 import { ApiError } from "@/lib/api/client";
 import { authClient, authParams, loadSession, withAuthLock, type Session } from "./session";
 
@@ -54,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(
     async (all = false) => {
       await withAuthLock(async () => {
+        if (session) await revokeCurrentPush(session.account.id);
         const client = await authClient();
         try {
           await client.POST(all ? "/api/v1/auth/logout-all" : "/api/v1/auth/logout", {
@@ -66,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         adopt(null);
       });
     },
-    [adopt],
+    [adopt, session],
   );
   useEffect(() => {
     const broadcast =

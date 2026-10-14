@@ -7,6 +7,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/mail"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/push"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
@@ -23,6 +24,8 @@ type Service struct {
 	mailer          mail.Mailer
 	origin          string
 	unsubscribeKey  []byte
+	pushPublicKey   string
+	pushSender      push.Sender
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
@@ -162,6 +165,7 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		s.mountPreferences(r)
 		s.mountReminders(r)
 		s.mountDeliveries(r)
+		s.mountPush(r)
 		r.Get("/api/v1/notifications", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, owner string) (any, error) {
 				return s.list(ctx, tx, owner, r.URL.Query().Get("before"))

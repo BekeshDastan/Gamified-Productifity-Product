@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/jobs"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/mail"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/push"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/privateapi"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -84,6 +85,12 @@ func (s *Service) deliveryExpiry(ctx context.Context, tx pgx.Tx, owner string, n
 	return expires, urgent, nil
 }
 func (s *Service) queueDeliveries(ctx context.Context, tx pgx.Tx, owner string, n Notification) error {
+	if e := s.queueEmail(ctx, tx, owner, n); e != nil {
+		return e
+	}
+	return s.queuePush(ctx, tx, owner, n)
+}
+func (s *Service) queueEmail(ctx context.Context, tx pgx.Tx, owner string, n Notification) error {
 	p, e := s.preferences(ctx, tx, owner)
 	if e != nil {
 		return e
@@ -269,7 +276,7 @@ func (s *Service) sendDelivery(ctx context.Context, tx pgx.Tx, j jobs.Job) error
 		return e
 	}
 	policy := p.Channel(n.Kind)
-	allowedChannel := d.Channel == "email" && policy.Email
+	allowedChannel := d.Channel == "email" && policy.Email || d.Channel == "push" && policy.Push
 	if !current || !allowedChannel || !s.Clock.Now().Before(d.ExpiresAt) {
 		_, e = tx.Exec(ctx, `UPDATE notification_deliveries SET state='cancelled',version=version+1,last_error_code='SOURCE_OR_CONSENT_CHANGED',updated_at=$3 WHERE owner_id=$1 AND id=$2`, owner, d.ID, s.Clock.Now())
 		return e
@@ -298,7 +305,18 @@ func (s *Service) sendDelivery(ctx context.Context, tx pgx.Tx, j jobs.Job) error
 	}
 	var email string
 	var verified bool
-	if e = tx.QueryRow(ctx, `SELECT email,email_verified_at IS NOT NULL AND disabled_at IS NULL FROM users WHERE id=$1`, owner).Scan(&email, &verified); e != nil {
+	var subscription push.Subscription
+	if d.Channel == "push" {
+		subscription, e = s.pushSubscription(ctx, tx, owner, d)
+		if errors.Is(e, push.ErrGone) {
+			_, e = tx.Exec(ctx, `UPDATE notification_deliveries SET state='cancelled',version=version+1,last_error_code='PUSH_REVOKED',updated_at=$3 WHERE owner_id=$1 AND id=$2`, owner, d.ID, s.Clock.Now())
+			return e
+		}
+		if e != nil {
+			return e
+		}
+		verified = true
+	} else if e = tx.QueryRow(ctx, `SELECT email,email_verified_at IS NOT NULL AND disabled_at IS NULL FROM users WHERE id=$1`, owner).Scan(&email, &verified); e != nil {
 		return e
 	}
 	if !verified {
@@ -316,8 +334,20 @@ func (s *Service) sendDelivery(ctx context.Context, tx pgx.Tx, j jobs.Job) error
 	if sender == nil {
 		sender = mail.Unavailable{}
 	}
-	err := sender.Send(ctx, s.mailMessage(owner, n, email))
+	var err error
+	if d.Channel == "email" {
+		err = sender.Send(ctx, s.mailMessage(owner, n, email))
+	}
 	state, code, retry := classifyMail(err)
+	if d.Channel == "push" {
+		err = s.sendPush(ctx, subscription, n)
+		state, code, retry = classifyPush(err)
+		if errors.Is(err, push.ErrGone) {
+			if _, e = tx.Exec(ctx, `UPDATE notification_push_subscriptions SET revoked_at=$3,version=version+1,updated_at=$3 WHERE owner_id=$1 AND id=$2 AND revoked_at IS NULL`, owner, *d.SubscriptionID, s.Clock.Now()); e != nil {
+				return e
+			}
+		}
+	}
 	run := s.Clock.Now()
 	if retry {
 		if sending.AutoAttempts >= 3 {
@@ -438,7 +468,7 @@ func (s *Service) mountDeliveries(r chi.Router) {
 				if e != nil {
 					return nil, e
 				}
-				if !valid || d.Channel != "email" || !p.Channel(n.Kind).Email || !s.Clock.Now().Before(d.ExpiresAt) {
+				if !valid || !(d.Channel == "email" && p.Channel(n.Kind).Email || d.Channel == "push" && p.Channel(n.Kind).Push) || !s.Clock.Now().Before(d.ExpiresAt) {
 					return nil, privateapi.Problem(409, "SOURCE_OR_CONSENT_CHANGED", "Источник или согласие изменились")
 				}
 				updated, e := scanDelivery(tx.QueryRow(ctx, `UPDATE notification_deliveries SET state='queued',version=version+1,auto_attempts=0,next_run_at=$3,last_error_code='',updated_at=$3 WHERE owner_id=$1 AND id=$2 RETURNING `+deliveryColumns, owner, d.ID, s.Clock.Now()))

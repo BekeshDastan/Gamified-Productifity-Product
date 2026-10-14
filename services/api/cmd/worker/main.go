@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/ecdh"
+	"encoding/base64"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/analytics"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/challenges"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/notifications"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/push"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/seasons"
 	"log/slog"
 	"net"
@@ -72,6 +75,21 @@ func main() {
 		os.Exit(1)
 	}
 	notificationService := notifications.NewService(pool, clock).WithHabits(habits.NewService(pool, clock).WithProgression(rewardService))
+	publicKey, privateKey := os.Getenv("PUSH_VAPID_PUBLIC_KEY"), os.Getenv("PUSH_VAPID_PRIVATE_KEY")
+	if publicKey != "" && privateKey != "" {
+		raw, e := base64.RawURLEncoding.DecodeString(privateKey)
+		if e != nil {
+			logger.Error("invalid push configuration")
+			os.Exit(1)
+		}
+		key, e := ecdh.P256().NewPrivateKey(raw)
+		if e != nil || base64.RawURLEncoding.EncodeToString(key.PublicKey().Bytes()) != publicKey {
+			logger.Error("invalid push configuration")
+			os.Exit(1)
+		}
+		notificationService.ConfigurePush(publicKey, push.Adapter{PublicKey: publicKey, PrivateKey: privateKey, Subject: cfg.Origin})
+	}
+
 	if err := notificationService.ConfigureDelivery(cfg.Origin, authConfig.SigningKey, mailer); err != nil {
 		logger.Error("notification_configuration_failed")
 		os.Exit(1)

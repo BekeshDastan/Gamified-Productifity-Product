@@ -2146,7 +2146,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Ошибка SMTP не ломает in-app; неизвестный исход не объявляется доказанной доставкой.
   - **КОММИТ СЕЙЧАС:** `feat(notifications): deliver opted-in mail with retry and delivery states`
 
-- [ ] **C157. Браузерные push**
+- [x] **C157. Браузерные push**
   - **Сделать:** Добавить service worker только для push, subscriptions, revoke и очистку невалидных адресов.
   - **Проверить:** Разрешение запрашивается по нажатию; отказ не блокирует основной интерфейс.
   - **КОММИТ СЕЙЧАС:** `feat(notifications): add consent-based browser push subscriptions`
