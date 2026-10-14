@@ -32,6 +32,9 @@ func TestNotificationEventsAchievementCorrectionFocusAndRecipientPrivacy(t *test
 		if n.Kind != "achievement" {
 			t.Fatal(n)
 		}
+		if r := f.privateRequest(t, a, "GET", "/notifications/"+n.ID+"/source", "", nil); r.status != 200 || !strings.Contains(string(r.body), `"available":true`) {
+			t.Fatal("current achievement source", r.status, string(r.body))
+		}
 	}
 	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), quests.Transition{Reason: "PRIVATE_DIARY_REASON"}))
 	if r := f.privateRequest(t, a, "GET", "/achievements", "", nil); r.status != 200 {
@@ -53,6 +56,9 @@ func TestNotificationEventsAchievementCorrectionFocusAndRecipientPrivacy(t *test
 	for _, n := range page.Items {
 		if n.Kind == "focus_result" && n.Active && n.SourceID == session.ID {
 			found = true
+			if r := f.privateRequest(t, a, "GET", "/notifications/"+n.ID+"/source", "", nil); r.status != 200 || !strings.Contains(string(r.body), `"available":true`) {
+				t.Fatal("current focus source", r.status, string(r.body))
+			}
 		}
 	}
 	if !found {
@@ -98,6 +104,9 @@ func TestNotificationEventsAchievementCorrectionFocusAndRecipientPrivacy(t *test
 	partner := readNotifications(t, f.privateRequest(t, b, "GET", "/notifications", "", nil))
 	if len(partner.Items) != 1 || partner.Items[0].Kind != "invite" {
 		t.Fatal(partner)
+	}
+	if r := f.privateRequest(t, b, "GET", "/notifications/"+partner.Items[0].ID+"/source", "", nil); r.status != 200 || !strings.Contains(string(r.body), `"available":true`) {
+		t.Fatal("current invite source", r.status, string(r.body))
 	}
 	raw, _ := json.Marshal(partner)
 	if strings.Contains(string(raw), "PRIVATE_") || strings.Contains(string(raw), who.Email) {

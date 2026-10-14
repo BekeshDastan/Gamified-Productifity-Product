@@ -76,9 +76,9 @@ function Morning({ account, timezone }: { account: string; timezone: string }) {
           date={date}
           current={q.data}
           template={template.data}
-          saved={() => {
+          saved={async () => {
+            await cache.invalidateQueries({ queryKey: accountQueryKey(account) });
             setNotice("Утренний план подтверждён.");
-            void cache.invalidateQueries({ queryKey: accountQueryKey(account) });
           }}
         />
       )}
@@ -97,7 +97,7 @@ function MorningEditor({
   date: string;
   current: Awaited<ReturnType<typeof getMorning>>;
   template: RoutineTemplate;
-  saved: () => void;
+  saved: () => Promise<void>;
 }) {
   const [frozen] = useState(template);
   const input = z

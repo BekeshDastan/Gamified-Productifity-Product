@@ -92,6 +92,15 @@ export async function reminders(signal?: AbortSignal) {
   if (!r.data) throw Error("Не удалось загрузить напоминания.");
   return r.data.data.items;
 }
+export async function getReminder(id: string, signal?: AbortSignal) {
+  await requireAccount();
+  const r = await createApiClient().GET("/api/v1/reminders/{id}", {
+    params: { path: { id } },
+    signal,
+  });
+  if (!r.data) throw Error("Напоминание недоступно.");
+  return r.data.data;
+}
 export async function snooze(r: Reminder, minutes: number, urgent_override: boolean) {
   await requireAccount();
   return withAuthLock(async () => {

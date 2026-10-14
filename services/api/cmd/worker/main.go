@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/analytics"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/challenges"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/focus"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/notifications"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/push"
@@ -76,6 +77,7 @@ func main() {
 	}
 	notificationService := notifications.NewService(pool, clock).WithHabits(habits.NewService(pool, clock).WithProgression(rewardService))
 	characterService.WithAchievementObserver(notificationService.AchievementChanged)
+	notificationService.WithFocusSettlement(focus.NewService(pool, clock, rewardService).WithResultObserver(notificationService.FocusChanged).SettleDueInTx)
 	analyticsService.WithReportObserver(notificationService.ReportCreated)
 
 	publicKey, privateKey := os.Getenv("PUSH_VAPID_PUBLIC_KEY"), os.Getenv("PUSH_VAPID_PRIVATE_KEY")
@@ -90,7 +92,7 @@ func main() {
 			logger.Error("invalid push configuration")
 			os.Exit(1)
 		}
-		notificationService.ConfigurePush(publicKey, push.Adapter{PublicKey: publicKey, PrivateKey: privateKey, Subject: cfg.Origin})
+		notificationService.ConfigurePush(publicKey, push.Adapter{PublicKey: publicKey, PrivateKey: privateKey, Subject: push.Contact(cfg.Origin, os.Getenv("MAIL_FROM"))})
 	}
 
 	if err := notificationService.ConfigureDelivery(cfg.Origin, authConfig.SigningKey, mailer); err != nil {

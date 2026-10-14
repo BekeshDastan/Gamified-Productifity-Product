@@ -250,7 +250,7 @@ func (s *Service) projectReminders(ctx context.Context, tx pgx.Tx, owner, after 
 		raw, _ := json.Marshal(struct {
 			After string `json:"after"`
 		}{sources[499].ID})
-		_, e = tx.Exec(ctx, `INSERT INTO jobs(owner_id,kind,payload,dedupe_key,next_run_at,created_at) VALUES($1,'notifications.reminders_continue',$2,$3,$4,$4) ON CONFLICT(dedupe_key) DO NOTHING`, owner, raw, fmt.Sprintf("reminder-continuation/%s/%s/%s", owner, sources[499].ID, now.UTC().Truncate(time.Minute).Format(time.RFC3339)), now)
+		_, e = tx.Exec(ctx, `INSERT INTO jobs(owner_id,kind,payload,dedupe_key,next_run_at,created_at) VALUES($1,'notifications.reminders_continue',$2,$3 || '/' || txid_current()::text,$4,$4) ON CONFLICT(dedupe_key) DO NOTHING`, owner, raw, fmt.Sprintf("reminder-continuation/%s/%s", owner, sources[499].ID), now)
 		if e != nil {
 			return e
 		}

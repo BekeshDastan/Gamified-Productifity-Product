@@ -26,6 +26,7 @@ type Service struct {
 	unsubscribeKey  []byte
 	pushPublicKey   string
 	pushSender      push.Sender
+	focusSettlement func(context.Context, pgx.Tx, string) error
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {

@@ -211,6 +211,9 @@ func (s *Service) finishAttempt(ctx context.Context, owner string, d Delivery, s
 			attemptState = "failed"
 		}
 		_, e = tx.Exec(ctx, `UPDATE notification_delivery_attempts SET state=$4,error_code=$5,finished_at=$6 WHERE owner_id=$1 AND delivery_id=$2 AND attempt_id=$3 AND state='sending'`, owner, d.ID, d.LastAttemptID, attemptState, code, now)
+		if e == nil && d.Channel == "push" && code == "PUSH_REVOKED" && d.SubscriptionID != nil {
+			_, e = tx.Exec(ctx, `UPDATE notification_push_subscriptions SET revoked_at=$3,version=version+1,updated_at=$3 WHERE owner_id=$1 AND id=$2 AND revoked_at IS NULL`, owner, *d.SubscriptionID, now)
+		}
 		return e
 	})
 	return out, e
@@ -342,11 +345,6 @@ func (s *Service) sendDelivery(ctx context.Context, tx pgx.Tx, j jobs.Job) error
 	if d.Channel == "push" {
 		err = s.sendPush(ctx, subscription, n)
 		state, code, retry = classifyPush(err)
-		if errors.Is(err, push.ErrGone) {
-			if _, e = tx.Exec(ctx, `UPDATE notification_push_subscriptions SET revoked_at=$3,version=version+1,updated_at=$3 WHERE owner_id=$1 AND id=$2 AND revoked_at IS NULL`, owner, *d.SubscriptionID, s.Clock.Now()); e != nil {
-				return e
-			}
-		}
 	}
 	run := s.Clock.Now()
 	if retry {

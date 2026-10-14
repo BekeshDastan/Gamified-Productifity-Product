@@ -88,6 +88,11 @@ func (s *Service) Handlers() map[string]jobs.Handler {
 			if e := s.projectReminders(ctx, tx, *j.OwnerID, ""); e != nil {
 				return e
 			}
+			if s.focusSettlement != nil {
+				if e := s.focusSettlement(ctx, tx, *j.OwnerID); e != nil {
+					return e
+				}
+			}
 			return s.repairDeliveries(ctx, tx, *j.OwnerID)
 		},
 		"notifications.reminders_continue": func(ctx context.Context, tx pgx.Tx, j jobs.Job) error {
@@ -101,6 +106,10 @@ func (s *Service) Handlers() map[string]jobs.Handler {
 			return s.projectReminders(ctx, tx, *j.OwnerID, in.After)
 		},
 	}
+}
+func (s *Service) WithFocusSettlement(f func(context.Context, pgx.Tx, string) error) *Service {
+	s.focusSettlement = f
+	return s
 }
 func (s *Service) ProjectReminders(ctx context.Context, tx pgx.Tx, owner string) error {
 	if !privateapi.UUID(owner) {

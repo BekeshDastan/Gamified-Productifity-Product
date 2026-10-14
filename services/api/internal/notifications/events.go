@@ -21,7 +21,7 @@ func (s *Service) AchievementChanged(ctx context.Context, tx pgx.Tx, owner, id s
 	return e
 }
 func (s *Service) ReportCreated(ctx context.Context, tx pgx.Tx, owner, id string, revision int64) error {
-	_, _, e := s.EmitInTx(ctx, tx, owner, Event{Kind: "report", SourceKind: "report", SourceID: id, SourceRevision: revision, EventKey: "report/" + id, URL: "/app/analytics?report=" + id})
+	_, _, e := s.EmitInTx(ctx, tx, owner, Event{Kind: "report", SourceKind: "report", SourceID: id, SourceRevision: revision, EventKey: "report/" + id, URL: "/app/analytics?report_id=" + id})
 	return e
 }
 func (s *Service) FocusChanged(ctx context.Context, tx pgx.Tx, owner, id string, revision int64, pending bool) error {

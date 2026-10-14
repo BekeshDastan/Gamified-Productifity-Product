@@ -122,7 +122,9 @@ func TestBrowserAuth(t *testing.T) {
 		t.Fatal(err)
 	}
 	notificationService.Mount(router, sessions.Protect)
-	focus.NewService(pool, domainClock, rewardService).WithResultObserver(notificationService.FocusChanged).Mount(router, sessions.Protect)
+	focusService := focus.NewService(pool, domainClock, rewardService).WithResultObserver(notificationService.FocusChanged)
+	focusService.Mount(router, sessions.Protect)
+	notificationService.WithFocusSettlement(focusService.SettleDueInTx)
 	navigator.NewService(pool, domainClock, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, domainClock).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	listener, err := net.Listen("tcp", "127.0.0.1:8080")

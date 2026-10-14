@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"testing"
 	"time"
 )
@@ -53,5 +54,43 @@ func TestPreferenceSchemaRejectsDuplicatesAndUnknownTimezone(t *testing.T) {
 	p.Quiet.End = p.Quiet.Start
 	if ValidatePreferences(p) == nil {
 		t.Fatal("ambiguous full-day quiet")
+	}
+}
+func TestPreferenceBoundsAndInvalidQuietTimes(t *testing.T) {
+	for _, change := range []func(*PreferencesInput){func(p *PreferencesInput) { p.Timezone = "Missing/Zone" }, func(p *PreferencesInput) { p.Quiet.Start = "25:00" }, func(p *PreferencesInput) { p.Quiet.End = "7:00" }, func(p *PreferencesInput) { p.DailyCap = 51 }, func(p *PreferencesInput) { p.DeadlineLeadMinutes = -1 }, func(p *PreferencesInput) { p.HabitLeadMinutes = 1441 }, func(p *PreferencesInput) { p.Channels = p.Channels[:1] }, func(p *PreferencesInput) { p.Channels[0].Type = "unknown" }} {
+		p := DefaultPreferences()
+		change(&p)
+		if ValidatePreferences(p) == nil {
+			t.Fatal("invalid preference accepted")
+		}
+	}
+	now := time.Date(2026, 10, 12, 12, 0, 0, 0, time.UTC)
+	for _, v := range []QuietWindow{{true, "25:00", "08:00"}, {true, "22:00", "25:00"}, {true, "08:00", "08:00"}} {
+		if _, e := QuietUntil(now, "UTC", v, false); e == nil {
+			t.Fatal("invalid quiet window accepted")
+		}
+	}
+	if _, e := QuietUntil(now, "Missing/Zone", QuietWindow{true, "22:00", "08:00"}, false); e == nil {
+		t.Fatal("unknown quiet zone")
+	}
+	p := Preferences{PreferencesInput: DefaultPreferences(), EffectiveTimezone: "UTC"}
+	p.Quiet.Enabled = false
+	if p.Channel("unknown").Email {
+		t.Fatal("unknown channel enabled")
+	}
+	at, ok, e := PolicyTime(now, time.Time{}, p, false, p.DailyCap, nil)
+	if e != nil || ok || !at.Equal(now) {
+		t.Fatal("cap without oldest must fail closed", at, ok, e)
+	}
+}
+func TestNotificationSchedulingClockPreservesDelay(t *testing.T) {
+	now := time.Date(2026, 10, 12, 12, 0, 0, 0, time.UTC)
+	worker := now.AddDate(0, 0, 2)
+	s := NewService(nil, platform.FixedClock{Time: now}).WithSchedulingClock(platform.FixedClock{Time: worker})
+	for _, delay := range []time.Duration{-time.Hour, 0, time.Hour} {
+		at, created := s.jobTimes(now.Add(delay))
+		if !created.Equal(worker) || !at.Equal(worker.Add(max(0, delay))) {
+			t.Fatal(at, created)
+		}
 	}
 }

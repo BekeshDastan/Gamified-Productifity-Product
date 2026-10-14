@@ -2161,7 +2161,7 @@ git commit -m "feat(auth): add login and session creation" -m "Spec: C026; F01"
   - **Проверить:** Ссылка на удалённый объект показывает понятное состояние, а не раскрывает чужой объект.
   - **КОММИТ СЕЙЧАС:** `feat(notifications-ui): add inbox preferences and snooze controls`
 
-- [ ] **C160. Приёмка уведомлений**
+- [x] **C160. Приёмка уведомлений**
   - **Сделать:** Проверить повторы, тихие часы, stale revision, отключённый push и worker crash.
   - **Проверить:** Личные функции F14–F22/F25 проходят; после merge можно поставить v0.4-personal.
   - **КОММИТ СЕЙЧАС:** `test(notifications): cover dedupe quiet hours and failed delivery recovery`

@@ -127,3 +127,6 @@ Endpoint допускается только у FCM, Mozilla и Apple push, кл
 [Релиз v1.4.0](https://github.com/SherClockHolmes/webpush-go/releases/tag/v1.4.0),
 [Исходный код](https://github.com/SherClockHolmes/webpush-go/blob/v1.4.0/webpush.go),
 [Apple Web Push](https://developer.apple.com/documentation/usernotifications/sending-web-push-notifications-in-web-apps-and-browsers).
+
+[RFC 8292, контакт VAPID](https://www.rfc-editor.org/rfc/rfc8292.html#section-2.1):
+для HTTPS origin используется его URI, для локального HTTP — mailto адрес MAIL_FROM.

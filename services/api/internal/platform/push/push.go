@@ -9,6 +9,7 @@ import (
 	webpush "github.com/SherClockHolmes/webpush-go"
 	"net/http"
 	"net/http/httptrace"
+	"net/mail"
 	"net/url"
 	"strings"
 	"sync/atomic"
@@ -28,6 +29,18 @@ type Sender interface {
 type Adapter struct {
 	PublicKey, PrivateKey, Subject string
 	Client                         webpush.HTTPClient
+}
+
+func Contact(origin, from string) string {
+	u, e := url.Parse(origin)
+	if e == nil && u.Scheme == "https" && u.Host != "" {
+		return origin
+	}
+	a, e := mail.ParseAddress(from)
+	if e == nil {
+		return "mailto:" + a.Address
+	}
+	return "mailto:notifications@localhost"
 }
 
 func Validate(s Subscription) error {

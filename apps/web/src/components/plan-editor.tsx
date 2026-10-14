@@ -36,7 +36,7 @@ export function PlanEditor({
   initialChecked = [],
 }: {
   plan: DayPlan;
-  onChanged: () => void;
+  onChanged: () => void | Promise<unknown>;
   saveOverride?: (
     input: PlanInput,
     reason: string,
@@ -68,7 +68,7 @@ export function PlanEditor({
         );
       else await savePlan(plan, planInput.parse(values), values.reason, operation.current.key);
       draft.clear();
-      onChanged();
+      await onChanged();
     },
   });
   const draft = useTabDraft({

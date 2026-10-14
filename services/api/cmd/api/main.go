@@ -125,7 +125,7 @@ func main() {
 			logger.Error("invalid push configuration")
 			os.Exit(1)
 		}
-		notificationService.ConfigurePush(publicKey, push.Adapter{PublicKey: publicKey, PrivateKey: privateKey, Subject: cfg.Origin})
+		notificationService.ConfigurePush(publicKey, push.Adapter{PublicKey: publicKey, PrivateKey: privateKey, Subject: push.Contact(cfg.Origin, os.Getenv("MAIL_FROM"))})
 	}
 
 	if err := notificationService.ConfigureDelivery(cfg.Origin, authConfig.SigningKey, nil); err != nil {
@@ -133,7 +133,9 @@ func main() {
 		os.Exit(1)
 	}
 	notificationService.Mount(router, sessions.Protect)
-	focus.NewService(pool, platform.RealClock{}, rewardService).WithResultObserver(notificationService.FocusChanged).Mount(router, sessions.Protect)
+	focusService := focus.NewService(pool, platform.RealClock{}, rewardService).WithResultObserver(notificationService.FocusChanged)
+	focusService.Mount(router, sessions.Protect)
+	notificationService.WithFocusSettlement(focusService.SettleDueInTx)
 	navigator.NewService(pool, platform.RealClock{}, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, platform.RealClock{}).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
 	server := &http.Server{

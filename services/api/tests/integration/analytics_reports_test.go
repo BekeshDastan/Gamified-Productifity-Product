@@ -77,6 +77,12 @@ func TestAnalyticsReportSnapshotZeroBaseRaceCorrectionAndPermanentReplay(t *test
 	for _, n := range page.Items {
 		if n.Kind == "report" && n.SourceID == saved.ID {
 			reportNotifications++
+			if n.URL != "/app/analytics?report_id="+saved.ID {
+				t.Fatal("report link does not select saved snapshot")
+			}
+			if r := f.privateRequest(t, a, "GET", "/notifications/"+n.ID+"/source", "", nil); r.status != 200 || !strings.Contains(string(r.body), `"available":true`) {
+				t.Fatal("current report source", r.status, string(r.body))
+			}
 			if strings.Contains(n.Message, "Недостаточно времени") {
 				t.Fatal("private report reason leaked")
 			}

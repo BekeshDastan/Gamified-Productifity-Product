@@ -207,6 +207,17 @@ func (s *Service) pushSubscription(ctx context.Context, tx pgx.Tx, owner string,
 	if d.SubscriptionID == nil {
 		return sub, push.ErrGone
 	}
+	// Share the endpoint lock with explicit account transfer. Once transfer
+	// returns, no previous owner's send can start on that browser capability.
+	var hash string
+	if e := tx.QueryRow(ctx, `SELECT endpoint_hash FROM notification_push_subscriptions WHERE owner_id=$1 AND id=$2`, owner, *d.SubscriptionID).Scan(&hash); errors.Is(e, pgx.ErrNoRows) {
+		return sub, push.ErrGone
+	} else if e != nil {
+		return sub, e
+	}
+	if _, e := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, hash); e != nil {
+		return sub, e
+	}
 	e := tx.QueryRow(ctx, `SELECT endpoint,p256dh,auth FROM notification_push_subscriptions WHERE owner_id=$1 AND id=$2 AND revoked_at IS NULL AND expires_at>$3`, owner, *d.SubscriptionID, s.Clock.Now()).Scan(&sub.Endpoint, &sub.Keys.P256dh, &sub.Keys.Auth)
 	if errors.Is(e, pgx.ErrNoRows) {
 		e = push.ErrGone

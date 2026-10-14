@@ -59,6 +59,11 @@ func TestValidateRejectsUnsafeEndpointAndKeys(t *testing.T) {
 		t.Fatal("keys")
 	}
 }
+func TestContactUsesHTTPSOrMailbox(t *testing.T) {
+	if Contact("https://ascend.test", "x@example.test") != "https://ascend.test" || Contact("http://localhost:3000", "ASCEND <x@example.test>") != "mailto:x@example.test" {
+		t.Fatal("contact URI")
+	}
+}
 func TestAdapterEncryptsAndPreservesOutcomes(t *testing.T) {
 	s, pub, priv := keys(t)
 	for _, tc := range []struct {

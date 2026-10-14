@@ -97,7 +97,7 @@ export function Notifications() {
         >
           Отметить просмотренные прочитанными
         </Button>
-        <Button variant="secondary" onClick={() => void q.refetch()}>
+        <Button variant="secondary" onClick={() => void changed()}>
           Обновить список
         </Button>
         {action.error && <p role="alert">{action.error}</p>}
@@ -141,6 +141,12 @@ function NotificationRow({
     enabled: expanded,
     refetchInterval: expanded ? 5000 : false,
   });
+  const ownedReminder = useQuery({
+    queryKey: [...key, "reminder", n.reminder_id],
+    queryFn: ({ signal }) => api.getReminder(n.reminder_id!, signal),
+    enabled: !!n.reminder_id && n.active && !reminder,
+  });
+  const currentReminder = reminder ?? ownedReminder.data;
   return (
     <Card className="notification-card">
       <article aria-label={n.title}>
@@ -184,7 +190,7 @@ function NotificationRow({
             <p role="status">{source.message}</p>
           ))}
         {action.error && <p role="alert">{action.error}</p>}
-        {reminder && n.active && <Snooze reminder={reminder} changed={changed} />}
+        {currentReminder && n.active && <Snooze reminder={currentReminder} changed={changed} />}
         <details onToggle={(e) => setExpanded(e.currentTarget.open)}>
           <summary>История внешних отправок</summary>
           <p>Принятие сервисом не подтверждает получение письма или показ push на устройстве.</p>
