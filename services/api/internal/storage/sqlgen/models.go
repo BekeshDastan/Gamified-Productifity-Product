@@ -625,6 +625,17 @@ type LifeArea struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type LowEnergyPreview struct {
+	OwnerID      pgtype.UUID        `json:"owner_id"`
+	ID           pgtype.UUID        `json:"id"`
+	Snapshot     []byte             `json:"snapshot"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
+	ApplyRequest []byte             `json:"apply_request"`
+	Result       []byte             `json:"result"`
+	AppliedAt    pgtype.Timestamptz `json:"applied_at"`
+}
+
 type Milestone struct {
 	ID                        pgtype.UUID        `json:"id"`
 	OwnerID                   pgtype.UUID        `json:"owner_id"`
@@ -703,6 +714,35 @@ type OutboxEvent struct {
 	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
 }
 
+type PersonalSeason struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	ID            pgtype.UUID        `json:"id"`
+	Request       []byte             `json:"request"`
+	Title         string             `json:"title"`
+	Theme         string             `json:"theme"`
+	DesiredResult string             `json:"desired_result"`
+	StartsOn      pgtype.Date        `json:"starts_on"`
+	EndsOn        pgtype.Date        `json:"ends_on"`
+	Timezone      string             `json:"timezone"`
+	IsPrimary     bool               `json:"is_primary"`
+	State         string             `json:"state"`
+	Version       int64              `json:"version"`
+	ActivatedAt   pgtype.Timestamptz `json:"activated_at"`
+	ClosedAt      pgtype.Timestamptz `json:"closed_at"`
+	FinalSnapshot []byte             `json:"final_snapshot"`
+	ArchivedAt    pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
+type PersonalSeasonEvent struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	SeasonID  pgtype.UUID        `json:"season_id"`
+	Version   int64              `json:"version"`
+	Kind      string             `json:"kind"`
+	Snapshot  []byte             `json:"snapshot"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type PlanChange struct {
 	ID          int64              `json:"id"`
 	OwnerID     pgtype.UUID        `json:"owner_id"`
@@ -768,6 +808,27 @@ type QuestView struct {
 	Name      string             `json:"name"`
 	Filters   []byte             `json:"filters"`
 	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type RecoveryOffer struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	ID        pgtype.UUID        `json:"id"`
+	Snapshot  []byte             `json:"snapshot"`
+	OfferedAt pgtype.Timestamptz `json:"offered_at"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	State     string             `json:"state"`
+	Version   int64              `json:"version"`
+	Request   []byte             `json:"request"`
+	Result    []byte             `json:"result"`
+	DecidedAt pgtype.Timestamptz `json:"decided_at"`
+}
+
+type RecoveryOfferEvent struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	OfferID   pgtype.UUID        `json:"offer_id"`
+	Version   int64              `json:"version"`
+	Snapshot  []byte             `json:"snapshot"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
@@ -897,6 +958,33 @@ type RoutineTemplate struct {
 	ID      string      `json:"id"`
 	Payload []byte      `json:"payload"`
 	Version int64       `json:"version"`
+}
+
+type SeasonChallengeLink struct {
+	OwnerID  pgtype.UUID        `json:"owner_id"`
+	SeasonID pgtype.UUID        `json:"season_id"`
+	RunID    pgtype.UUID        `json:"run_id"`
+	Baseline []byte             `json:"baseline"`
+	LinkedAt pgtype.Timestamptz `json:"linked_at"`
+}
+
+type SeasonGoalLink struct {
+	OwnerID  pgtype.UUID        `json:"owner_id"`
+	SeasonID pgtype.UUID        `json:"season_id"`
+	GoalID   pgtype.UUID        `json:"goal_id"`
+	IsMain   bool               `json:"is_main"`
+	Baseline []byte             `json:"baseline"`
+	LinkedAt pgtype.Timestamptz `json:"linked_at"`
+}
+
+type SeasonMonthlyBossLink struct {
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	SeasonID      pgtype.UUID        `json:"season_id"`
+	Month         string             `json:"month"`
+	Timezone      string             `json:"timezone"`
+	BossID        pgtype.UUID        `json:"boss_id"`
+	SourceVersion int64              `json:"source_version"`
+	LinkedAt      pgtype.Timestamptz `json:"linked_at"`
 }
 
 type Tag struct {

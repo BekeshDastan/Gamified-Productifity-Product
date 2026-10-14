@@ -6,6 +6,635 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/recovery/status:
+    get:
+      operationId: getRecoveryStatus
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RecoveryStatus"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+  /api/v1/recovery/low-energy/preview:
+    post:
+      operationId: previewLowEnergy
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LowEnergyInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/LowEnergyPreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/recovery/low-energy/{id}:
+    get:
+      operationId: getLowEnergyPreview
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/LowEnergyPreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/recovery/low-energy/{id}/apply:
+    post:
+      operationId: applyLowEnergy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LowEnergyApply"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/LowEnergyPreview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/recovery/comeback:
+    get:
+      operationId: getComebackOffer
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RecoveryEligibility"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+  /api/v1/recovery/comeback/history:
+    get:
+      operationId: getComebackHistory
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RecoveryHistory"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/recovery/comeback/{id}/decide:
+    post:
+      operationId: decideComeback
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoveryDecision"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/RecoveryOffer"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}/close:
+    post:
+      operationId: closeSeason
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeasonCloseInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SeasonSummary"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}/archive:
+    post:
+      operationId: archiveSeason
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeasonArchiveInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PersonalSeason"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}/summary:
+    get:
+      operationId: getSeasonSummary
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SeasonSummary"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}/overview:
+    get:
+      operationId: getSeasonOverview
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SeasonOverview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}/links:
+    put:
+      operationId: setSeasonLinks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeasonLinksInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SeasonOverview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}/monthly-boss:
+    put:
+      operationId: linkSeasonMonthlyBoss
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeasonMonthlyLinkInput"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SeasonOverview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons:
+    get:
+      operationId: listSeasons
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SeasonPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: createSeason
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSeason"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PersonalSeason"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}:
+    get:
+      operationId: getSeason
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PersonalSeason"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+  /api/v1/seasons/{id}/activate:
+    post:
+      operationId: activateSeason
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeasonConfirmation"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/PersonalSeason"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
   /api/v1/challenges/runs/{id}/close:
     post:
       operationId: closeChallenge
@@ -7836,6 +8465,780 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    RecoveryHabit:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - url
+        - stats
+        - periods
+        - current_amount
+        - full_target
+        - minimum
+        - minimum_met
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        stats:
+          $ref: "#/components/schemas/HabitStats"
+        periods:
+          type: array
+          items:
+            $ref: "#/components/schemas/HabitPeriod"
+        current_amount:
+          anyOf:
+            - type: number
+            - type: "null"
+        full_target:
+          anyOf:
+            - type: number
+            - type: "null"
+        minimum:
+          anyOf:
+            - type: number
+            - type: "null"
+        minimum_met:
+          anyOf:
+            - type: boolean
+            - type: "null"
+    ComebackProgress:
+      type: object
+      additionalProperties: false
+      required:
+        - offer_id
+        - goal_id
+        - run_id
+        - url
+        - member
+      properties:
+        offer_id:
+          type: string
+        goal_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        run_id:
+          type: string
+        url:
+          type: string
+        member:
+          $ref: "#/components/schemas/ChallengeMember"
+    RecoveryStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - computed_at
+        - complete
+        - habits
+        - comebacks
+      properties:
+        computed_at:
+          type: string
+        complete:
+          type: boolean
+        habits:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecoveryHabit"
+        comebacks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ComebackProgress"
+    LowEnergyInput:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - minimum_minutes
+      properties:
+        date:
+          type: string
+          format: date
+        minimum_minutes:
+          type: integer
+          minimum: 0
+          maximum: 240
+    LowEnergyApply:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+        - reason
+        - optional_ids
+        - confirm_unknown
+      properties:
+        confirm:
+          type: boolean
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        optional_ids:
+          type: array
+          items:
+            type: string
+        confirm_unknown:
+          type: boolean
+    LowEnergyCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - version
+        - estimated_minutes
+        - weight
+        - status
+        - archived
+        - completed_at
+        - required
+        - proposed
+        - eligible
+        - reason
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        version:
+          type: integer
+        estimated_minutes:
+          type: integer
+        weight:
+          type: integer
+        status:
+          type: string
+        archived:
+          type: boolean
+        completed_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        required:
+          type: boolean
+        proposed:
+          type: boolean
+        eligible:
+          type: boolean
+        reason:
+          type: string
+    LowEnergyPreview:
+      type: object
+      additionalProperties: false
+      required:
+        - date
+        - minimum_minutes
+        - id
+        - expires_at
+        - timezone
+        - original
+        - candidates
+        - commitments
+        - source_hash
+        - applied_at
+        - result
+      properties:
+        date:
+          type: string
+        minimum_minutes:
+          type: integer
+        id:
+          type: string
+        expires_at:
+          type: string
+        timezone:
+          type: string
+        original:
+          $ref: "#/components/schemas/DayPlan"
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/LowEnergyCandidate"
+        commitments:
+          type: array
+          items:
+            $ref: "#/components/schemas/CalendarEventDTO"
+        source_hash:
+          type: string
+        applied_at:
+          anyOf:
+            - type: string
+            - type: "null"
+        result:
+          anyOf:
+            - $ref: "#/components/schemas/DayPlan"
+            - type: "null"
+    RecoveryStep:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - description
+        - estimated_minutes
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        estimated_minutes:
+          type: integer
+          minimum: 1
+          maximum: 15
+    RecoveryResult:
+      type: object
+      additionalProperties: false
+      required:
+        - goal_id
+        - run_id
+        - quest_ids
+        - steps
+      properties:
+        goal_id:
+          type:
+            - string
+            - "null"
+        run_id:
+          type:
+            - string
+            - "null"
+        quest_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecoveryStep"
+    RecoveryOffer:
+      type: object
+      additionalProperties: false
+      required:
+        - catalog_version
+        - challenge_rules
+        - reward_xp
+        - economy_version
+        - rejoin
+        - visibility
+        - source_policy
+        - steps
+        - last_result_at
+        - inactive_since
+        - id
+        - offered_at
+        - expires_at
+        - state
+        - version
+        - decided_at
+        - result
+      properties:
+        catalog_version:
+          type: string
+        challenge_rules:
+          $ref: "#/components/schemas/ChallengeConfig"
+        reward_xp:
+          type: integer
+        economy_version:
+          type: string
+        rejoin:
+          type: boolean
+        visibility:
+          type: string
+          enum:
+            - private
+        source_policy:
+          type: string
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecoveryStep"
+        last_result_at:
+          type:
+            - string
+            - "null"
+        inactive_since:
+          type: string
+        id:
+          type: string
+          format: uuid
+        offered_at:
+          type: string
+        expires_at:
+          type: string
+        state:
+          type: string
+          enum:
+            - offered
+            - accepted
+            - declined
+            - withdrawn
+            - expired
+        version:
+          type: integer
+          minimum: 1
+        decided_at:
+          type:
+            - string
+            - "null"
+        result:
+          anyOf:
+            - $ref: "#/components/schemas/RecoveryResult"
+            - type: "null"
+    RecoveryEligibility:
+      type: object
+      additionalProperties: false
+      required:
+        - timezone
+        - eligible
+        - last_result_at
+        - inactive_since
+        - cooldown_until
+        - offer
+      properties:
+        timezone:
+          type: string
+        eligible:
+          type: boolean
+        last_result_at:
+          type:
+            - string
+            - "null"
+        inactive_since:
+          type: string
+        cooldown_until:
+          type:
+            - string
+            - "null"
+        offer:
+          anyOf:
+            - $ref: "#/components/schemas/RecoveryOffer"
+            - type: "null"
+    RecoveryHistory:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecoveryOffer"
+        next:
+          type: string
+    RecoveryDecision:
+      type: object
+      additionalProperties: false
+      required:
+        - timezone
+        - accept
+        - steps
+        - area_id
+      properties:
+        timezone:
+          type: string
+        accept:
+          type: boolean
+        steps:
+          type: array
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/RecoveryStep"
+        area_id:
+          type:
+            - string
+            - "null"
+    SeasonCloseInput:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+        - reason
+      properties:
+        confirm:
+          type: boolean
+        reason:
+          type: string
+          maxLength: 2000
+    SeasonArchiveInput:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+        - archived
+      properties:
+        confirm:
+          type: boolean
+        archived:
+          type: boolean
+    SeasonActivity:
+      type: object
+      additionalProperties: false
+      required:
+        - from
+        - until
+        - tasks
+        - habit_norms
+        - focus_seconds
+        - reviews
+        - xp_delta
+        - coins_delta
+        - level_at_close
+      properties:
+        from:
+          type:
+            - string
+            - "null"
+        until:
+          type: string
+        tasks:
+          type: integer
+        habit_norms:
+          type: integer
+        focus_seconds:
+          type: integer
+        reviews:
+          type: integer
+        xp_delta:
+          type: integer
+        coins_delta:
+          type: integer
+        level_at_close:
+          type: integer
+    SeasonSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - kind
+        - at
+        - early
+        - reason
+        - overview
+        - activity
+        - goals_achieved
+        - goals_unavailable
+        - challenges_achieved
+      properties:
+        version:
+          type: string
+        kind:
+          type: string
+          enum:
+            - season_result
+        at:
+          type: string
+        early:
+          type: boolean
+        reason:
+          type: string
+        overview:
+          $ref: "#/components/schemas/SeasonOverview"
+        activity:
+          $ref: "#/components/schemas/SeasonActivity"
+        goals_achieved:
+          type: integer
+        goals_unavailable:
+          type: integer
+        challenges_achieved:
+          type: integer
+    SeasonSource:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - metric
+        - value
+        - target
+        - unit
+        - percent
+        - state
+        - result
+        - version
+        - stages_completed
+        - stages_total
+        - url
+        - baseline
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        metric:
+          type: string
+        value:
+          type:
+            - number
+            - "null"
+        target:
+          type: number
+        unit:
+          type: string
+        percent:
+          type:
+            - number
+            - "null"
+        state:
+          type: string
+        result:
+          type:
+            - string
+            - "null"
+        version:
+          type: integer
+        stages_completed:
+          type: integer
+        stages_total:
+          type: integer
+        url:
+          type: string
+        baseline:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+    SeasonBoss:
+      type: object
+      additionalProperties: false
+      required:
+        - boss_id
+        - goal_id
+        - name
+        - month
+        - timezone
+        - state
+        - progress
+        - source_changed
+      properties:
+        boss_id:
+          type: string
+        goal_id:
+          type: string
+        name:
+          type: string
+        month:
+          type: string
+        timezone:
+          type: string
+        state:
+          type: string
+        progress:
+          type: number
+        source_changed:
+          type: boolean
+    SeasonOverview:
+      type: object
+      additionalProperties: false
+      required:
+        - season
+        - main_goal_id
+        - goals
+        - challenges
+        - bosses
+      properties:
+        season:
+          $ref: "#/components/schemas/PersonalSeason"
+        main_goal_id:
+          type:
+            - string
+            - "null"
+        goals:
+          type: array
+          items:
+            $ref: "#/components/schemas/SeasonSource"
+        challenges:
+          type: array
+          items:
+            $ref: "#/components/schemas/SeasonSource"
+        bosses:
+          type: array
+          items:
+            $ref: "#/components/schemas/SeasonBoss"
+    SeasonLinksInput:
+      type: object
+      additionalProperties: false
+      required:
+        - goal_ids
+        - main_goal_id
+        - challenge_ids
+      properties:
+        goal_ids:
+          type: array
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        main_goal_id:
+          type:
+            - string
+            - "null"
+        challenge_ids:
+          type: array
+          maxItems: 50
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+    SeasonMonthlyLinkInput:
+      type: object
+      additionalProperties: false
+      required:
+        - boss_id
+        - month
+        - source_version
+        - confirm
+      properties:
+        boss_id:
+          type: string
+          format: uuid
+        month:
+          type: string
+          pattern: ^\d{4}-\d{2}$
+        source_version:
+          type: integer
+          minimum: 1
+        confirm:
+          type: boolean
+    CreateSeason:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - theme
+        - desired_result
+        - starts_on
+        - ends_on
+        - primary
+        - operation_id
+      properties:
+        title:
+          type: string
+          maxLength: 200
+          minLength: 1
+        theme:
+          type: string
+          maxLength: 200
+          minLength: 1
+        desired_result:
+          type: string
+          maxLength: 2000
+          minLength: 1
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+        primary:
+          type: boolean
+        operation_id:
+          type: string
+          format: uuid
+    PersonalSeason:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - theme
+        - desired_result
+        - starts_on
+        - ends_on
+        - primary
+        - id
+        - timezone
+        - state
+        - version
+        - activated_at
+        - closed_at
+        - final_snapshot
+        - archived_at
+        - created_at
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        theme:
+          type: string
+          maxLength: 200
+        desired_result:
+          type: string
+          maxLength: 2000
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+        primary:
+          type: boolean
+        id:
+          type: string
+          format: uuid
+        timezone:
+          type: string
+        state:
+          type: string
+          enum:
+            - planned
+            - active
+            - completed
+            - cancelled
+        version:
+          type: integer
+        activated_at:
+          type:
+            - string
+            - "null"
+        closed_at:
+          type:
+            - string
+            - "null"
+        final_snapshot:
+          type:
+            - object
+            - "null"
+          additionalProperties: true
+        archived_at:
+          type:
+            - string
+            - "null"
+        created_at:
+          type: string
+    SeasonPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PersonalSeason"
+        next:
+          type: string
+    SeasonConfirmation:
+      type: object
+      additionalProperties: false
+      required:
+        - confirm
+      properties:
+        confirm:
+          type: boolean
     ChallengeCloseInput:
       type: object
       additionalProperties: false
