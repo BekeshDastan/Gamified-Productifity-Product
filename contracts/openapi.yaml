@@ -6,6 +6,177 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/notifications:
+    get:
+      operationId: listNotifications
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NotificationPage"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/notifications/{id}:
+    get:
+      operationId: getNotification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Notification"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/notifications/{id}/read:
+    patch:
+      operationId: readNotification
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IfMatch"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationRead"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Notification"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+  /api/v1/notifications/read-all:
+    post:
+      operationId: readAllNotifications
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationReadAll"
+      responses:
+        "200":
+          description: Личные данные владельца
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NotificationReadAllResult"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        "401":
+          $ref: "#/components/responses/Error"
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
   /api/v1/analytics/future-self:
     get:
       operationId: getFutureSelf
@@ -9145,6 +9316,104 @@ components:
         minLength: 16
         maxLength: 128
   schemas:
+    Notification:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - kind
+        - source_kind
+        - source_id
+        - source_revision
+        - event_key
+        - url
+        - reminder_id
+        - title
+        - message
+        - created_at
+        - read_at
+        - version
+        - active
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        source_kind:
+          type: string
+        source_id:
+          type: string
+        source_revision:
+          type: integer
+        event_key:
+          type: string
+        url:
+          type: string
+        reminder_id:
+          anyOf:
+            - type: string
+            - type: "null"
+        title:
+          type: string
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        version:
+          type: integer
+        active:
+          type: boolean
+    NotificationPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next
+        - unread
+        - computed_at
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        next:
+          type: string
+        unread:
+          type: integer
+        computed_at:
+          type: string
+          format: date-time
+    NotificationRead:
+      type: object
+      additionalProperties: false
+      required:
+        - read
+      properties:
+        read:
+          type: boolean
+    NotificationReadAll:
+      type: object
+      additionalProperties: false
+      required:
+        - seen_before
+      properties:
+        seen_before:
+          type: string
+          format: date-time
+    NotificationReadAllResult:
+      type: object
+      additionalProperties: false
+      required:
+        - updated
+      properties:
+        updated:
+          type: integer
     FutureSelfWeek:
       type: object
       additionalProperties: false

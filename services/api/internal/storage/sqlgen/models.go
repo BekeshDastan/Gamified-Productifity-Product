@@ -738,6 +738,24 @@ type NavigatorTaskView struct {
 	VisibleSeconds int32              `json:"visible_seconds"`
 }
 
+type Notification struct {
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	ID             pgtype.UUID        `json:"id"`
+	Kind           string             `json:"kind"`
+	SourceKind     string             `json:"source_kind"`
+	SourceID       string             `json:"source_id"`
+	SourceRevision int64              `json:"source_revision"`
+	EventKey       string             `json:"event_key"`
+	SourceUrl      string             `json:"source_url"`
+	ReminderID     pgtype.UUID        `json:"reminder_id"`
+	Title          string             `json:"title"`
+	Message        string             `json:"message"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	ReadAt         pgtype.Timestamptz `json:"read_at"`
+	Version        int64              `json:"version"`
+	Active         bool               `json:"active"`
+}
+
 type Onboarding struct {
 	OwnerID     pgtype.UUID        `json:"owner_id"`
 	Step        int32              `json:"step"`
