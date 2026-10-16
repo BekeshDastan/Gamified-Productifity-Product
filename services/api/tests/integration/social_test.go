@@ -211,6 +211,41 @@ func TestSocialNudgesRequireChosenPartnerAndFeedPublication(t *testing.T) {
 	}
 }
 
+func TestSocialBlockRevokesReadsInvitesAndUnblockDoesNotRestore(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "block-a@example.test")
+	b, other := f.signedIn(t, "block-b@example.test")
+	socialVerify(t, f, who.ID)
+	socialVerify(t, f, other.ID)
+	socialLink(t, f, a, b)
+	code := socialRead[social.Friends](t, f.privateRequest(t, a, "GET", "/social/friends", "", nil)).Code
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/grants", "", social.GrantAction{Recipient: other.ID, Metric: "regularity", Allow: true}))
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/moderation", "", social.ModerationAction{Action: "report", Target: who.ID, Reason: "spam"}))
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/moderation", "", social.ModerationAction{Action: "block", Target: who.ID}))
+	grants := socialRead[[]social.Grant](t, f.privateRequest(t, b, "GET", "/social/grants", "", nil))
+	if len(grants) != 0 {
+		t.Fatal("blocked summary", grants)
+	}
+	for _, client := range []*http.Client{a, b} {
+		v := socialRead[social.Friends](t, f.privateRequest(t, client, "GET", "/social/friends", "", nil))
+		if len(v.Items) != 0 {
+			t.Fatal("blocked friendship", v)
+		}
+	}
+	if r := f.privateRequest(t, b, "POST", "/social/friends", "", social.FriendAction{Action: "request", Code: code}); r.status != 404 {
+		t.Fatal("block bypass", r.status)
+	}
+	m := socialRead[social.Moderation](t, f.privateRequest(t, b, "GET", "/social/moderation", "", nil))
+	if len(m.Blocks) != 1 || len(m.Reports) != 1 || m.Admin {
+		t.Fatal(m)
+	}
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/moderation", "", social.ModerationAction{Action: "unblock", Target: who.ID}))
+	v := socialRead[social.Friends](t, f.privateRequest(t, b, "GET", "/social/friends", "", nil))
+	if len(v.Items) != 0 {
+		t.Fatal("unblock resurrected relationship", v)
+	}
+}
+
 func socialRead[T any](t *testing.T, r authResponse) T {
 	t.Helper()
 	var v struct{ Data T }
