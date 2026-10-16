@@ -1215,6 +1215,137 @@ type SmartSchedulePreview struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type SocialBlock struct {
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	TargetID  pgtype.UUID        `json:"target_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type SocialCheckin struct {
+	ID        pgtype.UUID        `json:"id"`
+	RoomID    pgtype.UUID        `json:"room_id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	LocalDate pgtype.Date        `json:"local_date"`
+	Amount    int64              `json:"amount"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type SocialFriend struct {
+	ID        pgtype.UUID        `json:"id"`
+	Sender    pgtype.UUID        `json:"sender"`
+	Recipient pgtype.UUID        `json:"recipient"`
+	State     string             `json:"state"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type SocialGrant struct {
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	RecipientID pgtype.UUID        `json:"recipient_id"`
+	Metric      string             `json:"metric"`
+	Scope       string             `json:"scope"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type SocialMember struct {
+	RoomID      pgtype.UUID        `json:"room_id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	State       string             `json:"state"`
+	Share       bool               `json:"share"`
+	Leaderboard bool               `json:"leaderboard"`
+	JoinedAt    pgtype.Timestamptz `json:"joined_at"`
+	Version     int64              `json:"version"`
+}
+
+type SocialNudge struct {
+	ID        pgtype.UUID        `json:"id"`
+	Sender    pgtype.UUID        `json:"sender"`
+	Recipient pgtype.UUID        `json:"recipient"`
+	Template  string             `json:"template"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type SocialPost struct {
+	ID            pgtype.UUID        `json:"id"`
+	OwnerID       pgtype.UUID        `json:"owner_id"`
+	SourceKey     string             `json:"source_key"`
+	SourceVersion string             `json:"source_version"`
+	Hidden        bool               `json:"hidden"`
+	Moderated     bool               `json:"moderated"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
+type SocialProfile struct {
+	OwnerID    pgtype.UUID `json:"owner_id"`
+	InviteCode pgtype.UUID `json:"invite_code"`
+	Nudges     bool        `json:"nudges"`
+	PartnerID  pgtype.UUID `json:"partner_id"`
+	Version    int64       `json:"version"`
+	Revision   pgtype.UUID `json:"revision"`
+}
+
+type SocialReport struct {
+	ID        pgtype.UUID        `json:"id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	TargetID  pgtype.UUID        `json:"target_id"`
+	PostID    pgtype.UUID        `json:"post_id"`
+	Reason    string             `json:"reason"`
+	Resolved  bool               `json:"resolved"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type SocialResult struct {
+	RoomID    pgtype.UUID        `json:"room_id"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
+	Amount    int64              `json:"amount"`
+	Rank      int32              `json:"rank"`
+	Earned    bool               `json:"earned"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type SocialReview struct {
+	ID             pgtype.UUID        `json:"id"`
+	CheckinID      pgtype.UUID        `json:"checkin_id"`
+	OwnerID        pgtype.UUID        `json:"owner_id"`
+	ReviewerID     pgtype.UUID        `json:"reviewer_id"`
+	CheckinVersion int64              `json:"checkin_version"`
+	AttachmentID   pgtype.UUID        `json:"attachment_id"`
+	ScoreState     string             `json:"score_state"`
+	State          string             `json:"state"`
+	Version        int64              `json:"version"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
+type SocialReviewEvent struct {
+	ID        int64              `json:"id"`
+	ReviewID  pgtype.UUID        `json:"review_id"`
+	ActorID   pgtype.UUID        `json:"actor_id"`
+	State     string             `json:"state"`
+	Version   int64              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type SocialRoom struct {
+	ID          pgtype.UUID        `json:"id"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	Name        string             `json:"name"`
+	Mode        string             `json:"mode"`
+	Metric      string             `json:"metric"`
+	Unit        string             `json:"unit"`
+	Target      int64              `json:"target"`
+	DailyCap    int64              `json:"daily_cap"`
+	StartsAt    pgtype.Timestamptz `json:"starts_at"`
+	EndsAt      pgtype.Timestamptz `json:"ends_at"`
+	RulesHash   string             `json:"rules_hash"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	FinalizedAt pgtype.Timestamptz `json:"finalized_at"`
+	Version     int64              `json:"version"`
+}
+
 type Tag struct {
 	ID        pgtype.UUID        `json:"id"`
 	OwnerID   pgtype.UUID        `json:"owner_id"`
