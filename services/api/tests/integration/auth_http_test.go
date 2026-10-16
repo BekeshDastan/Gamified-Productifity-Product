@@ -35,6 +35,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/rewards"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/social"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/tests/testkit"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -88,6 +89,7 @@ func newAuthFixture(t *testing.T, limits auth.Limits, scanners ...blob.Scanner) 
 	habitService.Mount(router, sessions.Protect)
 	challengeService := challenges.NewService(pool, clock).WithProgression(rewardService).WithQuests(questService)
 	challengeService.Mount(router, sessions.Protect)
+	social.NewService(pool, clock).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, clock, questService, calendarService)
 	seasons.NewService(pool, clock).WithChallenges(challengeService).WithRecovery(questService, goalService).WithPlanning(planService, calendarService).WithHabits(habitService).Mount(router, sessions.Protect)
 	planService.Mount(router, sessions.Protect)

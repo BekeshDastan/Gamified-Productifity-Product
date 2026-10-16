@@ -33,6 +33,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/progression"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/quests"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/rewards"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/social"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/storage"
 )
 
@@ -104,6 +105,7 @@ func main() {
 	habitService.Mount(router, sessions.Protect)
 	challengeService := challenges.NewService(pool, platform.RealClock{}).WithProgression(rewardService).WithQuests(questService)
 	challengeService.Mount(router, sessions.Protect)
+	social.NewService(pool, platform.RealClock{}).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, platform.RealClock{}, questService, calendarService)
 	seasons.NewService(pool, platform.RealClock{}).WithChallenges(challengeService).WithRecovery(questService, goalService).WithPlanning(planService, calendarService).WithHabits(habitService).Mount(router, sessions.Protect)
 	planService.Mount(router, sessions.Protect)
