@@ -58,6 +58,54 @@ func TestSocialCoopConsentCorrectionsAndLeaving(t *testing.T) {
 	}
 }
 
+func TestSocialPvPTiesFinalizationAndLeaderboardConsent(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "race-a@example.test")
+	b, other := f.signedIn(t, "race-b@example.test")
+	socialVerify(t, f, who.ID)
+	socialVerify(t, f, other.ID)
+	socialLink(t, f, a, b)
+	in := social.RoomAction{Action: "create", Name: "Чтение", Mode: "pvp", Metric: "manual", Unit: "pages", Target: 5, DailyCap: 10, Days: 1, Consent: true, Leaderboard: true}
+	id := socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", in)).ID
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", social.RoomAction{Action: "invite", ID: id, Recipient: other.ID}))
+	list := socialRead[[]social.Room](t, f.privateRequest(t, b, "GET", "/social/rooms", "", nil))
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/rooms", "", social.RoomAction{Action: "join", ID: id, Version: 1, RulesHash: list[0].RulesHash, Consent: true}))
+	if r := f.privateRequest(t, a, "POST", "/social/rooms", "", social.RoomAction{Action: "checkin", ID: id, Amount: 5}); r.status != 422 {
+		t.Fatal("early start", r.status)
+	}
+	f.clock.Advance(12*time.Hour + time.Second)
+	f.loginAs(t, a, "race-a@example.test")
+	f.loginAs(t, b, "race-b@example.test")
+	for _, client := range []*http.Client{a, b} {
+		socialRead[social.Receipt](t, f.privateRequest(t, client, "POST", "/social/rooms", "", social.RoomAction{Action: "checkin", ID: id, Amount: 5}))
+	}
+	f.clock.Advance(time.Second)
+	list = socialRead[[]social.Room](t, f.privateRequest(t, a, "GET", "/social/rooms", "", nil))
+	if len(list[0].Members) != 1 {
+		t.Fatal("leaderboard requires separate consent", list)
+	}
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/rooms", "", social.RoomAction{Action: "sharing", ID: id, Version: 2, Consent: true, Leaderboard: true}))
+	list = socialRead[[]social.Room](t, f.privateRequest(t, a, "GET", "/social/rooms", "", nil))
+	if len(list[0].Members) != 2 || list[0].Members[0].Rank != 1 || list[0].Members[1].Rank != 1 {
+		t.Fatal("ties", list)
+	}
+	f.clock.Advance(24 * time.Hour)
+	f.loginAs(t, a, "race-a@example.test")
+	f.loginAs(t, b, "race-b@example.test")
+	for i := 0; i < 3; i++ {
+		socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", social.RoomAction{Action: "finalize", ID: id}))
+	}
+	var n int
+	if e := f.pool.QueryRow(f.ctx, "SELECT count(*) FROM social_results WHERE room_id=$1 AND earned", id).Scan(&n); e != nil || n != 2 {
+		t.Fatal("reward duplicated or tie lost", n, e)
+	}
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/rooms", "", social.RoomAction{Action: "sharing", ID: id, Version: 3, Consent: false}))
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", social.RoomAction{Action: "finalize", ID: id}))
+	if e := f.pool.QueryRow(f.ctx, "SELECT count(*) FROM social_results WHERE room_id=$1 AND earned", id).Scan(&n); e != nil || n != 0 {
+		t.Fatal("revoked standings remain", n, e)
+	}
+}
+
 func socialRead[T any](t *testing.T, r authResponse) T {
 	t.Helper()
 	var v struct{ Data T }

@@ -92,7 +92,7 @@ func (s *Service) room(ctx context.Context, tx pgx.Tx, owner, id string) (Room, 
 	return r, nil
 }
 func validRoom(in RoomAction) bool {
-	if in.Mode != "coop" || in.Days < 1 || in.Days > 30 || in.DailyCap < 1 || in.Target < 1 || in.Target > in.DailyCap*int64(in.Days)*20 || utf8.RuneCountInString(strings.TrimSpace(in.Name)) < 1 || utf8.RuneCountInString(in.Name) > 80 || strings.ContainsAny(in.Name, "\x00\r\n") {
+	if (in.Mode != "coop" && in.Mode != "pvp") || (in.Mode == "pvp" && in.Target > in.DailyCap*int64(in.Days)) || in.Days < 1 || in.Days > 30 || in.DailyCap < 1 || in.Target < 1 || in.Target > in.DailyCap*int64(in.Days)*20 || utf8.RuneCountInString(strings.TrimSpace(in.Name)) < 1 || utf8.RuneCountInString(in.Name) > 80 || strings.ContainsAny(in.Name, "\x00\r\n") {
 		return false
 	}
 	switch in.Metric {
@@ -124,6 +124,9 @@ func (s *Service) roomAction(ctx context.Context, tx pgx.Tx, owner string, in Ro
 			return nil, limit()
 		}
 		start := now
+		if in.Mode == "pvp" {
+			start = now.Truncate(24 * time.Hour).Add(24 * time.Hour)
+		}
 		end := start.Truncate(24*time.Hour).AddDate(0, 0, in.Days)
 		body, _ := json.Marshal(struct {
 			Input      RoomAction
@@ -147,8 +150,18 @@ func (s *Service) roomAction(ctx context.Context, tx pgx.Tx, owner string, in Ro
 		return nil, e
 	}
 	switch in.Action {
+	case "finalize":
+		if r.State != "joined" {
+			return nil, conflict()
+		}
+		if e = s.fillRoom(ctx, tx, owner, &r); e != nil {
+			return nil, e
+		}
+		if e = s.settle(ctx, tx, r); e != nil {
+			return nil, e
+		}
 	case "invite":
-		if owner != r.Owner || r.State != "joined" || !now.Before(r.EndsAt) {
+		if owner != r.Owner || r.State != "joined" || !now.Before(r.EndsAt) || (r.Mode == "pvp" && !now.Before(r.StartsAt)) {
 			return nil, conflict()
 		}
 		if e = verified(ctx, tx, owner); e != nil {
@@ -175,7 +188,7 @@ func (s *Service) roomAction(ctx context.Context, tx pgx.Tx, owner string, in Ro
 		if e = verified(ctx, tx, owner); e != nil {
 			return nil, e
 		}
-		if r.State != "invited" || r.Version != in.Version || !in.Consent || r.RulesHash != in.RulesHash || !now.Before(r.EndsAt) {
+		if r.State != "invited" || r.Version != in.Version || !in.Consent || r.RulesHash != in.RulesHash || !now.Before(r.EndsAt) || (r.Mode == "pvp" && !now.Before(r.StartsAt)) {
 			return nil, conflict()
 		}
 		_, e = tx.Exec(ctx, "UPDATE social_members SET state='joined',share=true,leaderboard=$3,joined_at=$4,version=version+1 WHERE room_id=$1 AND owner_id=$2", r.ID, owner, in.Leaderboard, now)
@@ -276,12 +289,22 @@ func (s *Service) fillRoom(ctx context.Context, tx pgx.Tx, viewer string, r *Roo
 		if e != nil {
 			return e
 		}
+		if r.Mode == "pvp" && !m.board {
+			continue
+		}
 		r.Total += n
 		confirmation := "recorded"
 		if r.Metric == "manual" {
 			confirmation = "self_report"
 		}
 		r.Members = append(r.Members, Standing{UserID: m.id, Nickname: m.name, Amount: n, Confirmation: confirmation})
+	}
+	if r.Mode == "pvp" {
+		rankStandings(r.Members)
+	}
+	for i := range r.Members {
+		m := &r.Members[i]
+		m.Earned = r.FinalizedAt != nil && m.Amount > 0 && ((r.Mode == "coop" && r.Total >= r.Target) || (r.Mode == "pvp" && m.Rank == 1 && len(r.Members) > 1))
 	}
 	var c Checkin
 	e = tx.QueryRow(ctx, "SELECT id::text,amount,version FROM social_checkins WHERE room_id=$1 AND owner_id=$2 AND local_date=$3", r.ID, viewer, s.Clock.Now().UTC().Format("2006-01-02")).Scan(&c.ID, &c.Amount, &c.Version)
