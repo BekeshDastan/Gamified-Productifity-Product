@@ -3,6 +3,7 @@ package social
 
 import (
 	"context"
+
 	"errors"
 	"net/http"
 	"time"
@@ -231,6 +232,25 @@ func (s *Service) friendAction(ctx context.Context, tx pgx.Tx, owner string, in 
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		r.Get("/api/v1/social/rooms", func(w http.ResponseWriter, r *http.Request) {
+			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
+				if e := lock(ctx, tx, o); e != nil {
+					return nil, e
+				}
+				return s.rooms(ctx, tx, o)
+			})
+			s.Reply(w, r, out, e)
+		})
+		r.Post("/api/v1/social/rooms", func(w http.ResponseWriter, r *http.Request) {
+			privateapi.Decode(s.Service, w, r, func(in RoomAction) (any, error) {
+				return s.Mutate(r, in, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
+					if e := lock(ctx, tx, o); e != nil {
+						return nil, e
+					}
+					return s.roomAction(ctx, tx, o, in)
+				})
+			})
+		})
 		r.Get("/api/v1/social/grants", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
 				if e := lock(ctx, tx, o); e != nil {

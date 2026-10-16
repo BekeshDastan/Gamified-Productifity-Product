@@ -8,7 +8,55 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/social"
 	"net/http"
 	"testing"
+	"time"
 )
+
+func TestSocialCoopConsentCorrectionsAndLeaving(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "coop-a@example.test")
+	b, other := f.signedIn(t, "coop-b@example.test")
+	socialVerify(t, f, who.ID)
+	socialVerify(t, f, other.ID)
+	socialLink(t, f, a, b)
+	in := social.RoomAction{Action: "create", Name: "Читаем вместе", Mode: "coop", Metric: "manual", Unit: "pages", Target: 20, DailyCap: 10, Days: 3, Consent: true}
+	id := socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", in)).ID
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", social.RoomAction{Action: "invite", ID: id, Recipient: other.ID}))
+	list := socialRead[[]social.Room](t, f.privateRequest(t, b, "GET", "/social/rooms", "", nil))
+	if len(list) != 1 || len(list[0].Members) != 0 {
+		t.Fatal("unaccepted invitation exposes progress", list)
+	}
+	join := social.RoomAction{Action: "join", ID: id, RulesHash: list[0].RulesHash, Version: 1}
+	if r := f.privateRequest(t, b, "POST", "/social/rooms", "", join); r.status != 409 {
+		t.Fatal("missing consent", r.status)
+	}
+	join.Consent = true
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/rooms", "", join))
+	check := social.RoomAction{Action: "checkin", ID: id, Amount: 8}
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/rooms", "", check))
+	f.clock.Advance(time.Second)
+	list = socialRead[[]social.Room](t, f.privateRequest(t, a, "GET", "/social/rooms", "", nil))
+	if list[0].Total != 8 {
+		t.Fatal(list)
+	}
+	if r := f.privateRequest(t, b, "POST", "/social/rooms", "", check); r.status != 409 {
+		t.Fatal("duplicate checkin", r.status)
+	}
+	check.Version = 1
+	check.Amount = 3
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/rooms", "", check))
+	list = socialRead[[]social.Room](t, f.privateRequest(t, a, "GET", "/social/rooms", "", nil))
+	if list[0].Total != 3 {
+		t.Fatal("correction", list)
+	}
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/rooms", "", social.RoomAction{Action: "leave", ID: id, Version: 2}))
+	list = socialRead[[]social.Room](t, f.privateRequest(t, a, "GET", "/social/rooms", "", nil))
+	if list[0].Total != 0 {
+		t.Fatal("left contribution leaked", list)
+	}
+	if _, e := f.pool.Exec(f.ctx, "UPDATE social_rooms SET target=999 WHERE id=$1", id); e == nil {
+		t.Fatal("mutable rules")
+	}
+}
 
 func socialRead[T any](t *testing.T, r authResponse) T {
 	t.Helper()
