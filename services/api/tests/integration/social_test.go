@@ -24,6 +24,47 @@ func socialVerify(t *testing.T, f authFixture, id string) {
 		t.Fatal(e)
 	}
 }
+
+func TestSocialSharingIsExplicitAndRevokedOnRemoval(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "grant-a@example.test")
+	b, other := f.signedIn(t, "grant-b@example.test")
+	c, _ := f.signedIn(t, "grant-c@example.test")
+	socialVerify(t, f, who.ID)
+	id := socialLink(t, f, a, b)
+	in := social.GrantAction{Recipient: other.ID, Metric: "regularity", Allow: true}
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/grants", "", in))
+	v := socialRead[[]social.Grant](t, f.privateRequest(t, b, "GET", "/social/grants", "", nil))
+	if len(v) != 1 || v[0].Owner != who.ID {
+		t.Fatal(v)
+	}
+	v = socialRead[[]social.Grant](t, f.privateRequest(t, c, "GET", "/social/grants", "", nil))
+	if len(v) != 0 {
+		t.Fatal("foreign summary", v)
+	}
+	in.Allow = false
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/grants", "", in))
+	v = socialRead[[]social.Grant](t, f.privateRequest(t, b, "GET", "/social/grants", "", nil))
+	if len(v) != 0 {
+		t.Fatal("revoked summary", v)
+	}
+	in.Allow = true
+	in.Metric = "journal"
+	if r := f.privateRequest(t, a, "POST", "/social/grants", "", in); r.status != 422 {
+		t.Fatal("non allowlisted metric", r.status)
+	}
+	in.Metric = "evening"
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/grants", "", in))
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/friends", "", social.FriendAction{Action: "remove", ID: id, Version: 2}))
+	v = socialRead[[]social.Grant](t, f.privateRequest(t, b, "GET", "/social/grants", "", nil))
+	if len(v) != 0 {
+		t.Fatal("friend removal must revoke", v)
+	}
+	var n int
+	if e := f.pool.QueryRow(f.ctx, "SELECT count(*) FROM social_grants").Scan(&n); e != nil || n != 0 {
+		t.Fatal("grant resurrection", n, e)
+	}
+}
 func socialLink(t *testing.T, f authFixture, a, b *http.Client) string {
 	t.Helper()
 	v := socialRead[social.Friends](t, f.privateRequest(t, b, "GET", "/social/friends", "", nil))
