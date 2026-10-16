@@ -113,7 +113,7 @@ func TestBrowserAuth(t *testing.T) {
 	habitService.Mount(router, sessions.Protect)
 	challengeService := challenges.NewService(pool, domainClock).WithSchedulingClock(clock).WithProgression(rewardService).WithQuests(questService)
 	challengeService.Mount(router, sessions.Protect)
-	social.NewService(pool, domainClock).Mount(router, sessions.Protect)
+	social.NewService(pool, domainClock).WithFiles(files).Mount(router, sessions.Protect)
 	planService := planning.NewService(pool, domainClock, questService, calendarService)
 	seasons.NewService(pool, domainClock).WithSchedulingClock(clock).WithChallenges(challengeService).WithRecovery(questService, goalService).WithPlanning(planService, calendarService).WithHabits(habitService).Mount(router, sessions.Protect)
 	planService.Mount(router, sessions.Protect)

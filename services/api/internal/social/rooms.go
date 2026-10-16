@@ -247,7 +247,7 @@ func (s *Service) amount(ctx context.Context, tx pgx.Tx, r Room, owner string, j
 	case "reviews":
 		sources = `SELECT created_at at,1::bigint amount FROM daily_reviews WHERE owner_id=$1`
 	case "manual":
-		sources = `SELECT created_at at,amount FROM social_checkins WHERE owner_id=$1 AND room_id=$5`
+		sources = `SELECT created_at at,amount FROM social_checkins c WHERE owner_id=$1 AND room_id=$5 AND NOT EXISTS(SELECT 1 FROM social_reviews v WHERE v.checkin_id=c.id AND v.checkin_version=c.version AND v.score_state IN('rejected','disputed'))`
 	}
 	scale := int64(1)
 	if r.Metric == "focus" {
@@ -296,6 +296,14 @@ func (s *Service) fillRoom(ctx context.Context, tx pgx.Tx, viewer string, r *Roo
 		confirmation := "recorded"
 		if r.Metric == "manual" {
 			confirmation = "self_report"
+			var confirmed bool
+			e = tx.QueryRow(ctx, `SELECT count(*)>0 AND bool_and(EXISTS(SELECT 1 FROM social_reviews v WHERE v.checkin_id=c.id AND v.checkin_version=c.version AND v.state='accepted')) FROM social_checkins c WHERE c.owner_id=$1 AND c.room_id=$2 AND c.amount>0`, m.id, r.ID).Scan(&confirmed)
+			if e != nil {
+				return e
+			}
+			if confirmed {
+				confirmation = "partner_confirmed"
+			}
 		}
 		r.Members = append(r.Members, Standing{UserID: m.id, Nickname: m.name, Amount: n, Confirmation: confirmation})
 	}

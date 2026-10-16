@@ -3,6 +3,7 @@ package social
 
 import (
 	"context"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
 
 	"errors"
 	"net/http"
@@ -15,10 +16,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Service struct{ *privateapi.Service }
+type Service struct {
+	*privateapi.Service
+	files blob.BlobStore
+}
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
-	return &Service{privateapi.New(pool, clock)}
+	return &Service{Service: privateapi.New(pool, clock)}
 }
 func missing() error {
 	return privateapi.Problem(404, "NOT_FOUND", "Запись недоступна")
@@ -232,6 +236,35 @@ func (s *Service) friendAction(ctx context.Context, tx pgx.Tx, owner string, in 
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
+		r.Get("/api/v1/social/reviews/{id}/file", s.downloadReview)
+		r.Get("/api/v1/social/review-files", func(w http.ResponseWriter, r *http.Request) {
+			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
+				if e := lock(ctx, tx, o); e != nil {
+					return nil, e
+				}
+				return s.reviewFiles(ctx, tx, o)
+			})
+			s.Reply(w, r, out, e)
+		})
+		r.Get("/api/v1/social/reviews", func(w http.ResponseWriter, r *http.Request) {
+			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
+				if e := lock(ctx, tx, o); e != nil {
+					return nil, e
+				}
+				return s.reviews(ctx, tx, o)
+			})
+			s.Reply(w, r, out, e)
+		})
+		r.Post("/api/v1/social/reviews", func(w http.ResponseWriter, r *http.Request) {
+			privateapi.Decode(s.Service, w, r, func(in ReviewAction) (any, error) {
+				return s.Mutate(r, in, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
+					if e := lock(ctx, tx, o); e != nil {
+						return nil, e
+					}
+					return s.reviewAction(ctx, tx, o, in)
+				})
+			})
+		})
 		r.Get("/api/v1/social/rooms", func(w http.ResponseWriter, r *http.Request) {
 			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
 				if e := lock(ctx, tx, o); e != nil {
@@ -291,3 +324,6 @@ func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handl
 		})
 	})
 }
+
+func (s *Service) WithFiles(files blob.BlobStore) *Service { s.files = files; return s }
+func isMissing(e error) bool                               { var p *platform.APIError; return errors.As(e, &p) && p.Status == 404 }

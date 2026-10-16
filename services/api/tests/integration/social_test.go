@@ -106,6 +106,63 @@ func TestSocialPvPTiesFinalizationAndLeaderboardConsent(t *testing.T) {
 	}
 }
 
+func TestSocialEvidenceOnlyAssignedPartnerAndRevocable(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits(), cleanFixtureScanner{})
+	a, who := f.signedIn(t, "proof-a@example.test")
+	b, other := f.signedIn(t, "proof-b@example.test")
+	c, _ := f.signedIn(t, "proof-c@example.test")
+	socialVerify(t, f, who.ID)
+	socialVerify(t, f, other.ID)
+	socialLink(t, f, a, b)
+	id := socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", social.RoomAction{Action: "create", Name: "Практика", Mode: "coop", Metric: "manual", Unit: "count", Target: 10, DailyCap: 10, Days: 2, Consent: true})).ID
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", social.RoomAction{Action: "invite", ID: id, Recipient: other.ID}))
+	list := socialRead[[]social.Room](t, f.privateRequest(t, b, "GET", "/social/rooms", "", nil))
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/rooms", "", social.RoomAction{Action: "join", ID: id, Consent: true, Version: 1, RulesHash: list[0].RulesHash}))
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", social.RoomAction{Action: "checkin", ID: id, Amount: 4}))
+	f.clock.Advance(time.Second)
+	list = socialRead[[]social.Room](t, f.privateRequest(t, a, "GET", "/social/rooms", "", nil))
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Secret task")))
+	file := readAttachment(t, f.uploadFile(t, a, q, "proof.txt", []byte("only partner sees this")))
+	review := socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/reviews", "", social.ReviewAction{Action: "request", ID: list[0].Checkin.ID, Recipient: other.ID, AttachmentID: file.ID, Consent: true}))
+	path := "/social/reviews/" + review.ID + "/file"
+	if r := f.privateRequest(t, b, "GET", path, "", nil); r.status != 200 || string(r.body) != "only partner sees this" {
+		t.Fatal(r.status, string(r.body))
+	}
+	if r := f.privateRequest(t, c, "GET", path, "", nil); r.status != 404 {
+		t.Fatal("foreign evidence", r.status)
+	}
+	decision := social.ReviewAction{Action: "accepted", ID: review.ID, Version: 1}
+	if r := f.privateRequest(t, a, "POST", "/social/reviews", "", decision); r.status != 409 {
+		t.Fatal("self confirmation", r.status)
+	}
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/reviews", "", decision))
+	list = socialRead[[]social.Room](t, f.privateRequest(t, b, "GET", "/social/rooms", "", nil))
+	for _, m := range list[0].Members {
+		if m.UserID == who.ID && m.Confirmation != "partner_confirmed" {
+			t.Fatal(m)
+		}
+	}
+	decision.Action = "disputed"
+	decision.Version = 2
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/reviews", "", decision))
+	list = socialRead[[]social.Room](t, f.privateRequest(t, a, "GET", "/social/rooms", "", nil))
+	if list[0].Total != 0 {
+		t.Fatal("disputed amount still counts", list)
+	}
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/reviews", "", social.ReviewAction{Action: "withdrawn", ID: review.ID, Version: 3}))
+	if r := f.privateRequest(t, b, "GET", path, "", nil); r.status != 404 {
+		t.Fatal("withdrawn evidence", r.status)
+	}
+	list = socialRead[[]social.Room](t, f.privateRequest(t, a, "GET", "/social/rooms", "", nil))
+	if list[0].Total != 0 {
+		t.Fatal("withdrawal erased dispute", list)
+	}
+	var n int
+	if e := f.pool.QueryRow(f.ctx, "SELECT count(*) FROM social_review_events WHERE review_id=$1", review.ID).Scan(&n); e != nil || n != 4 {
+		t.Fatal(n, e)
+	}
+}
+
 func socialRead[T any](t *testing.T, r authResponse) T {
 	t.Helper()
 	var v struct{ Data T }
