@@ -163,6 +163,54 @@ func TestSocialEvidenceOnlyAssignedPartnerAndRevocable(t *testing.T) {
 	}
 }
 
+func TestSocialNudgesRequireChosenPartnerAndFeedPublication(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "feed-a@example.test")
+	b, other := f.signedIn(t, "feed-b@example.test")
+	socialVerify(t, f, who.ID)
+	socialLink(t, f, a, b)
+	nudge := social.CommunityAction{Action: "nudge", Recipient: other.ID, Template: "small_step"}
+	if r := f.privateRequest(t, a, "POST", "/social/community", "", nudge); r.status != 403 {
+		t.Fatal("unsolicited nudge", r.status)
+	}
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/community", "", social.CommunityAction{Action: "preferences", Recipient: who.ID, Enabled: true, Version: 1}))
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/community", "", nudge))
+	if r := f.privateRequest(t, a, "POST", "/social/community", "", nudge); r.status != 429 {
+		t.Fatal("spam", r.status)
+	}
+	v := socialRead[social.Community](t, f.privateRequest(t, b, "GET", "/social/community", "", nil))
+	if len(v.Inbox) != 1 {
+		t.Fatal(v)
+	}
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/community", "", social.CommunityAction{Action: "preferences", Recipient: who.ID, Version: 2}))
+	v = socialRead[social.Community](t, f.privateRequest(t, b, "GET", "/social/community", "", nil))
+	if len(v.Inbox) != 0 {
+		t.Fatal("opt out", v)
+	}
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Secret accomplishment")))
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]any{}))
+	// Achievement evaluation is the existing synchronous character endpoint.
+	f.privateRequest(t, a, "GET", "/character", "", nil)
+	v = socialRead[social.Community](t, f.privateRequest(t, a, "GET", "/social/community", "", nil))
+	if len(v.Publishable) == 0 {
+		t.Fatal("missing earned achievement")
+	}
+	if len(v.Feed) != 0 {
+		t.Fatal("automatic publication")
+	}
+	pub := social.CommunityAction{Action: "publish", SourceKey: v.Publishable[0].Key, SourceVersion: v.Publishable[0].Version}
+	if r := f.privateRequest(t, a, "POST", "/social/community", "", pub); r.status != 422 {
+		t.Fatal("no consent", r.status)
+	}
+	pub.Consent = true
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/community", "", pub))
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/community", "", pub))
+	v = socialRead[social.Community](t, f.privateRequest(t, b, "GET", "/social/community", "", nil))
+	if len(v.Feed) != 1 || v.Feed[0].Title == "Secret accomplishment" {
+		t.Fatal(v)
+	}
+}
+
 func socialRead[T any](t *testing.T, r authResponse) T {
 	t.Helper()
 	var v struct{ Data T }
