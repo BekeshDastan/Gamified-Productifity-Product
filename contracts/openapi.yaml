@@ -9278,6 +9278,382 @@ paths:
           $ref: "#/components/responses/Error"
         "429":
           $ref: "#/components/responses/Error"
+  /api/v1/social/friends:
+    get:
+      operationId: getSocialFriends
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SocialFriends"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: changeSocialFriends
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialFriendsAction"
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SocialReceipt"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+  /api/v1/social/grants:
+    get:
+      operationId: getSocialGrant
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SocialGrant"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: changeSocialGrant
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialGrantAction"
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SocialReceipt"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+  /api/v1/social/rooms:
+    get:
+      operationId: getSocialRoom
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SocialRoom"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: changeSocialRoom
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialRoomAction"
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SocialReceipt"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+  /api/v1/social/reviews:
+    get:
+      operationId: getSocialReview
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SocialReview"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: changeSocialReview
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialReviewAction"
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SocialReceipt"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+  /api/v1/social/community:
+    get:
+      operationId: getSocialCommunity
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SocialCommunity"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: changeSocialCommunity
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialCommunityAction"
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SocialReceipt"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+  /api/v1/social/moderation:
+    get:
+      operationId: getSocialModeration
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SocialModeration"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      operationId: changeSocialModeration
+      parameters:
+        - $ref: "#/components/parameters/CSRF"
+        - $ref: "#/components/parameters/Origin"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialModerationAction"
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SocialReceipt"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+  /api/v1/social/review-files:
+    get:
+      operationId: getSocialFile
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SocialFile"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+  /api/v1/social/dashboard:
+    get:
+      operationId: getSocialDashboard
+      responses:
+        "200":
+          description: "Только разрешённые данные; Cache-Control: no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SocialDashboard"
+                  meta:
+                    $ref: "#/components/schemas/Meta"
+        default:
+          $ref: "#/components/responses/Error"
+  /api/v1/social/changes:
+    get:
+      operationId: watchSocialChanges
+      responses:
+        "200":
+          description: >-
+            Короткий поток непрозрачных токенов инвалидирования текущего
+            пользователя
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        default:
+          $ref: "#/components/responses/Error"
+  /api/v1/social/reviews/{id}/file:
+    get:
+      operationId: downloadSocialEvidence
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Приватное доказательство только назначенному партнёру и автору
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        default:
+          $ref: "#/components/responses/Error"
 components:
   requestBodies:
     Empty:
@@ -18469,3 +18845,1233 @@ components:
         to:
           type: string
           format: date
+
+    SocialFriends:
+      type: object
+      properties:
+        code:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        verified:
+          type: boolean
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              user_id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              nickname:
+                type: string
+              state:
+                type: string
+                enum:
+                  - pending
+                  - accepted
+              incoming:
+                type: boolean
+              version:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+            required:
+              - id
+              - user_id
+              - nickname
+              - state
+              - incoming
+              - version
+            additionalProperties: false
+      required:
+        - code
+        - verified
+        - items
+      additionalProperties: false
+    SocialGrant:
+      type: object
+      properties:
+        owner:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        recipient:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        metric:
+          type: string
+          enum:
+            - regularity
+            - evening
+            - challenge
+        scope:
+          type: string
+        value:
+          type: number
+        unit:
+          type: string
+      required:
+        - owner
+        - recipient
+        - metric
+        - scope
+        - value
+        - unit
+      additionalProperties: false
+    SocialRoom:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        owner:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        name:
+          type: string
+        mode:
+          type: string
+          enum:
+            - coop
+            - pvp
+        metric:
+          type: string
+          enum:
+            - tasks
+            - focus
+            - reviews
+            - manual
+        unit:
+          type: string
+        target:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        daily_cap:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        starts_at:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        ends_at:
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        rules_hash:
+          type: string
+        finalized_at:
+          nullable: true
+          type: string
+          format: date-time
+          pattern: >-
+            ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+        state:
+          type: string
+          enum:
+            - invited
+            - joined
+            - left
+            - rejected
+        share:
+          type: boolean
+        leaderboard:
+          type: boolean
+        version:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        total:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              nickname:
+                type: string
+              amount:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+              rank:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+              earned:
+                type: boolean
+              confirmation:
+                type: string
+                enum:
+                  - recorded
+                  - self_report
+                  - partner_confirmed
+            required:
+              - user_id
+              - nickname
+              - amount
+              - rank
+              - earned
+              - confirmation
+            additionalProperties: false
+        checkin:
+          nullable: true
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            amount:
+              type: integer
+              minimum: 0
+              maximum: 9007199254740991
+            version:
+              type: integer
+              minimum: 0
+              maximum: 9007199254740991
+          required:
+            - id
+            - amount
+            - version
+          additionalProperties: false
+      required:
+        - id
+        - owner
+        - name
+        - mode
+        - metric
+        - unit
+        - target
+        - daily_cap
+        - starts_at
+        - ends_at
+        - rules_hash
+        - finalized_at
+        - state
+        - share
+        - leaderboard
+        - version
+        - total
+        - members
+        - checkin
+      additionalProperties: false
+    SocialReview:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        checkin_id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        owner:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        reviewer:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        room_id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        room_name:
+          type: string
+        amount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        unit:
+          type: string
+        state:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - rejected
+            - disputed
+            - withdrawn
+        version:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        file:
+          type: boolean
+        matches_version:
+          type: boolean
+      required:
+        - id
+        - checkin_id
+        - owner
+        - reviewer
+        - room_id
+        - room_name
+        - amount
+        - unit
+        - state
+        - version
+        - file
+        - matches_version
+      additionalProperties: false
+    SocialFile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        name:
+          type: string
+      required:
+        - id
+        - name
+      additionalProperties: false
+    SocialCommunity:
+      type: object
+      properties:
+        partner:
+          nullable: true
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        nudges:
+          type: boolean
+        version:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        feed:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              owner:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              nickname:
+                type: string
+              title:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+            required:
+              - id
+              - owner
+              - nickname
+              - title
+              - created_at
+            additionalProperties: false
+        publishable:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              version:
+                type: string
+              title:
+                type: string
+            required:
+              - key
+              - version
+              - title
+            additionalProperties: false
+        inbox:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              template:
+                type: string
+                enum:
+                  - small_step
+                  - rest
+                  - celebrate
+              nickname:
+                type: string
+              created_at:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+            required:
+              - id
+              - template
+              - nickname
+              - created_at
+            additionalProperties: false
+      required:
+        - partner
+        - nudges
+        - version
+        - feed
+        - publishable
+        - inbox
+      additionalProperties: false
+    SocialModeration:
+      type: object
+      properties:
+        blocks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              nickname:
+                type: string
+            required:
+              - id
+              - nickname
+            additionalProperties: false
+        reports:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              target:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              post_id:
+                nullable: true
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              reason:
+                type: string
+              resolved:
+                type: boolean
+            required:
+              - id
+              - target
+              - post_id
+              - reason
+              - resolved
+            additionalProperties: false
+        admin:
+          type: boolean
+      required:
+        - blocks
+        - reports
+        - admin
+      additionalProperties: false
+    SocialDashboard:
+      type: object
+      properties:
+        owner:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        nickname:
+          type: string
+        friends:
+          type: object
+          properties:
+            code:
+              type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            verified:
+              type: boolean
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    pattern: >-
+                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  user_id:
+                    type: string
+                    format: uuid
+                    pattern: >-
+                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  nickname:
+                    type: string
+                  state:
+                    type: string
+                    enum:
+                      - pending
+                      - accepted
+                  incoming:
+                    type: boolean
+                  version:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                required:
+                  - id
+                  - user_id
+                  - nickname
+                  - state
+                  - incoming
+                  - version
+                additionalProperties: false
+          required:
+            - code
+            - verified
+            - items
+          additionalProperties: false
+        grants:
+          type: array
+          items:
+            type: object
+            properties:
+              owner:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              recipient:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              metric:
+                type: string
+                enum:
+                  - regularity
+                  - evening
+                  - challenge
+              scope:
+                type: string
+              value:
+                type: number
+              unit:
+                type: string
+            required:
+              - owner
+              - recipient
+              - metric
+              - scope
+              - value
+              - unit
+            additionalProperties: false
+        rooms:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              owner:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              name:
+                type: string
+              mode:
+                type: string
+                enum:
+                  - coop
+                  - pvp
+              metric:
+                type: string
+                enum:
+                  - tasks
+                  - focus
+                  - reviews
+                  - manual
+              unit:
+                type: string
+              target:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+              daily_cap:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+              starts_at:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+              ends_at:
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+              rules_hash:
+                type: string
+              finalized_at:
+                nullable: true
+                type: string
+                format: date-time
+                pattern: >-
+                  ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+              state:
+                type: string
+                enum:
+                  - invited
+                  - joined
+                  - left
+                  - rejected
+              share:
+                type: boolean
+              leaderboard:
+                type: boolean
+              version:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+              total:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+              members:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id:
+                      type: string
+                      format: uuid
+                      pattern: >-
+                        ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                    nickname:
+                      type: string
+                    amount:
+                      type: integer
+                      minimum: 0
+                      maximum: 9007199254740991
+                    rank:
+                      type: integer
+                      minimum: 0
+                      maximum: 9007199254740991
+                    earned:
+                      type: boolean
+                    confirmation:
+                      type: string
+                      enum:
+                        - recorded
+                        - self_report
+                        - partner_confirmed
+                  required:
+                    - user_id
+                    - nickname
+                    - amount
+                    - rank
+                    - earned
+                    - confirmation
+                  additionalProperties: false
+              checkin:
+                nullable: true
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    pattern: >-
+                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  amount:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                  version:
+                    type: integer
+                    minimum: 0
+                    maximum: 9007199254740991
+                required:
+                  - id
+                  - amount
+                  - version
+                additionalProperties: false
+            required:
+              - id
+              - owner
+              - name
+              - mode
+              - metric
+              - unit
+              - target
+              - daily_cap
+              - starts_at
+              - ends_at
+              - rules_hash
+              - finalized_at
+              - state
+              - share
+              - leaderboard
+              - version
+              - total
+              - members
+              - checkin
+            additionalProperties: false
+        reviews:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              checkin_id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              owner:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              reviewer:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              room_id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              room_name:
+                type: string
+              amount:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+              unit:
+                type: string
+              state:
+                type: string
+                enum:
+                  - pending
+                  - accepted
+                  - rejected
+                  - disputed
+                  - withdrawn
+              version:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+              file:
+                type: boolean
+              matches_version:
+                type: boolean
+            required:
+              - id
+              - checkin_id
+              - owner
+              - reviewer
+              - room_id
+              - room_name
+              - amount
+              - unit
+              - state
+              - version
+              - file
+              - matches_version
+            additionalProperties: false
+        files:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                pattern: >-
+                  ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+              name:
+                type: string
+            required:
+              - id
+              - name
+            additionalProperties: false
+        community:
+          type: object
+          properties:
+            partner:
+              nullable: true
+              type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            nudges:
+              type: boolean
+            version:
+              type: integer
+              minimum: 0
+              maximum: 9007199254740991
+            feed:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    pattern: >-
+                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  owner:
+                    type: string
+                    format: uuid
+                    pattern: >-
+                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  nickname:
+                    type: string
+                  title:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                    pattern: >-
+                      ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                required:
+                  - id
+                  - owner
+                  - nickname
+                  - title
+                  - created_at
+                additionalProperties: false
+            publishable:
+              type: array
+              items:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  version:
+                    type: string
+                  title:
+                    type: string
+                required:
+                  - key
+                  - version
+                  - title
+                additionalProperties: false
+            inbox:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    pattern: >-
+                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  template:
+                    type: string
+                    enum:
+                      - small_step
+                      - rest
+                      - celebrate
+                  nickname:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                    pattern: >-
+                      ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$
+                required:
+                  - id
+                  - template
+                  - nickname
+                  - created_at
+                additionalProperties: false
+          required:
+            - partner
+            - nudges
+            - version
+            - feed
+            - publishable
+            - inbox
+          additionalProperties: false
+        moderation:
+          type: object
+          properties:
+            blocks:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    pattern: >-
+                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  nickname:
+                    type: string
+                required:
+                  - id
+                  - nickname
+                additionalProperties: false
+            reports:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    pattern: >-
+                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  target:
+                    type: string
+                    format: uuid
+                    pattern: >-
+                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  post_id:
+                    nullable: true
+                    type: string
+                    format: uuid
+                    pattern: >-
+                      ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+                  reason:
+                    type: string
+                  resolved:
+                    type: boolean
+                required:
+                  - id
+                  - target
+                  - post_id
+                  - reason
+                  - resolved
+                additionalProperties: false
+            admin:
+              type: boolean
+          required:
+            - blocks
+            - reports
+            - admin
+          additionalProperties: false
+      required:
+        - owner
+        - nickname
+        - friends
+        - grants
+        - rooms
+        - reviews
+        - files
+        - community
+        - moderation
+      additionalProperties: false
+    SocialReceipt:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        ok:
+          type: boolean
+      required:
+        - id
+        - ok
+      additionalProperties: false
+    SocialFriendsAction:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+            - request
+            - rotate
+            - accept
+            - reject
+            - remove
+        code:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        version:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - action
+      additionalProperties: false
+    SocialGrantAction:
+      type: object
+      properties:
+        recipient:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        metric:
+          type: string
+          enum:
+            - regularity
+            - evening
+            - challenge
+        scope:
+          type: string
+        allow:
+          type: boolean
+      required:
+        - recipient
+        - metric
+        - scope
+        - allow
+      additionalProperties: false
+    SocialRoomAction:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+            - create
+            - invite
+            - join
+            - leave
+            - reject
+            - sharing
+            - checkin
+            - finalize
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        name:
+          type: string
+          maxLength: 80
+        mode:
+          type: string
+          enum:
+            - coop
+            - pvp
+        metric:
+          type: string
+          enum:
+            - tasks
+            - focus
+            - reviews
+            - manual
+        unit:
+          type: string
+          enum:
+            - tasks
+            - minutes
+            - reviews
+            - count
+            - pages
+        target:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        daily_cap:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        days:
+          type: integer
+          minimum: 1
+          maximum: 30
+        recipient:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        rules_hash:
+          type: string
+        consent:
+          type: boolean
+        leaderboard:
+          type: boolean
+        version:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        amount:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - action
+      additionalProperties: false
+    SocialReviewAction:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+            - request
+            - accepted
+            - rejected
+            - disputed
+            - withdrawn
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        recipient:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        attachment_id:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: string
+              enum:
+                - ""
+        consent:
+          type: boolean
+        version:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+      required:
+        - action
+        - id
+      additionalProperties: false
+    SocialCommunityAction:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+            - preferences
+            - nudge
+            - publish
+        recipient:
+          anyOf:
+            - type: string
+              format: uuid
+              pattern: >-
+                ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+            - type: string
+              enum:
+                - ""
+        enabled:
+          type: boolean
+        version:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+        template:
+          type: string
+          enum:
+            - small_step
+            - rest
+            - celebrate
+        source_key:
+          type: string
+        source_version:
+          type: string
+        consent:
+          type: boolean
+      required:
+        - action
+      additionalProperties: false
+    SocialModerationAction:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+            - block
+            - unblock
+            - hide
+            - report
+            - resolve
+        id:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        target:
+          type: string
+          format: uuid
+          pattern: >-
+            ^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$
+        reason:
+          type: string
+          enum:
+            - spam
+            - abuse
+            - privacy
+            - other
+      required:
+        - action
+      additionalProperties: false

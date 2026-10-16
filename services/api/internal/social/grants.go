@@ -75,7 +75,7 @@ func (s *Service) grants(ctx context.Context, tx pgx.Tx, owner string) ([]Grant,
 		g.Unit = "days"
 		switch g.Metric {
 		case "regularity":
-			e = tx.QueryRow(ctx, "SELECT count(DISTINCT (first_awarded_at AT TIME ZONE 'UTC')::date) FROM reward_entitlements WHERE owner_id=$1 AND active AND first_awarded_at>=$2::timestamptz-interval '7 days' AND first_awarded_at<=$2", g.Owner, s.Clock.Now()).Scan(&g.Value)
+			e = tx.QueryRow(ctx, "SELECT count(DISTINCT (first_awarded_at AT TIME ZONE 'UTC')::date) FROM reward_entitlements WHERE owner_id=$1 AND active AND first_awarded_at>=(($2::timestamptz AT TIME ZONE 'UTC')::date-6)::timestamp AT TIME ZONE 'UTC' AND first_awarded_at<=$2", g.Owner, s.Clock.Now()).Scan(&g.Value)
 		case "evening":
 			g.Unit = "review"
 			e = tx.QueryRow(ctx, "SELECT CASE WHEN EXISTS(SELECT 1 FROM daily_reviews WHERE owner_id=$1 AND local_date=($2::timestamptz AT TIME ZONE 'UTC')::date) THEN 1 ELSE 0 END", g.Owner, s.Clock.Now()).Scan(&g.Value)
@@ -95,5 +95,17 @@ func revokePair(ctx context.Context, tx pgx.Tx, a, b string) error {
 		return e
 	}
 	_, e = tx.Exec(ctx, "UPDATE social_profiles SET partner_id=NULL,nudges=false,version=version+1 WHERE (owner_id=$1 AND partner_id=$2) OR(owner_id=$2 AND partner_id=$1)", a, b)
+	if e != nil {
+		return e
+	}
+	_, e = tx.Exec(ctx, "UPDATE social_members m SET state='left',share=false,leaderboard=false,version=m.version+1 FROM social_rooms r WHERE r.id=m.room_id AND ((r.owner_id=$1 AND m.owner_id=$2) OR(r.owner_id=$2 AND m.owner_id=$1)) AND m.state IN('joined','invited')", a, b)
+	if e != nil {
+		return e
+	}
+	_, e = tx.Exec(ctx, `UPDATE notification_invite_sources s SET active=false WHERE (s.recipient_id=$1 OR s.recipient_id=$2) AND (EXISTS(SELECT 1 FROM social_friends f WHERE f.id=s.id AND ((f.sender=$1 AND f.recipient=$2) OR(f.sender=$2 AND f.recipient=$1))) OR EXISTS(SELECT 1 FROM social_rooms r WHERE r.id=s.id AND ((r.owner_id=$1 AND s.recipient_id=$2) OR(r.owner_id=$2 AND s.recipient_id=$1))))`, a, b)
+	if e != nil {
+		return e
+	}
+	_, e = tx.Exec(ctx, `UPDATE notifications n SET active=false,version=version+1 WHERE n.owner_id IN($1,$2) AND n.source_kind='invite' AND n.active AND EXISTS(SELECT 1 FROM notification_invite_sources s WHERE s.recipient_id=n.owner_id AND s.id::text=n.source_id AND NOT s.active)`, a, b)
 	return e
 }

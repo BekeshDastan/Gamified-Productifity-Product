@@ -184,6 +184,9 @@ func (s *Service) roomAction(ctx context.Context, tx pgx.Tx, owner string, in Ro
 		if tag.RowsAffected() == 0 {
 			return nil, conflict()
 		}
+		if e = s.inviteNotification(ctx, tx, in.Recipient, r.ID); e != nil {
+			return nil, e
+		}
 	case "join":
 		if e = verified(ctx, tx, owner); e != nil {
 			return nil, e
@@ -192,11 +195,17 @@ func (s *Service) roomAction(ctx context.Context, tx pgx.Tx, owner string, in Ro
 			return nil, conflict()
 		}
 		_, e = tx.Exec(ctx, "UPDATE social_members SET state='joined',share=true,leaderboard=$3,joined_at=$4,version=version+1 WHERE room_id=$1 AND owner_id=$2", r.ID, owner, in.Leaderboard, now)
+		if e == nil {
+			e = closeInvite(ctx, tx, owner, r.ID)
+		}
 	case "leave", "reject":
 		if r.Version != in.Version || r.State != "joined" && r.State != "invited" {
 			return nil, conflict()
 		}
 		_, e = tx.Exec(ctx, "UPDATE social_members SET state='left',share=false,leaderboard=false,version=version+1 WHERE room_id=$1 AND owner_id=$2", r.ID, owner)
+		if e == nil {
+			e = closeInvite(ctx, tx, owner, r.ID)
+		}
 	case "sharing":
 		if r.Version != in.Version || r.State != "joined" {
 			return nil, conflict()
@@ -312,7 +321,7 @@ func (s *Service) fillRoom(ctx context.Context, tx pgx.Tx, viewer string, r *Roo
 	}
 	for i := range r.Members {
 		m := &r.Members[i]
-		m.Earned = r.FinalizedAt != nil && m.Amount > 0 && ((r.Mode == "coop" && r.Total >= r.Target) || (r.Mode == "pvp" && m.Rank == 1 && len(r.Members) > 1))
+		m.Earned = r.FinalizedAt != nil && m.Amount > 0 && ((r.Mode == "coop" && r.Total >= r.Target && len(r.Members) > 1) || (r.Mode == "pvp" && m.Rank == 1 && len(r.Members) > 1))
 	}
 	var c Checkin
 	e = tx.QueryRow(ctx, "SELECT id::text,amount,version FROM social_checkins WHERE room_id=$1 AND owner_id=$2 AND local_date=$3", r.ID, viewer, s.Clock.Now().UTC().Format("2006-01-02")).Scan(&c.ID, &c.Amount, &c.Version)
@@ -355,6 +364,11 @@ func (s *Service) rooms(ctx context.Context, tx pgx.Tx, owner string) ([]Room, e
 		}
 		if e = s.fillRoom(ctx, tx, owner, &r); e != nil {
 			return nil, e
+		}
+		if r.FinalizedAt != nil {
+			if e = s.settle(ctx, tx, r); e != nil {
+				return nil, e
+			}
 		}
 		out = append(out, r)
 	}

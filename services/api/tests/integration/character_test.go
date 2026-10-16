@@ -191,8 +191,8 @@ func TestCharacterAchievementEventsRepeatsCorrectionsAndMassRecompute(t *testing
 		if d.Metric == character.CompletedSeasons && (!d.Available || d.Active || d.Current != 0) {
 			t.Fatal("empty season history must be available with zero completions", d)
 		}
-		if d.Metric == character.CoopChallenges && (d.Active || d.Available) {
-			t.Fatal("invented unavailable evidence", d)
+		if d.Metric == character.CoopChallenges && (!d.Available || d.Active || d.Current != 0) {
+			t.Fatal("empty co-op history must be available with zero completions", d)
 		}
 	}
 }

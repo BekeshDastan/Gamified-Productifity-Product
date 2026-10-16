@@ -51,11 +51,24 @@ func databaseWithTimeout(t *testing.T, timeout time.Duration) (*pgxpool.Pool, co
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		cleanup, stop := context.WithTimeout(context.Background(), 10*time.Second)
+		cleanup, stop := context.WithTimeout(context.Background(), 60*time.Second)
 		defer stop()
-		_, err := admin.Exec(cleanup, "DROP SCHEMA "+quoted+" CASCADE")
+		// A full schema now contains hundreds of relations and indexes. Parallel
+		// DROP CASCADE operations can exhaust PostgreSQL's shared lock table.
+		tx, err := admin.Begin(cleanup)
+		if err == nil {
+			_, err = tx.Exec(cleanup, "SELECT pg_advisory_xact_lock(210022)")
+			if err == nil {
+				_, err = tx.Exec(cleanup, "DROP SCHEMA "+quoted+" CASCADE")
+			}
+			if err == nil {
+				err = tx.Commit(cleanup)
+			} else {
+				_ = tx.Rollback(cleanup)
+			}
+		}
 		if err != nil {
-			t.Error("test schema cleanup failed")
+			t.Errorf("test schema cleanup failed: %v", err)
 		}
 		_ = admin.Close(cleanup)
 	})

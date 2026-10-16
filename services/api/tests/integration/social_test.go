@@ -7,9 +7,90 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/auth"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/social"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
+
+func TestSocialAutomaticSourcesAndPrivateDashboard(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "sources-a@example.test")
+	b, other := f.signedIn(t, "sources-b@example.test")
+	socialVerify(t, f, who.ID)
+	socialVerify(t, f, other.ID)
+	socialLink(t, f, a, b)
+	old := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("secret old task")))
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+old.ID+"/complete", version(old), map[string]any{}))
+	f.clock.Advance(time.Second)
+	id := socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", social.RoomAction{Action: "create", Name: "Команда", Mode: "coop", Metric: "tasks", Unit: "tasks", Target: 2, DailyCap: 10, Days: 2, Consent: true})).ID
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/rooms", "", social.RoomAction{Action: "invite", ID: id, Recipient: other.ID}))
+	list := socialRead[[]social.Room](t, f.privateRequest(t, b, "GET", "/social/rooms", "", nil))
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/rooms", "", social.RoomAction{Action: "join", ID: id, Consent: true, Version: 1, RulesHash: list[0].RulesHash}))
+	f.clock.Advance(time.Second)
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("secret task title")))
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]any{}))
+	f.clock.Advance(time.Second)
+	check := func(want int64) {
+		t.Helper()
+		response := f.privateRequest(t, b, "GET", "/social/dashboard", "", nil)
+		d := socialRead[social.Dashboard](t, response)
+		if len(d.Rooms) != 1 || d.Rooms[0].Total != want {
+			t.Fatal(d.Rooms)
+		}
+		for _, secret := range []string{"secret task", "sources-a@example.test", old.ID, q.ID} {
+			if strings.Contains(string(response.body), secret) {
+				t.Fatal("private source leaked", secret)
+			}
+		}
+	}
+	check(1)
+	check(1)
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/reopen", version(q), map[string]any{"reason": "Correction"}))
+	check(0)
+	q = readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]any{}))
+	check(1)
+	if r := f.privateRequest(t, b, "POST", "/social/rooms", "", social.RoomAction{Action: "checkin", ID: id, Amount: 99}); r.status != 422 {
+		t.Fatal("manual injection into recorded metric", r.status)
+	}
+}
+
+func TestSocialModerationHidingRequiresOwnerOrAdmin(t *testing.T) {
+	f := newAuthFixture(t, auth.DefaultLimits())
+	a, who := f.signedIn(t, "mod-a@example.test")
+	b, other := f.signedIn(t, "mod-b@example.test")
+	socialVerify(t, f, who.ID)
+	socialLink(t, f, a, b)
+	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Private task")))
+	readQuest(t, f.privateRequest(t, a, "POST", "/quests/"+q.ID+"/complete", version(q), map[string]any{}))
+	f.privateRequest(t, a, "GET", "/achievements", "", nil)
+	v := socialRead[social.Community](t, f.privateRequest(t, a, "GET", "/social/community", "", nil))
+	if len(v.Publishable) == 0 {
+		t.Fatal("missing achievement")
+	}
+	p := v.Publishable[0]
+	socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/community", "", social.CommunityAction{Action: "publish", Consent: true, SourceKey: p.Key, SourceVersion: p.Version}))
+	v = socialRead[social.Community](t, f.privateRequest(t, b, "GET", "/social/community", "", nil))
+	post := v.Feed[0].ID
+	if r := f.privateRequest(t, b, "POST", "/social/moderation", "", social.ModerationAction{Action: "hide", ID: post}); r.status != 404 {
+		t.Fatal("foreign hide", r.status)
+	}
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/moderation", "", social.ModerationAction{Action: "report", ID: post, Reason: "privacy"}))
+	if _, e := f.pool.Exec(f.ctx, "UPDATE users SET role='admin' WHERE id=$1", other.ID); e != nil {
+		t.Fatal(e)
+	}
+	socialRead[social.Receipt](t, f.privateRequest(t, b, "POST", "/social/moderation", "", social.ModerationAction{Action: "hide", ID: post}))
+	v = socialRead[social.Community](t, f.privateRequest(t, a, "GET", "/social/community", "", nil))
+	if len(v.Feed) != 0 {
+		t.Fatal("moderated feed")
+	}
+	if r := f.privateRequest(t, a, "POST", "/social/community", "", social.CommunityAction{Action: "publish", Consent: true, SourceKey: p.Key, SourceVersion: p.Version}); r.status != 409 {
+		t.Fatal("republish moderated material", r.status)
+	}
+	m := socialRead[social.Moderation](t, f.privateRequest(t, b, "GET", "/social/moderation", "", nil))
+	if !m.Admin || len(m.Reports) != 1 || !m.Reports[0].Resolved {
+		t.Fatal(m)
+	}
+}
 
 func TestSocialCoopConsentCorrectionsAndLeaving(t *testing.T) {
 	f := newAuthFixture(t, auth.DefaultLimits())
@@ -123,6 +204,13 @@ func TestSocialEvidenceOnlyAssignedPartnerAndRevocable(t *testing.T) {
 	list = socialRead[[]social.Room](t, f.privateRequest(t, a, "GET", "/social/rooms", "", nil))
 	q := readQuest(t, f.privateRequest(t, a, "POST", "/quests", "", questInput("Secret task")))
 	file := readAttachment(t, f.uploadFile(t, a, q, "proof.txt", []byte("only partner sees this")))
+	files := socialRead[[]social.ReviewFile](t, f.privateRequest(t, a, "GET", "/social/review-files", "", nil))
+	if len(files) != 1 || files[0].ID != file.ID {
+		t.Fatal("own evidence picker", files)
+	}
+	if files = socialRead[[]social.ReviewFile](t, f.privateRequest(t, b, "GET", "/social/review-files", "", nil)); len(files) != 0 {
+		t.Fatal("foreign evidence in picker", files)
+	}
 	review := socialRead[social.Receipt](t, f.privateRequest(t, a, "POST", "/social/reviews", "", social.ReviewAction{Action: "request", ID: list[0].Checkin.ID, Recipient: other.ID, AttachmentID: file.ID, Consent: true}))
 	path := "/social/reviews/" + review.ID + "/file"
 	if r := f.privateRequest(t, b, "GET", path, "", nil); r.status != 200 || string(r.body) != "only partner sees this" {

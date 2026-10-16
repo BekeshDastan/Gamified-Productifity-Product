@@ -37,6 +37,18 @@ func (s *Service) moderate(ctx context.Context, tx pgx.Tx, owner string, in Mode
 		return nil, e
 	}
 	switch in.Action {
+	case "resolve":
+		if !admin || !privateapi.UUID(in.ID) {
+			return nil, missing()
+		}
+		tag, e := tx.Exec(ctx, "UPDATE social_reports SET resolved=true WHERE id=$1", in.ID)
+		if e != nil {
+			return nil, e
+		}
+		if tag.RowsAffected() == 0 {
+			return nil, missing()
+		}
+		return receipt(in.ID), audit(ctx, tx, owner, "report_resolved", in.ID, now)
 	case "block", "unblock":
 		if !privateapi.UUID(in.Target) || in.Target == owner {
 			return nil, missing()
@@ -101,8 +113,22 @@ func (s *Service) moderate(ctx context.Context, tx pgx.Tx, owner string, in Mode
 			}
 			post = &in.ID
 		}
-		if e := friends(ctx, tx, owner, in.Target); e != nil {
-			return nil, e
+		if post != nil {
+			if e := friends(ctx, tx, owner, in.Target); e != nil {
+				return nil, e
+			}
+		} else {
+			// Unwanted invitations can be reported without accepting them, including after a block.
+			if !privateapi.UUID(in.Target) || in.Target == owner {
+				return nil, missing()
+			}
+			var known bool
+			if e := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM social_friends WHERE (sender=$1 AND recipient=$2) OR(sender=$2 AND recipient=$1)) OR EXISTS(SELECT 1 FROM social_members a JOIN social_members b ON b.room_id=a.room_id WHERE a.owner_id=$1 AND b.owner_id=$2)", owner, in.Target).Scan(&known); e != nil {
+				return nil, e
+			}
+			if !known {
+				return nil, missing()
+			}
 		}
 		var count int
 		if e := tx.QueryRow(ctx, "SELECT count(*) FROM social_reports WHERE owner_id=$1 AND created_at>$2::timestamptz-interval '24 hours'", owner, now).Scan(&count); e != nil {

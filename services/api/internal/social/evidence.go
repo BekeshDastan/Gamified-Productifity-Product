@@ -20,24 +20,25 @@ type ReviewAction struct {
 	Version      int64  `json:"version"`
 }
 type Review struct {
-	ID       string `json:"id"`
-	Owner    string `json:"owner"`
-	Reviewer string `json:"reviewer"`
-	RoomID   string `json:"room_id"`
-	RoomName string `json:"room_name"`
-	Amount   int64  `json:"amount"`
-	Unit     string `json:"unit"`
-	State    string `json:"state"`
-	Version  int64  `json:"version"`
-	File     bool   `json:"file"`
-	Current  bool   `json:"current"`
+	CheckinID string `json:"checkin_id"`
+	ID        string `json:"id"`
+	Owner     string `json:"owner"`
+	Reviewer  string `json:"reviewer"`
+	RoomID    string `json:"room_id"`
+	RoomName  string `json:"room_name"`
+	Amount    int64  `json:"amount"`
+	Unit      string `json:"unit"`
+	State     string `json:"state"`
+	Version   int64  `json:"version"`
+	File      bool   `json:"file"`
+	Current   bool   `json:"matches_version"`
 }
 
-const reviewSelect = `SELECT v.id::text,v.owner_id::text,v.reviewer_id::text,c.room_id::text,r.name,c.amount,r.unit,v.state,v.version,v.attachment_id IS NOT NULL,c.version=v.checkin_version FROM social_reviews v JOIN social_checkins c ON c.id=v.checkin_id JOIN social_rooms r ON r.id=c.room_id `
+const reviewSelect = `SELECT v.id::text,v.checkin_id::text,v.owner_id::text,v.reviewer_id::text,c.room_id::text,r.name,c.amount,r.unit,v.state,v.version,v.attachment_id IS NOT NULL,c.version=v.checkin_version FROM social_reviews v JOIN social_checkins c ON c.id=v.checkin_id JOIN social_rooms r ON r.id=c.room_id `
 
 func scanReview(row pgx.Row) (Review, error) {
 	var v Review
-	e := row.Scan(&v.ID, &v.Owner, &v.Reviewer, &v.RoomID, &v.RoomName, &v.Amount, &v.Unit, &v.State, &v.Version, &v.File, &v.Current)
+	e := row.Scan(&v.ID, &v.CheckinID, &v.Owner, &v.Reviewer, &v.RoomID, &v.RoomName, &v.Amount, &v.Unit, &v.State, &v.Version, &v.File, &v.Current)
 	return v, e
 }
 func (s *Service) review(ctx context.Context, tx pgx.Tx, owner, id string) (Review, error) {

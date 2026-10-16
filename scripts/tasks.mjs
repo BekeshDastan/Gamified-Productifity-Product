@@ -127,7 +127,7 @@ const commands = {
       if (!env[setting])
         throw new Error(`${setting} must be explicitly configured; see docs/runbook.md`);
     }
-    const args = ["test", "-v", "-tags=integration", "-count=1", "-timeout=15m"];
+    const args = ["test", "-v", "-tags=integration", "-count=1", "-timeout=25m"];
     if (env.ASCEND_COVERAGE_PACKAGE) {
       mkdirSync(path.join(root, ".data"), { recursive: true });
       args.push(

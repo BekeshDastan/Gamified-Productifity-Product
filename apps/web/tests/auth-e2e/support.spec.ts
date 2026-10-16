@@ -68,7 +68,7 @@ test("support privacy choices persist and failed saves preserve the draft", asyn
   await expect(activity).not.toBeChecked();
   await expect(awards).toBeChecked();
   await expect(discovery).toBeChecked();
-  await expect(page.getByText("Сейчас всё доступно только вам", { exact: true })).toBeVisible();
+  await expect(page.getByText("Личные записи остаются вашими", { exact: true })).toBeVisible();
 });
 
 test("support session cards revoke only the selected device and retain local access", async ({

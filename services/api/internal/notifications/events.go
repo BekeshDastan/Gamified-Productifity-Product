@@ -45,7 +45,7 @@ func (s *Service) InviteCreated(ctx context.Context, tx pgx.Tx, recipient, id st
 	if !exists {
 		return nil
 	}
-	_, _, e := s.EmitInTx(ctx, tx, recipient, Event{Kind: "invite", SourceKind: "invite", SourceID: id, SourceRevision: revision, EventKey: "invite/" + id, URL: "/app/notifications"})
+	_, _, e := s.EmitInTx(ctx, tx, recipient, Event{Kind: "invite", SourceKind: "invite", SourceID: id, SourceRevision: revision, EventKey: "invite/" + id, URL: "/app/friends"})
 	return e
 }
 func (s *Service) eventCurrent(ctx context.Context, tx pgx.Tx, owner string, n Notification) (bool, error) {

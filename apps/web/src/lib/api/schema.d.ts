@@ -3351,6 +3351,166 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/social/friends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSocialFriends"];
+        put?: never;
+        post: operations["changeSocialFriends"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSocialGrant"];
+        put?: never;
+        post: operations["changeSocialGrant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/rooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSocialRoom"];
+        put?: never;
+        post: operations["changeSocialRoom"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSocialReview"];
+        put?: never;
+        post: operations["changeSocialReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/community": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSocialCommunity"];
+        put?: never;
+        post: operations["changeSocialCommunity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/moderation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSocialModeration"];
+        put?: never;
+        post: operations["changeSocialModeration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/review-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSocialFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getSocialDashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["watchSocialChanges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/social/reviews/{id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["downloadSocialEvidence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6050,6 +6210,375 @@ export interface components {
             from: string;
             /** Format: date */
             to: string;
+        };
+        SocialFriends: {
+            /** Format: uuid */
+            code: string;
+            verified: boolean;
+            items: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                user_id: string;
+                nickname: string;
+                /** @enum {string} */
+                state: "pending" | "accepted";
+                incoming: boolean;
+                version: number;
+            }[];
+        };
+        SocialGrant: {
+            /** Format: uuid */
+            owner: string;
+            /** Format: uuid */
+            recipient: string;
+            /** @enum {string} */
+            metric: "regularity" | "evening" | "challenge";
+            scope: string;
+            value: number;
+            unit: string;
+        };
+        SocialRoom: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            owner: string;
+            name: string;
+            /** @enum {string} */
+            mode: "coop" | "pvp";
+            /** @enum {string} */
+            metric: "tasks" | "focus" | "reviews" | "manual";
+            unit: string;
+            target: number;
+            daily_cap: number;
+            /** Format: date-time */
+            starts_at: string;
+            /** Format: date-time */
+            ends_at: string;
+            rules_hash: string;
+            /** Format: date-time */
+            finalized_at: string | null;
+            /** @enum {string} */
+            state: "invited" | "joined" | "left" | "rejected";
+            share: boolean;
+            leaderboard: boolean;
+            version: number;
+            total: number;
+            members: {
+                /** Format: uuid */
+                user_id: string;
+                nickname: string;
+                amount: number;
+                rank: number;
+                earned: boolean;
+                /** @enum {string} */
+                confirmation: "recorded" | "self_report" | "partner_confirmed";
+            }[];
+            checkin: {
+                /** Format: uuid */
+                id: string;
+                amount: number;
+                version: number;
+            } | null;
+        };
+        SocialReview: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            checkin_id: string;
+            /** Format: uuid */
+            owner: string;
+            /** Format: uuid */
+            reviewer: string;
+            /** Format: uuid */
+            room_id: string;
+            room_name: string;
+            amount: number;
+            unit: string;
+            /** @enum {string} */
+            state: "pending" | "accepted" | "rejected" | "disputed" | "withdrawn";
+            version: number;
+            file: boolean;
+            matches_version: boolean;
+        };
+        SocialFile: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        SocialCommunity: {
+            /** Format: uuid */
+            partner: string | null;
+            nudges: boolean;
+            version: number;
+            feed: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                owner: string;
+                nickname: string;
+                title: string;
+                /** Format: date-time */
+                created_at: string;
+            }[];
+            publishable: {
+                key: string;
+                version: string;
+                title: string;
+            }[];
+            inbox: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                template: "small_step" | "rest" | "celebrate";
+                nickname: string;
+                /** Format: date-time */
+                created_at: string;
+            }[];
+        };
+        SocialModeration: {
+            blocks: {
+                /** Format: uuid */
+                id: string;
+                nickname: string;
+            }[];
+            reports: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                target: string;
+                /** Format: uuid */
+                post_id: string | null;
+                reason: string;
+                resolved: boolean;
+            }[];
+            admin: boolean;
+        };
+        SocialDashboard: {
+            /** Format: uuid */
+            owner: string;
+            nickname: string;
+            friends: {
+                /** Format: uuid */
+                code: string;
+                verified: boolean;
+                items: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    user_id: string;
+                    nickname: string;
+                    /** @enum {string} */
+                    state: "pending" | "accepted";
+                    incoming: boolean;
+                    version: number;
+                }[];
+            };
+            grants: {
+                /** Format: uuid */
+                owner: string;
+                /** Format: uuid */
+                recipient: string;
+                /** @enum {string} */
+                metric: "regularity" | "evening" | "challenge";
+                scope: string;
+                value: number;
+                unit: string;
+            }[];
+            rooms: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                owner: string;
+                name: string;
+                /** @enum {string} */
+                mode: "coop" | "pvp";
+                /** @enum {string} */
+                metric: "tasks" | "focus" | "reviews" | "manual";
+                unit: string;
+                target: number;
+                daily_cap: number;
+                /** Format: date-time */
+                starts_at: string;
+                /** Format: date-time */
+                ends_at: string;
+                rules_hash: string;
+                /** Format: date-time */
+                finalized_at: string | null;
+                /** @enum {string} */
+                state: "invited" | "joined" | "left" | "rejected";
+                share: boolean;
+                leaderboard: boolean;
+                version: number;
+                total: number;
+                members: {
+                    /** Format: uuid */
+                    user_id: string;
+                    nickname: string;
+                    amount: number;
+                    rank: number;
+                    earned: boolean;
+                    /** @enum {string} */
+                    confirmation: "recorded" | "self_report" | "partner_confirmed";
+                }[];
+                checkin: {
+                    /** Format: uuid */
+                    id: string;
+                    amount: number;
+                    version: number;
+                } | null;
+            }[];
+            reviews: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                checkin_id: string;
+                /** Format: uuid */
+                owner: string;
+                /** Format: uuid */
+                reviewer: string;
+                /** Format: uuid */
+                room_id: string;
+                room_name: string;
+                amount: number;
+                unit: string;
+                /** @enum {string} */
+                state: "pending" | "accepted" | "rejected" | "disputed" | "withdrawn";
+                version: number;
+                file: boolean;
+                matches_version: boolean;
+            }[];
+            files: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+            }[];
+            community: {
+                /** Format: uuid */
+                partner: string | null;
+                nudges: boolean;
+                version: number;
+                feed: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    owner: string;
+                    nickname: string;
+                    title: string;
+                    /** Format: date-time */
+                    created_at: string;
+                }[];
+                publishable: {
+                    key: string;
+                    version: string;
+                    title: string;
+                }[];
+                inbox: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @enum {string} */
+                    template: "small_step" | "rest" | "celebrate";
+                    nickname: string;
+                    /** Format: date-time */
+                    created_at: string;
+                }[];
+            };
+            moderation: {
+                blocks: {
+                    /** Format: uuid */
+                    id: string;
+                    nickname: string;
+                }[];
+                reports: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    target: string;
+                    /** Format: uuid */
+                    post_id: string | null;
+                    reason: string;
+                    resolved: boolean;
+                }[];
+                admin: boolean;
+            };
+        };
+        SocialReceipt: {
+            /** Format: uuid */
+            id: string;
+            ok: boolean;
+        };
+        SocialFriendsAction: {
+            /** @enum {string} */
+            action: "request" | "rotate" | "accept" | "reject" | "remove";
+            /** Format: uuid */
+            code?: string;
+            /** Format: uuid */
+            id?: string;
+            version?: number;
+        };
+        SocialGrantAction: {
+            /** Format: uuid */
+            recipient: string;
+            /** @enum {string} */
+            metric: "regularity" | "evening" | "challenge";
+            scope: string;
+            allow: boolean;
+        };
+        SocialRoomAction: {
+            /** @enum {string} */
+            action: "create" | "invite" | "join" | "leave" | "reject" | "sharing" | "checkin" | "finalize";
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** @enum {string} */
+            mode?: "coop" | "pvp";
+            /** @enum {string} */
+            metric?: "tasks" | "focus" | "reviews" | "manual";
+            /** @enum {string} */
+            unit?: "tasks" | "minutes" | "reviews" | "count" | "pages";
+            target?: number;
+            daily_cap?: number;
+            days?: number;
+            /** Format: uuid */
+            recipient?: string;
+            rules_hash?: string;
+            consent?: boolean;
+            leaderboard?: boolean;
+            version?: number;
+            amount?: number;
+        };
+        SocialReviewAction: {
+            /** @enum {string} */
+            action: "request" | "accepted" | "rejected" | "disputed" | "withdrawn";
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            recipient?: string;
+            attachment_id?: string | "";
+            consent?: boolean;
+            version?: number;
+        };
+        SocialCommunityAction: {
+            /** @enum {string} */
+            action: "preferences" | "nudge" | "publish";
+            recipient?: string | "";
+            enabled?: boolean;
+            version?: number;
+            /** @enum {string} */
+            template?: "small_step" | "rest" | "celebrate";
+            source_key?: string;
+            source_version?: string;
+            consent?: boolean;
+        };
+        SocialModerationAction: {
+            /** @enum {string} */
+            action: "block" | "unblock" | "hide" | "report" | "resolve";
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            target?: string;
+            /** @enum {string} */
+            reason?: "spam" | "abuse" | "privacy" | "other";
         };
     };
     responses: {
@@ -13870,6 +14399,434 @@ export interface operations {
             409: components["responses"]["Error"];
             422: components["responses"]["Error"];
             429: components["responses"]["Error"];
+        };
+    };
+    getSocialFriends: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialFriends"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    changeSocialFriends: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SocialFriendsAction"];
+            };
+        };
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialReceipt"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getSocialGrant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialGrant"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    changeSocialGrant: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SocialGrantAction"];
+            };
+        };
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialReceipt"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getSocialRoom: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialRoom"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    changeSocialRoom: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SocialRoomAction"];
+            };
+        };
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialReceipt"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getSocialReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialReview"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    changeSocialReview: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SocialReviewAction"];
+            };
+        };
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialReceipt"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getSocialCommunity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialCommunity"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    changeSocialCommunity: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SocialCommunityAction"];
+            };
+        };
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialReceipt"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getSocialModeration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialModeration"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    changeSocialModeration: {
+        parameters: {
+            query?: never;
+            header: {
+                "X-CSRF-Token": components["parameters"]["CSRF"];
+                Origin: components["parameters"]["Origin"];
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SocialModerationAction"];
+            };
+        };
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialReceipt"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getSocialFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialFile"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    getSocialDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Только разрешённые данные; Cache-Control: no-store */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SocialDashboard"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    watchSocialChanges: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Короткий поток непрозрачных токенов инвалидирования текущего пользователя */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            default: components["responses"]["Error"];
+        };
+    };
+    downloadSocialEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Приватное доказательство только назначенному партнёру и автору */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            default: components["responses"]["Error"];
         };
     };
 }

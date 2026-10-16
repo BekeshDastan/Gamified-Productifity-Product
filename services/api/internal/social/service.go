@@ -18,7 +18,8 @@ import (
 
 type Service struct {
 	*privateapi.Service
-	files blob.BlobStore
+	files   blob.BlobStore
+	invites InviteObserver
 }
 
 func NewService(pool *pgxpool.Pool, clock platform.Clock) *Service {
@@ -180,6 +181,9 @@ func (s *Service) friendAction(ctx context.Context, tx pgx.Tx, owner string, in 
 		if e != nil {
 			return nil, e
 		}
+		if e = s.inviteNotification(ctx, tx, target, id); e != nil {
+			return nil, e
+		}
 		return receipt(id), audit(ctx, tx, owner, "request", id, now)
 	}
 	if !privateapi.UUID(in.ID) {
@@ -226,6 +230,9 @@ func (s *Service) friendAction(ctx context.Context, tx pgx.Tx, owner string, in 
 	if e != nil {
 		return nil, e
 	}
+	if e = closeInvite(ctx, tx, b, in.ID); e != nil {
+		return nil, e
+	}
 	if next != "accepted" {
 		if e := revokePair(ctx, tx, a, b); e != nil {
 			return nil, e
@@ -236,132 +243,17 @@ func (s *Service) friendAction(ctx context.Context, tx pgx.Tx, owner string, in 
 func (s *Service) Mount(router chi.Router, protect func(http.Handler) http.Handler) {
 	router.Group(func(r chi.Router) {
 		r.Use(protect)
-		r.Get("/api/v1/social/moderation", func(w http.ResponseWriter, r *http.Request) {
-			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-				if e := lock(ctx, tx, o); e != nil {
-					return nil, e
-				}
-				return s.moderation(ctx, tx, o)
-			})
-			s.Reply(w, r, out, e)
-		})
-		r.Post("/api/v1/social/moderation", func(w http.ResponseWriter, r *http.Request) {
-			privateapi.Decode(s.Service, w, r, func(in ModerationAction) (any, error) {
-				return s.Mutate(r, in, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-					if e := lock(ctx, tx, o); e != nil {
-						return nil, e
-					}
-					return s.moderate(ctx, tx, o, in)
-				})
-			})
-		})
-		r.Get("/api/v1/social/community", func(w http.ResponseWriter, r *http.Request) {
-			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-				if e := lock(ctx, tx, o); e != nil {
-					return nil, e
-				}
-				return s.community(ctx, tx, o)
-			})
-			s.Reply(w, r, out, e)
-		})
-		r.Post("/api/v1/social/community", func(w http.ResponseWriter, r *http.Request) {
-			privateapi.Decode(s.Service, w, r, func(in CommunityAction) (any, error) {
-				return s.Mutate(r, in, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-					if e := lock(ctx, tx, o); e != nil {
-						return nil, e
-					}
-					return s.communityAction(ctx, tx, o, in)
-				})
-			})
-		})
+		route[FriendAction](s, r, "/api/v1/social/friends", func(c context.Context, t pgx.Tx, o string) (any, error) { return s.listFriends(c, t, o) }, s.friendAction)
+		route[GrantAction](s, r, "/api/v1/social/grants", func(c context.Context, t pgx.Tx, o string) (any, error) { return s.grants(c, t, o) }, s.setGrant)
+		route[RoomAction](s, r, "/api/v1/social/rooms", func(c context.Context, t pgx.Tx, o string) (any, error) { return s.rooms(c, t, o) }, s.roomAction)
+		route[ReviewAction](s, r, "/api/v1/social/reviews", func(c context.Context, t pgx.Tx, o string) (any, error) { return s.reviews(c, t, o) }, s.reviewAction)
+		route[CommunityAction](s, r, "/api/v1/social/community", func(c context.Context, t pgx.Tx, o string) (any, error) { return s.community(c, t, o) }, s.communityAction)
+		route[ModerationAction](s, r, "/api/v1/social/moderation", func(c context.Context, t pgx.Tx, o string) (any, error) { return s.moderation(c, t, o) }, s.moderate)
+		route[struct{}](s, r, "/api/v1/social/review-files", func(c context.Context, t pgx.Tx, o string) (any, error) { return s.reviewFiles(c, t, o) }, nil)
+		route[struct{}](s, r, "/api/v1/social/dashboard", s.dashboard, nil)
+		r.Get("/api/v1/social/changes", s.changes)
 		r.Get("/api/v1/social/reviews/{id}/file", s.downloadReview)
-		r.Get("/api/v1/social/review-files", func(w http.ResponseWriter, r *http.Request) {
-			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-				if e := lock(ctx, tx, o); e != nil {
-					return nil, e
-				}
-				return s.reviewFiles(ctx, tx, o)
-			})
-			s.Reply(w, r, out, e)
-		})
-		r.Get("/api/v1/social/reviews", func(w http.ResponseWriter, r *http.Request) {
-			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-				if e := lock(ctx, tx, o); e != nil {
-					return nil, e
-				}
-				return s.reviews(ctx, tx, o)
-			})
-			s.Reply(w, r, out, e)
-		})
-		r.Post("/api/v1/social/reviews", func(w http.ResponseWriter, r *http.Request) {
-			privateapi.Decode(s.Service, w, r, func(in ReviewAction) (any, error) {
-				return s.Mutate(r, in, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-					if e := lock(ctx, tx, o); e != nil {
-						return nil, e
-					}
-					return s.reviewAction(ctx, tx, o, in)
-				})
-			})
-		})
-		r.Get("/api/v1/social/rooms", func(w http.ResponseWriter, r *http.Request) {
-			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-				if e := lock(ctx, tx, o); e != nil {
-					return nil, e
-				}
-				return s.rooms(ctx, tx, o)
-			})
-			s.Reply(w, r, out, e)
-		})
-		r.Post("/api/v1/social/rooms", func(w http.ResponseWriter, r *http.Request) {
-			privateapi.Decode(s.Service, w, r, func(in RoomAction) (any, error) {
-				return s.Mutate(r, in, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-					if e := lock(ctx, tx, o); e != nil {
-						return nil, e
-					}
-					return s.roomAction(ctx, tx, o, in)
-				})
-			})
-		})
-		r.Get("/api/v1/social/grants", func(w http.ResponseWriter, r *http.Request) {
-			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-				if e := lock(ctx, tx, o); e != nil {
-					return nil, e
-				}
-				return s.grants(ctx, tx, o)
-			})
-			s.Reply(w, r, out, e)
-		})
-		r.Post("/api/v1/social/grants", func(w http.ResponseWriter, r *http.Request) {
-			privateapi.Decode(s.Service, w, r, func(in GrantAction) (any, error) {
-				return s.Mutate(r, in, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-					if e := lock(ctx, tx, o); e != nil {
-						return nil, e
-					}
-					return s.setGrant(ctx, tx, o, in)
-				})
-			})
-		})
-		r.Get("/api/v1/social/friends", func(w http.ResponseWriter, r *http.Request) {
-			out, e := s.Read(r, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-				if e := lock(ctx, tx, o); e != nil {
-					return nil, e
-				}
-				return s.listFriends(ctx, tx, o)
-			})
-			s.Reply(w, r, out, e)
-		})
-		r.Post("/api/v1/social/friends", func(w http.ResponseWriter, r *http.Request) {
-			privateapi.Decode(s.Service, w, r, func(in FriendAction) (any, error) {
-				return s.Mutate(r, in, func(ctx context.Context, tx pgx.Tx, o string) (any, error) {
-					if e := lock(ctx, tx, o); e != nil {
-						return nil, e
-					}
-					return s.friendAction(ctx, tx, o, in)
-				})
-			})
-		})
 	})
 }
-
 func (s *Service) WithFiles(files blob.BlobStore) *Service { s.files = files; return s }
 func isMissing(e error) bool                               { var p *platform.APIError; return errors.As(e, &p) && p.Status == 404 }

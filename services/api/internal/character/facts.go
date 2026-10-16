@@ -3,12 +3,17 @@ package character
 import (
 	"context"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/habits"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/social"
 	"github.com/jackc/pgx/v5"
 )
 
 func (s *Service) facts(ctx context.Context, tx pgx.Tx, owner string, advance ...bool) (Facts, []habits.Evidence, bool, error) {
+	if e := social.NewService(s.pool, s.clock).ReconcileInTx(ctx, tx, owner); e != nil {
+		return Facts{}, nil, false, e
+	}
 	f := Facts{Values: map[Metric]int64{}, Available: map[Metric]bool{}}
 	queries := map[Metric]string{
+		CoopChallenges:   "SELECT count(*) FROM social_results s JOIN social_rooms r ON r.id=s.room_id WHERE s.owner_id=$1 AND s.earned AND r.mode='coop'",
 		CompletedSeasons: "SELECT count(*) FROM personal_seasons WHERE owner_id=$1 AND state='completed' AND activated_at IS NOT NULL",
 		Tasks:            "SELECT count(*) FROM quests q WHERE owner_id=$1 AND status='completed' AND NOT EXISTS(SELECT 1 FROM quests c WHERE c.owner_id=q.owner_id AND c.parent_id=q.id)",
 		ImportantTasks:   "SELECT count(*) FROM quests q WHERE owner_id=$1 AND status='completed' AND payload->>'priority' ='high' AND NOT EXISTS(SELECT 1 FROM quests c WHERE c.owner_id=q.owner_id AND c.parent_id=q.id)",

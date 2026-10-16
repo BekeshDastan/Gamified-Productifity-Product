@@ -1,5 +1,6 @@
 import {
   House,
+  Users,
   CalendarDays,
   ListTodo,
   Flag,
@@ -51,6 +52,7 @@ export const navigationGroups = [
   },
 ];
 export const utilityNavigation = [
+  { href: "/app/friends", label: "Друзья и испытания", icon: Users },
   { href: "/app/notifications", label: "Уведомления", icon: Bell },
   { href: "/app/settings", label: "Настройки", icon: Settings },
   { href: "/app/guide", label: "Как пользоваться", icon: Compass },

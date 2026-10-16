@@ -68,7 +68,7 @@ function PrivacyForm({ initial, ownerId }: { initial: Settings; ownerId: string 
       <div className="privacy-status">
         <LockKeyhole size={20} aria-hidden="true" />
         <div>
-          <strong>Сейчас всё доступно только вам</strong>
+          <strong>Личные записи остаются вашими</strong>
           <p>Задачи, цели, дневник и история остаются личными.</p>
         </div>
       </div>
@@ -94,7 +94,7 @@ function PrivacyForm({ initial, ownerId }: { initial: Settings; ownerId: string 
             {
               value: "friends",
               label: "Подтверждённые друзья",
-              description: "Когда появится раздел друзей",
+              description: "Псевдоним для взаимных приглашений",
               icon: Users,
               tone: "blue",
             },
@@ -107,7 +107,7 @@ function PrivacyForm({ initial, ownerId }: { initial: Settings; ownerId: string 
                 "share_activity",
                 "Разрешать делиться активностью с друзьями",
                 "Активность",
-                "Предпочтение для будущих сводок прогресса",
+                "Каждая сводка включается отдельно в карточке друга",
                 Activity,
                 "blue",
               ],
@@ -115,7 +115,7 @@ function PrivacyForm({ initial, ownerId }: { initial: Settings; ownerId: string 
                 "share_achievements",
                 "Разрешать делиться достижениями с друзьями",
                 "Достижения",
-                "Предпочтение для будущих публикаций наград",
+                "Публикация каждого достижения — отдельное действие",
                 Award,
                 "gold",
               ],
@@ -123,7 +123,7 @@ function PrivacyForm({ initial, ownerId }: { initial: Settings; ownerId: string 
                 "discoverable",
                 "Разрешать находить мой профиль по нику",
                 "Поиск по нику",
-                "Предпочтение для поиска профиля, без email",
+                "Дружба пока доступна только по личному коду",
                 Search,
                 "violet",
               ],
