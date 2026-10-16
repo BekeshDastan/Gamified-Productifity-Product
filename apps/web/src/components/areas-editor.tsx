@@ -20,6 +20,7 @@ import { requireAccount } from "@/lib/profile";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink, useConfirmDiscard } from "@/lib/forms/unsaved-changes";
 import { Card } from "./ui/card";
+import { ErrorState, LoadingState } from "./ui/states";
 import { Button } from "./ui/button";
 import { Input } from "./ui/field";
 import { Form } from "./ui/form";
@@ -110,14 +111,8 @@ function Labels({ kind, ownerId }: { kind: "areas" | "tags"; ownerId: string }) 
     },
   });
   if (query.isPending)
-    return <p role="status">Загружаем {kind === "areas" ? "направления" : "теги"}…</p>;
-  if (!query.data)
-    return (
-      <Card>
-        <p role="alert">Не удалось загрузить список.</p>
-        <Button onClick={() => void query.refetch()}>Повторить</Button>
-      </Card>
-    );
+    return <LoadingState label={kind === "areas" ? "Загружаем направления…" : "Загружаем теги…"} />;
+  if (!query.data) return <ErrorState error={query.error} retry={() => void query.refetch()} />;
   const count = query.data.filter((item) => !item.archived).length;
   return (
     <Card className="settings-card">
@@ -306,7 +301,7 @@ function LabelForm({
           </Button>
         )}
       </Form>
-      {saved && <p role="status">Запись сохранена.</p>}
+      {saved && !flow.form.formState.isDirty && <p role="status">Запись сохранена.</p>}
       {flow.error && (
         <p className="ui-hint">
           При конфликте версии отмените редактирование и откройте запись снова.

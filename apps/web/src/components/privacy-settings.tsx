@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { LockKeyhole, Users, Activity, Award, Search, ShieldCheck } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth/provider";
 import {
@@ -12,27 +13,22 @@ import {
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Card } from "./ui/card";
+import { ErrorState, LoadingState } from "./ui/states";
 import { Form } from "./ui/form";
-import { Select } from "./ui/field";
+import { ChoiceCards } from "./ui/choice-cards";
 import { Button } from "./ui/button";
 export function PrivacySettings() {
   const auth = useAuth();
   const query = useSettings();
   if (auth.session === undefined || (auth.session && query.isPending))
-    return <p role="status">Загружаем приватность…</p>;
+    return <LoadingState label="Загружаем приватность…" />;
   if (!auth.session)
     return (
       <SafeLink className="text-link" href="/auth/login?next=/app/settings/privacy">
         Войти для настройки приватности
       </SafeLink>
     );
-  if (!query.data)
-    return (
-      <Card>
-        <p role="alert">Не удалось загрузить приватность.</p>
-        <Button onClick={() => void query.refetch()}>Повторить</Button>
-      </Card>
-    );
+  if (!query.data) return <ErrorState error={query.error} retry={() => void query.refetch()} />;
   return <PrivacyForm initial={query.data} ownerId={auth.session.account.id} />;
 }
 function PrivacyForm({ initial, ownerId }: { initial: Settings; ownerId: string }) {
@@ -57,41 +53,115 @@ function PrivacyForm({ initial, ownerId }: { initial: Settings; ownerId: string 
       return preferencesSchema.parse(next);
     },
   });
+  const privacy = flow.form.watch("privacy");
   return (
-    <Card className="settings-card">
-      <h2>Ваши данные — ваше решение</h2>
+    <Card className="settings-card privacy-settings">
+      <div className="support-card-heading">
+        <span className="support-icon" data-tone="mint">
+          <ShieldCheck aria-hidden="true" />
+        </span>
+        <div>
+          <p className="eyebrow">ЛИЧНОЕ ПРОСТРАНСТВО</p>
+          <h2>Ваши данные — ваше решение</h2>
+        </div>
+      </div>
+      <div className="privacy-status">
+        <LockKeyhole size={20} aria-hidden="true" />
+        <div>
+          <strong>Сейчас всё доступно только вам</strong>
+          <p>Задачи, цели, дневник и история остаются личными.</p>
+        </div>
+      </div>
       <p className="ui-hint">
-        Сейчас профиль и все записи доступны только вам. Социальные функции ещё не подключены; выбор
-        ниже сохраняет предпочтения для них. Публикация потребует отдельного действия.
+        Социальные функции ещё не подключены. Здесь можно заранее выбрать предпочтения; публикация
+        потребует отдельного действия.
       </p>
       <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
-        <Select
+        <ChoiceCards
           label="Предпочтительная видимость профиля"
-          error={flow.form.formState.errors.privacy?.profile_visibility?.message}
-          {...flow.form.register("privacy.profile_visibility")}
-        >
-          <option value="private">Только я</option>
-          <option value="friends">Подтверждённые друзья, когда появится раздел</option>
-        </Select>
-        <label className="auth-checkbox">
-          <input type="checkbox" {...flow.form.register("privacy.share_activity")} />
-          Разрешать делиться активностью с друзьями
-        </label>
-        <label className="auth-checkbox">
-          <input type="checkbox" {...flow.form.register("privacy.share_achievements")} />
-          Разрешать делиться достижениями с друзьями
-        </label>
-        <label className="auth-checkbox">
-          <input type="checkbox" {...flow.form.register("privacy.discoverable")} />
-          Разрешать находить мой профиль по нику
-        </label>
+          value={privacy.profile_visibility}
+          onChange={(value) =>
+            flow.form.setValue("privacy.profile_visibility", value, { shouldDirty: true })
+          }
+          options={[
+            {
+              value: "private",
+              label: "Только я",
+              description: "Сохранить профиль личным",
+              icon: LockKeyhole,
+              tone: "mint",
+            },
+            {
+              value: "friends",
+              label: "Подтверждённые друзья",
+              description: "Когда появится раздел друзей",
+              icon: Users,
+              tone: "blue",
+            },
+          ]}
+        />
+        <div className="privacy-switches">
+          {(
+            [
+              [
+                "share_activity",
+                "Разрешать делиться активностью с друзьями",
+                "Активность",
+                "Предпочтение для будущих сводок прогресса",
+                Activity,
+                "blue",
+              ],
+              [
+                "share_achievements",
+                "Разрешать делиться достижениями с друзьями",
+                "Достижения",
+                "Предпочтение для будущих публикаций наград",
+                Award,
+                "gold",
+              ],
+              [
+                "discoverable",
+                "Разрешать находить мой профиль по нику",
+                "Поиск по нику",
+                "Предпочтение для поиска профиля, без email",
+                Search,
+                "violet",
+              ],
+            ] as const
+          ).map(([field, label, title, description, Icon, tone]) => (
+            <label className="preference-switch" key={field}>
+              <span className="support-icon" data-tone={tone}>
+                <Icon size={20} aria-hidden="true" />
+              </span>
+              <span>
+                <strong>{title}</strong>
+                <small>{description}</small>
+              </span>
+              <input
+                type="checkbox"
+                aria-label={label}
+                {...flow.form.register(`privacy.${field}`)}
+              />
+              <span className="switch-track" aria-hidden="true" />
+            </label>
+          ))}
+        </div>
         <p className="ui-hint">
           Email не будет показан другим пользователям. Задачи, цели, дневник и история остаются
           личными.
         </p>
         <Button type="submit">Сохранить приватность</Button>
       </Form>
-      {saved && <p role="status">Приватность сохранена.</p>}
+      {saved && !flow.form.formState.isDirty && (
+        <p className="preference-saved" role="status">
+          Приватность сохранена.
+        </p>
+      )}
+      {flow.form.formState.isDirty && (
+        <p className="ui-hint" role="status">
+          Есть несохранённые изменения.
+        </p>
+      )}
       {flow.error && (
         <Button
           variant="ghost"

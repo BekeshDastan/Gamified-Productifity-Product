@@ -21,6 +21,7 @@ import { DeadlineField } from "./deadline-field";
 import { useSettings, formatMoment } from "@/lib/settings";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { ErrorState, LoadingState } from "./ui/states";
 import { Input, Select, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
 import { QuestFiltersPanel } from "./quest-filters";
@@ -68,20 +69,16 @@ export function Quests({ id }: { id?: string }) {
         .
       </p>
     );
-  if (query.isPending || labels.isPending) return <p role="status">Загружаем задачи…</p>;
+  if (query.isPending || labels.isPending) return <LoadingState label="Загружаем задачи…" />;
   if (!query.data || !labels.data)
     return (
-      <Card>
-        <p role="alert">Не удалось загрузить задачи.</p>
-        <Button
-          onClick={() => {
-            void query.refetch();
-            void labels.refetch();
-          }}
-        >
-          Повторить
-        </Button>
-      </Card>
+      <ErrorState
+        error={query.error ?? labels.error}
+        retry={() => {
+          void query.refetch();
+          void labels.refetch();
+        }}
+      />
     );
   const current = "id" in query.data ? query.data : undefined;
   const collection = "items" in query.data ? query.data : undefined;
@@ -654,7 +651,7 @@ function QuestForm({
           Сохранить задачу
         </Button>
       </Form>
-      {saved && <p role="status">Сохранено.</p>}
+      {saved && !flow.form.formState.isDirty && <p role="status">Сохранено.</p>}
       {current && flow.error && (
         <Button
           variant="secondary"

@@ -151,6 +151,9 @@ test("workspace settings previews persist and reduced motion controls actual ani
   await expect(page.getByLabel("Предпросмотр профиля")).toContainText("Путешественник");
   await page.getByRole("button", { name: "Сохранить профиль", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Профиль сохранён." })).toBeVisible();
+  await page.getByLabel("Имя", { exact: true }).fill("Новый несохранённый ввод");
+  await expect(page.getByRole("status").filter({ hasText: "Профиль сохранён." })).toHaveCount(0);
+  await page.getByLabel("Имя", { exact: true }).fill("Путешественник");
   await page.reload();
   await expect(page.getByLabel("Компас", { exact: true })).toBeChecked();
   await expect(page.getByLabel("Имя", { exact: true })).toHaveValue("Путешественник");

@@ -163,7 +163,7 @@ const commands = {
         "-run",
         "^TestBrowserAuth$",
         "-count=1",
-        "-timeout=15m",
+        "-timeout=20m",
         "./tests/integration/...",
       ],
       api,

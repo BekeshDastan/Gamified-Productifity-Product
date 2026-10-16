@@ -61,7 +61,10 @@ func TestBrowserAuth(t *testing.T) {
 		t.Skip("run npm run test:auth-e2e for the real browser suite")
 	}
 	t.Setenv("FEATURE_MYSTERY_REWARDS", "true")
-	pool, ctx := databaseWithTimeout(t, 12*time.Minute)
+	// The full browser suite includes both-theme route audits as well as workflows.
+	// Keep database lifetime longer than their combined time; each scenario retains
+	// its own Playwright timeout and the outer runner still bounds total execution.
+	pool, ctx := databaseWithTimeout(t, 18*time.Minute)
 	key := make([]byte, 32)
 	if _, err := rand.Read(key); err != nil {
 		t.Fatal(err)

@@ -15,6 +15,7 @@ import {
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Card } from "./ui/card";
+import { ErrorState, LoadingState } from "./ui/states";
 import { Button } from "./ui/button";
 import { Input } from "./ui/field";
 import { Form } from "./ui/form";
@@ -37,7 +38,7 @@ export function ProfileEditor() {
     queryFn: ({ signal }) => getProfile(signal),
   });
   if (auth.session === undefined || (!!id && query.isPending))
-    return <p role="status">Загружаем профиль…</p>;
+    return <LoadingState label="Загружаем профиль…" />;
   if (!id)
     return (
       <p>
@@ -48,13 +49,7 @@ export function ProfileEditor() {
         .
       </p>
     );
-  if (!query.data)
-    return (
-      <Card>
-        <p role="alert">Не удалось загрузить профиль.</p>
-        <Button onClick={() => void query.refetch()}>Повторить</Button>
-      </Card>
-    );
+  if (!query.data) return <ErrorState error={query.error} retry={() => void query.refetch()} />;
   return <ProfileForm key={id} profile={query.data} />;
 }
 function ProfileForm({ profile }: { profile: Profile }) {
@@ -125,7 +120,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
         </fieldset>
         <Button type="submit">Сохранить профиль</Button>
       </Form>
-      {saved && <p role="status">Профиль сохранён.</p>}
+      {saved && !flow.form.formState.isDirty && <p role="status">Профиль сохранён.</p>}
       {flow.error && (
         <Button
           variant="ghost"

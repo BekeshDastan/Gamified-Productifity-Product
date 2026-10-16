@@ -95,7 +95,10 @@ test("new account setup resumes, preferences survive another device and password
     habit: "",
   });
   await page.goto("/app/settings/privacy");
-  await page.getByLabel("Предпочтительная видимость профиля").selectOption("friends");
+  await page
+    .getByRole("group", { name: "Предпочтительная видимость профиля" })
+    .getByRole("button", { name: "Подтверждённые друзья", exact: true })
+    .click();
   await page.getByLabel("Разрешать делиться активностью с друзьями").check();
   await page.getByRole("button", { name: "Сохранить приватность", exact: true }).click();
   await expect(

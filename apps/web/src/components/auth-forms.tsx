@@ -19,7 +19,7 @@ import { ThemeSelect } from "./theme-select";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { Form } from "./ui/form";
-import { Input } from "./ui/field";
+import { Input, PasswordInput } from "./ui/field";
 
 const email = z.string().trim().email("Введите корректный email.").max(254);
 export const passwordSchema = z.string().refine((value) => {
@@ -117,9 +117,8 @@ export function LoginForm() {
           error={flow.form.formState.errors.email?.message}
           {...flow.form.register("email")}
         />
-        <Input
+        <PasswordInput
           label="Пароль"
-          type="password"
           autoComplete="current-password"
           error={flow.form.formState.errors.password?.message}
           {...flow.form.register("password")}
@@ -187,17 +186,15 @@ export function RegisterForm() {
               error={flow.form.formState.errors.email?.message}
               {...flow.form.register("email")}
             />
-            <Input
+            <PasswordInput
               label="Пароль"
-              type="password"
               autoComplete="new-password"
               hint="12–128 символов. Пробелы и менеджеры паролей поддерживаются."
               error={flow.form.formState.errors.password?.message}
               {...flow.form.register("password")}
             />
-            <Input
+            <PasswordInput
               label="Повторите пароль"
-              type="password"
               autoComplete="new-password"
               error={flow.form.formState.errors.confirmation?.message}
               {...flow.form.register("confirmation")}
@@ -378,17 +375,15 @@ export function ResetForm() {
         <>
           <p className="ui-hint">После смены пароля все предыдущие входы будут завершены.</p>
           <Form saving={flow.saving} error={flow.error} onSubmit={flow.onSubmit}>
-            <Input
+            <PasswordInput
               label="Новый пароль"
-              type="password"
               autoComplete="new-password"
               hint="12–128 символов, без обрезания пробелов."
               error={flow.form.formState.errors.password?.message}
               {...flow.form.register("password")}
             />
-            <Input
+            <PasswordInput
               label="Повторите пароль"
-              type="password"
               autoComplete="new-password"
               error={flow.form.formState.errors.confirmation?.message}
               {...flow.form.register("confirmation")}

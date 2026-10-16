@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { z } from "zod";
+import { Monitor, ShieldCheck, Mail, CheckCircle2 } from "lucide-react";
 import { SafeLink as Link } from "@/lib/forms/unsaved-changes";
 import { ApiError, createApiClient } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/provider";
@@ -89,9 +90,21 @@ export function AccountPanel() {
     );
   return (
     <Card className="account-panel">
-      <p className="eyebrow">ЛИЧНЫЙ АККАУНТ</p>
-      <h2 className="account-email">{auth.session.account.email}</h2>
-      <p className="ui-hint">
+      <div className="support-card-heading">
+        <span className="support-icon" data-tone="blue">
+          <ShieldCheck aria-hidden="true" />
+        </span>
+        <div>
+          <p className="eyebrow">ЛИЧНЫЙ АККАУНТ</p>
+          <h2 className="account-email">{auth.session.account.email}</h2>
+        </div>
+      </div>
+      <p className="account-verification" data-verified={auth.session.account.email_verified}>
+        {auth.session.account.email_verified ? (
+          <CheckCircle2 size={18} aria-hidden="true" />
+        ) : (
+          <Mail size={18} aria-hidden="true" />
+        )}
         {auth.session.account.email_verified
           ? "Почта подтверждена"
           : "Почта ещё не подтверждена. Проверьте письмо: ссылка действует 24 часа."}
@@ -127,10 +140,18 @@ export function AccountPanel() {
       </div>
       {sessions && (
         <div className="session-list">
-          <h3>Активные входы</h3>
+          <div className="session-heading">
+            <h3>Активные входы</h3>
+            <span className="count-badge" aria-label={`Активных входов: ${sessions.length}`}>
+              {sessions.length}
+            </span>
+          </div>
           <ul>
             {sessions.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} data-current={item.current}>
+                <span className="support-icon" data-tone={item.current ? "mint" : "blue"}>
+                  <Monitor size={20} aria-hidden="true" />
+                </span>
                 <div>
                   <strong>{item.current ? "Это устройство" : "Другое устройство"}</strong>
                   <p className="ui-hint">

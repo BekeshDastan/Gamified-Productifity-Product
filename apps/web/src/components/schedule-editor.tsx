@@ -16,6 +16,7 @@ import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { ErrorState, LoadingState } from "./ui/states";
 import { Input, Select } from "./ui/field";
 import { Form } from "./ui/form";
 import { CalendarDays, Coffee } from "lucide-react";
@@ -24,20 +25,14 @@ export function ScheduleEditor() {
   const auth = useAuth();
   const query = useSettings();
   if (auth.session === undefined || (auth.session && query.isPending))
-    return <p role="status">Загружаем настройки…</p>;
+    return <LoadingState label="Загружаем настройки…" />;
   if (!auth.session)
     return (
       <SafeLink className="text-link" href="/auth/login?next=/app/settings/schedule">
         Войти для настройки расписания
       </SafeLink>
     );
-  if (!query.data)
-    return (
-      <Card>
-        <p role="alert">Не удалось загрузить настройки.</p>
-        <Button onClick={() => void query.refetch()}>Повторить</Button>
-      </Card>
-    );
+  if (!query.data) return <ErrorState error={query.error} retry={() => void query.refetch()} />;
   return <ScheduleForm initial={query.data} ownerId={auth.session.account.id} />;
 }
 function ScheduleForm({ initial, ownerId }: { initial: Settings; ownerId: string }) {
@@ -227,7 +222,7 @@ function ScheduleForm({ initial, ownerId }: { initial: Settings; ownerId: string
         </Button>
         <Button type="submit">Сохранить расписание</Button>
       </Form>
-      {saved && <p role="status">Расписание сохранено.</p>}
+      {saved && !flow.form.formState.isDirty && <p role="status">Расписание сохранено.</p>}
       {flow.error && (
         <Button
           variant="ghost"

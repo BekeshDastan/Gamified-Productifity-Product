@@ -207,6 +207,9 @@ test("unknown routes return 404; auth routes disclose current availability", asy
   const response = await page.goto("/app/does-not-exist");
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "Страница не найдена" })).toBeVisible();
+  await page.getByRole("link", { name: "Вернуться к своему дню" }).click();
+  await expect(page).toHaveURL("/app");
+  expect((await page.goto("/does-not-exist"))?.status()).toBe(404);
   await page.getByRole("link", { name: "На главную" }).click();
   await expect(page).toHaveURL("/");
   await page.getByRole("link", { name: "Войти" }).click();

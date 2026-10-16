@@ -73,3 +73,53 @@ checks. Existing scenarios continue to cover the rest of the application.
 Browser viewport and automated accessibility checks do not replace testing on
 physical devices or with assistive technology. This is an interface revision of
 the existing product, not delivery of unimplemented roadmap stages.
+
+## Finishing pass — 16 October 2026
+
+The follow-up remains focused on the implemented application, as requested.
+No social or integration roadmap stage is started in this pass.
+
+- The guide now offers three interactive routes: starting with a small action,
+  focusing on a task and finishing the day. Each route has three concrete steps
+  linked to working screens. Finite staggered motion respects both account and
+  operating-system reduced-motion preferences. Text remains fully opaque during
+  the transition so its contrast does not temporarily fall below the readable level.
+- Privacy preferences use illustrated choices and keyboard-accessible native
+  checkbox switches. The page clearly separates today's private records from
+  preferences for future social features. Changing these preferences does not
+  publish anything or introduce sharing APIs.
+- Security has verification status and device cards identifying the current
+  session. Existing session revocation remains server-enforced. Registration,
+  login, password reset and password change have explicit show/hide controls;
+  these preserve the input value and do not submit the form.
+- Loading and failed-query states in tasks, goals and the settings editors now
+  use shared visual states with retry controls. Unknown application URLs lead
+  back to the user's day; unknown public URLs still lead to the landing page.
+- Success notices in task, goal, profile, schedule, appearance, direction/tag and
+  privacy editors disappear when a new unsaved change is entered. They no longer
+  imply that the current draft has already been saved.
+- Added real-browser coverage for keyboard password visibility, saved privacy
+  choices, failed-save recovery, selective device revocation, guide navigation,
+  reduced motion, failed-query retry and both 404 destinations. The guide is also
+  audited at 320 px in both themes. Existing profile coverage checks that a saved
+  notice clears on editing.
+
+The growing browser suite has an 18-minute isolated database lifetime and a
+20-minute outer runner timeout. Each browser scenario retains its own bounded
+timeout. This change affects only the acceptance runner, not production limits.
+
+### Verification of the finishing pass
+
+- One complete production-browser run passed all **45 authenticated scenarios**
+  in 11.7 minutes, using the real Go API, isolated PostgreSQL schema and SMTP
+  fixture. This closes the previous pass's separate-run acceptance gap.
+- The two route sweeps passed for 12 and 15 sections in both themes at desktop
+  and 360 px widths, including expanded editors; the new guide also passes at
+  320 px. Axe checks and horizontal-overflow assertions passed.
+- All **40 component/unit tests** passed. Production build, application and test
+  TypeScript, ESLint, repository checks and whole-repository formatting passed.
+- Local screenshots and logs are preserved under `.data/support-proof/` and
+  `.data/support-*.log`. Browser records are isolated test data.
+- All **14 public browser scenarios** and all **three tooling tests** passed,
+  including delayed JavaScript readiness, keyboard/mobile navigation, both
+  404 return paths and recovery from a server error.

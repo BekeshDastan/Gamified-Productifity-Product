@@ -1,4 +1,4 @@
-import { SafeLink } from "@/lib/forms/unsaved-changes";
+import { GuidePaths } from "@/components/guide-paths";
 import { Card } from "@/components/ui/card";
 import { ServiceStatus } from "@/components/service-status";
 export default function GuidePage() {
@@ -14,49 +14,7 @@ export default function GuidePage() {
         ASCEND объединяет планирование и мягкую игровую мотивацию. Личные задачи, привычки,
         календарь, фокус, отчёты и уведомления уже доступны.
       </p>
-      <div className="settings-directory">
-        {(
-          [
-            [
-              "/app",
-              "Начать день",
-              "Запишите одно дело в поле на главной. После выполнения нажмите галочку рядом с ним.",
-            ],
-            [
-              "/app/planning",
-              "Спланировать нагрузку",
-              "Выберите задачи и доступное время. Подтверждение сохранит исходный план, с которым можно сравнить результат.",
-            ],
-            [
-              "/app/habits",
-              "Выработать привычку",
-              "Создайте привычку, выберите норму и расписание, затем добавляйте отметки выполнения.",
-            ],
-            [
-              "/app/focus",
-              "Сосредоточиться",
-              "Запустите подходящий таймер. По окончании подтвердите фактическую работу — задача завершается отдельно.",
-            ],
-            [
-              "/app/journal?section=evening",
-              "Подвести итог дня",
-              "Выберите вечерний обзор, отметьте важное и решите, что перенести на завтра.",
-            ],
-            [
-              "/app/settings",
-              "Настроить пространство",
-              "Часовой пояс, оформление, напоминания и аккаунт находятся в одном месте.",
-            ],
-          ] as const
-        ).map(([href, title, text]) => (
-          <SafeLink className="directory-row" href={href} key={href}>
-            <div>
-              <h2>{title}</h2>
-              <p>{text}</p>
-            </div>
-          </SafeLink>
-        ))}
-      </div>
+      <GuidePaths />
       <details className="section-disclosure">
         <summary>Приватность и правила прогресса</summary>
         <div className="disclosure-content">

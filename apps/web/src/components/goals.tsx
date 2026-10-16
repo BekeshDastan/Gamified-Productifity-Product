@@ -24,6 +24,7 @@ import { Target, Flag, ListChecks, TrendingUp, CalendarDays } from "lucide-react
 import { ChoiceCards } from "./ui/choice-cards";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { ErrorState, LoadingState } from "./ui/states";
 import { Input, Select, DatePicker } from "./ui/field";
 import { Form } from "./ui/form";
 import { GoalPlanPanel } from "./goal-plan";
@@ -65,20 +66,16 @@ export function Goals({ id }: { id?: string }) {
         .
       </p>
     );
-  if (query.isPending || labels.isPending) return <p role="status">Загружаем цели…</p>;
+  if (query.isPending || labels.isPending) return <LoadingState label="Загружаем цели…" />;
   if (!query.data || !labels.data)
     return (
-      <Card>
-        <p role="alert">Не удалось загрузить цели.</p>
-        <Button
-          onClick={() => {
-            void query.refetch();
-            void labels.refetch();
-          }}
-        >
-          Повторить
-        </Button>
-      </Card>
+      <ErrorState
+        error={query.error ?? labels.error}
+        retry={() => {
+          void query.refetch();
+          void labels.refetch();
+        }}
+      />
     );
   const current = "id" in query.data ? query.data : undefined;
   const collection = "items" in query.data ? query.data : undefined;
@@ -531,7 +528,7 @@ function GoalForm({
         )}
         <Button type="submit">Сохранить цель</Button>
       </Form>
-      {saved && <p role="status">Цель сохранена.</p>}
+      {saved && !flow.form.formState.isDirty && <p role="status">Цель сохранена.</p>}
       {current && (
         <Button
           variant="secondary"

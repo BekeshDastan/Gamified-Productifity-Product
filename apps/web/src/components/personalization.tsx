@@ -14,6 +14,7 @@ import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink } from "@/lib/forms/unsaved-changes";
 import { ThemeSelect } from "./theme-select";
 import { Card } from "./ui/card";
+import { ErrorState, LoadingState } from "./ui/states";
 import { Button } from "./ui/button";
 import { Form } from "./ui/form";
 import { Sun, Moon, Monitor, Feather, Sparkles, Play, Volume2 } from "lucide-react";
@@ -103,7 +104,7 @@ export function AppearanceSettings() {
   const auth = useAuth();
   const query = useSettings();
   if (auth.session === undefined || (auth.session && query.isPending))
-    return <p role="status">Загружаем оформление…</p>;
+    return <LoadingState label="Загружаем оформление…" />;
   if (!auth.session)
     return (
       <Card className="settings-card">
@@ -118,13 +119,7 @@ export function AppearanceSettings() {
         </p>
       </Card>
     );
-  if (!query.data)
-    return (
-      <Card>
-        <p role="alert">Не удалось загрузить оформление.</p>
-        <Button onClick={() => void query.refetch()}>Повторить</Button>
-      </Card>
-    );
+  if (!query.data) return <ErrorState error={query.error} retry={() => void query.refetch()} />;
   return <AppearanceForm initial={query.data} ownerId={auth.session.account.id} />;
 }
 function AppearanceForm({ initial, ownerId }: { initial: Settings; ownerId: string }) {
@@ -299,7 +294,7 @@ function AppearanceForm({ initial, ownerId }: { initial: Settings; ownerId: stri
         </ol>
         <Button type="submit">Сохранить оформление</Button>
       </Form>
-      {saved && <p role="status">Оформление сохранено.</p>}
+      {saved && !flow.form.formState.isDirty && <p role="status">Оформление сохранено.</p>}
       {flow.error && (
         <Button
           variant="ghost"

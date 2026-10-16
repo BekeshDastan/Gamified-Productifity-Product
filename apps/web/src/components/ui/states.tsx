@@ -9,7 +9,7 @@ import { Dialog } from "./dialog";
 
 export function LoadingState({ label = "Загружаем данные…" }: { label?: string }) {
   return (
-    <div role="status" className="page-state">
+    <div role="status" className="page-state" data-state="loading">
       <p>{label}</p>
       <div aria-hidden="true" className="skeleton-stack">
         <span className="skeleton" />
@@ -29,7 +29,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="page-state">
+    <div className="page-state" data-state="empty">
       <Inbox size={32} aria-hidden="true" />
       <h2>{title}</h2>
       <p className="ui-hint">{description}</p>
@@ -40,7 +40,7 @@ export function EmptyState({
 export function UnauthorizedState() {
   const pathname = usePathname() ?? "/app";
   return (
-    <div className="page-state" role="alert">
+    <div className="page-state" role="alert" data-state="locked">
       <LockKeyhole size={32} aria-hidden="true" />
       <h2>Нужен вход в аккаунт</h2>
       <p className="ui-hint">Войдите, чтобы открыть свои личные данные.</p>
@@ -57,7 +57,7 @@ export function UnauthorizedState() {
 export function ErrorState({ error, retry }: { error?: unknown; retry: () => void }) {
   if (error instanceof ApiError && error.status === 401) return <UnauthorizedState />;
   return (
-    <div className="page-state" role="alert">
+    <div className="page-state" role="alert" data-state="error">
       <AlertTriangle size={30} aria-hidden="true" />
       <h2>Не удалось загрузить данные</h2>
       <p className="ui-hint">
@@ -75,15 +75,19 @@ export function ErrorState({ error, retry }: { error?: unknown; retry: () => voi
     </div>
   );
 }
-export function NotFoundState() {
+export function NotFoundState({ home }: { home?: "/" | "/app" }) {
+  const pathname = usePathname();
+  const destination = home ?? (pathname?.startsWith("/app/") ? "/app" : "/");
   return (
-    <div className="page-state">
+    <div className="page-state" data-state="missing">
       <FileQuestion size={36} aria-hidden="true" />
       <p className="eyebrow">404</p>
       <h1 className="page-title">Страница не найдена</h1>
       <p className="ui-hint">Ссылка могла измениться или раздел ещё не доступен.</p>
       <Button asChild>
-        <Link href="/">На главную</Link>
+        <Link href={destination}>
+          {destination === "/app" ? "Вернуться к своему дню" : "На главную"}
+        </Link>
       </Button>
     </div>
   );
