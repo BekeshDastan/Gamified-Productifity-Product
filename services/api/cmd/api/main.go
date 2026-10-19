@@ -142,9 +142,14 @@ func main() {
 	notificationService.WithFocusSettlement(focusService.SettleDueInTx)
 	navigator.NewService(pool, platform.RealClock{}, planService, goalService, habitService, analyticsService).WithQuests(questService).Mount(router, sessions.Protect)
 	journal.NewService(pool, platform.RealClock{}).WithPlanning(planService).WithQuests(questService).Mount(router, sessions.Protect)
+	proxy, err := platform.TrustedProxy(os.Getenv("TRUSTED_PROXY_CIDRS"))
+	if err != nil {
+		logger.Error("invalid proxy configuration")
+		os.Exit(1)
+	}
 	server := &http.Server{
 		Addr:              cfg.Address,
-		Handler:           router,
+		Handler:           proxy(router),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      30 * time.Second,

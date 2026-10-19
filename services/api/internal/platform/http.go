@@ -18,6 +18,9 @@ func NewRouter(logger *slog.Logger, c Clock, readiness ...func(context.Context) 
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			w.Header().Set("X-Content-Type-Options", "nosniff")
 			w.Header().Set("Cache-Control", "no-store")
+			w.Header().Set("X-Frame-Options", "DENY")
+			w.Header().Set("Referrer-Policy", "no-referrer")
+			w.Header().Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; sandbox")
 			limit := int64(1 << 20)
 			if req.Method == http.MethodPost && req.URL.Path == "/api/v1/attachments" {
 				limit = 11 << 20

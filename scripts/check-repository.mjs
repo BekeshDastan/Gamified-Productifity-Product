@@ -18,6 +18,11 @@ export function inspectFile(filename, contents) {
   if (/\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{60,})\b/.test(contents)) {
     issues.push("GitHub credential");
   }
+  if (
+    /\bAKIA[A-Z0-9]{16}\b|\bAIza[A-Za-z0-9_-]{35}\b|\bxox[baprs]-[A-Za-z0-9-]{20,}\b/.test(contents)
+  ) {
+    issues.push("provider credential");
+  }
   return issues;
 }
 
@@ -32,7 +37,7 @@ export function checkRepository() {
           `safe.directory=${root.replace(/\\/g, "/").replace(/\/$/, "")}`,
           "ls-files",
           "--cached",
-          "--others",
+          ...(process.argv.includes("--tracked") ? [] : ["--others"]),
           "--exclude-standard",
           "-z",
         ],

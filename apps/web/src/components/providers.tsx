@@ -4,9 +4,9 @@ import { AuthProvider, useAuth } from "@/lib/auth/provider";
 import { ThemeProvider } from "./theme-provider";
 import { ToastProvider } from "./ui/toast";
 import { UnsavedChangesProvider } from "@/lib/forms/unsaved-changes";
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({ children, nonce }: { children: ReactNode; nonce?: string }) {
   return (
-    <ThemeProvider>
+    <ThemeProvider nonce={nonce}>
       <AuthProvider>
         <UnsavedChangesProvider>
           <AccountToasts>{children}</AccountToasts>

@@ -182,8 +182,8 @@ func (s *Sessions) Protect(next http.Handler) http.Handler {
 }
 
 func remoteIP(r *http.Request) string {
-	// Forwarded headers are deliberately ignored. Only a separately configured,
-	// trusted reverse proxy may establish client identity in a future deployment.
+	// Forwarded headers are ignored here. The explicit TrustedProxy boundary may
+	// replace RemoteAddr after verifying the transport peer and a single edge IP.
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return "unknown"
