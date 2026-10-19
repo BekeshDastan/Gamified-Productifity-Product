@@ -56,7 +56,7 @@ export default function Home() {
             </div>
             <p className="availability" role="status">
               <span aria-hidden="true">◷</span> Доступны задачи, привычки, календарь, отчёты и
-              личные уведомления. Совместные функции находятся в разработке.
+              личные уведомления, друзья и совместные испытания.
             </p>
           </div>
           <div className="landing-visual">
@@ -154,8 +154,8 @@ export default function Home() {
             <h2 id="privacy-title">Личное остаётся личным.</h2>
           </div>
           <p>
-            Личные записи закрыты по умолчанию. Подключение интеграций и совместные функции — только
-            по вашему выбору.
+            Личные записи закрыты по умолчанию. Вы сами выбираете, какие показатели доступны друзьям
+            и в каких совместных испытаниях участвовать.
           </p>
           <Link href="/app/guide" className="text-link">
             Подробнее о принципах <ArrowUpRight size={16} aria-hidden="true" />
