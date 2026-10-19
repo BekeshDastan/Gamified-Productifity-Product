@@ -12,6 +12,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  release-local:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/prepare-release-local.mjs
+      - run: node scripts/validate-release-env.mjs .data/release-local/release.env --local
+      - run: docker compose --env-file .data/release-local/release.env -f deploy/compose.yaml -p ascend-release-local up -d --build --wait --wait-timeout 300
+      - run: node scripts/release-smoke.mjs
+      - name: Retain redacted service diagnostics on failure
+        if: failure()
+        run: docker compose --env-file .data/release-local/release.env -f deploy/compose.yaml -p ascend-release-local logs --tail 80 api worker scanner
+      - name: Stop isolated containers
+        if: always()
+        run: docker compose --env-file .data/release-local/release.env -f deploy/compose.yaml -p ascend-release-local down
   web:
     runs-on: ubuntu-24.04
     timeout-minutes: 15

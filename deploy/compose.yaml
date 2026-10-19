@@ -1,0 +1,125 @@
+name: ascend-release
+
+x-app: &app
+  image: ascend-api:${RELEASE_TAG:?Set RELEASE_TAG}
+  build:
+    context: ..
+    dockerfile: deploy/api.Dockerfile
+  env_file: ${RELEASE_ENV_FILE:?Set RELEASE_ENV_FILE to an absolute private env file}
+  read_only: true
+  tmpfs: ["/tmp:size=32m,mode=1777"]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  networks: [private]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: "3" }
+
+services:
+  db:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_USER: ascend
+      POSTGRES_DB: ascend
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a random database password}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks: [private]
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U ascend -d ascend]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    shm_size: 256mb
+  migrate:
+    <<: *app
+    entrypoint: [/usr/local/bin/migrate]
+    restart: "no"
+    depends_on:
+      db: { condition: service_healthy }
+  api:
+    <<: *app
+    environment:
+      API_HOST: 0.0.0.0
+      BLOB_PRIVATE_DIR: /data/blobs
+      TRUSTED_PROXY_CIDRS: 172.30.25.10/32
+      UPLOAD_SCAN_MODE: clamav
+      CLAMAV_ADDRESS: 127.0.0.1:3310
+    volumes: [blobs:/data/blobs]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: [CMD, /usr/local/bin/healthcheck]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  worker:
+    <<: *app
+    entrypoint: [/usr/local/bin/worker]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+  scanner:
+    image: clamav/clamav:1.4.3
+    # The scanner accepts only loopback traffic; no unencrypted scanner port is published.
+    network_mode: service:api
+    volumes: [signatures:/var/lib/clamav]
+    depends_on: [api]
+    restart: unless-stopped
+  web:
+    image: ascend-web:${RELEASE_TAG:?Set RELEASE_TAG}
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+    read_only: true
+    tmpfs: ["/tmp:size=32m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [private]
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3000/auth/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  edge:
+    image: ascend-edge:${RELEASE_TAG:?Set RELEASE_TAG}
+    build:
+      context: ..
+      dockerfile: deploy/edge.Dockerfile
+    user: "1000:1000"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN}
+    ports:
+      [
+        "${EDGE_BIND:-0.0.0.0}:${HTTP_PORT:-80}:8080",
+        "${EDGE_BIND:-0.0.0.0}:${HTTPS_PORT:-443}:8443",
+      ]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", caddy_data:/data, caddy_config:/config]
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks:
+      private: { ipv4_address: 172.30.25.10 }
+    depends_on:
+      api: { condition: service_healthy }
+      web: { condition: service_healthy }
+    restart: unless-stopped
+
+networks:
+  private:
+    ipam:
+      config: [{ subnet: 172.30.25.0/24 }]
+volumes:
+  pgdata:
+  blobs:
+  signatures:
+  caddy_data:
+  caddy_config:
