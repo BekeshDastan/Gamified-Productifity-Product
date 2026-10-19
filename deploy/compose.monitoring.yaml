@@ -1,0 +1,24 @@
+services:
+  api:
+    environment:
+      OPS_ADDRESS: 0.0.0.0:9090
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=15d"]
+    volumes:
+      [
+        "./prometheus.yaml:/etc/prometheus/prometheus.yml:ro",
+        "./alerts.yaml:/etc/prometheus/alerts.yaml:ro",
+        metrics:/prometheus,
+      ]
+    secrets: [metrics_token]
+    ports: ["127.0.0.1:19090:9090"]
+    networks: [private]
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+secrets:
+  metrics_token:
+    file: ${METRICS_TOKEN_FILE:?Set METRICS_TOKEN_FILE}
+volumes:
+  metrics:

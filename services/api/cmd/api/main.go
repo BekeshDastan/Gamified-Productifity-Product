@@ -25,6 +25,7 @@ import (
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/journal"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/navigator"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/notifications"
+	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/operations"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/planning"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform"
 	"github.com/BekeshDastan/Gamified-Productifity-Product/services/api/internal/platform/blob"
@@ -161,6 +162,28 @@ func main() {
 		os.Exit(1)
 	}
 	logger.Info("api starting", "address", server.Addr, "environment", cfg.Environment)
+	if token := os.Getenv("OPS_BEARER_TOKEN"); token != "" {
+		handler, err := operations.Handler(pool, token, directory)
+		if err != nil {
+			logger.Error("invalid operations configuration")
+			os.Exit(1)
+		}
+		address := os.Getenv("OPS_ADDRESS")
+		if address == "" {
+			address = "127.0.0.1:9090"
+		}
+		opsListener, err := net.Listen("tcp", address)
+		if err != nil {
+			logger.Error("operations listener unavailable")
+			os.Exit(1)
+		}
+		go func() {
+			if err := platform.Serve(ctx, &http.Server{Handler: handler, ReadHeaderTimeout: 3 * time.Second, WriteTimeout: 5 * time.Second, IdleTimeout: 30 * time.Second}, opsListener); err != nil {
+				logger.Error("operations listener failed")
+				stop()
+			}
+		}()
+	}
 	if err := platform.Serve(ctx, server, listener); err != nil {
 		logger.Error("api stopped unexpectedly")
 		os.Exit(1)

@@ -1166,6 +1166,11 @@ type RoutineTemplate struct {
 	Version int64       `json:"version"`
 }
 
+type RuntimeHeartbeat struct {
+	Name   string             `json:"name"`
+	SeenAt pgtype.Timestamptz `json:"seen_at"`
+}
+
 type ScoreVersion struct {
 	Version    string `json:"version"`
 	Definition []byte `json:"definition"`

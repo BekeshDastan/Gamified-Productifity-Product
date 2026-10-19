@@ -1,0 +1,38 @@
+groups:
+  - name: ascend
+    rules:
+      - alert: AscendUnavailable
+        expr: up{job="ascend"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations: { summary: "API or database is unavailable; follow the release runbook" }
+      - alert: AscendWorkerStopped
+        expr: ascend_worker_heartbeat_age_seconds > 60
+        for: 1m
+        labels: { severity: critical }
+        annotations: { summary: "Worker heartbeat is stale" }
+      - alert: AscendQueueLag
+        expr: ascend_jobs_lag_seconds > 120 or ascend_outbox_lag_seconds > 120
+        for: 2m
+        labels: { severity: warning }
+        annotations: { summary: "Work queue is delayed" }
+      - alert: AscendDeadLetters
+        expr: ascend_jobs_dead > 0
+        for: 1m
+        labels: { severity: warning }
+        annotations: { summary: "Dead-letter jobs need operator review" }
+      - alert: AscendExpiredLease
+        expr: ascend_jobs_expired_leases > 0
+        for: 2m
+        labels: { severity: warning }
+        annotations: { summary: "Worker leases are not recovering" }
+      - alert: AscendStorageLow
+        expr: ascend_storage_available_bytes / ascend_storage_total_bytes < 0.10
+        for: 5m
+        labels: { severity: critical }
+        annotations: { summary: "Less than 10% storage is available" }
+      - alert: AscendAPIErrors
+        expr: sum(rate(ascend_http_duration_seconds_count{status_class="5xx"}[5m])) / clamp_min(sum(rate(ascend_http_duration_seconds_count[5m])), 0.01) > 0.05
+        for: 2m
+        labels: { severity: warning }
+        annotations: { summary: "API error ratio exceeds 5%" }

@@ -48,6 +48,7 @@ func requestMetadata(logger *slog.Logger, c Clock) func(http.Handler) http.Handl
 				}
 				logger.Info("http_request", "request_id", meta.RequestID, "correlation_id", meta.CorrelationID,
 					"method", r.Method, "route", pattern, "status", recorder.Status(), "duration_ms", c.Now().Sub(started).Milliseconds())
+				observeRequest(pattern, r.Method, recorder.Status(), c.Now().Sub(started))
 			}()
 			next.ServeHTTP(recorder, r)
 		})

@@ -69,11 +69,26 @@ func (s Store) Process(ctx context.Context, job Job, handlers map[string]Handler
 func Run(ctx context.Context, store Store, handlers map[string]Handler, logger *slog.Logger) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
+	lastBeat := time.Time{}
+	heartbeat := func() {
+		if time.Since(lastBeat) < 5*time.Second {
+			return
+		}
+		beatCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+		if _, err := store.Pool.Exec(beatCtx, `INSERT INTO runtime_heartbeats(name,seen_at) VALUES('worker',clock_timestamp()) ON CONFLICT(name) DO UPDATE SET seen_at=excluded.seen_at`); err != nil {
+			logger.Error("worker_heartbeat_failed")
+		} else {
+			lastBeat = time.Now()
+		}
+	}
 	for {
+		heartbeat()
 		if _, err := store.Dispatch(ctx, 50); err != nil && ctx.Err() == nil {
 			logger.Error("outbox_dispatch_failed")
 		}
 		for ctx.Err() == nil {
+			heartbeat()
 			job, err := store.Claim(ctx)
 			if errors.Is(err, pgx.ErrNoRows) {
 				break
