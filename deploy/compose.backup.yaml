@@ -1,0 +1,41 @@
+services:
+  backup:
+    image: ascend-backup:${RELEASE_TAG:?Set RELEASE_TAG}
+    build:
+      context: ..
+      dockerfile: deploy/backup.Dockerfile
+    profiles: [ops]
+    env_file: ${BACKUP_ENV_FILE:?Set BACKUP_ENV_FILE}
+    environment:
+      PGHOST: db
+      PGDATABASE: ascend
+      PGUSER: ascend
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes: [blobs:/source/blobs:ro, backup_repository:/repository, restored_blobs:/restore]
+    tmpfs:
+      [
+        "/work:uid=10001,gid=10001,mode=0700,size=2g",
+        "/tmp:uid=10001,gid=10001,mode=0700,size=256m",
+      ]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [private]
+  restore-db:
+    image: postgres:17.11-bookworm
+    profiles: [ops]
+    environment:
+      POSTGRES_USER: ascend
+      POSTGRES_DB: ascend_restore
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes: [restored_database:/var/lib/postgresql/data]
+    networks: [private]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U ascend -d ascend_restore]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  backup_repository:
+  restored_database:
+  restored_blobs:

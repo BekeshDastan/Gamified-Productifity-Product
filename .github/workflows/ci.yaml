@@ -27,6 +27,9 @@ jobs:
       - run: node scripts/validate-release-env.mjs .data/release-local/release.env --local
       - run: docker compose --env-file .data/release-local/release.env -f deploy/compose.yaml -p ascend-release-local up -d --build --wait --wait-timeout 300
       - run: node scripts/release-smoke.mjs
+      - run: node scripts/release-backup.mjs init .data/release-local/release.env ascend-release-local
+      - run: node scripts/release-backup.mjs backup .data/release-local/release.env ascend-release-local
+      - run: node scripts/release-backup.mjs restore-drill .data/release-local/release.env ascend-release-local
       - name: Retain redacted service diagnostics on failure
         if: failure()
         run: docker compose --env-file .data/release-local/release.env -f deploy/compose.yaml -p ascend-release-local logs --tail 80 api worker scanner
@@ -79,6 +82,7 @@ jobs:
       - name: Formatting
         run: test -z "$(gofmt -l cmd internal migrations tests)"
       - run: go vet ./...
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
       - run: go run honnef.co/go/tools/cmd/staticcheck@v0.8.1 ./...
       - run: go test -race -count=1 ./...
       - run: go build ./cmd/api ./cmd/worker

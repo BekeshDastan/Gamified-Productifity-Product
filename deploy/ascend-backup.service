@@ -1,0 +1,12 @@
+[Unit]
+Description=ASCEND consistent encrypted backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=ascend
+WorkingDirectory=/srv/ascend/app
+ExecStart=/usr/bin/node scripts/release-backup.mjs backup /srv/ascend/.env.production ascend-release
+TimeoutStartSec=30min
+UMask=0077
