@@ -63,8 +63,10 @@ CI создаёт отдельные контейнеры PostgreSQL/Mailpit и 
 
 ## Ограничения текущего этапа
 
-Backup/restore и production deployment ещё не подключены.
-Готовность каждого пункта отмечается в ТЗ и журнале разработки.
+Production-контейнеры и локальный HTTPS-стенд описаны в [launch.md](launch.md).
+Согласованный encrypted backup/restore — в [backup-restore.md](backup-restore.md),
+метрики и аварии — в [operations.md](operations.md). Внешний сервер, SMTP,
+независимое хранилище и доставка alerts ожидают настройки владельцем.
 
 ## Авторизация и письма
 
@@ -84,8 +86,9 @@ AUTH_MAIL_REQUESTS=3 (час), AUTH_TOKEN_ATTEMPTS=30 (час IP) настраи
 Почтовый лимит 3/час применяется к аккаунту/адресу; общий IP-порог выше
 и задаётся AUTH_IP_FAILURES (по умолчанию 50/час), чтобы один адрес не исчерпывал
 почтовую квоту других пользователей общего соединения.
-Forwarded headers не принимаются: без отдельной настройки доверенного proxy
-IP-лимит видит соединение proxy. Production-развёртывание ещё не принято.
+Forwarded/X-Forwarded-For не принимаются. При явном TRUSTED_PROXY_CIDRS
+API принимает одиночный X-Real-IP только от заданного proxy peer;
+production edge перезаписывает этот заголовок. CIDR по умолчанию отсутствует.
 
 Реальная браузерная приёмка: остановите dev, выполните npm run build:web,
 затем npm run test:auth-e2e. Нужны ascend_test, TEST_DATABASE_URL,

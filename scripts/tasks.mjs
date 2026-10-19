@@ -109,6 +109,16 @@ const commands = {
     await npm("run", "build:web");
     await buildGo();
   },
+  backup: async () => {
+    await run(process.execPath, ["scripts/release-backup.mjs", "backup", ...process.argv.slice(3)]);
+  },
+  "restore-verify": async () => {
+    await run(process.execPath, [
+      "scripts/release-backup.mjs",
+      "restore-drill",
+      ...process.argv.slice(3),
+    ]);
+  },
   "reconcile-character": async () => {
     requireLocalEnv();
     await run("go", ["run", "./cmd/reconcile-character", ...process.argv.slice(3)], api);
@@ -173,8 +183,6 @@ const commands = {
 for (const [name, milestone] of Object.entries({
   seed: "C167",
   "seed-demo": "C194",
-  backup: "C197",
-  "restore-verify": "C197",
 })) {
   commands[name] = async () => {
     throw new Error(
