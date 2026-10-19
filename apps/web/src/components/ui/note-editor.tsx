@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { Bold, Heading2, List, Quote, Sparkles } from "lucide-react";
 
 export function NoteEditor({
@@ -10,6 +10,14 @@ export function NoteEditor({
   onChange: (value: string) => void;
 }) {
   const input = useRef<HTMLTextAreaElement>(null);
+  const selection = useRef<{ value: string; start: number; end: number } | null>(null);
+  useLayoutEffect(() => {
+    const pending = selection.current;
+    if (!pending || pending.value !== value) return;
+    selection.current = null;
+    input.current?.focus();
+    input.current?.setSelectionRange(pending.start, pending.end);
+  }, [value]);
   function insert(prefix: string, suffix = "", placeholder = "Текст") {
     const el = input.current;
     const start = el?.selectionStart ?? value.length,
@@ -17,11 +25,13 @@ export function NoteEditor({
     const selected = value.slice(start, end) || placeholder;
     const next = value.slice(0, start) + prefix + selected + suffix + value.slice(end);
     if (next.length > 50000) return;
+    // Restore selection in the same commit, before another keystroke can arrive.
+    selection.current = {
+      value: next,
+      start: start + prefix.length,
+      end: start + prefix.length + selected.length,
+    };
     onChange(next);
-    requestAnimationFrame(() => {
-      el?.focus();
-      el?.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
-    });
   }
   return (
     <div className="note-editor">
