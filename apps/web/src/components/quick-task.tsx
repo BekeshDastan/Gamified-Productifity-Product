@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DateTime } from "luxon";
 import { z } from "zod";
@@ -44,7 +44,8 @@ export function QuickTask({
     },
   });
   const dirty = flow.form.formState.isDirty;
-  useEffect(() => {
+  // The close guard must see a new draft before the next Escape/click event.
+  useLayoutEffect(() => {
     onStateChange?.({ dirty, saving: flow.saving });
   }, [dirty, flow.saving, onStateChange]);
   if (!auth.session)

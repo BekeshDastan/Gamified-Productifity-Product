@@ -275,8 +275,8 @@ label > input[type="checkbox"] {
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
+  /* Keep foreground and background in sync during theme/selection changes. */
   transition:
-    background 0.2s,
     transform 0.2s,
     box-shadow 0.2s;
 }

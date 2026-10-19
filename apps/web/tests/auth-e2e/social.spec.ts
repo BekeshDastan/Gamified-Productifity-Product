@@ -159,8 +159,12 @@ test("social two people consent live revocation coop review block and mobile", a
     await friend.getByRole("button", { name: "Поддержка и победы", exact: true }).click();
     await friend.getByLabel("Мой партнёр", { exact: true }).selectOption({ label: "aurora" });
     await friend.getByLabel("Принимать поддержку", { exact: false }).check();
+    await expect(friend.getByLabel("Принимать поддержку", { exact: false })).toBeEnabled();
     await page.getByRole("button", { name: "Поддержка и победы", exact: true }).click();
     await page.getByLabel("Кого поддержать", { exact: true }).selectOption({ label: "orion" });
+    const recipient = await page.getByLabel("Кого поддержать", { exact: true }).inputValue();
+    await page.getByRole("button", { name: "Обновить", exact: true }).click();
+    await expect(page.getByLabel("Кого поддержать", { exact: true })).toHaveValue(recipient);
     await page.getByRole("button", { name: "Поддержать", exact: true }).click();
     await expect(friend.locator(".social-nudge")).toContainText("Один небольшой шаг");
     await friend.reload();
@@ -191,6 +195,13 @@ test("social two people consent live revocation coop review block and mobile", a
     await page
       .getByLabel("Поделиться заработанным достижением", { exact: true })
       .selectOption({ index: 1 });
+    const achievement = await page
+      .getByLabel("Поделиться заработанным достижением", { exact: true })
+      .inputValue();
+    await page.getByRole("button", { name: "Обновить", exact: true }).click();
+    await expect(
+      page.getByLabel("Поделиться заработанным достижением", { exact: true }),
+    ).toHaveValue(achievement);
     await page.getByRole("button", { name: "Опубликовать для друзей", exact: true }).click();
     await expect(friend.locator(".social-feed article")).toHaveCount(1);
     await page.getByRole("button", { name: "Скрыть публикацию", exact: true }).click();

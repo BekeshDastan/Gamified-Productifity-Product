@@ -81,6 +81,17 @@ export function FriendsWorkspace() {
   const [code, setCode] = useState("");
   const [create, setCreate] = useState(false);
   const [roomDrafts, setRoomDrafts] = useState<Record<string, RoomDraft>>({});
+  const [communityDrafts, setCommunityDrafts] = useState<
+    Record<string, { recipient?: string; template?: keyof typeof templates; achievement?: string }>
+  >({});
+  const communityDraft = communityDrafts[owner ?? ""] ?? {};
+  function updateCommunityDraft(patch: typeof communityDraft) {
+    if (owner)
+      setCommunityDrafts((previous) => ({
+        ...previous,
+        [owner]: { ...previous[owner], ...patch },
+      }));
+  }
   useUnsavedChanges(
     Object.entries(roomDrafts).some(
       ([key, draft]) => key.startsWith(`${owner}:`) && draft.amount !== undefined,
@@ -826,7 +837,14 @@ export function FriendsWorkspace() {
                     <p className="ui-hint">
                       Сработает, если друг выбрал вас партнёром и включил поддержку.
                     </p>
-                    <NudgeComposer friends={friends} act={act} />
+                    <NudgeComposer
+                      friends={friends}
+                      act={act}
+                      recipient={communityDraft.recipient ?? ""}
+                      template={communityDraft.template ?? "small_step"}
+                      setRecipient={(recipient) => updateCommunityDraft({ recipient })}
+                      setTemplate={(template) => updateCommunityDraft({ template })}
+                    />
                   </Card>
                 </div>
                 <Card>
@@ -837,7 +855,12 @@ export function FriendsWorkspace() {
                     </div>
                     <Medal className="social-gold" size={36} />
                   </div>
-                  <PublishComposer data={current} act={act} />
+                  <PublishComposer
+                    data={current}
+                    act={act}
+                    selected={communityDraft.achievement ?? ""}
+                    setSelected={(achievement) => updateCommunityDraft({ achievement })}
+                  />
                   {current.community.feed.length === 0 ? (
                     <EmptyScene
                       title="Победы любят хорошую компанию"
@@ -1789,12 +1812,19 @@ function RoomCreator({
 function NudgeComposer({
   friends,
   act,
+  recipient: draftRecipient,
+  template,
+  setRecipient,
+  setTemplate,
 }: {
   friends: SocialDashboard["friends"]["items"];
   act: Act;
+  recipient: string;
+  template: keyof typeof templates;
+  setRecipient: (value: string) => void;
+  setTemplate: (value: keyof typeof templates) => void;
 }) {
-  const [recipient, setRecipient] = useState(""),
-    [template, setTemplate] = useState<keyof typeof templates>("small_step");
+  const recipient = friends.some((f) => f.user_id === draftRecipient) ? draftRecipient : "";
   return (
     <form
       className="social-form"
@@ -1840,8 +1870,17 @@ function NudgeComposer({
     </form>
   );
 }
-function PublishComposer({ data, act }: { data: SocialDashboard; act: Act }) {
-  const [selected, setSelected] = useState("");
+function PublishComposer({
+  data,
+  act,
+  selected,
+  setSelected,
+}: {
+  data: SocialDashboard;
+  act: Act;
+  selected: string;
+  setSelected: (value: string) => void;
+}) {
   if (!data.community.publishable.length)
     return (
       <p className="ui-hint">

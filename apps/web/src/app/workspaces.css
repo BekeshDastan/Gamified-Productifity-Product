@@ -36,9 +36,9 @@
   background: var(--card);
   color: var(--foreground);
   cursor: pointer;
+  /* Animate movement, not a background that would lag behind the text color. */
   transition:
     border-color 0.2s,
-    background 0.2s,
     transform 0.2s,
     box-shadow 0.2s;
 }
