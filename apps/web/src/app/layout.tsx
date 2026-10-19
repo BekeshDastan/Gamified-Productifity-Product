@@ -8,6 +8,7 @@ import "./experience.css";
 import "./interaction.css";
 import "./workspaces.css";
 import "./social.css";
+import "./accessibility.css";
 
 export const metadata: Metadata = {
   title: "ASCEND — Level Up Your Life",

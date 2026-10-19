@@ -1,0 +1,30 @@
+/* Windows High Contrast keeps state and keyboard focus visible without gradients. */
+@media (forced-colors: active) {
+  button,
+  input,
+  select,
+  textarea,
+  [role="tab"],
+  .ui-button {
+    border: 1px solid ButtonText;
+  }
+  :focus-visible {
+    outline: 3px solid Highlight !important;
+    outline-offset: 3px;
+  }
+  [aria-pressed="true"],
+  [aria-selected="true"],
+  [aria-current="page"] {
+    outline: 2px solid Highlight;
+    outline-offset: -3px;
+  }
+  button:disabled {
+    color: GrayText;
+    border-color: GrayText;
+  }
+}
+
+/* Leave room for the sticky header when keyboard focus scrolls a control. */
+:where(button, a, input, select, textarea, summary, [tabindex="0"]) {
+  scroll-margin-block: 6rem;
+}
