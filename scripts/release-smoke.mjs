@@ -99,7 +99,11 @@ try {
   await page.reload();
   await page.getByText("Локальная приёмка запуска", { exact: true }).first().waitFor();
   assert.deepEqual(failures, []);
-  await page.screenshot({ path: ".data/release-local/https-quests.png", fullPage: true });
+  await page.screenshot({
+    path: ".data/release-local/https-quests.png",
+    fullPage: true,
+    animations: "disabled",
+  });
   assert.equal((await api.get("/metrics")).status(), 404);
   console.log(
     "HTTPS certificate, HSTS, secure cookies, registration/login, persisted quest, live clean-file scan, reload and private metrics: passed.",

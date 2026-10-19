@@ -4,7 +4,7 @@ import path from "node:path";
 
 // Only creates a new, ignored file. Existing keys and volumes are never reset.
 const directory = path.resolve(".data/release-local");
-mkdirSync(directory, { recursive: true });
+mkdirSync(directory, { recursive: true, mode: 0o700 });
 const filename = path.join(directory, "release.env");
 const password = randomBytes(32).toString("hex");
 const backupFile = path.join(directory, "backup.env");

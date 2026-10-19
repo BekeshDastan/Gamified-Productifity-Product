@@ -5,7 +5,9 @@ test("UX first useful action, completion, mobile quick add and persistent welcom
   page,
 }, info) => {
   test.setTimeout(120000);
-  await page.clock.setFixedTime("2026-10-12T12:00:00Z");
+  // A stale device clock must not place the first task on a different day
+  // from the server-backed Today dashboard.
+  await page.clock.setFixedTime("2026-10-11T12:00:00Z");
   const email = `ux-${crypto.randomUUID()}@example.test`;
   await page.goto("/auth/register");
   await page.getByLabel("Email", { exact: true }).fill(email);

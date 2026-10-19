@@ -53,12 +53,15 @@ export function PlanEditor({
 }) {
   const operation = useRef({ body: "", key: "" });
   const [selected, setSelected] = useState("");
+  const [adding, setAdding] = useState(false);
+  const addPending = useRef(false);
   const [titles, setTitles] = useState<Record<string, string>>({});
   const { form, onSubmit, saving, error } = useValidatedForm({
     schema: editorSchema,
     defaultValues: { ...planInput.parse(plan), reason: "", checked: initialChecked },
     fields: ["available_minutes", "windows", "quest_ids", "top_ids", "rest", "reason"],
     save: async (values) => {
+      if (addPending.current) throw new Error("Дождитесь добавления задачи в план.");
       const body = JSON.stringify(values);
       if (operation.current.body !== body) operation.current = { body, key: crypto.randomUUID() };
       if (saveOverride)
@@ -86,7 +89,9 @@ export function PlanEditor({
   const set = (name: "quest_ids" | "top_ids", value: string[]) =>
     form.setValue(name, value, { shouldDirty: true, shouldValidate: true });
   async function add() {
-    if (!selected || ids.includes(selected)) return;
+    if (!selected || ids.includes(selected) || addPending.current) return;
+    addPending.current = true;
+    setAdding(true);
     try {
       const q = await getQuest(selected);
       setTitles((v) => ({ ...v, [q.id]: q.title }));
@@ -96,6 +101,9 @@ export function PlanEditor({
       form.setError("root.server", {
         message: "Не удалось загрузить задачу. Повторите добавление.",
       });
+    } finally {
+      addPending.current = false;
+      setAdding(false);
     }
   }
   return (
@@ -109,7 +117,7 @@ export function PlanEditor({
           <h2>{title ?? (plan.confirmed_at ? "Изменить текущий план" : "Черновик плана")}</h2>
         </div>
       </div>
-      <Form saving={saving} error={error} onSubmit={onSubmit}>
+      <Form saving={saving || adding} error={error} onSubmit={onSubmit}>
         {draftStorageKey && <TabDraftRecovery draft={draft} />}
         {checklist && (
           <RoutineChecklist

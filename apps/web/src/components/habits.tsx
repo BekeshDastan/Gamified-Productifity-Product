@@ -487,7 +487,7 @@ function HabitLogForm({
     schema: logForm,
     defaultValues: {
       amount: h.kind === "binary" ? 1 : h.minimum,
-      occurred_at: DateTime.now().setZone(h.timezone).toFormat("yyyy-MM-dd'T'HH:mm"),
+      occurred_at: DateTime.fromISO(h.as_of).setZone(h.timezone).toFormat("yyyy-MM-dd'T'HH:mm"),
     },
     fields: ["amount", "occurred_at"],
     save: async (v) => {

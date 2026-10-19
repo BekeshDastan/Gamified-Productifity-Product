@@ -39,6 +39,9 @@ def backup():
     root = Path("/work/snapshot")
     root.mkdir()  # Fresh tmpfs per run; never overwrite an earlier snapshot.
     started = time.time()
+    for item in Path("/source/blobs").iterdir():
+        if item.is_symlink() or not item.is_file() or len(item.name) != 64 or any(c not in "0123456789abcdef" for c in item.name):
+            raise RuntimeError("Unexpected object in private blob storage; inspect before backup")
     run("pg_dump", "--format=custom", "--no-owner", "--no-acl", "--file=" + str(root / "database.dump"))
     shutil.copytree("/source/blobs", root / "blobs", symlinks=False)
     data = {"schema_version": 1, "captured_at": started, "tables": counts(), "files": manifest(root)}

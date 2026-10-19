@@ -64,6 +64,8 @@ test("workspace shortcuts save real tasks habits goals and calendar dates", asyn
       .getByRole("link", { name: "Подготовить первую главу", exact: true }),
   ).toBeVisible();
 
+  // A stale device date must not move a current-period quick log into yesterday.
+  await page.clock.setFixedTime("2026-10-11T12:00:00Z");
   await page.goto("/app/habits");
   await page.getByRole("button", { name: "Создать привычку", exact: true }).click();
   await page.getByLabel("Название привычки", { exact: true }).fill("Практика внимания");
@@ -83,6 +85,7 @@ test("workspace shortcuts save real tasks habits goals and calendar dates", asyn
   await page.reload();
   await expect(habit.getByRole("progressbar")).toHaveAttribute("value", "100");
   await page.screenshot({ path: info.outputPath("habit-completed.png"), fullPage: true });
+  await page.clock.setFixedTime("2026-10-12T12:00:00Z");
 
   await page.goto("/app/goals");
   await page.getByRole("button", { name: "Создать цель", exact: true }).click();

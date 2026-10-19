@@ -39,7 +39,19 @@ test("seasons preserve closure history and low energy commitments with accessibl
   await page
     .getByLabel("Задача в план", { exact: true })
     .selectOption({ label: "Маленькая задача сезона" });
+  let releaseTask!: () => void;
+  const loadingTask = new Promise<void>((resolve) => {
+    releaseTask = resolve;
+  });
+  await page.route(/\/api\/v1\/quests\/[0-9a-f-]+$/, async (route) => {
+    if (route.request().method() === "GET") await loadingTask;
+    await route.continue();
+  });
   await page.getByRole("button", { name: "Добавить выбранную задачу" }).click();
+  await expect(
+    page.getByRole("button", { name: "Сохранить черновик", exact: true }),
+  ).toBeDisabled();
+  releaseTask();
   await page.getByRole("button", { name: "Сохранить черновик", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Блоки работы и перенос" })).toBeVisible();
   await page.getByLabel("Я просмотрел задачи, ёмкость и пересечения").check();

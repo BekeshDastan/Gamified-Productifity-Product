@@ -1,11 +1,10 @@
 "use client";
 import { useLayoutEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { DateTime } from "luxon";
 import { z } from "zod";
 import { Plus, Check } from "lucide-react";
 import { useAuth } from "@/lib/auth/provider";
-import { useSettings } from "@/lib/settings";
+import { useSettings, getAccountToday } from "@/lib/settings";
 import { emptyQuest, saveQuest, type Quest } from "@/lib/quests";
 import { useValidatedForm } from "@/lib/forms/use-validated-form";
 import { SafeLink } from "@/lib/forms/unsaved-changes";
@@ -35,7 +34,7 @@ export function QuickTask({
     defaultValues: { title: "" },
     fields: ["title"],
     save: async ({ title }) => {
-      const day = date ?? DateTime.now().setZone(settings.data!.timezone).toISODate()!;
+      const day = date ?? (await getAccountToday());
       const quest = await saveQuest({ ...emptyQuest, title, status: "todo", planned_date: day });
       setCreated(quest);
       void cache.invalidateQueries({ queryKey: ["account", auth.session?.account.id] });

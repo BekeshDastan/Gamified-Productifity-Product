@@ -1,5 +1,6 @@
 "use client";
 import { z } from "zod";
+import { DateTime } from "luxon";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth/provider";
 import { createApiClient } from "@/lib/api/client";
@@ -58,6 +59,15 @@ export async function getSettings(signal?: AbortSignal) {
   await requireAccount();
   const result = await createApiClient().GET("/api/v1/me/settings", { signal });
   return settingsSchema.parse(result.data?.data);
+}
+// Fresh server time and current account zone keep "today" consistent with the
+// dashboard even when the device clock is wrong or the tab crossed midnight.
+export async function getAccountToday() {
+  await requireAccount();
+  const result = await createApiClient().GET("/api/v1/me/settings");
+  const settings = settingsSchema.parse(result.data?.data);
+  const instant = z.iso.datetime({ offset: true }).parse(result.data?.meta.server_time);
+  return DateTime.fromISO(instant).setZone(settings.timezone).toISODate()!;
 }
 export function useSettings() {
   const auth = useAuth();
