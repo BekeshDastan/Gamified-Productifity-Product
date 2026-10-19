@@ -153,13 +153,20 @@ func Validate(in Input) (Input, error) {
 }
 func (s *Service) items(ctx context.Context, tx pgx.Tx, id string, keys []string, validate bool) ([]Item, error) {
 	out := []Item{}
-	for _, key := range keys {
+	if len(keys) == 0 {
+		return out, nil
+	}
+	// Ordinality preserves the user's order, including historical snapshots.
+	// One owner-scoped query replaces one round trip per planned task.
+	rows, e := tx.Query(ctx, `SELECT q.id::text,q.payload->>'title',q.version,COALESCE((q.payload->>'estimated_minutes')::int,0),CASE q.payload->>'priority' WHEN 'high' THEN 3 WHEN 'low' THEN 1 ELSE 2 END,q.status,q.archived_at IS NOT NULL,q.completed_at,NOT EXISTS(SELECT 1 FROM quests c WHERE c.owner_id=q.owner_id AND c.parent_id=q.id AND c.archived_at IS NULL) FROM unnest($2::uuid[]) WITH ORDINALITY AS selected(id,position) JOIN quests q ON q.id=selected.id AND q.owner_id=$1 ORDER BY selected.position`, id, keys)
+	if e != nil {
+		return out, e
+	}
+	defer rows.Close()
+	for rows.Next() {
 		var v Item
 		var leaf bool
-		e := tx.QueryRow(ctx, `SELECT q.id::text,q.payload->>'title',q.version,COALESCE((q.payload->>'estimated_minutes')::int,0),CASE q.payload->>'priority' WHEN 'high' THEN 3 WHEN 'low' THEN 1 ELSE 2 END,q.status,q.archived_at IS NOT NULL,q.completed_at,NOT EXISTS(SELECT 1 FROM quests c WHERE c.owner_id=q.owner_id AND c.parent_id=q.id AND c.archived_at IS NULL) FROM quests q WHERE q.owner_id=$1 AND q.id=$2`, id, key).Scan(&v.ID, &v.Title, &v.Version, &v.EstimatedMinutes, &v.Weight, &v.Status, &v.Archived, &v.CompletedAt, &leaf)
-		if errors.Is(e, pgx.ErrNoRows) {
-			return out, problem(404, "NOT_FOUND", "Задача не найдена")
-		}
+		e := rows.Scan(&v.ID, &v.Title, &v.Version, &v.EstimatedMinutes, &v.Weight, &v.Status, &v.Archived, &v.CompletedAt, &leaf)
 		if e != nil {
 			return out, e
 		}
@@ -167,6 +174,12 @@ func (s *Service) items(ctx context.Context, tx pgx.Tx, id string, keys []string
 			return out, invalid("quest_ids", "Выберите активные листовые задачи, без контейнеров")
 		}
 		out = append(out, v)
+	}
+	if e := rows.Err(); e != nil {
+		return out, e
+	}
+	if len(out) != len(keys) {
+		return []Item{}, problem(404, "NOT_FOUND", "Задача не найдена")
 	}
 	return out, nil
 }
